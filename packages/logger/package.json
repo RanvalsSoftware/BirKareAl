@@ -1,0 +1,16 @@
+{
+  "name": "@birkare/logger",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@birkare/config": "workspace:*",
+    "pino": "^9.6.0"
+  }
+}

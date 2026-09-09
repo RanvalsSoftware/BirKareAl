@@ -1,0 +1,652 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  SUPPORT
+  MODERATOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  SUSPENDED
+  DELETION_PENDING
+  DELETED
+}
+
+enum AuthProvider {
+  PASSWORD
+  GOOGLE
+  APPLE
+}
+
+enum ConsentType {
+  TERMS
+  PRIVACY
+  AI_DISCLOSURE
+  AGE_CONFIRMATION
+  IMAGE_RIGHTS
+}
+
+enum ConsentSource {
+  PASSWORD_REGISTRATION
+  SOCIAL_REGISTRATION
+}
+
+enum AssetType {
+  USER_SOURCE
+  APPROVED_REFERENCE
+  SCENE_PREVIEW
+  FILTER_PREVIEW
+  GENERATION_PREVIEW
+  GENERATION_FINAL
+  THUMBNAIL
+  AVATAR
+}
+
+enum AssetStatus {
+  PENDING_UPLOAD
+  UPLOADED
+  VALIDATING
+  READY
+  REJECTED
+  DELETION_PENDING
+  DELETED
+}
+
+enum ProjectMode {
+  BACKGROUND_REPLACE
+  FULL_SCENE
+  FAN_MOMENT
+  AI_FILTER
+  PRO_PORTRAIT
+}
+
+enum ProjectStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+  DELETION_PENDING
+  DELETED
+}
+
+enum GenerationStatus {
+  DRAFT
+  VALIDATING
+  MODERATING_INPUT
+  BLOCKED
+  QUEUED
+  PREPARING
+  GENERATING
+  POST_PROCESSING
+  MODERATING_OUTPUT
+  COMPLETED
+  FAILED
+  CANCELLED
+  DELETION_PENDING
+  DELETED
+}
+
+enum GenerationStage {
+  AWAITING_UPLOAD
+  VALIDATING
+  INPUT_QUALITY_CHECK
+  INPUT_MODERATION
+  RIGHTS_CHECK
+  AWAITING_CREDIT_RESERVATION
+  QUEUE_WAIT
+  PREPARING_ASSETS
+  COMPILING_PROMPT
+  OPENAI_IMAGE_GENERATION
+  POST_PROCESSING
+  OUTPUT_MODERATION
+  QUALITY_CHECK
+  UPLOADING_OUTPUTS
+  POLICY_CHECK
+  MODERATION_PROVIDER
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum GenerationQuality {
+  PREVIEW
+  STANDARD
+  HD
+}
+
+enum FeaturedPersonKind {
+  FICTIONAL_CHARACTER
+  LICENSED_PERSON
+  PUBLIC_FIGURE_FAN_ART
+  HISTORICAL_FIGURE
+}
+
+enum RightsStatus {
+  FICTIONAL
+  PENDING_REVIEW
+  LICENSED
+  LIMITED
+  EXPIRED
+  BLOCKED
+}
+
+enum CreditTransactionType {
+  PURCHASE
+  SUBSCRIPTION_GRANT
+  GENERATION_RESERVATION
+  GENERATION_CAPTURE
+  GENERATION_RELEASE
+  REFUND
+  BONUS
+  ADMIN_ADJUSTMENT
+  CHARGEBACK
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REVERSED
+}
+
+enum ModerationStage {
+  INPUT_TEXT
+  INPUT_IMAGE
+  COMPILED_PROMPT
+  OUTPUT_IMAGE
+  USER_REPORT
+  MODERATION_COPY
+}
+
+enum ModerationAction {
+  ALLOW
+  BLOCK
+  REVIEW
+  WARN
+}
+
+model User {
+  id              String      @id @default(uuid())
+  email           String      @unique
+  passwordHash    String?
+  firstName       String?
+  lastName        String?
+  role            UserRole    @default(USER)
+  status          UserStatus  @default(PENDING_VERIFICATION)
+  emailVerifiedAt DateTime?
+  locale          String      @default("tr-TR")
+  countryCode     String?
+  dateOfBirth     DateTime?
+  lastLoginAt     DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  deletedAt       DateTime?
+
+  profile       Profile?
+  accounts      AuthAccount[]
+  consents      UserConsent[]
+  sessions      Session[]
+  emailTokens   EmailToken[]
+  assets        Asset[]
+  projects      Project[]
+  generations   Generation[]
+  wallet        CreditWallet?
+  transactions  CreditTransaction[]
+  supportTickets SupportTicket[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Profile {
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  avatarAssetId      String?
+  keepSourcePhotos   Boolean  @default(true)
+  marketingEmail     Boolean  @default(false)
+  pushEnabled        Boolean  @default(true)
+  reducedMotion      Boolean  @default(false)
+  defaultAspectRatio String   @default("4:5")
+  defaultQuality     String   @default("STANDARD")
+  preferences        Json?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// No relation to User: keyed anti-abuse hashes outlive deleted account data.
+// Storage keys are cleared after physical object deletion succeeds.
+model AccountDeletion {
+  userId         String   @id
+  identityHashes String[]
+  storageKeys    String[]
+  notBefore      DateTime
+  completedAt    DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([completedAt, notBefore])
+  @@index([identityHashes], type: Gin)
+}
+
+model AuthAccount {
+  id                String       @id @default(uuid())
+  userId            String
+  provider          AuthProvider
+  providerAccountId String
+  providerEmail     String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+/**
+ * One-time, short-lived bridge between a verified provider identity and the
+ * legal/profile fields required to create a new BirKare account. The raw
+ * provider ID token is never stored; tokenHash is a SHA-256 hash of a random
+ * opaque handoff token returned to the mobile client.
+ */
+model PendingSocialLogin {
+  id                String       @id @default(uuid())
+  tokenHash         String       @unique
+  provider          AuthProvider
+  providerAccountId String
+  providerEmail     String
+  givenName         String?
+  familyName        String?
+  expiresAt         DateTime
+  consumedAt        DateTime?
+  createdAt         DateTime     @default(now())
+
+  @@index([provider, providerAccountId])
+  @@index([expiresAt])
+}
+
+/**
+ * Immutable consent audit trail. Each required consent is a separate record
+ * so policy versions can be re-accepted without overwriting prior evidence.
+ */
+model UserConsent {
+  id         String        @id @default(uuid())
+  userId     String
+  type       ConsentType
+  version    String
+  source     ConsentSource
+  acceptedAt DateTime
+  createdAt  DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type, version])
+  @@index([userId, acceptedAt])
+}
+
+model Session {
+  id               String   @id @default(uuid())
+  userId           String
+  tokenFamilyId    String
+  refreshTokenHash String   @unique
+  deviceId         String?
+  deviceName       String?
+  platform         String?
+  appVersion       String?
+  ipHash           String?
+  userAgent        String?
+  expiresAt        DateTime
+  lastUsedAt       DateTime @default(now())
+  rotatedAt        DateTime?
+  revokedAt        DateTime?
+  revokedReason    String?
+  createdAt        DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([tokenFamilyId])
+  @@index([expiresAt])
+}
+
+model EmailToken {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@index([expiresAt])
+}
+
+model Asset {
+  id              String      @id @default(uuid())
+  ownerId         String?
+  type            AssetType
+  status          AssetStatus @default(PENDING_UPLOAD)
+  storageProvider String
+  storageKey      String      @unique
+  originalName    String?
+  mimeType        String
+  sizeBytes       BigInt
+  sha256          String?
+  width           Int?
+  height          Int?
+  isPrivate       Boolean     @default(true)
+  retentionUntil  DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  deletedAt       DateTime?
+
+  owner              User?              @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  generationInputs   GenerationInput[]
+  generationOutputs  GenerationOutput[]
+
+  @@index([ownerId, createdAt])
+  @@index([status])
+}
+
+model SceneTemplate {
+  id                  String   @id @default(uuid())
+  slug                String   @unique
+  name                String
+  description         String?
+  category            String
+  previewAssetId      String?
+  basePrompt          String
+  negativeConstraints String?
+  allowedModes        String[]
+  requiredCredits     Int      @default(0)
+  isPro               Boolean  @default(false)
+  enabled             Boolean  @default(true)
+  sortOrder           Int      @default(0)
+  config              Json?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  projects Project[]
+  @@index([category, enabled, sortOrder])
+}
+
+model StylePreset {
+  id                  String   @id @default(uuid())
+  slug                String   @unique
+  name                String
+  category            String
+  engine              String
+  previewAssetId      String?
+  promptModifier      String?
+  requiredCredits     Int      @default(0)
+  isPro               Boolean  @default(false)
+  supportsIntensity   Boolean  @default(false)
+  preserveFaceDefault Boolean  @default(true)
+  enabled             Boolean  @default(true)
+  sortOrder           Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  projects Project[]
+  @@index([category, enabled, sortOrder])
+}
+
+model FeaturedPerson {
+  id                       String             @id @default(uuid())
+  slug                     String             @unique
+  displayName              String
+  category                 String
+  kind                     FeaturedPersonKind
+  rightsStatus             RightsStatus
+  promptDescriptor         String
+  referenceAssetId         String?
+  isHistorical             Boolean            @default(false)
+  isPoliticalOrSensitive   Boolean            @default(false)
+  minimumAge               Int?
+  allowedCountries         String[]
+  blockedCountries         String[]
+  allowedSceneSlugs        String[]
+  blockedUseCases          String[]
+  disclosureText           String?
+  isSelectable             Boolean            @default(false)
+  isSearchable             Boolean            @default(false)
+  generationEnabled        Boolean            @default(false)
+  requiresDisclosure       Boolean            @default(true)
+  requiresWatermark        Boolean            @default(false)
+  enabled                  Boolean            @default(false)
+  sortOrder                Int                @default(0)
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+
+  projects Project[]
+  @@index([category, enabled, sortOrder])
+  @@index([rightsStatus, enabled])
+}
+
+model Project {
+  id               String        @id @default(uuid())
+  userId           String
+  title            String?
+  mode             ProjectMode
+  status           ProjectStatus @default(DRAFT)
+  sourceAssetId    String?
+  sceneTemplateId  String?
+  stylePresetId    String?
+  featuredPersonId String?
+  composition      String?
+  aspectRatio      String        @default("4:5")
+  editRecipe       Json?
+  isFavorite       Boolean       @default(false)
+  lastOpenedAt     DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  deletedAt        DateTime?
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sceneTemplate  SceneTemplate?  @relation(fields: [sceneTemplateId], references: [id], onDelete: SetNull)
+  stylePreset    StylePreset?    @relation(fields: [stylePresetId], references: [id], onDelete: SetNull)
+  featuredPerson FeaturedPerson? @relation(fields: [featuredPersonId], references: [id], onDelete: SetNull)
+  generations    Generation[]
+
+  @@index([userId, createdAt])
+  @@index([userId, isFavorite])
+}
+
+model Generation {
+  id                  String            @id @default(uuid())
+  userId              String
+  projectId           String
+  parentGenerationId  String?
+  status              GenerationStatus  @default(DRAFT)
+  stage               GenerationStage?
+  progress            Int               @default(0)
+  quality             GenerationQuality
+  requestedImageCount Int               @default(1)
+  aspectRatio         String
+  preserveFace        Boolean           @default(true)
+  preserveClothes     Boolean           @default(true)
+  recipe              Json?
+  userInstruction     String?
+  compiledPrompt      String?
+  promptVersion       String?
+  provider            String            @default("OPENAI")
+  model               String            @default("gpt-image-1-mini")
+  providerRequestId   String?
+  providerUsage       Json?
+  reservedCredits     Int               @default(0)
+  chargedCredits      Int               @default(0)
+  refundedCredits     Int               @default(0)
+  failureCode         String?
+  failureMessage      String?
+  retryCount          Int               @default(0)
+  startedAt           DateTime?
+  completedAt         DateTime?
+  failedAt            DateTime?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  deletedAt           DateTime?
+
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project            Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parentGeneration   Generation?         @relation("GenerationTree", fields: [parentGenerationId], references: [id], onDelete: SetNull)
+  childGenerations   Generation[]        @relation("GenerationTree")
+  inputs             GenerationInput[]
+  outputs            GenerationOutput[]
+  messages           GenerationMessage[]
+  moderationEvents   ModerationEvent[]
+
+  @@index([userId, createdAt])
+  @@index([projectId, createdAt])
+  @@index([status, createdAt])
+}
+
+model GenerationInput {
+  id           String     @id @default(uuid())
+  generationId String
+  assetId      String
+  role         String
+  sortOrder    Int        @default(0)
+  createdAt    DateTime   @default(now())
+
+  generation Generation @relation(fields: [generationId], references: [id], onDelete: Cascade)
+  asset      Asset      @relation(fields: [assetId], references: [id], onDelete: Restrict)
+  @@unique([generationId, assetId, role])
+}
+
+model GenerationOutput {
+  id               String     @id @default(uuid())
+  generationId     String
+  assetId          String
+  variantIndex     Int
+  selected         Boolean    @default(false)
+  watermarkApplied Boolean    @default(false)
+  disclosureType   String?
+  createdAt        DateTime   @default(now())
+
+  generation Generation @relation(fields: [generationId], references: [id], onDelete: Cascade)
+  asset      Asset      @relation(fields: [assetId], references: [id], onDelete: Restrict)
+  @@unique([generationId, variantIndex])
+  @@index([assetId])
+}
+
+model GenerationMessage {
+  id               String     @id @default(uuid())
+  generationId     String
+  role             String
+  content          String
+  normalizedIntent Json?
+  createdAt        DateTime   @default(now())
+
+  generation Generation @relation(fields: [generationId], references: [id], onDelete: Cascade)
+  @@index([generationId, createdAt])
+}
+
+model ModerationEvent {
+  id           String   @id @default(uuid())
+  userId       String?
+  generationId String?
+  assetId      String?
+  stage        ModerationStage
+  provider     String
+  model        String
+  flagged      Boolean
+  action       ModerationAction
+  categories   Json?
+  scores       Json?
+  policyRule   String?
+  reason       String?
+  createdAt    DateTime @default(now())
+
+  generation Generation? @relation(fields: [generationId], references: [id], onDelete: SetNull)
+  @@index([generationId, stage])
+}
+
+model CreditWallet {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  available       Int      @default(0)
+  reserved        Int      @default(0)
+  lifetimeEarned  Int      @default(0)
+  lifetimeSpent   Int      @default(0)
+  version         Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CreditTransaction {
+  id             String                @id @default(uuid())
+  userId         String
+  type           CreditTransactionType
+  status         TransactionStatus     @default(PENDING)
+  amount         Int
+  availableAfter Int?
+  reservedAfter  Int?
+  referenceType  String?
+  referenceId    String?
+  idempotencyKey String?               @unique
+  description    String?
+  metadata       Json?
+  createdAt      DateTime              @default(now())
+  completedAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, createdAt])
+}
+
+model IdempotencyRecord {
+  id           String   @id @default(uuid())
+  userId       String?
+  route        String
+  key          String
+  requestHash  String
+  responseCode Int?
+  responseBody Json?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@unique([route, key])
+  @@index([expiresAt])
+}
+
+enum SupportTicketStatus {
+  PENDING
+  SENT
+  UNCONFIRMED
+}
+
+model SupportTicket {
+  id             String              @id @default(uuid())
+  userId         String
+  idempotencyKey String              @db.VarChar(128)
+  requestHash    String              @db.VarChar(64)
+  requestId      String              @db.VarChar(100)
+  category       String              @db.VarChar(32)
+  subject        String              @db.VarChar(120)
+  message        String              @db.VarChar(4000)
+  status         SupportTicketStatus @default(PENDING)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  sentAt         DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}

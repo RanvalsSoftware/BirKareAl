@@ -1,0 +1,106 @@
+name: birkare-ai
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: birkare
+      POSTGRES_USER: birkare
+      POSTGRES_PASSWORD: birkare
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U birkare -d birkare']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7.4-alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  mailpit:
+    image: axllent/mailpit:v1.24
+    ports:
+      - '8025:8025'
+      - '1025:1025'
+
+  migrate:
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+    env_file: .env
+    environment:
+      DATABASE_PROVIDER: prisma
+      DATABASE_URL: postgresql://birkare:birkare@postgres:5432/birkare?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ['pnpm', '--filter', '@birkare/database', 'prisma:deploy']
+    restart: 'no'
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+    env_file:
+      - path: .env
+        required: true
+      - path: .local-credentials/deployment/mail.env
+        required: false
+    environment:
+      API_PORT: 4000
+      DATABASE_PROVIDER: prisma
+      DATABASE_URL: postgresql://birkare:birkare@postgres:5432/birkare?schema=public
+      REDIS_URL: redis://redis:6379
+      QUEUE_DRIVER: bullmq
+      ENABLE_INLINE_WORKER: 'false'
+      LOCAL_STORAGE_PATH: /srv/app/.local-storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    ports:
+      - '4000:4000'
+    volumes:
+      - local-storage:/srv/app/.local-storage
+
+  worker:
+    build:
+      context: .
+      dockerfile: infra/docker/worker.Dockerfile
+    env_file: .env
+    environment:
+      DATABASE_PROVIDER: prisma
+      DATABASE_URL: postgresql://birkare:birkare@postgres:5432/birkare?schema=public
+      REDIS_URL: redis://redis:6379
+      QUEUE_DRIVER: bullmq
+      ENABLE_INLINE_WORKER: 'false'
+      LOCAL_STORAGE_PATH: /srv/app/.local-storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    volumes:
+      - local-storage:/srv/app/.local-storage
+
+volumes:
+  postgres-data:
+  redis-data:
+  local-storage:

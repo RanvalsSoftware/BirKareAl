@@ -1,0 +1,305 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {
+  buildGenerationPrompt,
+  compositionPrompt,
+  intensityPrompt,
+  normalizeGenerationRecipe,
+  scenePrompt,
+  stylePrompt,
+} from '@birkare/ai';
+import { catalogFixtures } from '@birkare/shared';
+import type { GenerationRecord, ProjectRecord } from '@birkare/database';
+
+const scene = (slug: string) => {
+  const item = catalogFixtures.scenes.find((entry) => entry.slug === slug);
+  assert.ok(item, slug);
+  return item;
+};
+
+function sourceEditFixture(mode: ProjectRecord['mode'], featuredPersonId: string | null = null) {
+  return {
+    generation: {
+      preserveFace: true,
+      preserveClothes: true,
+      aspectRatio: '4:5',
+      userInstruction: null,
+      recipe: null,
+    } as GenerationRecord,
+    project: {
+      mode,
+      composition: 'CLOSE',
+      sceneTemplateId: null,
+      stylePresetId: catalogFixtures.styles.find((entry) => entry.slug === 'natural-light')!.id,
+      featuredPersonId,
+    } as ProjectRecord,
+    catalog: catalogFixtures,
+  };
+}
+
+test('localized edits preserve the source person count without requesting a secondary character', () => {
+  for (const mode of ['AI_FILTER', 'BACKGROUND_REPLACE'] as const) {
+    for (const personId of [null, catalogFixtures.featuredPeople[0]!.id]) {
+      const prompt = buildGenerationPrompt(sourceEditFixture(mode, personId));
+      assert.match(prompt, /Preserve the number of people in the source image/);
+      assert.match(prompt, /if the source has no people, keep it that way/);
+      assert.doesNotMatch(
+        prompt,
+        /SECONDARY CHARACTER|Add one original fictional secondary character|real meeting|endorsement/,
+      );
+      assert.match(prompt, /no duplicated or extra body parts/);
+      assert.match(prompt, /No random text, captions, logos/);
+    }
+  }
+});
+
+test('an authorized secondary person is compatible with person count and anatomy restrictions', () => {
+  const licensed = {
+    ...catalogFixtures.featuredPeople[0]!,
+    id: 'licensed-prompt-fixture',
+    kind: 'LICENSED_PERSON' as const,
+    rightsStatus: 'LICENSED' as const,
+  };
+  for (const mode of ['FAN_MOMENT', 'FULL_SCENE'] as const) {
+    for (const person of [catalogFixtures.featuredPeople[0]!, licensed]) {
+      const prompt = buildGenerationPrompt({
+        ...sourceEditFixture(mode, person.id),
+        catalog: {
+          ...catalogFixtures,
+          featuredPeople: [...catalogFixtures.featuredPeople, licensed],
+        },
+      });
+      assert.match(prompt, /SECONDARY CHARACTER/);
+      assert.match(prompt, /add exactly one authorized secondary person/);
+      assert.match(prompt, /With one source person, the result has two foreground people/);
+      assert.match(prompt, /no duplicated or extra body parts/);
+      assert.match(prompt, /real meeting, endorsement or event/);
+      assert.doesNotMatch(
+        prompt,
+        /No extra faces|No additional arms, hands, fingers, legs or bodies/,
+      );
+    }
+  }
+});
+
+test('missing or unlicensed secondary selections never grant permission to add a person', () => {
+  const blocked = { ...catalogFixtures.featuredPeople[0]!, rightsStatus: 'BLOCKED' as const };
+  const noSelection = buildGenerationPrompt(sourceEditFixture('FULL_SCENE'));
+  assert.match(noSelection, /without adding or duplicating foreground people/);
+  assert.doesNotMatch(noSelection, /SECONDARY CHARACTER|add exactly one authorized/);
+  const prompt = buildGenerationPrompt({
+    ...sourceEditFixture('FAN_MOMENT', blocked.id),
+    catalog: { ...catalogFixtures, featuredPeople: [blocked] },
+  });
+  assert.match(prompt, /Do not add a secondary character/);
+  assert.doesNotMatch(prompt, /add exactly one authorized/);
+});
+
+test('every new scene resolves to its own environment, not an unrelated legacy fallback', () => {
+  const expectations = {
+    'stadium-night': /football stadium/,
+    'award-night': /waterfront terrace/,
+    'waterfront-night': /suspension bridge/,
+    'coastal-terrace': /Mediterranean/,
+    'window-portrait': /window light/,
+    'neon-drive': /sports coupe/,
+    'alpine-lake': /alpine lake/,
+  };
+  for (const [slug, pattern] of Object.entries(expectations)) {
+    assert.match(scenePrompt(scene(slug), 'FULL_SCENE'), pattern);
+    const background = scenePrompt(scene(slug), 'BACKGROUND_REPLACE');
+    assert.match(background, pattern);
+    assert.match(background, /original face, hairstyle, clothing/);
+    assert.match(background, /pose and expression/);
+  }
+});
+
+test('filter and portrait modes cannot inherit a stale scene background', () => {
+  const filter = scenePrompt(scene('neon-drive'), 'AI_FILTER');
+  assert.match(filter, /Keep the original setting/);
+  assert.doesNotMatch(filter, /sports coupe/);
+  assert.match(filter, /canvas expansion/);
+  assert.doesNotMatch(scenePrompt(scene('alpine-lake'), 'PRO_PORTRAIT'), /alpine lake/);
+});
+
+test('composition respects selected angle without forcing a vertical output', () => {
+  for (const shotType of ['PORTRAIT', 'HALF_BODY', 'FULL_BODY'] as const) {
+    const prompt = compositionPrompt({
+      shotType,
+      cameraAngle: 'SLIGHTLY_LOW',
+      subjectPosition: 'LEFT',
+      backgroundDepth: 'DEEP',
+    });
+    assert.match(prompt, /requested aspect ratio/);
+    assert.match(prompt, /low camera angle/);
+    assert.doesNotMatch(prompt, /vertical|eye.level/);
+  }
+});
+
+test('studio styling does not override the chosen environment', () => {
+  const studio = catalogFixtures.styles.find((entry) => entry.slug === 'studio');
+  assert.ok(studio);
+  assert.match(stylePrompt(studio), /must not replace it/);
+  assert.match(stylePrompt(studio), /warm professional studio/);
+});
+
+test('warm studio has concrete, different light targets at each intensity', () => {
+  const studio = catalogFixtures.styles.find((entry) => entry.slug === 'studio')!;
+  const low = intensityPrompt(25, studio);
+  const medium = intensityPrompt(60, studio);
+  const high = intensityPrompt(100, studio);
+  assert.match(low, /25\/100 \(LOW\)/);
+  assert.match(low, /faint warm key-light lift/);
+  assert.match(medium, /60\/100 \(MEDIUM\)/);
+  assert.match(medium, /moderate cheek and jaw shadow/);
+  assert.match(high, /100\/100 \(HIGH\)/);
+  assert.match(high, /pronounced golden soft-key highlights/);
+  assert.match(high, /never identity, anatomy, output quality/);
+  assert.match(high, /do not render all strengths identically/);
+});
+
+test('every supported filter uses distinct style-specific low, medium and high guidance', () => {
+  const items = [...catalogFixtures.styles, ...catalogFixtures.filters];
+  for (const slug of [
+    'studio',
+    'natural-light',
+    'cinematic',
+    'vintage',
+    'black-white',
+    'hdr',
+    'bokeh',
+    'cyberpunk',
+    'drip-art',
+    'pop-art',
+    'watercolor',
+    'sketch',
+    'cartoon',
+  ]) {
+    const filter = items.find((entry) => entry.slug === slug);
+    assert.ok(filter, slug);
+    const directions = [25, 60, 100].map((value) =>
+      intensityPrompt(value, filter).split('. ').slice(1, -2).join('. '),
+    );
+    assert.equal(new Set(directions).size, 3, `${slug} has three different treatment instructions`);
+  }
+  const mono = items.find((entry) => entry.slug === 'black-white')!;
+  assert.match(intensityPrompt(25, mono), /partial desaturation/);
+  assert.match(intensityPrompt(100, mono), /true neutral black-and-white/);
+});
+
+test('zero and invalid intensity are bounded without disabling the scene', () => {
+  assert.match(intensityPrompt(-10), /STRENGTH 0\/100/);
+  assert.match(intensityPrompt(0), /Still perform the selected scene/);
+  assert.match(intensityPrompt(150), /STRENGTH 100\/100/);
+  assert.match(intensityPrompt(NaN), /STRENGTH 60\/100/);
+  const recipe = normalizeGenerationRecipe(
+    {
+      version: 1,
+      filterIntensity: NaN,
+      character: null,
+      composition: {
+        shotType: 'PORTRAIT',
+        cameraAngle: 'EYE_LEVEL',
+        subjectPosition: 'CENTER',
+        backgroundDepth: 'BALANCED',
+      },
+    },
+    'SELFIE',
+  );
+  assert.equal(recipe.filterIntensity, 60);
+});
+
+test('background prompt preserves pose and immutable selection; bounds user text', () => {
+  const generation = {
+    preserveFace: true,
+    preserveClothes: false,
+    aspectRatio: '16:9',
+    userInstruction: 'a'.repeat(1100),
+    recipe: {
+      version: 1,
+      filterIntensity: 60,
+      character: null,
+      composition: {
+        shotType: 'FULL_BODY',
+        cameraAngle: 'SLIGHTLY_LOW',
+        subjectPosition: 'LEFT',
+        backgroundDepth: 'DEEP',
+      },
+      selection: {
+        sceneTemplateId: scene('coastal-terrace').id,
+        stylePresetId: null,
+        featuredPersonId: null,
+      },
+    },
+  } as GenerationRecord;
+  const project = {
+    mode: 'BACKGROUND_REPLACE',
+    sceneTemplateId: scene('neon-drive').id,
+    stylePresetId: null,
+    featuredPersonId: null,
+    composition: 'WIDE',
+  } as ProjectRecord;
+  const prompt = buildGenerationPrompt({ generation, project, catalog: catalogFixtures });
+  assert.match(prompt, /Mediterranean/);
+  assert.doesNotMatch(prompt, /sports coupe|Use a full-body|Adapt clothing/);
+  assert.match(prompt, /Retain the source camera angle/);
+  assert.match(prompt, /16:9/);
+  assert.match(prompt, /contains no person/);
+  assert.ok(prompt.includes('a'.repeat(1000)));
+  assert.ok(!prompt.includes('a'.repeat(1001)));
+});
+
+test('generation uses captured style and intensity together, not current project style', () => {
+  const studio = catalogFixtures.styles.find((entry) => entry.slug === 'studio')!;
+  const vintage = [...catalogFixtures.styles, ...catalogFixtures.filters].find(
+    (entry) => entry.slug === 'vintage',
+  )!;
+  const generation = {
+    preserveFace: true,
+    preserveClothes: true,
+    aspectRatio: '4:5',
+    userInstruction: null,
+    recipe: {
+      version: 1,
+      filterIntensity: 25,
+      character: null,
+      composition: {
+        shotType: 'PORTRAIT',
+        cameraAngle: 'EYE_LEVEL',
+        subjectPosition: 'CENTER',
+        backgroundDepth: 'BALANCED',
+      },
+      selection: { sceneTemplateId: null, stylePresetId: studio.id, featuredPersonId: null },
+    },
+  } as GenerationRecord;
+  const project = {
+    mode: 'AI_FILTER',
+    stylePresetId: vintage.id,
+    sceneTemplateId: null,
+    featuredPersonId: null,
+    composition: 'SELFIE',
+  } as ProjectRecord;
+  const prompt = buildGenerationPrompt({ generation, project, catalog: catalogFixtures });
+  assert.match(prompt, /faint warm key-light lift/);
+  assert.match(prompt, /25\/100/);
+  assert.doesNotMatch(prompt, /understated analog film response/);
+  assert.match(prompt, /Keep the original setting/);
+  const cartoon = [...catalogFixtures.styles, ...catalogFixtures.filters].find(
+    (entry) => entry.slug === 'cartoon',
+  )!;
+  const cartoonPrompt = buildGenerationPrompt({
+    generation: {
+      ...generation,
+      recipe: {
+        ...generation.recipe!,
+        filterIntensity: 100,
+        selection: { sceneTemplateId: null, stylePresetId: cartoon.id, featuredPersonId: null },
+      },
+    },
+    project,
+    catalog: catalogFixtures,
+  });
+  assert.match(cartoonPrompt, /complete polished cartoon treatment/);
+  assert.match(cartoonPrompt, /not a requirement to keep a fully photographic surface/);
+  assert.doesNotMatch(cartoonPrompt, /Preserve natural pores, individual hair strands/);
+});

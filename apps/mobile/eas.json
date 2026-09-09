@@ -1,0 +1,51 @@
+{
+  "cli": {
+    "version": ">= 16.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "environment": "development",
+      "env": { "EXPO_PUBLIC_APP_ENV": "development" }
+    },
+    "preview": {
+      "distribution": "internal",
+      "environment": "preview",
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "staging",
+        "EXPO_PUBLIC_API_BASE_URL": "https://birkare-api.ranvals.com",
+        "EXPO_PUBLIC_SUPPORT_EMAIL": "birkareal@ranvals.com"
+      },
+      "android": { "buildType": "apk" }
+    },
+    "staging": {
+      "distribution": "store",
+      "credentialsSource": "local",
+      "environment": "preview",
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "staging",
+        "EXPO_PUBLIC_API_BASE_URL": "https://birkare-api.ranvals.com",
+        "EXPO_PUBLIC_SUPPORT_EMAIL": "birkareal@ranvals.com"
+      },
+      "autoIncrement": false,
+      "android": { "buildType": "app-bundle" }
+    },
+    "production": {
+      "distribution": "store",
+      "credentialsSource": "local",
+      "environment": "production",
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "production",
+        "EXPO_PUBLIC_API_BASE_URL": "https://birkare-api.ranvals.com",
+        "EXPO_PUBLIC_SUPPORT_EMAIL": "birkareal@ranvals.com"
+      },
+      "autoIncrement": false,
+      "android": { "buildType": "app-bundle" }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

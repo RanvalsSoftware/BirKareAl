@@ -1,0 +1,19 @@
+{
+  "name": "@birkare/ai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@birkare/config": "workspace:*",
+    "@birkare/database": "workspace:*",
+    "@birkare/shared": "workspace:*",
+    "@birkare/storage": "workspace:*",
+    "openai": "^4.86.2"
+  }
+}

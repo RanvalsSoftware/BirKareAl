@@ -1,0 +1,24 @@
+{
+  "name": "@birkare/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch --env-file-if-exists=../../.env --import tsx src/worker.ts",
+    "start": "node --env-file-if-exists=../../.env --import tsx src/worker.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@birkare/ai": "workspace:*",
+    "@birkare/config": "workspace:*",
+    "@birkare/database": "workspace:*",
+    "@birkare/logger": "workspace:*",
+    "@birkare/storage": "workspace:*",
+    "bullmq": "^5.40.3",
+    "ioredis": "^5.5.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  }
+}

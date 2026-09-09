@@ -1,0 +1,72 @@
+{
+  "expo": {
+    "name": "BirKare AI",
+    "slug": "birkare-ai",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "birkare",
+    "userInterfaceStyle": "dark",
+    "icon": "./assets/images/brand/icon.png",
+    "splash": {
+      "image": "./assets/images/brand/logo-mark.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#050505"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.birkare.ai"
+    },
+    "android": {
+      "package": "com.birkare.ai",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/brand/icon.png",
+        "backgroundColor": "#050505"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/brand/icon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "BirKare AI, seçtiğiniz fotoğrafı AI önizlemesinde kullanmak için galerinize erişir.",
+          "cameraPermission": "BirKare AI, yeni bir fotoğraf çekebilmeniz için kameranıza erişir.",
+          "microphonePermission": false,
+          "colors": {
+            "cropToolbarColor": "#050505",
+            "cropToolbarIconColor": "#FFFFFF",
+            "cropToolbarActionTextColor": "#FFC400",
+            "cropBackButtonIconColor": "#FFFFFF",
+            "cropBackgroundColor": "#050505"
+          },
+          "dark": {
+            "colors": {
+              "cropToolbarColor": "#050505",
+              "cropToolbarIconColor": "#FFFFFF",
+              "cropToolbarActionTextColor": "#FFC400",
+              "cropBackButtonIconColor": "#FFFFFF",
+              "cropBackgroundColor": "#050505"
+            }
+          }
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#050505",
+          "image": "./assets/images/brand/logo-mark.png",
+          "imageWidth": 180,
+          "resizeMode": "contain"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
