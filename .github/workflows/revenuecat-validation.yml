@@ -1,0 +1,47 @@
+name: RevenueCat integration validation
+
+on:
+  push:
+    branches: [feat/revenuecat-subscriptions]
+
+concurrency:
+  group: revenuecat-integration-validation
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    if: github.repository == 'RanvalsSoftware/BirKareAl' && github.ref == 'refs/heads/feat/revenuecat-subscriptions'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enable the repository's package manager
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.18.0 --activate
+      - name: Resolve dependencies without lifecycle scripts
+        run: pnpm install --lockfile-only --ignore-scripts --no-frozen-lockfile
+      - name: Record only the generated lockfile on the feature branch
+        run: |
+          if ! git diff --quiet -- pnpm-lock.yaml; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add pnpm-lock.yaml
+            git commit -m 'chore: lock RevenueCat dependencies'
+            git push origin HEAD:feat/revenuecat-subscriptions
+          fi
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Generate Prisma client
+        run: pnpm db:generate
+      - name: Typecheck all workspaces
+        run: pnpm typecheck
+      - name: Run tests
+        run: pnpm test
