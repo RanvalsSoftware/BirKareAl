@@ -1,63 +1,63 @@
-name: RevenueCat integration validation
+name: RevenueCat mobile validation
 
 on:
   push:
     branches: [feat/revenuecat-subscriptions]
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/revenuecat-validation.yml'
+
+permissions:
+  contents: read
 
 concurrency:
-  group: revenuecat-integration-validation
+  group: revenuecat-mobile-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  validate:
-    if: github.repository == 'RanvalsSoftware/BirKareAl' && github.ref == 'refs/heads/feat/revenuecat-subscriptions'
+  integration:
+    name: RevenueCat types, tests and Android config
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    permissions:
-      contents: write
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          ref: ${{ github.sha }}
-      - uses: actions/setup-node@v4
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
-      - name: Apply anchored integration edits
-        run: node scripts/apply-revenuecat-integration.cjs
-      - name: Enable the repository package manager
+      - name: Use the repository package manager
         run: |
           corepack enable
           corepack prepare pnpm@10.18.0 --activate
-      - name: Resolve dependencies without lifecycle scripts
-        run: pnpm install --lockfile-only --ignore-scripts --no-frozen-lockfile
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
-      - name: Format only integration files
-        run: >-
-          pnpm exec prettier --write
-          apps/mobile/config/revenuecat.cjs apps/mobile/config/revenuecat.d.cts
-          apps/mobile/config/revenuecat.test.ts apps/mobile/plugins/with-revenuecat.js
-          apps/mobile/src/features/billing/revenuecat-client.ts
-          apps/mobile/src/features/billing/revenuecat-client.test.ts
-          apps/mobile/src/features/billing/revenuecat.tsx
-          apps/mobile/src/features/billing/SubscriptionCard.tsx
-          apps/mobile/app.config.ts apps/mobile/app/_layout.tsx
-          'apps/mobile/app/(tabs)/credits.tsx' apps/mobile/package.json
-      - name: Record generated integration files only on the feature branch
-        run: |
-          git add pnpm-lock.yaml apps/mobile/package.json apps/mobile/app.config.ts apps/mobile/app/_layout.tsx 'apps/mobile/app/(tabs)/credits.tsx' apps/mobile/config/revenuecat.cjs apps/mobile/config/revenuecat.d.cts apps/mobile/config/revenuecat.test.ts apps/mobile/plugins/with-revenuecat.js apps/mobile/src/features/billing/revenuecat-client.ts apps/mobile/src/features/billing/revenuecat-client.test.ts apps/mobile/src/features/billing/revenuecat.tsx apps/mobile/src/features/billing/SubscriptionCard.tsx
-          if ! git diff --cached --quiet; then
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git commit -m 'chore: apply mobile integration and lock RevenueCat dependencies'
-            git push origin HEAD:feat/revenuecat-subscriptions
-          fi
       - name: Typecheck mobile application
         run: pnpm --filter @birkare/mobile typecheck
-      - name: Run all mobile tests
-        if: ${{ !cancelled() }}
-        run: pnpm --filter @birkare/mobile test
-      - name: Validate native Android configuration
+      - name: Run RevenueCat lifecycle and release guard tests
+        run: pnpm --filter @birkare/mobile exec vitest run src/features/billing/revenuecat-client.test.ts config/revenuecat.test.ts
+      - name: Validate Android native project generation
         env:
           EXPO_PUBLIC_APP_ENV: development
         run: pnpm --filter @birkare/mobile exec expo prebuild --platform android --no-install
+  regression:
+    name: Existing mobile regression suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Install with the existing lockfile
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.18.0 --activate
+          pnpm install --frozen-lockfile
+      - name: Run the complete mobile suite without hiding existing failures
+        run: pnpm --filter @birkare/mobile test
