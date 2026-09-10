@@ -14,7 +14,7 @@ const apiKey = (Platform.OS === 'ios' ? config?.iosApiKey : config?.androidApiKe
 const isTestStore = apiKey.startsWith('test_');
 const getUserId = () => {
   const auth = useAuthStore.getState();
-  return auth.state === 'authenticated' ? auth.user?.id ?? null : null;
+  return auth.state === 'authenticated' ? (auth.user?.id ?? null) : null;
 };
 
 function unavailableReason(): string | undefined {
@@ -46,11 +46,21 @@ export const revenueCat = createRevenueCatClient({
       );
       return module;
     });
-    try { return await sdkPromise; } catch (error) { sdkPromise = null; throw error; }
+    try {
+      return await sdkPromise;
+    } catch (error) {
+      sdkPromise = null;
+      throw error;
+    }
   },
   loadUi: async () => {
     uiPromise ??= import('react-native-purchases-ui');
-    try { return await uiPromise; } catch (error) { uiPromise = null; throw error; }
+    try {
+      return await uiPromise;
+    } catch (error) {
+      uiPromise = null;
+      throw error;
+    }
   },
 });
 
@@ -58,7 +68,9 @@ export const revenueCat = createRevenueCatClient({
 export function RevenueCatBootstrap() {
   const queryClient = useQueryClient();
   useEffect(() => {
-    const identify = () => { void revenueCat.setUser(getUserId()); };
+    const identify = () => {
+      void revenueCat.setUser(getUserId());
+    };
     identify();
     const unsubscribeAuth = useAuthStore.subscribe((state, previous) => {
       if (state.user?.id !== previous.user?.id || state.state !== previous.state) identify();
@@ -70,9 +82,11 @@ export function RevenueCatBootstrap() {
       lastInfo = state.customerInfo;
       if (state.customerInfo && state.userId === getUserId()) {
         // Read the authoritative backend wallet; never add credits on-device.
-        void queryClient.invalidateQueries({
-          queryKey: accountQueryKey(CREDIT_WALLET_QUERY_KEY, state.userId ?? undefined),
-        }).catch(() => undefined);
+        void queryClient
+          .invalidateQueries({
+            queryKey: accountQueryKey(CREDIT_WALLET_QUERY_KEY, state.userId ?? undefined),
+          })
+          .catch(() => undefined);
       }
     });
     const appState = AppState.addEventListener('change', (state) => {
@@ -88,8 +102,14 @@ export function RevenueCatBootstrap() {
 }
 
 export function useRevenueCat() {
-  const state = useSyncExternalStore(revenueCat.subscribe, revenueCat.getSnapshot, revenueCat.getSnapshot);
-  const userId = useAuthStore((auth) => auth.state === 'authenticated' ? auth.user?.id ?? null : null);
+  const state = useSyncExternalStore(
+    revenueCat.subscribe,
+    revenueCat.getSnapshot,
+    revenueCat.getSnapshot,
+  );
+  const userId = useAuthStore((auth) =>
+    auth.state === 'authenticated' ? (auth.user?.id ?? null) : null,
+  );
   const belongsToUser = Boolean(userId) && state.userId === userId;
   const customerInfo = belongsToUser ? state.customerInfo : null;
   return {

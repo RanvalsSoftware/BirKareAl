@@ -37,7 +37,12 @@ export function hasPro(info: CustomerInfo | null, entitlementId: string): boolea
  */
 export function createRevenueCatClient(options: ClientOptions) {
   let snapshot: BillingSnapshot = {
-    status: 'signed_out', userId: null, customerInfo: null, offering: null, busy: false, error: null,
+    status: 'signed_out',
+    userId: null,
+    customerInfo: null,
+    offering: null,
+    busy: false,
+    error: null,
   };
   const subscribers = new Set<() => void>();
   let sdkModule: SdkModule | null = null;
@@ -57,10 +62,14 @@ export function createRevenueCatClient(options: ClientOptions) {
   };
   const current = (version: number, userId: string | null) =>
     version === epoch && userId === targetUserId && userId === options.getUserId();
-  const enqueue = <T,>(task: () => Promise<T>): Promise<T> => {
+  const enqueue = <T>(task: () => Promise<T>): Promise<T> => {
     const next = queue.then(async () => {
       working = true;
-      try { return await task(); } finally { working = false; }
+      try {
+        return await task();
+      } finally {
+        working = false;
+      }
     });
     queue = next.catch(() => undefined);
     return next;
@@ -91,8 +100,12 @@ export function createRevenueCatClient(options: ClientOptions) {
     try {
       const offerings = await sdkModule!.default.getOfferings();
       if (current(version, userId)) {
-        publish({ offering: offerings.current, error: offerings.current ? null :
-          'RevenueCat’te bu uygulama için geçerli bir offering bulunamadı. Ürünleri bağlayıp current offering seçin.' });
+        publish({
+          offering: offerings.current,
+          error: offerings.current
+            ? null
+            : 'RevenueCat’te bu uygulama için geçerli bir offering bulunamadı. Ürünleri bağlayıp current offering seçin.',
+        });
       }
     } catch (error) {
       if (current(version, userId)) publish({ offering: null, error: messageFor(error) });
@@ -102,19 +115,32 @@ export function createRevenueCatClient(options: ClientOptions) {
     // Do not accept the payload as another account's entitlement. Read the SDK
     // again after the identity queue settles; suppress our own read callbacks.
     if (working || snapshot.status !== 'ready' || !targetUserId) return;
-    if (snapshot.customerInfo?.requestDate === info.requestDate &&
-        JSON.stringify(snapshot.customerInfo?.entitlements) === JSON.stringify(info.entitlements)) return;
+    if (
+      snapshot.customerInfo?.requestDate === info.requestDate &&
+      JSON.stringify(snapshot.customerInfo?.entitlements) === JSON.stringify(info.entitlements)
+    )
+      return;
     void refresh();
   };
 
   async function setUser(userId: string | null, force = false): Promise<void> {
-    if (!force && userId === targetUserId &&
-        ['ready', 'connecting', 'signed_out'].includes(snapshot.status)) return;
+    if (
+      !force &&
+      userId === targetUserId &&
+      ['ready', 'connecting', 'signed_out'].includes(snapshot.status)
+    )
+      return;
     targetUserId = userId;
     const version = ++epoch;
     // Clear synchronously, BEFORE any native login/logout work or React render.
-    publish({ userId, customerInfo: null, offering: null, busy: false, error: null,
-      status: userId ? 'connecting' : 'signed_out' });
+    publish({
+      userId,
+      customerInfo: null,
+      offering: null,
+      busy: false,
+      error: null,
+      status: userId ? 'connecting' : 'signed_out',
+    });
     await enqueue(async () => {
       if (!current(version, userId)) return;
       try {
@@ -149,7 +175,8 @@ export function createRevenueCatClient(options: ClientOptions) {
         publish({ status: 'ready', customerInfo: info });
         await readOfferings(version, userId);
       } catch (error) {
-        if (current(version, userId)) publish({ status: userId ? 'error' : 'signed_out', error: messageFor(error) });
+        if (current(version, userId))
+          publish({ status: userId ? 'error' : 'signed_out', error: messageFor(error) });
       }
     });
   }
@@ -169,7 +196,9 @@ export function createRevenueCatClient(options: ClientOptions) {
       } catch (error) {
         if (current(version, userId)) publish({ error: messageFor(error) });
       }
-    }).finally(() => { refreshPromise = null; });
+    }).finally(() => {
+      refreshPromise = null;
+    });
     return refreshPromise;
   }
 
@@ -180,7 +209,11 @@ export function createRevenueCatClient(options: ClientOptions) {
     const userId = targetUserId;
     const version = epoch;
     if (!userId || userId !== options.getUserId() || snapshot.status !== 'ready')
-      return { kind: 'error', message: snapshot.error || 'Satın alma için giriş yapın ve mağazanın hazırlanmasını bekleyin.' };
+      return {
+        kind: 'error',
+        message:
+          snapshot.error || 'Satın alma için giriş yapın ve mağazanın hazırlanmasını bekleyin.',
+      };
     interactive = true;
     publish({ busy: true, error: null });
     try {
@@ -193,10 +226,17 @@ export function createRevenueCatClient(options: ClientOptions) {
           if (!current(version, userId)) return { kind: 'cancelled' as const };
           const purchaseError = error as { userCancelled?: boolean; code?: unknown } | null;
           const codes = sdkModule?.PURCHASES_ERROR_CODE;
-          if (purchaseError?.userCancelled || (codes && String(purchaseError?.code) === String(codes.PURCHASE_CANCELLED_ERROR)))
+          if (
+            purchaseError?.userCancelled ||
+            (codes && String(purchaseError?.code) === String(codes.PURCHASE_CANCELLED_ERROR))
+          )
             return { kind: 'cancelled' as const };
           if (codes && String(purchaseError?.code) === String(codes.PAYMENT_PENDING_ERROR))
-            return { kind: 'pending' as const, message: 'Ödeme onay bekliyor. Onaylanana kadar Pro erişimi açılmaz; tekrar satın almayın.' };
+            return {
+              kind: 'pending' as const,
+              message:
+                'Ödeme onay bekliyor. Onaylanana kadar Pro erişimi açılmaz; tekrar satın almayın.',
+            };
           const message = messageFor(error);
           publish({ error: message });
           return { kind: 'error' as const, message };
@@ -215,44 +255,61 @@ export function createRevenueCatClient(options: ClientOptions) {
 
   return {
     getSnapshot: () => snapshot,
-    subscribe(listener: () => void) { subscribers.add(listener); return () => { subscribers.delete(listener); }; },
+    subscribe(listener: () => void) {
+      subscribers.add(listener);
+      return () => {
+        subscribers.delete(listener);
+      };
+    },
     setUser,
     refresh,
-    purchase: (pkg: PurchasesPackage) => action(async (version, userId) => {
-      const offered = snapshot.offering?.availablePackages.find((item) =>
-        item.identifier === pkg.identifier && item.product.identifier === pkg.product.identifier);
-      if (!offered) fail('Bu paket artık geçerli teklifte yok. Paket listesini yenileyin.');
-      const { customerInfo } = await sdkModule!.default.purchasePackage(offered!);
-      return completed(customerInfo, version, userId);
-    }),
-    restore: () => action(async (version, userId) =>
-      completed(await sdkModule!.default.restorePurchases(), version, userId)),
-    presentPaywall: () => action(async (version, userId) => {
-      if (!snapshot.offering) fail('Önce RevenueCat’te ürünleri bir offering’e bağlayın.');
-      const ui = await options.loadUi();
-      assertAccount(version, userId);
-      const result = await ui.default.presentPaywallIfNeeded({
-        requiredEntitlementIdentifier: options.entitlementId,
-        offering: snapshot.offering!,
-        displayCloseButton: true,
-      });
-      if (result === ui.PAYWALL_RESULT.CANCELLED) return { kind: 'cancelled' };
-      if (result === ui.PAYWALL_RESULT.ERROR) fail('Paywall açılamadı veya işlem tamamlanamadı. Paket kartlarıyla tekrar deneyebilirsiniz.');
-      assertAccount(version, userId);
-      // PURCHASED/RESTORED/NOT_PRESENTED alone NEVER grant entitlement.
-      return completed(await sdkModule!.default.getCustomerInfo(), version, userId);
-    }),
-    presentCustomerCenter: () => action(async (version, userId) => {
-      const ui = await options.loadUi();
-      assertAccount(version, userId);
-      await ui.default.presentCustomerCenter();
-      assertAccount(version, userId);
-      return completed(await sdkModule!.default.getCustomerInfo(), version, userId);
-    }),
+    purchase: (pkg: PurchasesPackage) =>
+      action(async (version, userId) => {
+        const offered = snapshot.offering?.availablePackages.find(
+          (item) =>
+            item.identifier === pkg.identifier &&
+            item.product.identifier === pkg.product.identifier,
+        );
+        if (!offered) fail('Bu paket artık geçerli teklifte yok. Paket listesini yenileyin.');
+        const { customerInfo } = await sdkModule!.default.purchasePackage(offered!);
+        return completed(customerInfo, version, userId);
+      }),
+    restore: () =>
+      action(async (version, userId) =>
+        completed(await sdkModule!.default.restorePurchases(), version, userId),
+      ),
+    presentPaywall: () =>
+      action(async (version, userId) => {
+        if (!snapshot.offering) fail('Önce RevenueCat’te ürünleri bir offering’e bağlayın.');
+        const ui = await options.loadUi();
+        assertAccount(version, userId);
+        const result = await ui.default.presentPaywallIfNeeded({
+          requiredEntitlementIdentifier: options.entitlementId,
+          offering: snapshot.offering!,
+          displayCloseButton: true,
+        });
+        if (result === ui.PAYWALL_RESULT.CANCELLED) return { kind: 'cancelled' };
+        if (result === ui.PAYWALL_RESULT.ERROR)
+          fail(
+            'Paywall açılamadı veya işlem tamamlanamadı. Paket kartlarıyla tekrar deneyebilirsiniz.',
+          );
+        assertAccount(version, userId);
+        // PURCHASED/RESTORED/NOT_PRESENTED alone NEVER grant entitlement.
+        return completed(await sdkModule!.default.getCustomerInfo(), version, userId);
+      }),
+    presentCustomerCenter: () =>
+      action(async (version, userId) => {
+        const ui = await options.loadUi();
+        assertAccount(version, userId);
+        await ui.default.presentCustomerCenter();
+        assertAccount(version, userId);
+        return completed(await sdkModule!.default.getCustomerInfo(), version, userId);
+      }),
     dispose() {
       epoch++;
       targetUserId = null;
-      if (listening && sdkModule) sdkModule.default.removeCustomerInfoUpdateListener(onCustomerInfo);
+      if (listening && sdkModule)
+        sdkModule.default.removeCustomerInfoUpdateListener(onCustomerInfo);
       listening = false;
       subscribers.clear();
     },

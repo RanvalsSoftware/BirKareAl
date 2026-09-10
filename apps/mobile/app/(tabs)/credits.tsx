@@ -7,12 +7,12 @@ import {
   CreditBadge,
   Icon,
   PrimaryButton,
-  ProBadge,
   SectionHeader,
   SettingRow,
 } from '@/components';
 import { colors, gradients, radii, spacing, typography } from '@/theme';
 import { useAvailableCredits } from '@/features/billing/use-wallet';
+import { SubscriptionCard } from '@/features/billing/SubscriptionCard';
 
 const packs = [
   { title: 'Başlangıç', credits: 12, price: '₺79,99', note: 'Tek seferlik' },
@@ -57,30 +57,7 @@ export default function CreditsScreen() {
           </View>
         </LinearGradient>
 
-        <View style={styles.proCard}>
-          <View style={styles.proTop}>
-            <View>
-              <ProBadge label="BirKare Pro" />
-              <Text style={styles.proTitle}>Her ay yaratmak için daha çok alan.</Text>
-              <Text style={styles.proText}>
-                Aylık 80 kredi, öncelikli sıra ve Pro koleksiyonları.
-              </Text>
-            </View>
-            <View style={styles.proIcon}>
-              <Icon name="sparkles" size={24} color={colors.accentYellow} />
-            </View>
-          </View>
-          <PrimaryButton
-            label="Pro’yu incele"
-            icon="arrow-forward"
-            onPress={() =>
-              Alert.alert(
-                'BirKare Pro',
-                'Mağaza bağlantısı gerçek ödeme entegrasyonu eklendiğinde burada açılacak.',
-              )
-            }
-          />
-        </View>
+        <SubscriptionCard />
 
         <SectionHeader title="Kredi paketleri" />
         <View style={styles.packList}>
@@ -129,7 +106,6 @@ export default function CreditsScreen() {
             value="−1"
           />
         </View>
-        <Text style={styles.restore}>Satın alımları geri yükle</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -160,36 +136,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accentYellowSoft,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  proCard: {
-    marginTop: spacing.md,
-    backgroundColor: colors.surfaceElevated,
-    padding: spacing.lg,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(255,196,0,0.31)',
-  },
-  proTop: {
-    flexDirection: 'row',
-    gap: 12,
-    justifyContent: 'space-between',
-    marginBottom: spacing.md,
-  },
-  proTitle: { ...typography.h3, color: colors.textPrimary, marginTop: 9, maxWidth: 255 },
-  proText: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginTop: 4,
-    maxWidth: 270,
-    lineHeight: 18,
-  },
-  proIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.accentPurpleSoft,
   },
   packList: { gap: 10 },
   pack: {
@@ -226,11 +172,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderWidth: 1,
     borderColor: colors.border,
-  },
-  restore: {
-    ...typography.label,
-    color: colors.accentYellow,
-    textAlign: 'center',
-    marginTop: spacing.xl,
   },
 });
