@@ -174,7 +174,7 @@ Test verilerini açıkça sentetik/izinli etiketle. Gerçek kullanıcının tama
 - Hesap silme pending yaşı ve tekrar eden obje silme hataları; cron/background temizlik döngüsünün çalıştığını izle.
 - PostgreSQL otomatik yedek + periyodik **ayrı restore DB’de** geri yükleme tatbikatı. R2 retention/lifecycle, yedeklerde silme gecikmesi ve HMAC kayıtlarının saklama kararını gizlilik politikasıyla uyumlu yap.
 - Deploy’dan önce DB yedeği ve önceki API/worker image digest’ini kaydet. Geri dönüşte API/worker birlikte önceki uyumlu sürüme alınır. Migration geri almak tablo silmek demek değildir; uyumlu ileri düzeltme veya planlı restore gerekir.
-- Kritik hatada `DISABLE_ALL_GENERATION=true` ile yeni işleri durdur; devam eden/sağlayıcıya gönderilmiş işlerin otomatik duracağını varsayma. Operatör tek tek doğrular; kredi iadesi muhasebeleştirilir.
+- Kritik hatada `DISABLE_ALL_GENERATION=false` ile yeni işleri durdur; devam eden/sağlayıcıya gönderilmiş işlerin otomatik duracağını varsayma. Operatör tek tek doğrular; kredi iadesi muhasebeleştirilir.
 - Sır sızarsa ilgili anahtarı sağlayıcıda iptal/rotate et; production kullanıcı oturumlarını ve pepper etkisini planlayarak yönet. Logdan değeri silmek tek başına yeterli değildir.
 
 ## 9. Testten production’a geçiş kapısı

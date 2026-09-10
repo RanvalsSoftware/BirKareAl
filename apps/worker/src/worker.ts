@@ -83,8 +83,12 @@ async function main(): Promise<void> {
   process.on('SIGTERM', () => void shutdown('SIGTERM'));
 }
 
-main().catch(() => {
-  // Do not log config values, provider errors or secrets.
-  console.error('BirKare AI worker başlatılamadı.');
+main().catch((error: unknown) => {
+  const detail = error instanceof Error ? error.message : 'Bilinmeyen başlangıç hatası.';
+  const safeDetail = detail
+    .replace(/(postgres(?:ql)?:\/\/)[^\s]+/gi, '$1<redacted>')
+    .replace(/(redis:\/\/)[^\s]+/gi, '$1<redacted>')
+    .replace(/(Bearer\s+)[^\s]+/gi, '$1<redacted>');
+  console.error(`BirKare AI worker başlatılamadı: ${safeDetail}`);
   process.exit(1);
 });

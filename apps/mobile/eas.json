@@ -30,7 +30,7 @@
         "EXPO_PUBLIC_SUPPORT_EMAIL": "birkareal@ranvals.com"
       },
       "autoIncrement": false,
-      "android": { "buildType": "app-bundle" }
+      "android": { "buildType": "app-bundle", "credentialsSource": "remote" }
     },
     "production": {
       "distribution": "store",
@@ -42,7 +42,7 @@
         "EXPO_PUBLIC_SUPPORT_EMAIL": "birkareal@ranvals.com"
       },
       "autoIncrement": false,
-      "android": { "buildType": "app-bundle" }
+      "android": { "buildType": "app-bundle", "credentialsSource": "remote" }
     }
   },
   "submit": {

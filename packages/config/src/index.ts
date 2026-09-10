@@ -105,6 +105,7 @@ const RawEnvSchema = z.object({
   AI_PROVIDER: z.enum(['fake', 'openai', 'disabled']).default('fake'),
   ENABLE_INLINE_WORKER: BooleanFromEnv.default('true'),
   DISABLE_ALL_GENERATION: BooleanFromEnv.default('false'),
+  ALLOW_LOCAL_STORAGE: BooleanFromEnv.default('false'),
 });
 
 export type BirKareConfig = Omit<
@@ -180,8 +181,10 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): BirKareConf
   if (isProductionLike && config.QUEUE_DRIVER !== 'bullmq') {
     throw new Error('Production ortamında BullMQ/Redis kuyruğu zorunludur.');
   }
-  if (isProductionLike && config.STORAGE_DRIVER !== 'r2') {
-    throw new Error('Production ortamında private R2 storage zorunludur.');
+  if (isProductionLike && config.STORAGE_DRIVER !== 'r2' && !config.ALLOW_LOCAL_STORAGE) {
+    throw new Error(
+      'Production ortamında private R2 storage zorunludur; tek host kurulumu için ALLOW_LOCAL_STORAGE=true ayarlanmalıdır.',
+    );
   }
   if (isProductionLike && config.AUTH_DEV_MODE) {
     throw new Error('Production ortamında AUTH_DEV_MODE=false olmalıdır.');

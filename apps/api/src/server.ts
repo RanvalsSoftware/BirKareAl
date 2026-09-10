@@ -87,8 +87,12 @@ async function main(): Promise<void> {
   });
 }
 
-main().catch(() => {
-  // Never print environment/config values here; startup diagnostics stay server-side and redacted.
-  console.error('BirKare AI API başlatılamadı.');
+main().catch((error: unknown) => {
+  const detail = error instanceof Error ? error.message : 'Bilinmeyen başlangıç hatası.';
+  const safeDetail = detail
+    .replace(/(postgres(?:ql)?:\/\/)[^\s]+/gi, '$1<redacted>')
+    .replace(/(redis:\/\/)[^\s]+/gi, '$1<redacted>')
+    .replace(/(Bearer\s+)[^\s]+/gi, '$1<redacted>');
+  console.error(`BirKare AI API başlatılamadı: ${safeDetail}`);
   process.exit(1);
 });

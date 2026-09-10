@@ -12,8 +12,8 @@ Hazırlanma: 8 Eylül 2026. Bu dağıtım **backend API + worker** içindir; mob
 | Üretim tipi Compose | `docker-compose.production.yml`; ayrı API, worker, Redis ve tek seferlik migration |
 | PostgreSQL          | **Cloud SQL üzerinde harici**; Compose PostgreSQL kurmaz, Cloud SQL Auth Proxy kullanır |
 | Redis               | Compose içinde; şifreli erişim, kalıcı volume, internete yayınlanan port yok       |
-| Fotoğraflar         | Private Cloudflare R2; staging/production yapılandırması için zorunlu              |
-| İlk ortam           | Staging; production için ayrı DB, R2 ve sırlar kullanılmalı                        |
+| Fotoğraflar         | Portainer tek host ise API/worker ortak Docker volume'u; R2 kullanılmıyor          |
+| İlk ortam           | Staging; production için ayrı DB ve sırlar kullanılmalı                            |
 | Destek e-postası    | `birkareal@ranvals.com` — kullanıcı tarafından sağlandı; teslimat testi yapılmadı  |
 
 Mevcut `docker-compose.yml` yalnız yerel geliştirme içindir ve değiştirilmeden korunur. Rıdvan'a Portainer için doğrudan **`docker-compose.portainer.yml`** dosyasını ver. Bu dosya proxy, otomatik migration, Redis, API ve worker servislerinin tamamını içerir. `docker-compose.production.yml` aynı yapının daha ayrıntılı production kopyasıdır; Portainer'a verilecek tek dosya olarak `docker-compose.portainer.yml` kullanılmalıdır.
@@ -31,7 +31,7 @@ Geri dönmesi gereken bilgiler:
 1. Cloud SQL host/port ve bağlantı yöntemi: özel ağ üzerinden doğrudan TLS veya operatörün sağladığı Cloud SQL Auth Proxy adresi.
 2. Doğrudan TLS için gereken CA/istemci sertifikaları ve erişim/allowlist ayarları. Sertifikalar image'a konmaz; gerekiyorsa runtime secret olarak mount edilir. Yalnız `sslmode=require` yazmak sunucu kimliğinin doğrulandığını tek başına kanıtlamaz; CA/hostname doğrulaması bağlantı yöntemine göre yapılandırılmalıdır.
 3. API için gerçek HTTPS alan adı ve reverse proxy'nin bağlantı/topoloji bilgisi.
-4. Private R2 endpoint, bucket ve yalnız ilgili bucket için gerekli erişim anahtarları.
+4. R2 kullanılacak başka bir production topolojisi varsa private R2 endpoint, bucket ve yalnız ilgili bucket için gerekli erişim anahtarları. **Portainer için verilen `docker-compose.portainer.yml` R2 istemez.**
 5. Mail gönderimi için SMTP host, port, TLS modu, gönderici adı/adresi ve sağlayıcı gerektiriyorsa uygulama parolası. Gerçek e-posta teslim kodu ayrıca tamamlanmalıdır.
 
 Cloud SQL Auth Proxy/Connector bağlantılarında TLS yönetimi ile doğrudan TLS bağlantıları farklıdır; operatör bu seçimi netleştirmelidir. [Cloud SQL SSL/TLS belgesi](https://docs.cloud.google.com/sql/docs/postgres/configure-ssl-instance)
@@ -41,7 +41,7 @@ Cloud SQL Auth Proxy/Connector bağlantılarında TLS yönetimi ile doğrudan TL
 - Paylaşılabilir şablon: `.env.production.example`; gerçek sır içermez.
 - Özel teslim dosyası: `.local-credentials/deployment/portainer.env`; yalnız dosya sahibi okuyabilir (`600`), üst klasör `700`.
 - Bu özel dosyada yeni DB, Redis, JWT ve pepper değerleri hazır; mevcut backend AI anahtarı da yalnız buraya kopyalandı. Yerelde kullanılan DB/parola/JWT ayarları değiştirilmedi.
-- `JWT_ISSUER`, `CORS_ORIGINS` ve R2 alanları operatör bilgileri gelene kadar boştur. Compose, `DB_NAME/DB_USER/DB_PASSWORD` değerlerinden proxy üzerinden kullanılacak `DATABASE_URL` değerini oluşturur.
+- `JWT_ISSUER` ve `CORS_ORIGINS` operatör bilgileri gelene kadar boştur. Portainer compose `DB_NAME/DB_USER/DB_PASSWORD` değerlerinden proxy üzerinden kullanılacak `DATABASE_URL` değerini oluşturur; R2 env değerleri bu stack için kullanılmaz.
 - `DB_NAME/DB_USER/DB_PASSWORD` operatör teslim bilgisidir; bu üç değeri yazmak otomatik DB oluşturmaz. DB parolası URL-safe olmalıdır.
 - `SUPPORT_EMAIL` iletişim bilgisidir; mevcut backend config bunu SMTP gönderici ayarı olarak kullanmaz. Mail şifresi ve GitHub PAT bu dosyada saklanmadı.
 - Sohbette görünen GitHub tokenları, mail parolası ve AI anahtarı yenilenmelidir. Kalıcı `PASSWORD_PEPPER` veya JWT sırrını ileride plansız değiştirmeyin; hesap/oturum erişimini etkileyebilir.
@@ -71,12 +71,12 @@ Bu klasörde Git geçmişi bulunmadığı için doğrulanmamış repo URL/commit
 Hedef: Portainer **Docker Standalone / Compose stack**. Swarm kullanılıyorsa profiles, depends_on ve env/secret davranışları ayrıca uyarlanmalı; bu dosyayı doğrudan `docker stack deploy` ile aynı davranır varsaymayın. Compose `.env` interpolation özelliği Swarm ile aynı değildir. [Docker değişken belgesi](https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/)
 
 1. Rıdvan Cloud SQL DB/kullanıcıyı, instance connection name'i ve least-privilege service-account JSON'u hazırlar. Compose içindeki `cloudsql-proxy` servisi API, worker ve migration için Cloud SQL bağlantısını sağlar; Cloud SQL portu host'a yayınlanmaz.
-2. Özel env dosyasındaki eksikler tamamlanır. `AUTH_DEV_MODE=false`, harici prisma DB, BullMQ ve R2 production Compose içinde zorunludur.
+2. Özel env dosyasındaki eksikler tamamlanır. `AUTH_DEV_MODE=false`, harici prisma DB, BullMQ ve API/worker ortak storage volume'u Portainer Compose içinde zorunludur. Bu Portainer stack R2 kullanmaz ve `ALLOW_LOCAL_STORAGE=true` ile bu bilinçli tek-host tercihini etkinleştirir.
 3. Portainer registry erişimi yapılandırılır. **`docker-compose.portainer.yml` dosyasının tamamı** Stack Editor'a alınır; private env değerleri Stack > Environment variables alanına verilir. Bir `.env` dosyasının kendiliğinden sunucuda var olduğunu varsaymayın.
 4. `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `CLOUD_SQL_INSTANCE_CONNECTION_NAME` ve `CLOUD_SQL_CREDENTIALS_FILE` verilir; compose uygulama bağlantısını otomatik olarak `cloudsql-proxy:5432` adresine kurar. `docker compose up -d` migration'ı tek seferlik otomatik çalıştırır; boş staging DB için geçmiş doğrulanır, dolu DB için önce yedek alınır. `migrate reset`, veri kayıplı `db push`, eski kullanıcı/kredi temizliği yapılmaz.
-5. Migration başarılıysa API ve worker otomatik başlar. `DISABLE_ALL_GENERATION=true` ilk kurulumda korunur.
+5. Migration başarılıysa API ve worker otomatik başlar. `DISABLE_ALL_GENERATION=false` ilk kurulumda korunur.
 6. API'nin 4000 portu reverse proxy üzerinden HTTPS'e bağlanır. Host proxy için loopback bind; proxy ayrı container'daysa ortak özel Docker ağı üzerinden `api:4000` tercih edilir. API'yi yanlışlıkla tüm internete bind etmeyin. Proxy topolojisi doğrulanmadan `TRUST_PROXY=true` yapmayın.
-7. Health/readiness, worker logları, Cloud SQL bağlantısı, R2 erişimi ve Redis kalıcılığı doğrulanır. Yalnız HTTP 200 gerçek AI/mail/ödeme işlevlerinin testi değildir.
+7. Health/readiness, worker logları, Cloud SQL bağlantısı, ortak storage volume'u ve Redis kalıcılığı doğrulanır. Yalnız HTTP 200 gerçek AI/mail/ödeme işlevlerinin testi değildir.
 
 ## 5.1 Migration ve Cloud SQL Proxy otomatik başlatma akışı
 
@@ -102,8 +102,9 @@ Rıdvan'ın Portainer sunucusunda hazırlaması gerekenler:
 5. `CLOUD_SQL_CREDENTIALS_FILE`, host üzerindeki JSON yolunu göstermelidir.
 	 Compose içindeki `cloudsql-proxy` bu dosyayı
 	 `/run/secrets/cloudsql-service-account` olarak okur. Proxy dışarıya port
-	 açmaz; API, worker ve migration yalnızca `cloudsql-proxy:5432` adresini
-	 kullanır.
+	açmaz; API, worker ve migration yalnızca `cloudsql-proxy:5432` adresini
+	kullanır. Fotoğraf ve çıktı dosyaları R2 yerine `birkare-storage` Docker
+	volume'unda tutulur; API ve worker aynı volume'u mount eder.
 
 Portainer Stack deploy edildiğinde normal başlatma komutu migration'ı otomatik
 olarak tetikler:
@@ -156,7 +157,7 @@ Redis şifre değişimini sıradan env düzenlemesi saymayın: API/worker bağla
 ## 6. Henüz yayın öncesi tamamlanması gerekenler
 
 - Gerçek SMTP teslimi: `register`, yeniden doğrulama ve parola sıfırlama kodları token oluşturuyor ama gerçek mail gönderimi henüz bağlı değil. Mail hesabı açmak/şifre vermek bu kodu tamamlamaz. `AUTH_DEV_MODE=false` korunur; bunu açarak üretimde debug token yayımlamayın.
-- Cloud SQL/R2/proxy bağlantıları bu makineden doğrulanmış değildir; bilgiler eksik.
+- Cloud SQL/proxy bağlantıları bu makineden doğrulanmış değildir; R2’siz Portainer storage volume'u compose doğrulamasından geçmiştir.
 - Destek adresi mobilde güncellense de mobil release bundle yeniden build edilmeden dağıtılmış uygulama değişmez. Gerçek HTTPS API adresi de mobil build ortamına verilmelidir; server sırları mobile taşınmaz.
 - AI testleri ücret doğurabilir; önce ayrı onay ve düşük bütçe. Önceki onay tek test içindi, yeni deployment başka üretim için otomatik onay sayılmaz.
 - Önceki incelemede saptanan kredi finalizasyonu kenar durumları ve diğer staging kabul kapıları: [runtime incelemesi](friday-generation-comparison-2026-09-08.md), [staging yol haritası](backend-staging-roadmap.md).
