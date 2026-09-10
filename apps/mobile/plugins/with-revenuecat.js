@@ -8,3 +8,4 @@ module.exports = function withRevenueCat(config) {
     activity.$['android:launchMode'] = 'singleTop';
     return mod;
   });
+};
