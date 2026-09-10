@@ -12,6 +12,7 @@ import { useAuthBootstrap } from '@/features/auth/use-auth-bootstrap';
 import { bindAccountQueryCache } from '@/features/auth/account-query-cache';
 import { apiRequest } from '@/api/client';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { RevenueCatBootstrap } from '@/features/billing/revenuecat';
 
 // Keep the native black-and-gold mark on screen until the first React frame is
 // actually laid out. Calling this at module scope is important on a cold start.
@@ -34,7 +35,10 @@ function Providers({ children }: PropsWithChildren) {
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#050505' }}>
       <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        <QueryClientProvider client={queryClient}>
+          <RevenueCatBootstrap />
+          {children}
+        </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

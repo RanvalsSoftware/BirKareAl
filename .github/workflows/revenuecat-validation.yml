@@ -1,0 +1,63 @@
+name: RevenueCat mobile validation
+
+on:
+  push:
+    branches: [feat/revenuecat-subscriptions]
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/revenuecat-validation.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: revenuecat-mobile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integration:
+    name: RevenueCat types, tests and Android config
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Use the repository package manager
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.18.0 --activate
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck mobile application
+        run: pnpm --filter @birkare/mobile typecheck
+      - name: Run RevenueCat lifecycle and release guard tests
+        run: pnpm --filter @birkare/mobile exec vitest run src/features/billing/revenuecat-client.test.ts config/revenuecat.test.ts
+      - name: Validate Android native project generation
+        env:
+          EXPO_PUBLIC_APP_ENV: development
+        run: pnpm --filter @birkare/mobile exec expo prebuild --platform android --no-install
+  regression:
+    name: Existing mobile regression suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Install with the existing lockfile
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.18.0 --activate
+          pnpm install --frozen-lockfile
+      - name: Run the complete mobile suite without hiding existing failures
+        run: pnpm --filter @birkare/mobile test
