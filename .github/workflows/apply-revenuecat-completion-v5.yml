@@ -1,0 +1,118 @@
+name: Apply RevenueCat completion v5
+
+on:
+  push:
+    branches: [feat/revenuecat-custom-paywall-complete]
+    paths:
+      - '.github/workflows/apply-revenuecat-completion-v5.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-revenuecat-completion-v5
+  cancel-in-progress: false
+
+jobs:
+  apply-commit-and-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feat/revenuecat-custom-paywall-complete
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply complete RevenueCat patch
+        run: node scripts/apply-revenuecat-completion-v4.mjs
+      - name: Activate pnpm and install
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.18.0 --activate
+          pnpm install --frozen-lockfile
+      - name: Format generated sources
+        run: |
+          pnpm exec prettier --write \
+            apps/mobile/config/revenuecat.cjs \
+            apps/mobile/config/revenuecat.d.cts \
+            apps/mobile/config/revenuecat.test.ts \
+            apps/mobile/app/pro.tsx \
+            apps/mobile/app/_layout.tsx \
+            apps/mobile/app/'(tabs)'/credits.tsx \
+            apps/mobile/src/features/billing/CustomProPaywall.tsx \
+            apps/mobile/src/features/billing/SubscriptionCard.tsx \
+            apps/mobile/src/features/billing/paywall-model.ts \
+            apps/mobile/src/features/billing/paywall-model.test.ts \
+            apps/mobile/src/features/billing/revenuecat-client.ts \
+            apps/mobile/src/features/billing/revenuecat-client.test.ts \
+            apps/mobile/src/features/billing/revenuecat.tsx \
+            apps/api/src/modules/billing/billing.routes.ts \
+            apps/api/src/modules/billing/revenuecat.service.ts \
+            apps/api/src/modules/billing/revenuecat.service.test.ts \
+            apps/api/src/modules/billing/pro-access.ts \
+            apps/api/src/modules/generations/generations.routes.ts \
+            packages/config/src/index.ts \
+            packages/database/src/types.ts \
+            packages/database/src/memory.repository.ts \
+            packages/database/src/prisma.repository.ts \
+            docs/REVENUECAT_INTEGRATION.md
+          pnpm --filter @birkare/database exec prisma format
+          pnpm --filter @birkare/database exec prisma generate
+      - name: Validate and record result
+        id: validation
+        shell: bash
+        run: |
+          set +e
+          LOG=/tmp/revenuecat-validation.log
+          : > "$LOG"
+          run_check() {
+            echo "\n## $1" | tee -a "$LOG"
+            shift
+            "$@" 2>&1 | tee -a "$LOG"
+            return ${PIPESTATUS[0]}
+          }
+          STATUS=0
+          run_check 'Mobile typecheck' pnpm --filter @birkare/mobile typecheck || STATUS=1
+          run_check 'API typecheck' pnpm --filter @birkare/api typecheck || STATUS=1
+          run_check 'Mobile RevenueCat tests' pnpm --filter @birkare/mobile exec vitest run src/features/billing/revenuecat-client.test.ts src/features/billing/paywall-model.test.ts config/revenuecat.test.ts || STATUS=1
+          run_check 'API RevenueCat tests' pnpm --filter @birkare/api exec vitest run src/modules/billing/revenuecat.service.test.ts || STATUS=1
+          {
+            echo '# RevenueCat validation result'
+            echo
+            if [ "$STATUS" -eq 0 ]; then
+              echo '**PASS** — mobile/API typechecks and targeted RevenueCat tests passed.'
+            else
+              echo '**FAIL** — inspect this workflow run before merging.'
+            fi
+            echo
+            echo '```text'
+            tail -n 500 "$LOG"
+            echo '```'
+          } > docs/REVENUECAT_VALIDATION.md
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Remove one-time patch machinery
+        run: |
+          rm -f scripts/apply-revenuecat-completion.mjs
+          rm -f scripts/apply-revenuecat-completion-v2.mjs
+          rm -f scripts/apply-revenuecat-completion-v3.mjs
+          rm -f scripts/apply-revenuecat-completion-v4.mjs
+          rm -f .github/workflows/apply-revenuecat-completion.yml
+          rm -f .github/workflows/apply-revenuecat-completion-v2.yml
+          rm -f .github/workflows/apply-revenuecat-completion-v4.yml
+          rm -f .github/workflows/apply-revenuecat-completion-v5.yml
+          rm -f docs/revenuecat-completion-trigger.md docs/revenuecat-completion-marker-2.md
+      - name: Commit branch result
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'feat: complete RevenueCat custom paywall and server sync' || true
+          git push origin HEAD:feat/revenuecat-custom-paywall-complete
+      - name: Fail when validation failed
+        if: steps.validation.outputs.status != '0'
+        run: exit 1
