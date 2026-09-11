@@ -28,7 +28,7 @@ const packs = [
 
 export default function CreditsScreen() {
   const availableCredits = useAvailableCredits();
-  const approximateStandardGenerations = Math.floor(availableCredits / 3);
+  const approximateStandardGenerations = Math.floor(availableCredits / 4);
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.safe}>
