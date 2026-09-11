@@ -1,0 +1,129 @@
+name: RevenueCat business-rule hardening v2
+
+on:
+  push:
+    branches: [feat/revenuecat-custom-paywall-complete]
+    paths:
+      - '.github/workflows/revenuecat-hardening-v2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: revenuecat-hardening-v2
+  cancel-in-progress: false
+
+jobs:
+  harden:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feat/revenuecat-custom-paywall-complete
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply business-rule corrections
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const change = (file, transform) => {
+            const before = fs.readFileSync(file, 'utf8');
+            const after = transform(before);
+            fs.writeFileSync(file, after.endsWith('\n') ? after : after + '\n');
+          };
+
+          change('apps/mobile/src/features/billing/CustomProPaywall.tsx', (source) =>
+            source.replace(
+              /title="Daha hızlı üretim"\s+detail="Öncelikli erişim"/,
+              'title="Pro portre" detail="Yüksek kalite seçenekleri"',
+            ),
+          );
+
+          change('apps/api/src/modules/generations/generations.routes.ts', (source) => {
+            source = source.replace(
+              /import \{\s*assertBeautyAccess,\s*assertBeautySource,\s*assertBeautyStyle\s*\} from '\.\/beauty-selection\.js';/,
+              "import { assertBeautySource, assertBeautyStyle } from './beauty-selection.js';",
+            );
+            return source.replace(/^\s*assertBeautyAccess\(req\.body\);\s*$/gm, '');
+          });
+
+          change('apps/api/src/modules/billing/revenuecat.service.ts', (source) => {
+            if (!source.includes('function anchoredMonthPeriodKey(')) {
+              const functionText = [
+                '',
+                'function anchoredMonthPeriodKey(original: Date, current: Date): string {',
+                '  let months =',
+                '    (current.getUTCFullYear() - original.getUTCFullYear()) * 12 +',
+                '    current.getUTCMonth() -',
+                '    original.getUTCMonth();',
+                '  const beforeMonthlyAnniversary =',
+                '    current.getUTCDate() < original.getUTCDate() ||',
+                '    (current.getUTCDate() === original.getUTCDate() &&',
+                '      current.getUTCHours() < original.getUTCHours());',
+                '  if (beforeMonthlyAnniversary) months -= 1;',
+                "  return 'anchor-' + original.toISOString() + '-period-' + Math.max(0, months);",
+                '}',
+              ].join('\n');
+              source = source.replace(
+                /function utcMonthKey\(value: Date\): string \{[\s\S]*?\n\}/,
+                (match) => match + functionText,
+              );
+            }
+            source = source.replace(
+              'if (!force && cached && cached.expiresAt > timestamp) return cached.value;',
+              "if (!force && cached && cached.expiresAt > timestamp)\n      return { ...cached.value, creditsGranted: 0 };",
+            );
+            source = source.replace(
+              /creditsGranted = \(await grant\(userId, productId, plan, utcMonthKey\(now\(\)\)\)\)\.credits;/,
+              [
+                'const anchor =',
+                '          validDate(subscription?.original_purchase_date) ??',
+                '          validDate(subscription?.purchase_date) ??',
+                '          now();',
+                '        creditsGranted = (',
+                '          await grant(userId, productId, plan, anchoredMonthPeriodKey(anchor, now()))',
+                '        ).credits;',
+              ].join('\n'),
+            );
+            return source;
+          });
+
+          change('apps/api/src/modules/billing/revenuecat.service.test.ts', (source) =>
+            source.replace(
+              "expect([...f.grants.keys()][0]).toContain('2026-09');",
+              "expect([...f.grants.keys()][0]).toContain('period-8');",
+            ),
+          );
+          NODE
+      - name: Install, format and generate
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.18.0 --activate
+          pnpm install --frozen-lockfile
+          pnpm exec prettier --write \
+            apps/mobile/src/features/billing/CustomProPaywall.tsx \
+            apps/api/src/modules/generations/generations.routes.ts \
+            apps/api/src/modules/billing/revenuecat.service.ts \
+            apps/api/src/modules/billing/revenuecat.service.test.ts
+          pnpm --filter @birkare/database exec prisma format
+          pnpm --filter @birkare/database exec prisma generate
+      - name: Validate hardened integration
+        run: |
+          pnpm --filter @birkare/mobile typecheck
+          pnpm --filter @birkare/api typecheck
+          pnpm --filter @birkare/mobile exec vitest run src/features/billing/revenuecat-client.test.ts src/features/billing/paywall-model.test.ts config/revenuecat.test.ts
+          pnpm --filter @birkare/api exec vitest run src/modules/billing/revenuecat.service.test.ts
+      - name: Commit hardening
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add apps packages docs
+          git commit -m 'fix: harden RevenueCat period grants and Pro access' || true
+          git fetch origin feat/revenuecat-custom-paywall-complete
+          git rebase origin/feat/revenuecat-custom-paywall-complete
+          git push origin HEAD:feat/revenuecat-custom-paywall-complete
