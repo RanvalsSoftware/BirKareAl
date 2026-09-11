@@ -10,6 +10,8 @@ import type { RevenueCatPublicConfig } from '../../../config/revenuecat.cjs';
 
 const config = Constants.expoConfig?.extra?.revenueCat as RevenueCatPublicConfig | undefined;
 const entitlementId = 'create_an_app_called_birkare_pro';
+const offeringId = config?.offeringId || 'birkare_pro';
+const appEnv = config?.appEnv || 'development';
 const apiKey = (Platform.OS === 'ios' ? config?.iosApiKey : config?.androidApiKey) || '';
 const isTestStore = apiKey.startsWith('test_');
 const getUserId = () => {
@@ -24,7 +26,7 @@ function unavailableReason(): string | undefined {
     return 'Gerçek satın alma testi için Expo Go yerine uygulamanın yeni native derlemesini açın.';
   if (!config || config.entitlementId !== entitlementId || !apiKey)
     return 'RevenueCat yapılandırması eksik. Uygulamayı güncel app.config.ts ile yeniden derleyin.';
-  if (isTestStore && config.appEnv !== 'development')
+  if (isTestStore && appEnv !== 'development')
     return 'Test Store anahtarı canlı ortamda kullanılamaz.';
   return undefined;
 }
@@ -35,6 +37,7 @@ let uiPromise: Promise<typeof import('react-native-purchases-ui')> | null = null
 export const revenueCat = createRevenueCatClient({
   apiKey,
   entitlementId,
+  offeringId,
   unavailableReason: unavailableReason(),
   getUserId,
   // Loading lazily keeps web/Expo Go and builds without the native module from
@@ -42,7 +45,7 @@ export const revenueCat = createRevenueCatClient({
   loadSdk: async () => {
     sdkPromise ??= import('react-native-purchases').then(async (module) => {
       await module.default.setLogLevel(
-        config?.appEnv === 'development' ? module.LOG_LEVEL.DEBUG : module.LOG_LEVEL.WARN,
+        appEnv === 'development' ? module.LOG_LEVEL.DEBUG : module.LOG_LEVEL.WARN,
       );
       return module;
     });
@@ -119,6 +122,8 @@ export function useRevenueCat() {
     isPro: hasPro(customerInfo, entitlementId),
     entitlement: customerInfo?.entitlements.active[entitlementId],
     entitlementId,
+    offeringId,
+    appEnv,
     isTestStore,
     ready: belongsToUser && state.status === 'ready',
     refresh: revenueCat.refresh,
