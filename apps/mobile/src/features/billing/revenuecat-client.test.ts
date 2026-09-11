@@ -3,6 +3,7 @@ import type { CustomerInfo, PurchasesOffering, PurchasesPackage } from 'react-na
 import { createRevenueCatClient, hasPro } from './revenuecat-client';
 
 const entitlementId = 'create_an_app_called_birkare_pro';
+
 function info(active = false, marker = 'now'): CustomerInfo {
   return {
     requestDate: marker,
@@ -15,15 +16,23 @@ function info(active = false, marker = 'now'): CustomerInfo {
     },
   } as unknown as CustomerInfo;
 }
+
 const pkg = {
   identifier: '$rc_monthly',
   product: { identifier: 'monthly', priceString: '₺99,99' },
 } as PurchasesPackage;
+
 const offering = {
-  identifier: 'default',
+  identifier: 'birkare_pro',
   availablePackages: [pkg],
   monthly: pkg,
 } as PurchasesOffering;
+
+const unrelatedOffering = {
+  identifier: 'default',
+  availablePackages: [],
+} as PurchasesOffering;
+
 function deferred<T>() {
   let resolve!: (value: T) => void;
   const promise = new Promise<T>((done) => {
@@ -31,6 +40,7 @@ function deferred<T>() {
   });
   return { promise, resolve };
 }
+
 function fixture(unavailableReason?: string) {
   let user: string | null = 'user-a';
   let latestInfo = info();
@@ -41,7 +51,10 @@ function fixture(unavailableReason?: string) {
     logOut: vi.fn(async () => info()),
     isAnonymous: vi.fn(async () => false),
     getCustomerInfo: vi.fn(async () => latestInfo),
-    getOfferings: vi.fn(async () => ({ current: offering, all: { default: offering } })),
+    getOfferings: vi.fn(async () => ({
+      current: unrelatedOffering,
+      all: { birkare_pro: offering, default: unrelatedOffering },
+    })),
     purchasePackage: vi.fn(async (_package: PurchasesPackage) => ({ customerInfo: latestInfo })),
     restorePurchases: vi.fn(async () => latestInfo),
     addCustomerInfoUpdateListener: vi.fn((callback: (value: CustomerInfo) => void) => {
@@ -68,6 +81,7 @@ function fixture(unavailableReason?: string) {
   const client = createRevenueCatClient({
     apiKey: 'test_fixture',
     entitlementId,
+    offeringId: 'birkare_pro',
     unavailableReason,
     getUserId: () => user,
     loadSdk,
@@ -109,6 +123,7 @@ describe('RevenueCat account and purchase lifecycle', () => {
     expect(hasPro(info(true), entitlementId)).toBe(true);
     expect(hasPro(info(true), 'other')).toBe(false);
   });
+
   it('configures once using the authenticated backend user ID', async () => {
     const f = fixture();
     await f.signIn();
@@ -119,6 +134,13 @@ describe('RevenueCat account and purchase lifecycle', () => {
     });
     expect(f.client.getSnapshot().status).toBe('ready');
   });
+
+  it('selects the configured offering instead of an unrelated current offering', async () => {
+    const f = fixture();
+    await f.signIn();
+    expect(f.client.getSnapshot().offering).toBe(offering);
+  });
+
   it('does not load SDKs on unsupported platforms or Expo Go', async () => {
     const f = fixture('Native build required');
     await f.signIn();
@@ -126,6 +148,7 @@ describe('RevenueCat account and purchase lifecycle', () => {
     expect(f.client.getSnapshot().status).toBe('unavailable');
     expect((await f.client.restore()).kind).toBe('error');
   });
+
   it('clears entitlement synchronously on account switch', async () => {
     const f = fixture();
     f.setInfo(info(true));
@@ -138,6 +161,7 @@ describe('RevenueCat account and purchase lifecycle', () => {
     expect(f.sdk.configure).toHaveBeenCalledTimes(1);
     expect(hasPro(f.client.getSnapshot().customerInfo, entitlementId)).toBe(false);
   });
+
   it('logs out and blocks purchases without an app account', async () => {
     const f = fixture();
     f.setInfo(info(true));
@@ -149,6 +173,7 @@ describe('RevenueCat account and purchase lifecycle', () => {
     expect((await f.client.purchase(pkg)).kind).toBe('error');
     expect(f.sdk.purchasePackage).not.toHaveBeenCalled();
   });
+
   it('discards a late customer response after switching accounts', async () => {
     const f = fixture();
     const read = deferred<CustomerInfo>();
@@ -161,6 +186,7 @@ describe('RevenueCat account and purchase lifecycle', () => {
     expect(f.client.getSnapshot().userId).toBe('user-b');
     expect(hasPro(f.client.getSnapshot().customerInfo, entitlementId)).toBe(false);
   });
+
   it('discards a completed purchase from a previous app account', async () => {
     const f = fixture();
     await f.signIn();
@@ -174,20 +200,23 @@ describe('RevenueCat account and purchase lifecycle', () => {
     await login;
     expect(hasPro(f.client.getSnapshot().customerInfo, entitlementId)).toBe(false);
   });
-  it('purchases the exact package from the offering', async () => {
+
+  it('purchases the exact package from the configured offering', async () => {
     const f = fixture();
     await f.signIn();
     f.setInfo(info(true));
     expect(await f.client.purchase(pkg)).toEqual({ kind: 'completed', isPro: true });
     expect(f.sdk.purchasePackage.mock.calls[0]?.[0]).toBe(pkg);
   });
-  it('rejects products that are not in the current offering', async () => {
+
+  it('rejects products that are not in the configured offering', async () => {
     const f = fixture();
     await f.signIn();
     const other = { ...pkg, identifier: 'unknown' };
     expect((await f.client.purchase(other)).kind).toBe('error');
     expect(f.sdk.purchasePackage).not.toHaveBeenCalled();
   });
+
   it('does not start duplicate purchases on repeated taps', async () => {
     const f = fixture();
     await f.signIn();
@@ -200,6 +229,7 @@ describe('RevenueCat account and purchase lifecycle', () => {
     expect(f.sdk.purchasePackage).toHaveBeenCalledTimes(1);
     expect(f.client.getSnapshot().busy).toBe(false);
   });
+
   it('treats user cancellation as cancellation, without an error banner', async () => {
     const f = fixture();
     await f.signIn();
@@ -207,6 +237,7 @@ describe('RevenueCat account and purchase lifecycle', () => {
     expect(await f.client.purchase(pkg)).toEqual({ kind: 'cancelled' });
     expect(f.client.getSnapshot().error).toBeNull();
   });
+
   it('never grants Pro for a pending payment', async () => {
     const f = fixture();
     await f.signIn();
@@ -214,6 +245,7 @@ describe('RevenueCat account and purchase lifecycle', () => {
     expect((await f.client.purchase(pkg)).kind).toBe('pending');
     expect(hasPro(f.client.getSnapshot().customerInfo, entitlementId)).toBe(false);
   });
+
   it('handles network errors and permits an explicit retry', async () => {
     const f = fixture();
     await f.signIn();
@@ -222,6 +254,7 @@ describe('RevenueCat account and purchase lifecycle', () => {
     f.setInfo(info(true));
     expect((await f.client.purchase(pkg)).kind).toBe('completed');
   });
+
   it('restores only the entitlement actually returned by RevenueCat', async () => {
     const f = fixture();
     await f.signIn();
@@ -229,6 +262,7 @@ describe('RevenueCat account and purchase lifecycle', () => {
     f.setInfo(info(true));
     expect(await f.client.restore()).toEqual({ kind: 'completed', isPro: true });
   });
+
   it('keeps restore available when fetching offerings fails', async () => {
     const f = fixture();
     f.sdk.getOfferings.mockRejectedValueOnce({ code: '10' });
@@ -237,7 +271,8 @@ describe('RevenueCat account and purchase lifecycle', () => {
     f.setInfo(info(true));
     expect(await f.client.restore()).toEqual({ kind: 'completed', isPro: true });
   });
-  it('shows the native paywall for the exact entitlement and offering', async () => {
+
+  it('shows the native paywall fallback for the exact entitlement and offering', async () => {
     const f = fixture();
     await f.signIn();
     f.setInfo(info(true));
@@ -248,11 +283,13 @@ describe('RevenueCat account and purchase lifecycle', () => {
       displayCloseButton: true,
     });
   });
+
   it('does not equate PURCHASED paywall result with active entitlement', async () => {
     const f = fixture();
     await f.signIn();
     expect(await f.client.presentPaywall()).toEqual({ kind: 'completed', isPro: false });
   });
+
   it('handles cancellation, error, restored and not-presented paywall results', async () => {
     const f = fixture();
     await f.signIn();
@@ -266,6 +303,7 @@ describe('RevenueCat account and purchase lifecycle', () => {
       expect(await f.client.presentPaywall()).toEqual({ kind: 'completed', isPro: true });
     }
   });
+
   it('refreshes customer info after Customer Center closes', async () => {
     const f = fixture();
     await f.signIn();
@@ -273,6 +311,7 @@ describe('RevenueCat account and purchase lifecycle', () => {
     expect(await f.client.presentCustomerCenter()).toEqual({ kind: 'completed', isPro: true });
     expect(f.ui.presentCustomerCenter).toHaveBeenCalledTimes(1);
   });
+
   it('does not grant another account’s entitlement from a delayed listener payload', async () => {
     const f = fixture();
     await f.signIn();
@@ -280,6 +319,7 @@ describe('RevenueCat account and purchase lifecycle', () => {
     await f.client.refresh();
     expect(hasPro(f.client.getSnapshot().customerInfo, entitlementId)).toBe(false);
   });
+
   it('refresh revokes expired entitlements instead of retaining a local Pro boolean', async () => {
     const f = fixture();
     f.setInfo(info(true));
@@ -288,6 +328,7 @@ describe('RevenueCat account and purchase lifecycle', () => {
     await f.client.refresh();
     expect(hasPro(f.client.getSnapshot().customerInfo, entitlementId)).toBe(false);
   });
+
   it('cleans up its single native customer info listener', async () => {
     const f = fixture();
     await f.signIn();
