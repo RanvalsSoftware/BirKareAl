@@ -31,7 +31,7 @@ const offering = {
 const unrelatedOffering = {
   identifier: 'default',
   availablePackages: [],
-} as PurchasesOffering;
+} as unknown as PurchasesOffering;
 
 function deferred<T>() {
   let resolve!: (value: T) => void;

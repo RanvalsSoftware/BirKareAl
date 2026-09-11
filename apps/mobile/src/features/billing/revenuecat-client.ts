@@ -286,7 +286,7 @@ export function createRevenueCatClient(options: ClientOptions) {
             item.product.identifier === pkg.product.identifier,
         );
         if (!offered) fail('Bu paket artık geçerli teklifte yok. Paket listesini yenileyin.');
-        const { customerInfo } = await sdkModule!.default.purchasePackage(offered);
+        const { customerInfo } = await sdkModule!.default.purchasePackage(offered!);
         return completed(customerInfo, version, userId);
       }),
     restore: () =>
@@ -300,7 +300,7 @@ export function createRevenueCatClient(options: ClientOptions) {
         assertAccount(version, userId);
         const result = await ui.default.presentPaywallIfNeeded({
           requiredEntitlementIdentifier: options.entitlementId,
-          offering: snapshot.offering,
+          offering: snapshot.offering!,
           displayCloseButton: true,
         });
         if (result === ui.PAYWALL_RESULT.CANCELLED) return { kind: 'cancelled' };
