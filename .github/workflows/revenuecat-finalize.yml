@@ -1,0 +1,121 @@
+name: RevenueCat final branch verification
+
+on:
+  push:
+    branches: [feat/revenuecat-custom-paywall-complete]
+    paths:
+      - '.github/workflows/revenuecat-finalize.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: revenuecat-finalize-branch
+  cancel-in-progress: false
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feat/revenuecat-custom-paywall-complete
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Apply pending deterministic patch if present
+        run: |
+          if [ -f scripts/apply-revenuecat-completion-v4.mjs ]; then
+            node scripts/apply-revenuecat-completion-v4.mjs
+          fi
+          test -f apps/mobile/src/features/billing/CustomProPaywall.tsx
+          test -f apps/api/src/modules/billing/revenuecat.service.ts
+          test -f apps/api/src/modules/billing/pro-access.ts
+      - name: Install and generate
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.18.0 --activate
+          pnpm install --frozen-lockfile
+          pnpm --filter @birkare/database exec prisma format
+          pnpm --filter @birkare/database exec prisma generate
+      - name: Format RevenueCat sources
+        run: |
+          pnpm exec prettier --write \
+            apps/mobile/config/revenuecat.cjs \
+            apps/mobile/config/revenuecat.d.cts \
+            apps/mobile/config/revenuecat.test.ts \
+            apps/mobile/app/pro.tsx \
+            apps/mobile/app/_layout.tsx \
+            apps/mobile/app/'(tabs)'/credits.tsx \
+            apps/mobile/src/features/billing/CustomProPaywall.tsx \
+            apps/mobile/src/features/billing/SubscriptionCard.tsx \
+            apps/mobile/src/features/billing/paywall-model.ts \
+            apps/mobile/src/features/billing/paywall-model.test.ts \
+            apps/mobile/src/features/billing/revenuecat-client.ts \
+            apps/mobile/src/features/billing/revenuecat-client.test.ts \
+            apps/mobile/src/features/billing/revenuecat.tsx \
+            apps/api/src/modules/billing/billing.routes.ts \
+            apps/api/src/modules/billing/revenuecat.service.ts \
+            apps/api/src/modules/billing/revenuecat.service.test.ts \
+            apps/api/src/modules/billing/pro-access.ts \
+            apps/api/src/modules/generations/generations.routes.ts \
+            packages/config/src/index.ts \
+            packages/database/src/types.ts \
+            packages/database/src/memory.repository.ts \
+            packages/database/src/prisma.repository.ts \
+            docs/REVENUECAT_INTEGRATION.md
+      - name: Validate and create branch report
+        id: checks
+        shell: bash
+        run: |
+          set +e
+          LOG=/tmp/revenuecat-final.log
+          : > "$LOG"
+          check() {
+            printf '\n## %s\n' "$1" | tee -a "$LOG"
+            shift
+            "$@" 2>&1 | tee -a "$LOG"
+            return ${PIPESTATUS[0]}
+          }
+          STATUS=0
+          check 'Mobile typecheck' pnpm --filter @birkare/mobile typecheck || STATUS=1
+          check 'API typecheck' pnpm --filter @birkare/api typecheck || STATUS=1
+          check 'Mobile RevenueCat tests' pnpm --filter @birkare/mobile exec vitest run src/features/billing/revenuecat-client.test.ts src/features/billing/paywall-model.test.ts config/revenuecat.test.ts || STATUS=1
+          check 'API RevenueCat tests' pnpm --filter @birkare/api exec vitest run src/modules/billing/revenuecat.service.test.ts || STATUS=1
+          {
+            echo '# RevenueCat final validation'
+            echo
+            if [ "$STATUS" -eq 0 ]; then
+              echo '**PASS**'
+            else
+              echo '**FAIL — do not merge until corrected.**'
+            fi
+            echo
+            echo 'Validated scope:'
+            echo '- custom React Native paywall'
+            echo '- RevenueCat account lifecycle and exact entitlement/offering mapping'
+            echo '- API REST verification, webhook authentication and credit idempotency'
+            echo '- Prisma client/schema consistency'
+            echo
+            echo '```text'
+            tail -n 700 "$LOG"
+            echo '```'
+          } > docs/REVENUECAT_VALIDATION.md
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Commit latest branch result
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add apps packages docs .env.example .env.production.example pnpm-lock.yaml
+          git commit -m 'test: record final RevenueCat validation' || true
+          git fetch origin feat/revenuecat-custom-paywall-complete
+          git rebase origin/feat/revenuecat-custom-paywall-complete
+          git push origin HEAD:feat/revenuecat-custom-paywall-complete
+      - name: Enforce validation result
+        if: steps.checks.outputs.status != '0'
+        run: exit 1
