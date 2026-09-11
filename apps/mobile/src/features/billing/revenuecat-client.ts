@@ -6,6 +6,7 @@ type UiModule = typeof import('react-native-purchases-ui');
 type ClientOptions = {
   apiKey: string;
   entitlementId: string;
+  offeringId?: string;
   unavailableReason?: string;
   getUserId: () => string | null;
   loadSdk: () => Promise<SdkModule>;
@@ -20,6 +21,7 @@ export type BillingSnapshot = {
   busy: boolean;
   error: string | null;
 };
+
 export type BillingResult =
   | { kind: 'completed'; isPro: boolean }
   | { kind: 'cancelled' }
@@ -60,8 +62,10 @@ export function createRevenueCatClient(options: ClientOptions) {
     snapshot = { ...snapshot, ...patch };
     subscribers.forEach((listener) => listener());
   };
+
   const current = (version: number, userId: string | null) =>
     version === epoch && userId === targetUserId && userId === options.getUserId();
+
   const enqueue = <T>(task: () => Promise<T>): Promise<T> => {
     const next = queue.then(async () => {
       working = true;
@@ -74,6 +78,7 @@ export function createRevenueCatClient(options: ClientOptions) {
     queue = next.catch(() => undefined);
     return next;
   };
+
   const messageFor = (error: unknown): string => {
     const code = String((error as { code?: unknown } | null)?.code ?? '');
     const codes = sdkModule?.PURCHASES_ERROR_CODE;
@@ -84,33 +89,43 @@ export function createRevenueCatClient(options: ClientOptions) {
     if (error instanceof Error && error.name === 'BirKareBillingError') return error.message;
     return 'Satın alma servisine ulaşılamadı. Tekrar deneyin; yeni SDK eklendiyse uygulamayı yeniden derleyin.';
   };
+
   const fail = (message: string): never => {
     const error = new Error(message);
     error.name = 'BirKareBillingError';
     throw error;
   };
+
   const assertAccount = (version: number, userId: string | null) => {
     if (!userId || !current(version, userId) || sdkUserId !== userId)
       fail('Hesap değişti. İşleme devam etmek için hesabınıza tekrar giriş yapın.');
   };
+
   const saveInfo = (info: CustomerInfo, version: number, userId: string) => {
     if (current(version, userId)) publish({ customerInfo: info });
   };
+
   const readOfferings = async (version: number, userId: string) => {
     try {
       const offerings = await sdkModule!.default.getOfferings();
+      const offering = options.offeringId
+        ? (offerings.all[options.offeringId] ?? null)
+        : offerings.current;
       if (current(version, userId)) {
         publish({
-          offering: offerings.current,
-          error: offerings.current
+          offering,
+          error: offering
             ? null
-            : 'RevenueCat’te bu uygulama için geçerli bir offering bulunamadı. Ürünleri bağlayıp current offering seçin.',
+            : options.offeringId
+              ? `RevenueCat’te \`${options.offeringId}\` offering’i bulunamadı. Ürünleri bu offering’e bağlayın.`
+              : 'RevenueCat’te bu uygulama için geçerli bir offering bulunamadı. Ürünleri bağlayıp current offering seçin.',
         });
       }
     } catch (error) {
       if (current(version, userId)) publish({ offering: null, error: messageFor(error) });
     }
   };
+
   const onCustomerInfo = (info: CustomerInfo) => {
     // Do not accept the payload as another account's entitlement. Read the SDK
     // again after the identity queue settles; suppress our own read callbacks.
@@ -271,7 +286,7 @@ export function createRevenueCatClient(options: ClientOptions) {
             item.product.identifier === pkg.product.identifier,
         );
         if (!offered) fail('Bu paket artık geçerli teklifte yok. Paket listesini yenileyin.');
-        const { customerInfo } = await sdkModule!.default.purchasePackage(offered!);
+        const { customerInfo } = await sdkModule!.default.purchasePackage(offered);
         return completed(customerInfo, version, userId);
       }),
     restore: () =>
@@ -285,7 +300,7 @@ export function createRevenueCatClient(options: ClientOptions) {
         assertAccount(version, userId);
         const result = await ui.default.presentPaywallIfNeeded({
           requiredEntitlementIdentifier: options.entitlementId,
-          offering: snapshot.offering!,
+          offering: snapshot.offering,
           displayCloseButton: true,
         });
         if (result === ui.PAYWALL_RESULT.CANCELLED) return { kind: 'cancelled' };
