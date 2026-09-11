@@ -1,0 +1,97 @@
+const fs = require('node:fs');
+
+const patches = [
+  {
+    path: 'apps/mobile/src/features/billing/revenuecat-client.ts',
+    old: 'dHlwZSBDbGllbnRPcHRpb25zID0gewogIGFwaUtleTogc3RyaW5nOwogIGVudGl0bGVtZW50SWQ6IHN0cmluZzsKICB1bmF2YWlsYWJsZVJlYXNvbj86IHN0cmluZzsK',
+    new: 'dHlwZSBDbGllbnRPcHRpb25zID0gewogIGFwaUtleTogc3RyaW5nOwogIGVudGl0bGVtZW50SWQ6IHN0cmluZzsKICBvZmZlcmluZ0lkPzogc3RyaW5nOwogIHVuYXZhaWxhYmxlUmVhc29uPzogc3RyaW5nOwo=',
+  },
+  {
+    path: 'apps/mobile/src/features/billing/revenuecat-client.ts',
+    old: 'ICBjb25zdCByZWFkT2ZmZXJpbmdzID0gYXN5bmMgKHZlcnNpb246IG51bWJlciwgdXNlcklkOiBzdHJpbmcpID0+IHsKICAgIHRyeSB7CiAgICAgIGNvbnN0IG9mZmVyaW5ncyA9IGF3YWl0IHNka01vZHVsZSEuZGVmYXVsdC5nZXRPZmZlcmluZ3MoKTsKICAgICAgaWYgKGN1cnJlbnQodmVyc2lvbiwgdXNlcklkKSkgewogICAgICAgIHB1Ymxpc2goewogICAgICAgICAgb2ZmZXJpbmc6IG9mZmVyaW5ncy5jdXJyZW50LAogICAgICAgICAgZXJyb3I6IG9mZmVyaW5ncy5jdXJyZW50CiAgICAgICAgICAgID8gbnVsbAogICAgICAgICAgICA6ICdSZXZlbnVlQ2F04oCZdGUgYnUgdXlndWxhbWEgacOnaW4gZ2XDp2VybGkgYmlyIG9mZmVyaW5nIGJ1bHVuYW1hZMSxLiDDnHLDvG5sZXJpIGJhxJ9sYXnEsXAgY3VycmVudCBvZmZlcmluZyBzZcOnaW4uJywKICAgICAgICB9KTsKICAgICAgfQogICAgfSBjYXRjaCAoZXJyb3IpIHsKICAgICAgaWYgKGN1cnJlbnQodmVyc2lvbiwgdXNlcklkKSkgcHVibGlzaCh7IG9mZmVyaW5nOiBudWxsLCBlcnJvcjogbWVzc2FnZUZvcihlcnJvcikgfSk7CiAgICB9CiAgfTsK',
+    new: 'ICBjb25zdCByZWFkT2ZmZXJpbmdzID0gYXN5bmMgKHZlcnNpb246IG51bWJlciwgdXNlcklkOiBzdHJpbmcpID0+IHsKICAgIHRyeSB7CiAgICAgIGNvbnN0IG9mZmVyaW5ncyA9IGF3YWl0IHNka01vZHVsZSEuZGVmYXVsdC5nZXRPZmZlcmluZ3MoKTsKICAgICAgY29uc3Qgb2ZmZXJpbmcgPSBvcHRpb25zLm9mZmVyaW5nSWQKICAgICAgICA/IChvZmZlcmluZ3MuYWxsW29wdGlvbnMub2ZmZXJpbmdJZF0gPz8gbnVsbCkKICAgICAgICA6IG9mZmVyaW5ncy5jdXJyZW50OwogICAgICBpZiAoY3VycmVudCh2ZXJzaW9uLCB1c2VySWQpKSB7CiAgICAgICAgcHVibGlzaCh7CiAgICAgICAgICBvZmZlcmluZywKICAgICAgICAgIGVycm9yOiBvZmZlcmluZwogICAgICAgICAgICA/IG51bGwKICAgICAgICAgICAgOiBvcHRpb25zLm9mZmVyaW5nSWQKICAgICAgICAgICAgICA/IGBSZXZlbnVlQ2F04oCZdGUgXGAke29wdGlvbnMub2ZmZXJpbmdJZH1cYCBvZmZlcmluZyBidWx1bmFtYWTEsS4gw5xyw7xubGVyaSBidSBvZmZlcmluZ+KAmWUgYmHEn2xhecSxbi5gCiAgICAgICAgICAgICAgOiAnUmV2ZW51ZUNhdOKAmXRlIGJ1IHV5Z3VsYW1hIGnDp2luIGdlw6dlcmxpIGJpciBvZmZlcmluZyBidWx1bmFtYWTEsS4nLAogICAgICAgIH0pOwogICAgICB9CiAgICB9IGNhdGNoIChlcnJvcikgewogICAgICBpZiAoY3VycmVudCh2ZXJzaW9uLCB1c2VySWQpKSBwdWJsaXNoKHsgb2ZmZXJpbmc6IG51bGwsIGVycm9yOiBtZXNzYWdlRm9yKGVycm9yKSB9KTsKICAgIH0KICB9Owo=',
+  },
+  {
+    path: 'apps/mobile/src/features/billing/revenuecat.tsx',
+    old: 'Y29uc3QgY29uZmlnID0gQ29uc3RhbnRzLmV4cG9Db25maWc/LmV4dHJhPy5yZXZlbnVlQ2F0IGFzIFJldmVudWVDYXRQdWJsaWNDb25maWcgfCB1bmRlZmluZWQ7CmNvbnN0IGVudGl0bGVtZW50SWQgPSAnY3JlYXRlX2FuX2FwcF9jYWxsZWRfYmlya2FyZV9wcm8nOwpjb25zdCBhcGlLZXkgPSAoUGxhdGZvcm0uT1MgPT09ICdpb3MnID8gY29uZmlnPy5pb3NBcGlLZXkgOiBjb25maWc/LmFuZHJvaWRBcGlLZXkpIHx8ICcnOwo=',
+    new: 'Y29uc3QgY29uZmlnID0gQ29uc3RhbnRzLmV4cG9Db25maWc/LmV4dHJhPy5yZXZlbnVlQ2F0IGFzIFJldmVudWVDYXRQdWJsaWNDb25maWcgfCB1bmRlZmluZWQ7CmNvbnN0IGVudGl0bGVtZW50SWQgPSAnY3JlYXRlX2FuX2FwcF9jYWxsZWRfYmlya2FyZV9wcm8nOwpjb25zdCBvZmZlcmluZ0lkID0gY29uZmlnPy5vZmZlcmluZ0lkIHx8ICdiaXJrYXJlX3Bybyc7CmNvbnN0IGFwcEVudiA9IGNvbmZpZz8uYXBwRW52IHx8ICdkZXZlbG9wbWVudCc7CmNvbnN0IGFwaUtleSA9IChQbGF0Zm9ybS5PUyA9PT0gJ2lvcycgPyBjb25maWc/Lmlvc0FwaUtleSA6IGNvbmZpZz8uYW5kcm9pZEFwaUtleSkgfHwgJyc7Cg==',
+  },
+  {
+    path: 'apps/mobile/src/features/billing/revenuecat.tsx',
+    old: 'ZXhwb3J0IGNvbnN0IHJldmVudWVDYXQgPSBjcmVhdGVSZXZlbnVlQ2F0Q2xpZW50KHsKICBhcGlLZXksCiAgZW50aXRsZW1lbnRJZCwKICB1bmF2YWlsYWJsZVJlYXNvbjogdW5hdmFpbGFibGVSZWFzb24oKSwK',
+    new: 'ZXhwb3J0IGNvbnN0IHJldmVudWVDYXQgPSBjcmVhdGVSZXZlbnVlQ2F0Q2xpZW50KHsKICBhcGlLZXksCiAgZW50aXRsZW1lbnRJZCwKICBvZmZlcmluZ0lkLAogIHVuYXZhaWxhYmxlUmVhc29uOiB1bmF2YWlsYWJsZVJlYXNvbigpLAo=',
+  },
+  {
+    path: 'apps/mobile/src/features/billing/revenuecat.tsx',
+    old: 'ICAgICAgYXdhaXQgbW9kdWxlLmRlZmF1bHQuc2V0TG9nTGV2ZWwoCiAgICAgICAgY29uZmlnPy5hcHBFbnYgPT09ICdkZXZlbG9wbWVudCcgPyBtb2R1bGUuTE9HX0xFVkVMLkRFQlVHIDogbW9kdWxlLkxPR19MRVZFTC5XQVJOLAogICAgICApOwo=',
+    new: 'ICAgICAgYXdhaXQgbW9kdWxlLmRlZmF1bHQuc2V0TG9nTGV2ZWwoCiAgICAgICAgYXBwRW52ID09PSAnZGV2ZWxvcG1lbnQnID8gbW9kdWxlLkxPR19MRVZFTC5ERUJVRyA6IG1vZHVsZS5MT0dfTEVWRUwuV0FSTiwKICAgICAgKTsK',
+  },
+  {
+    path: 'apps/mobile/src/features/billing/revenuecat.tsx',
+    old: 'ICAgIGVudGl0bGVtZW50SWQsCiAgICBpc1Rlc3RTb3JlLAogICAgcmVhZHk6IGJlbG9uZ3NUb1VzZXIgJiYgc3RhdGUuc3RhdHVzID09PSAncmVhZHknLAo=',
+    new: 'ICAgIGVudGl0bGVtZW50SWQsCiAgICBvZmZlcmluZ0lkLAogICAgYXBwRW52LAogICAgaXNUZXN0U3RvcmUsCiAgICByZWFkeTogYmVsb25nc1RvVXNlciAmJiBzdGF0ZS5zdGF0dXMgPT09ICdyZWFkeScsCg==',
+  },
+  {
+    path: 'apps/mobile/src/features/billing/revenuecat-client.test.ts',
+    old: 'Y29uc3Qgb2ZmZXJpbmcgPSB7CiAgaWRlbnRpZmllcjogJ2RlZmF1bHQnLAogIGF2YWlsYWJsZVBhY2thZ2VzOiBbcGtnXSwKICBtb250aGx5OiBwa2csCn0gYXMgUHVyY2hhc2VzT2ZmZXJpbmc7Cg==',
+    new: 'Y29uc3Qgb2ZmZXJpbmcgPSB7CiAgaWRlbnRpZmllcjogJ2JpcmthcmVfcHJvJywKICBhdmFpbGFibGVQYWNrYWdlczogW3BrZ10sCiAgbW9udGhseTogcGtnLAp9IGFzIFB1cmNoYXNlc09mZmVyaW5nOwpjb25zdCB1bnJlbGF0ZWRPZmZlcmluZyA9IHsKICBpZGVudGlmaWVyOiAnZGVmYXVsdCcsCiAgYXZhaWxhYmxlUGFja2FnZXM6IFtdLAp9IGFzIFB1cmNoYXNlc09mZmVyaW5nOwo=',
+  },
+  {
+    path: 'apps/mobile/src/features/billing/revenuecat-client.test.ts',
+    old: 'ICAgIGdldE9mZmVyaW5nczogdmkuZm4oYXN5bmMgKCkgPT4gKHsgY3VycmVudDogb2ZmZXJpbmcsIGFsbDogeyBkZWZhdWx0OiBvZmZlcmluZyB9IH0pKSwK',
+    new: 'ICAgIGdldE9mZmVyaW5nczogdmkuZm4oYXN5bmMgKCkgPT4gKHsKICAgICAgY3VycmVudDogdW5yZWxhdGVkT2ZmZXJpbmcsCiAgICAgIGFsbDogeyBiaXJrYXJlX3Bybzogb2ZmZXJpbmcsIGRlZmF1bHQ6IHVucmVsYXRlZE9mZmVyaW5nIH0sCiAgICB9KSksCg==',
+  },
+  {
+    path: 'apps/mobile/src/features/billing/revenuecat-client.test.ts',
+    old: 'ICBjb25zdCBjbGllbnQgPSBjcmVhdGVSZXZlbnVlQ2F0Q2xpZW50KHsKICAgIGFwaUtleTogJ3Rlc3RfZml4dHVyZScsCiAgICBlbnRpdGxlbWVudElkLAogICAgdW5hdmFpbGFibGVSZWFzb24sCg==',
+    new: 'ICBjb25zdCBjbGllbnQgPSBjcmVhdGVSZXZlbnVlQ2F0Q2xpZW50KHsKICAgIGFwaUtleTogJ3Rlc3RfZml4dHVyZScsCiAgICBlbnRpdGxlbWVudElkLAogICAgb2ZmZXJpbmdJZDogJ2JpcmthcmVfcHJvJywKICAgIHVuYXZhaWxhYmxlUmVhc29uLAo=',
+  },
+  {
+    path: 'apps/mobile/src/features/billing/revenuecat-client.test.ts',
+    old: 'ICBpdCgnZG9lcyBub3QgbG9hZCBTREtzIG9uIHVuc3VwcG9ydGVkIHBsYXRmb3JtcyBvciBFeHBvIEdvJywgYXN5bmMgKCkgPT4gewo=',
+    new: 'ICBpdCgnc2VsZWN0cyB0aGUgY29uZmlndXJlZCBvZmZlcmluZyBpbnN0ZWFkIG9mIGFuIHVucmVsYXRlZCBjdXJyZW50IG9mZmVyaW5nJywgYXN5bmMgKCkgPT4gewogICAgY29uc3QgZiA9IGZpeHR1cmUoKTsKICAgIGF3YWl0IGYuc2lnbkluKCk7CiAgICBleHBlY3QoZi5jbGllbnQuZ2V0U25hcHNob3QoKS5vZmZlcmluZykudG9CZShvZmZlcmluZyk7CiAgfSk7CgogIGl0KCdkb2VzIG5vdCBsb2FkIFNES3Mgb24gdW5zdXBwb3J0ZWQgcGxhdGZvcm1zIG9yIEV4cG8gR28nLCBhc3luYyAoKSA9PiB7Cg==',
+  },
+  {
+    path: 'apps/mobile/app/_layout.tsx',
+    old: 'ICAgICAgICAgIDxTdGFjay5TY3JlZW4gbmFtZT0iKHRhYnMpIiAvPgogICAgICAgICAgPFN0YWNrLlNjcmVlbgogICAgICAgICAgICBuYW1lPSJjcmVhdGUiCg==',
+    new: 'ICAgICAgICAgIDxTdGFjay5TY3JlZW4gbmFtZT0iKHRhYnMpIiAvPgogICAgICAgICAgPFN0YWNrLlNjcmVlbgogICAgICAgICAgICBuYW1lPSJwcm8iCiAgICAgICAgICAgIG9wdGlvbnM9e3sKICAgICAgICAgICAgICBwcmVzZW50YXRpb246ICdmdWxsU2NyZWVuTW9kYWwnLAogICAgICAgICAgICAgIGFuaW1hdGlvbjogcmVkdWNlZE1vdGlvbiA/ICdub25lJyA6ICdmYWRlJywKICAgICAgICAgICAgfX0KICAgICAgICAgIC8+CiAgICAgICAgICA8U3RhY2suU2NyZWVuCiAgICAgICAgICAgIG5hbWU9ImNyZWF0ZSIK',
+  },
+  {
+    path: 'apps/mobile/app/(tabs)/credits.tsx',
+    old: 'ICBjb25zdCBhcHByb3hpbWF0ZVN0YW5kYXJkR2VuZXJhdGlvbnMgPSBNYXRoLmZsb29yKGF2YWlsYWJsZUNyZWRpdHMgLyAzKTsK',
+    new: 'ICBjb25zdCBhcHByb3hpbWF0ZVN0YW5kYXJkR2VuZXJhdGlvbnMgPSBNYXRoLmZsb29yKGF2YWlsYWJsZUNyZWRpdHMgLyA0KTsK',
+  },
+  {
+    path: '.env.example',
+    old: 'RVhQT19QVUJMSUNfR09PR0xFX1dFQl9DTElFTlRfSUQ9CkVYUE9fUFVCTElDX0dPT0dMRV9JT1NfQ0xJRU5UX0lEPQo=',
+    new: 'RVhQT19QVUJMSUNfR09PR0xFX1dFQl9DTElFTlRfSUQ9CkVYUE9fUFVCTElDX0dPT0dMRV9JT1NfQ0xJRU5UX0lEPQoKIyBSZXZlbnVlQ2F0IHB1YmxpYyBTREsgdmFsdWVzLiBEZXZlbG9wbWVudCB1c2VzIHRoZSBidWlsdC1pbiBUZXN0IFN0b3JlIGtleQojIHdoZW4gdGhlc2UgYXJlIGJsYW5rLiBOZXZlciBwdXQgc2tfIHNlY3JldHMsIHdlYmhvb2sgdG9rZW5zIG9yIEFwcGxlIC5wOCBoZXJlLgpFWFBPX1BVQkxJQ19SRVZFTlVFQ0FUX09GRkVSSU5HX0lEPWJpcmthcmVfcHJvCkVYUE9fUFVCTElDX1JFVkVOVUVDQVRfSU9TX0FQSV9LRVk9CkVYUE9fUFVCTElDX1JFVkVOVUVDQVRfQU5EUk9JRF9BUElfS0VZPQo=',
+  },
+  {
+    path: '.github/workflows/revenuecat-validation.yml',
+    old: 'ICAgICAgLSBuYW1lOiBSdW4gUmV2ZW51ZUNhdCBsaWZlY3ljbGUgYW5kIHJlbGVhc2UgZ3VhcmQgdGVzdHMKICAgICAgICBydW46IHBucG0gLS1maWx0ZXIgQGJpcmthcmUvbW9iaWxlIGV4ZWMgdml0ZXN0IHJ1biBzcmMvZmVhdHVyZXMvYmlsbGluZy9yZXZlbnVlY2F0LWNsaWVudC50ZXN0LnRzIGNvbmZpZy9yZXZlbnVlY2F0LnRlc3QudHMK',
+    new: 'ICAgICAgLSBuYW1lOiBSdW4gUmV2ZW51ZUNhdCBsaWZlY3ljbGUsIHBheXdhbGwgbW9kZWwgYW5kIHJlbGVhc2UgZ3VhcmQgdGVzdHMKICAgICAgICBydW46ID4tCiAgICAgICAgICBwbnBtIC0tZmlsdGVyIEBiaXJrYXJlL21vYmlsZSBleGVjIHZpdGVzdCBydW4KICAgICAgICAgIHNyYy9mZWF0dXJlcy9iaWxsaW5nL3JldmVudWVjYXQtY2xpZW50LnRlc3QudHMKICAgICAgICAgIHNyYy9mZWF0dXJlcy9iaWxsaW5nL3BheXdhbGwtbW9kZWwudGVzdC50cwogICAgICAgICAgY29uZmlnL3JldmVudWVjYXQudGVzdC50cwo=',
+  },
+  {
+    path: '.github/workflows/revenuecat-validation.yml',
+    old: 'ICAgIGJyYW5jaGVzOiBbZmVhdC9yZXZlbnVlY2F0LXN1YnNjcmlwdGlvbnNdCg==',
+    new: 'ICAgIGJyYW5jaGVzOiBbZmVhdC9yZXZlbnVlY2F0LXN1YnNjcmlwdGlvbnMsIGZlYXQvcmV2ZW51ZWNhdC1jdXN0b20tcGF5d2FsbC1jb21wbGV0ZV0K',
+  },
+];
+
+for (const patch of patches) {
+  const oldText = Buffer.from(patch.old, 'base64').toString('utf8');
+  const newText = Buffer.from(patch.new, 'base64').toString('utf8');
+  const current = fs.readFileSync(patch.path, 'utf8');
+  if (current.includes(newText)) continue;
+  const count = current.split(oldText).length - 1;
+  if (count !== 1) throw new Error(`Expected one match in ${patch.path}, found ${count}`);
+  fs.writeFileSync(patch.path, current.replace(oldText, newText), 'utf8');
+}
+
+for (const file of [
+  'scripts/apply-custom-paywall-patches.cjs',
+  '.github/workflows/apply-custom-paywall-patches.yml',
+]) {
+  if (fs.existsSync(file)) fs.rmSync(file);
+}
+console.log('Applied custom paywall integration patches.');
