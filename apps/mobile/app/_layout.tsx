@@ -49,10 +49,12 @@ export default function RootLayout() {
   const splashHidden = useRef(false);
   const reducedMotion = useReducedMotion();
   const userId = useAuthStore((state) => state.user?.id);
+
   useEffect(() => {
     Appearance.setColorScheme('dark');
     void useAppearanceStore.getState().hydrate();
   }, []);
+
   useEffect(() => {
     if (!userId) return;
     let active = true;
@@ -69,7 +71,6 @@ export default function RootLayout() {
 
   const hideNativeSplash = useCallback(() => {
     if (splashHidden.current) return;
-
     splashHidden.current = true;
     requestAnimationFrame(() => SplashScreen.hide());
   }, []);
@@ -89,6 +90,13 @@ export default function RootLayout() {
           <Stack.Screen name="(onboarding)" />
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
+          <Stack.Screen
+            name="pro"
+            options={{
+              presentation: 'fullScreenModal',
+              animation: reducedMotion ? 'none' : 'fade',
+            }}
+          />
           <Stack.Screen
             name="create"
             options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
