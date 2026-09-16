@@ -13,18 +13,43 @@ vi.mock('@/api/client', () => ({ apiRequest: mocks.request }));
 vi.mock('@/features/settings/language-store', () => ({
   useCopy: () => (turkish: string) => turkish,
 }));
+vi.mock('@/hooks/useReducedMotion', () => ({ useReducedMotion: () => false }));
 vi.mock('expo-router', () => ({
   useLocalSearchParams: () => mocks.params,
   router: { canGoBack: () => false, push: mocks.push, replace: mocks.replace },
 }));
 vi.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
-vi.mock('react-native', () => ({
-  View: 'View',
-  Text: 'Text',
-  TextInput: 'TextInput',
-  Pressable: 'Pressable',
-  StyleSheet: { create: (value: unknown) => value },
-}));
+vi.mock('react-native', () => {
+  class AnimatedValue {
+    value: number;
+    constructor(value: number) {
+      this.value = value;
+    }
+    setValue(value: number) {
+      this.value = value;
+    }
+  }
+  const animation = { start: (done?: () => void) => done?.() };
+  return {
+    View: 'View',
+    Text: 'Text',
+    TextInput: 'TextInput',
+    Pressable: 'Pressable',
+    StyleSheet: { create: (value: unknown) => value },
+    Animated: {
+      Value: AnimatedValue,
+      View: 'AnimatedView',
+      timing: () => animation,
+      spring: () => animation,
+      sequence: () => animation,
+      parallel: () => animation,
+    },
+    Easing: {
+      cubic: 'cubic',
+      out: (value: unknown) => value,
+    },
+  };
+});
 vi.mock('./auth-ui', () => ({
   AuthBrandBar: 'AuthBrandBar',
   AuthFormCard: 'AuthFormCard',
@@ -42,6 +67,7 @@ import VerifyEmailScreen from '../../../app/(auth)/verify-email';
 let screen: ReactTestRenderer | undefined;
 beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  vi.useFakeTimers();
   vi.clearAllMocks();
   mocks.params = { email: 'member@example.test' };
   mocks.request.mockResolvedValue({ accepted: true, delivery: 'unconfirmed' });
@@ -49,6 +75,7 @@ beforeEach(() => {
 afterEach(async () => {
   if (screen) await act(async () => screen!.unmount());
   screen = undefined;
+  vi.useRealTimers();
 });
 async function mount() {
   await act(async () => {
@@ -88,7 +115,7 @@ describe('transactional email handoff', () => {
     expect(mocks.request).not.toHaveBeenCalled();
   });
 
-  it('submits the typed verification token once even for a double tap', async () => {
+  it('submits once, shows the success state, then hands off to login after the animation', async () => {
     let finish!: () => void;
     mocks.request.mockImplementation(
       () =>
@@ -113,6 +140,11 @@ describe('transactional email handoff', () => {
       { authenticated: false },
     );
     await act(async () => finish());
+    expect(JSON.stringify(screen!.toJSON())).toContain('E-posta doğrulandı');
+    expect(mocks.replace).not.toHaveBeenCalled();
+    await act(async () => {
+      vi.advanceTimersByTime(1600);
+    });
     expect(mocks.replace).toHaveBeenCalledWith('/(auth)/login');
   });
 
