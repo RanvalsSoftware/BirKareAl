@@ -49,7 +49,11 @@ export function CustomProPaywall() {
     if (!billing.ready || billing.busy) return;
     if (billing.isPro) {
       const result = await billing.presentCustomerCenter();
-      if (result.kind === 'error' || result.kind === 'pending') notify(result);
+      if (result.kind === 'error' || result.kind === 'pending') {
+        notify(result);
+        return;
+      }
+      await billing.refreshFresh();
       return;
     }
     const plan = selectedPlan;
@@ -149,7 +153,7 @@ export function CustomProPaywall() {
               {billing.error ? (
                 <Pressable
                   onPress={() => {
-                    void billing.refresh();
+                    void billing.refreshFresh();
                   }}
                   disabled={billing.busy}
                   style={s.link}
