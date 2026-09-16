@@ -69,6 +69,18 @@ export const revenueCat = createRevenueCatClient({
   },
 });
 
+async function refreshFreshCustomerInfo(): Promise<void> {
+  if (sdkPromise) {
+    try {
+      const sdk = await sdkPromise;
+      sdk.default.invalidateCustomerInfoCache();
+    } catch {
+      // Normal refresh below still gives the SDK a chance to recover.
+    }
+  }
+  await revenueCat.refresh();
+}
+
 /** Mount once below QueryClientProvider. No anonymous customer may buy. */
 export function RevenueCatBootstrap() {
   const queryClient = useQueryClient();
@@ -152,6 +164,7 @@ export function useRevenueCat() {
     testEnvironmentLabel,
     ready: belongsToUser && state.status === 'ready',
     refresh: revenueCat.refresh,
+    refreshFresh: refreshFreshCustomerInfo,
     purchase: revenueCat.purchase,
     purchaseCredit: revenueCat.purchaseCredit,
     restore: revenueCat.restore,
