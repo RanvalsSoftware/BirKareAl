@@ -1,12 +1,8 @@
-import type {
-  CustomerInfo,
-  PurchasesOffering,
-  PurchasesPackage,
-  StoreProduct,
-} from 'react-native-purchases';
+import type { CustomerInfo, PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
 
 type SdkModule = typeof import('react-native-purchases');
 type UiModule = typeof import('react-native-purchases-ui');
+type PurchasesStoreProduct = Awaited<ReturnType<SdkModule['default']['getProducts']>>[number];
 
 type ClientOptions = {
   apiKey: string;
@@ -24,13 +20,13 @@ export type BillingSnapshot = {
   userId: string | null;
   customerInfo: CustomerInfo | null;
   offering: PurchasesOffering | null;
-  creditProducts: StoreProduct[];
+  creditProducts: PurchasesStoreProduct[];
   busy: boolean;
   error: string | null;
 };
 
 export type BillingResult =
-  | { kind: 'completed'; isPro: boolean; productId?: string }
+  | { kind: 'completed'; isPro: boolean }
   | { kind: 'cancelled' }
   | { kind: 'pending'; message: string }
   | { kind: 'error'; message: string };
@@ -42,7 +38,7 @@ export function hasPro(info: CustomerInfo | null, entitlementId: string): boolea
 /**
  * One client per app process. Auth changes and all SDK operations are serialized.
  * Epoch checks discard purchases/refreshes belonging to a previous app account.
- * CustomerInfo and StoreProduct values control UI only: this module NEVER modifies the credit wallet.
+ * CustomerInfo and store product values control UI only: this module NEVER modifies the credit wallet.
  */
 export function createRevenueCatClient(options: ClientOptions) {
   let snapshot: BillingSnapshot = {
@@ -297,18 +293,9 @@ export function createRevenueCatClient(options: ClientOptions) {
     }
   }
 
-  const completed = (
-    info: CustomerInfo,
-    version: number,
-    userId: string,
-    productId?: string,
-  ): BillingResult => {
+  const completed = (info: CustomerInfo, version: number, userId: string): BillingResult => {
     saveInfo(info, version, userId);
-    return {
-      kind: 'completed',
-      isPro: hasPro(info, options.entitlementId),
-      ...(productId ? { productId } : {}),
-    };
+    return { kind: 'completed', isPro: hasPro(info, options.entitlementId) };
   };
 
   return {
@@ -330,16 +317,16 @@ export function createRevenueCatClient(options: ClientOptions) {
         );
         if (!offered) fail('Bu paket artık geçerli teklifte yok. Paket listesini yenileyin.');
         const { customerInfo } = await sdkModule!.default.purchasePackage(offered!);
-        return completed(customerInfo, version, userId, offered!.product.identifier);
+        return completed(customerInfo, version, userId);
       }),
-    purchaseCredit: (product: StoreProduct) =>
+    purchaseCredit: (product: PurchasesStoreProduct) =>
       action(async (version, userId) => {
         const allowed = new Set(options.creditProductIds ?? []);
         const offered = snapshot.creditProducts.find((item) => item.identifier === product.identifier);
         if (!allowed.has(product.identifier) || !offered)
           fail('Bu kredi paketi artık mağazada kullanılamıyor. Paket listesini yenileyin.');
         const { customerInfo } = await sdkModule!.default.purchaseStoreProduct(offered);
-        return completed(customerInfo, version, userId, offered.identifier);
+        return completed(customerInfo, version, userId);
       }),
     restore: () =>
       action(async (version, userId) =>

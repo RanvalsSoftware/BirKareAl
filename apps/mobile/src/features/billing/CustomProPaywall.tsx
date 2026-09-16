@@ -1,18 +1,12 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { BIRKARE_PRO_PRODUCTS, expectedTryPriceMatches } from '@birkare/shared';
+import { MOBILE_PRO_PRICE_POLICY, expectedTryPriceMatches } from './billing-policy';
 import { ProPaywallView } from './ProPaywallView';
 import { toDisplayPlans } from './paywall-display';
 import { useRevenueCat } from './revenuecat';
 import type { BillingResult } from './revenuecat-client';
 import { planById, plansFromOffering, preferredPlanId, type ProPlanId } from './paywall-model';
-
-const expectedTryPrice = {
-  monthly: BIRKARE_PRO_PRODUCTS.monthly.expectedTryPrice,
-  annual: BIRKARE_PRO_PRODUCTS.annual.expectedTryPrice,
-  lifetime: BIRKARE_PRO_PRODUCTS.lifetime.expectedTryPrice,
-} as const;
 
 /** Real purchase controller. Never falls back to screenshot/demo packages. */
 export function CustomProPaywall() {
@@ -77,12 +71,12 @@ export function CustomProPaywall() {
             !expectedTryPriceMatches(
               plan.package.product.price,
               plan.package.product.currencyCode,
-              expectedTryPrice[plan.id],
+              MOBILE_PRO_PRICE_POLICY[plan.id],
             ),
         )
       : undefined;
   const priceWarning = priceMismatch
-    ? `${priceMismatch.label} App Store fiyatı politika ile eşleşmiyor. Beklenen TRY fiyatı ₺${expectedTryPrice[
+    ? `${priceMismatch.label} App Store fiyatı politika ile eşleşmiyor. Beklenen TRY fiyatı ₺${MOBILE_PRO_PRICE_POLICY[
         priceMismatch.id
       ].toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`
     : null;

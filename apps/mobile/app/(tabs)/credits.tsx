@@ -4,13 +4,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQueryClient } from '@tanstack/react-query';
-import { BIRKARE_CREDIT_PRODUCTS, expectedTryPriceMatches } from '@birkare/shared';
 
 import { apiRequest } from '@/api/client';
 import { AppHeader, CreditBadge, GlassSurface, Icon } from '@/components';
 import { accountQueryKey } from '@/features/auth/account-query-cache';
 import { useAuthStore } from '@/features/auth/auth-store';
 import { SubscriptionCard } from '@/features/billing/SubscriptionCard';
+import { MOBILE_CREDIT_PRODUCTS, expectedTryPriceMatches } from '@/features/billing/billing-policy';
 import { useRevenueCat } from '@/features/billing/revenuecat';
 import {
   CREDIT_WALLET_QUERY_KEY,
@@ -164,7 +164,7 @@ export default function CreditsScreen() {
           ) : null}
 
           <View style={styles.packList}>
-            {BIRKARE_CREDIT_PRODUCTS.map((pack) => {
+            {MOBILE_CREDIT_PRODUCTS.map((pack) => {
               const presentation = packPresentation[pack.id];
               const product = productsById.get(pack.productId);
               const price = product?.priceString ?? (billing.ready ? 'Mağazada yok' : 'Yükleniyor…');
@@ -233,7 +233,7 @@ export default function CreditsScreen() {
             })}
           </View>
 
-          {billing.ready && billing.creditProducts.length !== BIRKARE_CREDIT_PRODUCTS.length ? (
+          {billing.ready && billing.creditProducts.length !== MOBILE_CREDIT_PRODUCTS.length ? (
             <Text accessibilityRole="alert" style={styles.catalogWarning}>
               Kredi ürünlerinin tamamı mağazadan gelmedi. RevenueCat / App Store Connect içinde
               com.birkareai.credits.20, .60 ve .150 ürünlerini kontrol edin.
