@@ -1,44 +1,48 @@
 import { Router } from 'express';
+import {
+  BIRKARE_CREDIT_PRODUCTS,
+  BIRKARE_PRO_PRODUCTS,
+  BIRKARE_REVENUECAT_ENTITLEMENT_ID,
+  BIRKARE_REVENUECAT_OFFERING_ID,
+} from '@birkare/shared';
 import { requireAuth } from '../../middleware/auth.middleware.js';
 import { billingSyncRateLimit } from '../../middleware/rate-limit.middleware.js';
 import type { ApiDependencies } from '../../services/dependencies.js';
 import { asyncHandler, sendSuccess } from '../../services/http.js';
 
-const entitlementId = 'create_an_app_called_birkare_pro';
-const offeringId = 'birkare_pro';
 const revenueCatProducts = [
   {
-    id: 'pro.monthly',
-    packageIdentifier: '$rc_monthly',
+    ...BIRKARE_PRO_PRODUCTS.monthly,
     kind: 'subscription',
     creditPolicy: { cadence: 'monthly', amount: 80 },
     testStoreProductId: 'monthly',
-    platformProductIds: { ios: 'com.birkareai.pro.monthly' },
+    platformProductIds: { ios: BIRKARE_PRO_PRODUCTS.monthly.productId },
   },
   {
-    id: 'pro.annual',
-    packageIdentifier: '$rc_annual',
+    ...BIRKARE_PRO_PRODUCTS.annual,
     kind: 'subscription',
     creditPolicy: { cadence: 'monthly', amount: 80 },
     testStoreProductId: 'yearly',
-    platformProductIds: { ios: 'com.birkareai.pro.yearly' },
+    platformProductIds: { ios: BIRKARE_PRO_PRODUCTS.annual.productId },
   },
   {
-    id: 'pro.lifetime',
-    packageIdentifier: '$rc_lifetime',
+    ...BIRKARE_PRO_PRODUCTS.lifetime,
     kind: 'non_consumable',
     creditPolicy: { cadence: 'once', amount: 200 },
     testStoreProductId: 'lifetime',
-    platformProductIds: { ios: 'com.birkareai.pro.lifetime' },
+    platformProductIds: { ios: BIRKARE_PRO_PRODUCTS.lifetime.productId },
   },
+  ...BIRKARE_CREDIT_PRODUCTS.map((product) => ({
+    id: product.id,
+    kind: 'consumable' as const,
+    creditPolicy: { cadence: 'once' as const, amount: product.credits },
+    platformProductIds: { ios: product.productId },
+  })),
 ] as const;
 
 export function createBillingRouter(deps: ApiDependencies): Router {
   const router = Router();
 
-  // RevenueCat calls this endpoint directly, so it must remain outside mobile
-  // JWT authentication. The service performs timing-safe token verification
-  // before touching a user or granting credits.
   router.post(
     '/revenuecat/webhook',
     asyncHandler(async (req, res) => {
@@ -95,13 +99,9 @@ export function createBillingRouter(deps: ApiDependencies): Router {
   router.get(
     '/products',
     asyncHandler(async (req, res) => {
-      // This endpoint documents server policy identifiers only. Localized price,
-      // currency, eligibility and the purchasable StoreProduct are read by the
-      // RevenueCat mobile SDK from the named offering; the API never invents a
-      // storefront price or accepts a client claim as proof of purchase.
       sendSuccess(res, req.requestId, {
-        entitlementId,
-        offeringId,
+        entitlementId: BIRKARE_REVENUECAT_ENTITLEMENT_ID,
+        offeringId: BIRKARE_REVENUECAT_OFFERING_ID,
         pricingSource: 'revenuecat_mobile_sdk',
         items: revenueCatProducts,
       });

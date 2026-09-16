@@ -2,6 +2,7 @@ import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { useEffect, useSyncExternalStore } from 'react';
 import { AppState, Platform } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
+import { BIRKARE_CREDIT_PRODUCTS } from '@birkare/shared';
 import { apiRequest } from '@/api/client';
 import { useAuthStore } from '@/features/auth/auth-store';
 import { accountQueryKey } from '@/features/auth/account-query-cache';
@@ -15,6 +16,7 @@ const offeringId = config?.offeringId || 'birkare_pro';
 const appEnv = config?.appEnv || 'development';
 const apiKey = (Platform.OS === 'ios' ? config?.iosApiKey : config?.androidApiKey) || '';
 const isTestStore = apiKey.startsWith('test_');
+const creditProductIds = BIRKARE_CREDIT_PRODUCTS.map((item) => item.productId);
 const getUserId = () => {
   const auth = useAuthStore.getState();
   return auth.state === 'authenticated' ? (auth.user?.id ?? null) : null;
@@ -39,10 +41,9 @@ export const revenueCat = createRevenueCatClient({
   apiKey,
   entitlementId,
   offeringId,
+  creditProductIds,
   unavailableReason: unavailableReason(),
   getUserId,
-  // Loading lazily keeps web/Expo Go and builds without the native module from
-  // crashing at launch. Errors are shown in the billing card, not swallowed.
   loadSdk: async () => {
     sdkPromise ??= import('react-native-purchases').then(async (module) => {
       await module.default.setLogLevel(
@@ -85,10 +86,6 @@ export function RevenueCatBootstrap() {
       if (state.customerInfo === lastInfo) return;
       lastInfo = state.customerInfo;
       if (state.customerInfo && state.userId === getUserId()) {
-        // RevenueCat CustomerInfo controls the paywall UI only. Ask the API to
-        // verify the same App User ID with RevenueCat's server API, grant any
-        // due period credits idempotently, and then reload the authoritative
-        // wallet. A client payload can never mint credits by itself.
         void apiRequest('/v1/billing/revenuecat/sync', { method: 'POST' })
           .catch(() => undefined)
           .finally(() =>
@@ -123,19 +120,27 @@ export function useRevenueCat() {
   );
   const belongsToUser = Boolean(userId) && state.userId === userId;
   const customerInfo = belongsToUser ? state.customerInfo : null;
+  const testEnvironmentLabel = isTestStore
+    ? 'REVENUECAT TEST STORE · GERÇEK ÜCRET ALINMAZ'
+    : appEnv !== 'production'
+      ? 'APP STORE / PLAY TEST ORTAMI · GERÇEK MAĞAZA FİYATLARI SANDBOX’TAN GELİR'
+      : null;
   return {
     ...state,
     customerInfo,
     offering: belongsToUser ? state.offering : null,
+    creditProducts: belongsToUser ? state.creditProducts : [],
     isPro: hasPro(customerInfo, entitlementId),
     entitlement: customerInfo?.entitlements.active[entitlementId],
     entitlementId,
     offeringId,
     appEnv,
     isTestStore,
+    testEnvironmentLabel,
     ready: belongsToUser && state.status === 'ready',
     refresh: revenueCat.refresh,
     purchase: revenueCat.purchase,
+    purchaseCredit: revenueCat.purchaseCredit,
     restore: revenueCat.restore,
     presentPaywall: revenueCat.presentPaywall,
     presentCustomerCenter: revenueCat.presentCustomerCenter,

@@ -68,8 +68,8 @@ export function SubscriptionCard() {
         </View>
       </View>
 
-      {billing.isTestStore ? (
-        <Text style={styles.test}>TEST ORTAMI · Gerçek ücret alınmaz.</Text>
+      {billing.testEnvironmentLabel ? (
+        <Text style={styles.test}>{billing.testEnvironmentLabel}</Text>
       ) : null}
       {billing.status === 'connecting' ? (
         <Text style={styles.text}>Mağaza hazırlanıyor…</Text>
@@ -155,7 +155,16 @@ const styles = StyleSheet.create({
   crown: { width: 70, height: 70 },
   title: { ...typography.h3, color: colors.textPrimary, marginTop: 8 },
   text: { ...typography.caption, color: colors.textSecondary, lineHeight: 19, marginTop: 6 },
-  test: { ...typography.overline, color: colors.accentYellow, marginTop: 10 },
+  test: {
+    ...typography.overline,
+    color: colors.accentYellow,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,211,84,0.3)',
+    borderRadius: 9,
+    padding: 7,
+    textAlign: 'center',
+  },
   warning: { ...typography.caption, color: colors.accentYellow, lineHeight: 19, marginTop: 10 },
   primary: {
     minHeight: 50,

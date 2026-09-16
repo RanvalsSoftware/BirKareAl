@@ -8,3 +8,4 @@ export * from './errors.js';
 export * from './policy.js';
 export * from './quote.js';
 export * from './studio.js';
+export * from './billing.js';

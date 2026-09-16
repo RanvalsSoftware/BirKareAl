@@ -3,10 +3,20 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useQueryClient } from '@tanstack/react-query';
+import { BIRKARE_CREDIT_PRODUCTS, expectedTryPriceMatches } from '@birkare/shared';
 
+import { apiRequest } from '@/api/client';
 import { AppHeader, CreditBadge, GlassSurface, Icon } from '@/components';
+import { accountQueryKey } from '@/features/auth/account-query-cache';
+import { useAuthStore } from '@/features/auth/auth-store';
 import { SubscriptionCard } from '@/features/billing/SubscriptionCard';
-import { useAvailableCredits, useCreditTransactions } from '@/features/billing/use-wallet';
+import { useRevenueCat } from '@/features/billing/revenuecat';
+import {
+  CREDIT_WALLET_QUERY_KEY,
+  useAvailableCredits,
+  useCreditTransactions,
+} from '@/features/billing/use-wallet';
 import {
   settledCreditHistory,
   transactionIcon,
@@ -15,33 +25,33 @@ import {
 } from '@/features/billing/transaction-presentation';
 import { colors, layout, radii, spacing, typography } from '@/theme';
 
-const packs = [
-  {
-    title: 'Başlangıç',
-    credits: 20,
-    price: '₺99,99',
-    note: 'Tek seferlik',
+const packPresentation = {
+  'credits.20': {
+    note: 'Tek seferlik · Süresiz kredi',
     icon: 'albums-outline' as const,
+    featured: false,
   },
-  {
-    title: 'Yaratıcı',
-    credits: 60,
-    price: '₺249,99',
+  'credits.60': {
     note: 'En çok tercih edilen',
     icon: 'diamond-outline' as const,
     featured: true,
   },
-  {
-    title: 'Stüdyo',
-    credits: 150,
-    price: '₺499,99',
-    note: 'Daha fazla üretim',
+  'credits.150': {
+    note: 'En yüksek kredi paketi',
     icon: 'camera-outline' as const,
+    featured: false,
   },
-];
+} as const;
+
+type RevenueCatSyncResponse = {
+  creditPackCreditsGranted?: number;
+};
 
 export default function CreditsScreen() {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const billing = useRevenueCat();
+  const userId = useAuthStore((store) => store.user?.id);
   const availableCredits = useAvailableCredits();
   const transactionQuery = useCreditTransactions();
   const approximateStandardGenerations = Math.floor(availableCredits / 4);
@@ -49,6 +59,58 @@ export default function CreditsScreen() {
     () => settledCreditHistory(transactionQuery.data?.items ?? [], 4),
     [transactionQuery.data?.items],
   );
+  const productsById = useMemo(
+    () => new Map(billing.creditProducts.map((product) => [product.identifier, product])),
+    [billing.creditProducts],
+  );
+
+  async function purchaseCredits(productId: string, credits: number) {
+    const product = productsById.get(productId);
+    if (!product) {
+      Alert.alert(
+        'Kredi paketi bulunamadı',
+        'Bu ürün App Store / RevenueCat kataloğundan alınamadı. Ürün ID ve mağaza durumunu kontrol edin.',
+      );
+      return;
+    }
+    const result = await billing.purchaseCredit(product);
+    if (result.kind === 'cancelled') return;
+    if (result.kind === 'pending' || result.kind === 'error') {
+      Alert.alert(result.kind === 'pending' ? 'Onay bekleniyor' : 'Kredi satın alma', result.message);
+      return;
+    }
+    try {
+      const sync = await apiRequest<RevenueCatSyncResponse>('/v1/billing/revenuecat/sync', {
+        method: 'POST',
+      });
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: accountQueryKey(CREDIT_WALLET_QUERY_KEY, userId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: accountQueryKey(['credit-transactions'], userId),
+        }),
+      ]);
+      await Promise.all([
+        queryClient.refetchQueries({
+          queryKey: accountQueryKey(CREDIT_WALLET_QUERY_KEY, userId),
+          type: 'active',
+        }),
+        transactionQuery.refetch(),
+      ]);
+      Alert.alert(
+        'Krediler hazır',
+        sync.creditPackCreditsGranted && sync.creditPackCreditsGranted > 0
+          ? `${sync.creditPackCreditsGranted} kredi hesabınıza eklendi.`
+          : `${credits} kredilik satın alma doğrulandı. Bakiyeniz yenilendi.`,
+      );
+    } catch {
+      Alert.alert(
+        'Satın alma alındı',
+        'Mağaza işlemi tamamlandı. Sunucu doğrulaması henüz sonuçlanmadıysa tekrar satın almayın; bakiye kısa süre içinde RevenueCat üzerinden eşitlenecek.',
+      );
+    }
+  }
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.safe}>
@@ -94,57 +156,89 @@ export default function CreditsScreen() {
             <Text style={styles.sectionTitle}>Kredi </Text>
             <Text style={styles.sectionTitleGold}>paketleri</Text>
           </View>
-          <Text style={styles.sectionSubtitle}>Daha fazlasını hayal et, daha fazlasını yarat.</Text>
+          <Text style={styles.sectionSubtitle}>
+            Fiyatlar App Store / RevenueCat üzerinden canlı gelir. Kredi miktarı backend politikasıdır.
+          </Text>
+          {billing.testEnvironmentLabel ? (
+            <Text style={styles.testBanner}>{billing.testEnvironmentLabel}</Text>
+          ) : null}
 
           <View style={styles.packList}>
-            {packs.map((pack) => (
-              <GlassSurface
-                key={pack.title}
-                tone={pack.featured ? 'iridescent' : 'gold'}
-                selected={pack.featured}
-                radius={24}
-                style={pack.featured ? styles.packGlow : undefined}
-                contentStyle={styles.pack}
-              >
-                {pack.featured ? (
-                  <LinearGradient colors={['#6D18D9', '#9C25E8']} style={styles.packPopular}>
-                    <Text style={styles.packPopularText}>EN ÇOK SEÇİLEN</Text>
-                  </LinearGradient>
-                ) : null}
-                <View style={[styles.packIcon, pack.featured && styles.packIconFeatured]}>
-                  <Icon name={pack.icon} size={30} color="#FFD866" />
-                </View>
-                <View style={styles.packCopy}>
-                  <Text style={styles.packTitle}>{pack.title}</Text>
-                  <Text style={styles.packCredits}>{pack.credits} kredi</Text>
-                  <Text style={styles.packNote}>{pack.note}</Text>
-                </View>
-                <View style={styles.packAction}>
-                  <Text style={styles.packPrice}>{pack.price}</Text>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`${pack.title}, ${pack.credits} kredi, ${pack.price}`}
-                    onPress={() =>
-                      Alert.alert(
-                        'Mağaza ürünü bekleniyor',
-                        `${pack.title} paketini satışa açmak için App Store ve RevenueCat'te tüketilebilir ürün eşlemesi tamamlanmalı. Bu ekran sahte ödeme veya kredi eklemez.`,
-                      )
-                    }
-                    style={({ pressed }) => [styles.select, pressed && styles.pressed]}
-                  >
-                    <LinearGradient
-                      colors={['#FFE49A', '#F5B91C']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.selectFill}
-                    >
-                      <Text style={styles.selectText}>Seç</Text>
+            {BIRKARE_CREDIT_PRODUCTS.map((pack) => {
+              const presentation = packPresentation[pack.id];
+              const product = productsById.get(pack.productId);
+              const price = product?.priceString ?? (billing.ready ? 'Mağazada yok' : 'Yükleniyor…');
+              const priceMismatch =
+                billing.appEnv !== 'production' &&
+                product &&
+                !expectedTryPriceMatches(product.price, product.currencyCode, pack.expectedTryPrice);
+              const disabled = billing.busy || !billing.ready || !product;
+              return (
+                <GlassSurface
+                  key={pack.id}
+                  tone={presentation.featured ? 'iridescent' : 'gold'}
+                  selected={presentation.featured}
+                  radius={24}
+                  style={presentation.featured ? styles.packGlow : undefined}
+                  contentStyle={styles.pack}
+                >
+                  {presentation.featured ? (
+                    <LinearGradient colors={['#6D18D9', '#9C25E8']} style={styles.packPopular}>
+                      <Text style={styles.packPopularText}>EN ÇOK SEÇİLEN</Text>
                     </LinearGradient>
-                  </Pressable>
-                </View>
-              </GlassSurface>
-            ))}
+                  ) : null}
+                  <View style={[styles.packIcon, presentation.featured && styles.packIconFeatured]}>
+                    <Icon name={presentation.icon} size={30} color="#FFD866" />
+                  </View>
+                  <View style={styles.packCopy}>
+                    <Text style={styles.packTitle}>{pack.label}</Text>
+                    <Text style={styles.packCredits}>{pack.credits} kredi</Text>
+                    <Text style={styles.packNote}>{presentation.note}</Text>
+                    {priceMismatch ? (
+                      <Text style={styles.priceWarning}>
+                        Test uyarısı: mağaza fiyatı politika ile eşleşmiyor. Beklenen TRY fiyatı ₺
+                        {pack.expectedTryPrice.toLocaleString('tr-TR', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}.
+                      </Text>
+                    ) : null}
+                  </View>
+                  <View style={styles.packAction}>
+                    <Text style={styles.packPrice}>{price}</Text>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`${pack.label}, ${pack.credits} kredi, ${price}`}
+                      accessibilityState={{ disabled }}
+                      disabled={disabled}
+                      onPress={() => void purchaseCredits(pack.productId, pack.credits)}
+                      style={({ pressed }) => [
+                        styles.select,
+                        disabled && styles.disabled,
+                        pressed && !disabled && styles.pressed,
+                      ]}
+                    >
+                      <LinearGradient
+                        colors={['#FFE49A', '#F5B91C']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.selectFill}
+                      >
+                        <Text style={styles.selectText}>{billing.busy ? 'İşleniyor' : 'Satın al'}</Text>
+                      </LinearGradient>
+                    </Pressable>
+                  </View>
+                </GlassSurface>
+              );
+            })}
           </View>
+
+          {billing.ready && billing.creditProducts.length !== BIRKARE_CREDIT_PRODUCTS.length ? (
+            <Text accessibilityRole="alert" style={styles.catalogWarning}>
+              Kredi ürünlerinin tamamı mağazadan gelmedi. RevenueCat / App Store Connect içinde
+              com.birkareai.credits.20, .60 ve .150 ürünlerini kontrol edin.
+            </Text>
+          ) : null}
 
           <View style={styles.historyHeading}>
             <View style={styles.sectionTitleRow}>
@@ -272,6 +366,16 @@ const styles = StyleSheet.create({
   sectionTitle: { ...typography.h1, color: colors.textPrimary },
   sectionTitleGold: { ...typography.h1, color: '#FFD86B' },
   sectionSubtitle: { ...typography.body, color: colors.textSecondary, marginTop: 5 },
+  testBanner: {
+    ...typography.overline,
+    color: colors.accentYellow,
+    borderWidth: 1,
+    borderColor: 'rgba(255,215,120,.34)',
+    borderRadius: 10,
+    padding: 8,
+    marginTop: 10,
+    textAlign: 'center',
+  },
   packList: { gap: 12, marginTop: 18 },
   packGlow: { shadowColor: '#B34DFF', shadowOpacity: 0.3, shadowRadius: 18 },
   pack: {
@@ -306,17 +410,26 @@ const styles = StyleSheet.create({
   packTitle: { ...typography.bodyStrong, color: colors.textPrimary },
   packCredits: { ...typography.h2, color: '#FFD76C', marginTop: 1 },
   packNote: { ...typography.caption, color: colors.textMuted, marginTop: 1 },
+  priceWarning: { color: '#FFB36B', fontSize: 9, lineHeight: 13, marginTop: 4 },
   packAction: { alignItems: 'flex-end', justifyContent: 'center', gap: 9 },
-  packPrice: { ...typography.bodyStrong, color: colors.textPrimary },
+  packPrice: { ...typography.bodyStrong, color: colors.textPrimary, textAlign: 'right' },
   select: { borderRadius: 15, overflow: 'hidden', minWidth: 86 },
   selectFill: {
     minHeight: 42,
-    paddingHorizontal: 22,
+    paddingHorizontal: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
   selectText: { ...typography.bodyStrong, color: '#100D06' },
+  disabled: { opacity: 0.45 },
   pressed: { opacity: 0.78 },
+  catalogWarning: {
+    ...typography.caption,
+    color: '#FFB36B',
+    lineHeight: 18,
+    marginTop: 12,
+    textAlign: 'center',
+  },
   history: { paddingHorizontal: 16 },
   historyRow: {
     minHeight: 88,

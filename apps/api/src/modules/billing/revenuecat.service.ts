@@ -1,7 +1,7 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import type { BirKareConfig } from '@birkare/config';
 import type { BirKareRepository, CreditTransactionRecord } from '@birkare/database';
-import { conflict, forbidden, unavailable } from '@birkare/shared';
+import { BIRKARE_CREDIT_PRODUCTS, conflict, forbidden, unavailable } from '@birkare/shared';
 
 const REVENUECAT_API_BASE = 'https://api.revenuecat.com/v1';
 const REVENUECAT_EVENT_ID = /^[A-Za-z0-9._:$-]{1,200}$/;
@@ -20,6 +20,7 @@ export type RevenueCatSubscriptionStatus = {
   environment: 'sandbox' | 'production' | 'unknown';
   store: string | null;
   creditsGranted: number;
+  creditPackCreditsGranted: number;
 };
 
 type RevenueCatEntitlement = {
@@ -46,12 +47,14 @@ type RevenueCatNonSubscription = {
   is_sandbox?: boolean;
 };
 
+type RevenueCatSubscriber = {
+  entitlements?: Record<string, RevenueCatEntitlement>;
+  subscriptions?: Record<string, RevenueCatSubscription>;
+  non_subscriptions?: Record<string, RevenueCatNonSubscription[]>;
+};
+
 type RevenueCatSubscriberResponse = {
-  subscriber?: {
-    entitlements?: Record<string, RevenueCatEntitlement>;
-    subscriptions?: Record<string, RevenueCatSubscription>;
-    non_subscriptions?: Record<string, RevenueCatNonSubscription[]>;
-  };
+  subscriber?: RevenueCatSubscriber;
 };
 
 export type RevenueCatWebhookEvent = {
@@ -171,10 +174,6 @@ export function createRevenueCatService(dependencies: Dependencies) {
   const annualProducts = csvSet(config.REVENUECAT_ANNUAL_PRODUCT_IDS);
   const lifetimeProducts = csvSet(config.REVENUECAT_LIFETIME_PRODUCT_IDS);
 
-  // A mobile `appl_`/`goog_` public SDK key can read Store products on-device,
-  // but it must never be accepted as server authorization. Treating it as
-  // configured would make a completed Apple purchase fail later with a vague
-  // RevenueCat 401 while the credit wallet stays unchanged.
   const configured = () =>
     config.REVENUECAT_ENABLED &&
     Boolean(config.REVENUECAT_SECRET_API_KEY?.trim().startsWith('sk_'));
@@ -187,7 +186,7 @@ export function createRevenueCatService(dependencies: Dependencies) {
     return 'unknown';
   }
 
-  async function subscriber(userId: string): Promise<RevenueCatSubscriberResponse['subscriber']> {
+  async function subscriber(userId: string): Promise<RevenueCatSubscriber | undefined> {
     if (!configured()) {
       throw unavailable(
         'REVENUECAT_NOT_CONFIGURED',
@@ -246,9 +245,6 @@ export function createRevenueCatService(dependencies: Dependencies) {
       type: plan === 'lifetime' ? 'PURCHASE' : 'SUBSCRIPTION_GRANT',
       referenceType: 'REVENUECAT',
       referenceId: productId,
-      // Credit idempotency keys are globally unique in the repository. Include
-      // the account so one subscriber can never suppress another subscriber's
-      // monthly grant for the same product and calendar period.
       idempotencyKey: `revenuecat:${userId}:${plan}:${productId}:${periodKey}`,
       description:
         plan === 'monthly'
@@ -258,6 +254,30 @@ export function createRevenueCatService(dependencies: Dependencies) {
             : 'BirKare Pro ömür boyu başlangıç kredisi',
     });
     return { credits: result.created ? amount : 0, transaction: result.transaction };
+  }
+
+  async function grantCreditPackPurchases(
+    userId: string,
+    data: RevenueCatSubscriber | undefined,
+  ): Promise<number> {
+    let creditsGranted = 0;
+    for (const pack of BIRKARE_CREDIT_PRODUCTS) {
+      for (const purchase of data?.non_subscriptions?.[pack.productId] ?? []) {
+        const transactionId = purchase.id?.trim();
+        if (!transactionId) continue;
+        const result = await repository.grantCredits({
+          userId,
+          amount: pack.credits,
+          type: 'PURCHASE',
+          referenceType: 'REVENUECAT_CONSUMABLE',
+          referenceId: transactionId,
+          idempotencyKey: `revenuecat:${userId}:credit-pack:${pack.productId}:${transactionId}`,
+          description: `BirKare ${pack.credits} kredi paketi`,
+        });
+        if (result.created) creditsGranted += pack.credits;
+      }
+    }
+    return creditsGranted;
   }
 
   async function readStatus(userId: string, force = false): Promise<RevenueCatSubscriptionStatus> {
@@ -277,10 +297,12 @@ export function createRevenueCatService(dependencies: Dependencies) {
         environment: 'unknown',
         store: null,
         creditsGranted: 0,
+        creditPackCreditsGranted: 0,
       };
     }
 
     const data = await subscriber(userId);
+    const creditPackCreditsGranted = await grantCreditPackPurchases(userId, data);
     const entitlement = data?.entitlements?.[config.REVENUECAT_ENTITLEMENT_ID];
     const productId = entitlement?.product_identifier ?? null;
     const plan = planFor(productId);
@@ -303,9 +325,6 @@ export function createRevenueCatService(dependencies: Dependencies) {
         const period = validDate(subscription?.purchase_date) ?? now();
         creditsGranted = (await grant(userId, productId, plan, utcMonthKey(period))).credits;
       } else {
-        // Annual subscribers receive one grant per calendar month while their
-        // entitlement remains active. A missed month is not backfilled on a
-        // later device launch, preventing accidental bulk grants.
         creditsGranted = (await grant(userId, productId, plan, utcMonthKey(now()))).credits;
       }
     }
@@ -321,6 +340,7 @@ export function createRevenueCatService(dependencies: Dependencies) {
       environment: source?.is_sandbox === true ? 'sandbox' : source ? 'production' : 'unknown',
       store: source?.store ?? null,
       creditsGranted,
+      creditPackCreditsGranted,
     };
     cache.set(userId, { expiresAt: timestamp + config.REVENUECAT_CACHE_TTL_MS, value });
     return value;

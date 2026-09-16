@@ -1,11 +1,18 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { BIRKARE_PRO_PRODUCTS, expectedTryPriceMatches } from '@birkare/shared';
 import { ProPaywallView } from './ProPaywallView';
 import { toDisplayPlans } from './paywall-display';
 import { useRevenueCat } from './revenuecat';
 import type { BillingResult } from './revenuecat-client';
 import { planById, plansFromOffering, preferredPlanId, type ProPlanId } from './paywall-model';
+
+const expectedTryPrice = {
+  monthly: BIRKARE_PRO_PRODUCTS.monthly.expectedTryPrice,
+  annual: BIRKARE_PRO_PRODUCTS.annual.expectedTryPrice,
+  lifetime: BIRKARE_PRO_PRODUCTS.lifetime.expectedTryPrice,
+} as const;
 
 /** Real purchase controller. Never falls back to screenshot/demo packages. */
 export function CustomProPaywall() {
@@ -63,7 +70,24 @@ export function CustomProPaywall() {
   const activeNote = date
     ? `${billing.entitlement?.willRenew ? 'Yenileme' : 'Erişim bitişi'}: ${date}`
     : 'Kalıcı Pro erişimi · AI üretimleri kredi kullanır.';
+  const priceMismatch =
+    billing.appEnv !== 'production'
+      ? plans.find(
+          (plan) =>
+            !expectedTryPriceMatches(
+              plan.package.product.price,
+              plan.package.product.currencyCode,
+              expectedTryPrice[plan.id],
+            ),
+        )
+      : undefined;
+  const priceWarning = priceMismatch
+    ? `${priceMismatch.label} App Store fiyatı politika ile eşleşmiyor. Beklenen TRY fiyatı ₺${expectedTryPrice[
+        priceMismatch.id
+      ].toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`
+    : null;
   const status =
+    priceWarning ||
     billing.error ||
     (!billing.ready
       ? billing.status === 'signed_out'
@@ -101,13 +125,7 @@ export function CustomProPaywall() {
           activeNote={activeNote}
           disabled={!billing.ready || (!billing.isPro && !selectedPlan)}
           restoreDisabled={!billing.ready}
-          banner={
-            billing.isTestStore
-              ? 'REVENUECAT TEST STORE · GERÇEK ÜCRET ALINMAZ'
-              : billing.appEnv !== 'production'
-                ? 'GELİŞTİRME DERLEMESİ · APP STORE SANDBOX'
-                : undefined
-          }
+          banner={billing.testEnvironmentLabel ?? undefined}
           message={
             <View>
               {status ? (

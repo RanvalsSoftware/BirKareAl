@@ -1,4 +1,9 @@
-import type { CustomerInfo, PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
+import type {
+  CustomerInfo,
+  PurchasesOffering,
+  PurchasesPackage,
+  StoreProduct,
+} from 'react-native-purchases';
 
 type SdkModule = typeof import('react-native-purchases');
 type UiModule = typeof import('react-native-purchases-ui');
@@ -7,6 +12,7 @@ type ClientOptions = {
   apiKey: string;
   entitlementId: string;
   offeringId?: string;
+  creditProductIds?: readonly string[];
   unavailableReason?: string;
   getUserId: () => string | null;
   loadSdk: () => Promise<SdkModule>;
@@ -18,12 +24,13 @@ export type BillingSnapshot = {
   userId: string | null;
   customerInfo: CustomerInfo | null;
   offering: PurchasesOffering | null;
+  creditProducts: StoreProduct[];
   busy: boolean;
   error: string | null;
 };
 
 export type BillingResult =
-  | { kind: 'completed'; isPro: boolean }
+  | { kind: 'completed'; isPro: boolean; productId?: string }
   | { kind: 'cancelled' }
   | { kind: 'pending'; message: string }
   | { kind: 'error'; message: string };
@@ -35,7 +42,7 @@ export function hasPro(info: CustomerInfo | null, entitlementId: string): boolea
 /**
  * One client per app process. Auth changes and all SDK operations are serialized.
  * Epoch checks discard purchases/refreshes belonging to a previous app account.
- * CustomerInfo controls UI only: this module NEVER modifies the credit wallet.
+ * CustomerInfo and StoreProduct values control UI only: this module NEVER modifies the credit wallet.
  */
 export function createRevenueCatClient(options: ClientOptions) {
   let snapshot: BillingSnapshot = {
@@ -43,6 +50,7 @@ export function createRevenueCatClient(options: ClientOptions) {
     userId: null,
     customerInfo: null,
     offering: null,
+    creditProducts: [],
     busy: false,
     error: null,
   };
@@ -126,9 +134,35 @@ export function createRevenueCatClient(options: ClientOptions) {
     }
   };
 
+  const readCreditProducts = async (version: number, userId: string) => {
+    const ids = [...(options.creditProductIds ?? [])];
+    if (!ids.length) {
+      if (current(version, userId)) publish({ creditProducts: [] });
+      return;
+    }
+    try {
+      const products = await sdkModule!.default.getProducts(
+        ids,
+        sdkModule!.PRODUCT_CATEGORY.NON_SUBSCRIPTION,
+      );
+      const order = new Map(ids.map((id, index) => [id, index]));
+      products.sort(
+        (left, right) =>
+          (order.get(left.identifier) ?? Number.MAX_SAFE_INTEGER) -
+          (order.get(right.identifier) ?? Number.MAX_SAFE_INTEGER),
+      );
+      if (current(version, userId)) publish({ creditProducts: products });
+    } catch (error) {
+      if (current(version, userId)) {
+        publish({
+          creditProducts: [],
+          error: `Ek kredi ürünleri mağazadan alınamadı. ${messageFor(error)}`,
+        });
+      }
+    }
+  };
+
   const onCustomerInfo = (info: CustomerInfo) => {
-    // Do not accept the payload as another account's entitlement. Read the SDK
-    // again after the identity queue settles; suppress our own read callbacks.
     if (working || snapshot.status !== 'ready' || !targetUserId) return;
     if (
       snapshot.customerInfo?.requestDate === info.requestDate &&
@@ -147,11 +181,11 @@ export function createRevenueCatClient(options: ClientOptions) {
       return;
     targetUserId = userId;
     const version = ++epoch;
-    // Clear synchronously, BEFORE any native login/logout work or React render.
     publish({
       userId,
       customerInfo: null,
       offering: null,
+      creditProducts: [],
       busy: false,
       error: null,
       status: userId ? 'connecting' : 'signed_out',
@@ -188,7 +222,7 @@ export function createRevenueCatClient(options: ClientOptions) {
         const info = await sdk.getCustomerInfo();
         if (!current(version, userId)) return;
         publish({ status: 'ready', customerInfo: info });
-        await readOfferings(version, userId);
+        await Promise.all([readOfferings(version, userId), readCreditProducts(version, userId)]);
       } catch (error) {
         if (current(version, userId))
           publish({ status: userId ? 'error' : 'signed_out', error: messageFor(error) });
@@ -207,7 +241,7 @@ export function createRevenueCatClient(options: ClientOptions) {
       try {
         assertAccount(version, userId);
         saveInfo(await sdkModule!.default.getCustomerInfo(), version, userId);
-        await readOfferings(version, userId);
+        await Promise.all([readOfferings(version, userId), readCreditProducts(version, userId)]);
       } catch (error) {
         if (current(version, userId)) publish({ error: messageFor(error) });
       }
@@ -250,7 +284,7 @@ export function createRevenueCatClient(options: ClientOptions) {
             return {
               kind: 'pending' as const,
               message:
-                'Ödeme onay bekliyor. Onaylanana kadar Pro erişimi açılmaz; tekrar satın almayın.',
+                'Ödeme onay bekliyor. Onaylanana kadar satın alma tamamlanmaz; tekrar satın almayın.',
             };
           const message = messageFor(error);
           publish({ error: message });
@@ -263,9 +297,18 @@ export function createRevenueCatClient(options: ClientOptions) {
     }
   }
 
-  const completed = (info: CustomerInfo, version: number, userId: string): BillingResult => {
+  const completed = (
+    info: CustomerInfo,
+    version: number,
+    userId: string,
+    productId?: string,
+  ): BillingResult => {
     saveInfo(info, version, userId);
-    return { kind: 'completed', isPro: hasPro(info, options.entitlementId) };
+    return {
+      kind: 'completed',
+      isPro: hasPro(info, options.entitlementId),
+      ...(productId ? { productId } : {}),
+    };
   };
 
   return {
@@ -287,7 +330,16 @@ export function createRevenueCatClient(options: ClientOptions) {
         );
         if (!offered) fail('Bu paket artık geçerli teklifte yok. Paket listesini yenileyin.');
         const { customerInfo } = await sdkModule!.default.purchasePackage(offered!);
-        return completed(customerInfo, version, userId);
+        return completed(customerInfo, version, userId, offered!.product.identifier);
+      }),
+    purchaseCredit: (product: StoreProduct) =>
+      action(async (version, userId) => {
+        const allowed = new Set(options.creditProductIds ?? []);
+        const offered = snapshot.creditProducts.find((item) => item.identifier === product.identifier);
+        if (!allowed.has(product.identifier) || !offered)
+          fail('Bu kredi paketi artık mağazada kullanılamıyor. Paket listesini yenileyin.');
+        const { customerInfo } = await sdkModule!.default.purchaseStoreProduct(offered);
+        return completed(customerInfo, version, userId, offered.identifier);
       }),
     restore: () =>
       action(async (version, userId) =>
@@ -309,7 +361,6 @@ export function createRevenueCatClient(options: ClientOptions) {
             'Paywall açılamadı veya işlem tamamlanamadı. Paket kartlarıyla tekrar deneyebilirsiniz.',
           );
         assertAccount(version, userId);
-        // PURCHASED/RESTORED/NOT_PRESENTED alone NEVER grant entitlement.
         return completed(await sdkModule!.default.getCustomerInfo(), version, userId);
       }),
     presentCustomerCenter: () =>
