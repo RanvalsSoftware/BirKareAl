@@ -40,23 +40,38 @@ export function SubscriptionCard() {
     expiration && Number.isFinite(Date.parse(expiration))
       ? new Date(expiration).toLocaleDateString('tr-TR')
       : null;
+  const cancelled = billing.subscriptionCancelled;
   const disabled = billing.busy || (!billing.ready && billing.status !== 'connecting');
+
+  const badgeLabel = cancelled
+    ? 'BirKare Pro · İptal edildi'
+    : billing.isPro
+      ? 'BirKare Pro · Aktif'
+      : 'BirKare Pro';
+
+  const title = cancelled
+    ? 'Aboneliğiniz iptal edildi.'
+    : billing.isPro
+      ? 'Pro hesabınız hazır.'
+      : 'Premium sahnelerin kilidini açın.';
+
+  const description = cancelled
+    ? expiresText
+      ? `Pro erişiminiz ${expiresText} tarihine kadar devam eder. Bu tarihten sonra otomatik yenileme yapılmaz.`
+      : 'Otomatik yenileme kapatıldı.'
+    : billing.isPro
+      ? expiresText
+        ? `${billing.entitlement?.willRenew ? 'Yenileme tarihi' : 'Erişim bitişi'}: ${expiresText}`
+        : 'Süresiz Pro erişimi · Otomatik yenileme yok.'
+      : 'Aylık, yıllık ve ömür boyu seçeneklerini mağazanın güncel yerel fiyatlarıyla inceleyin.';
 
   return (
     <LinearGradient colors={['#17130A', '#111111', '#171019']} style={styles.card}>
       <View style={styles.hero}>
         <View style={styles.copy}>
-          <ProBadge label={billing.isPro ? 'BirKare Pro · Aktif' : 'BirKare Pro'} />
-          <Text style={styles.title}>
-            {billing.isPro ? 'Pro hesabınız hazır.' : 'Premium sahnelerin kilidini açın.'}
-          </Text>
-          <Text style={styles.text}>
-            {billing.isPro
-              ? expiresText
-                ? `${billing.entitlement?.willRenew ? 'Yenileme tarihi' : 'Erişim bitişi'}: ${expiresText}`
-                : 'Süresiz Pro erişimi · Otomatik yenileme yok.'
-              : 'Aylık, yıllık ve ömür boyu seçeneklerini mağazanın güncel yerel fiyatlarıyla inceleyin.'}
-          </Text>
+          <ProBadge label={badgeLabel} />
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.text}>{description}</Text>
         </View>
         <View style={styles.crownFrame}>
           <Image
@@ -67,6 +82,15 @@ export function SubscriptionCard() {
           />
         </View>
       </View>
+
+      {cancelled ? (
+        <View accessibilityRole="alert" style={styles.cancelledBox}>
+          <Ionicons name="close-circle" size={18} color="#FF8D80" />
+          <Text style={styles.cancelledText}>
+            İptal edildi{expiresText ? ` · ${expiresText} tarihine kadar kullanabilirsiniz.` : ''}
+          </Text>
+        </View>
+      ) : null}
 
       {billing.testEnvironmentLabel ? (
         <Text style={styles.test}>{billing.testEnvironmentLabel}</Text>
@@ -105,7 +129,9 @@ export function SubscriptionCard() {
               });
             }}
           >
-            <Text style={styles.secondaryText}>Aboneliği yönet</Text>
+            <Text style={styles.secondaryText}>
+              {billing.busy ? 'Mağaza güncelleniyor…' : 'Aboneliği yönet'}
+            </Text>
           </Pressable>
           <Pressable
             accessibilityRole="button"
@@ -155,6 +181,25 @@ const styles = StyleSheet.create({
   crown: { width: 70, height: 70 },
   title: { ...typography.h3, color: colors.textPrimary, marginTop: 8 },
   text: { ...typography.caption, color: colors.textSecondary, lineHeight: 19, marginTop: 6 },
+  cancelledBox: {
+    minHeight: 42,
+    marginTop: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,141,128,0.36)',
+    backgroundColor: 'rgba(255,92,75,0.08)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  cancelledText: {
+    ...typography.caption,
+    color: '#FFB0A7',
+    lineHeight: 18,
+    flex: 1,
+  },
   test: {
     ...typography.overline,
     color: colors.accentYellow,
