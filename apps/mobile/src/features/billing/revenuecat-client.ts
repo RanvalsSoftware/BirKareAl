@@ -325,7 +325,7 @@ export function createRevenueCatClient(options: ClientOptions) {
         const offered = snapshot.creditProducts.find((item) => item.identifier === product.identifier);
         if (!allowed.has(product.identifier) || !offered)
           fail('Bu kredi paketi artık mağazada kullanılamıyor. Paket listesini yenileyin.');
-        const { customerInfo } = await sdkModule!.default.purchaseStoreProduct(offered);
+        const { customerInfo } = await sdkModule!.default.purchaseStoreProduct(offered!);
         return completed(customerInfo, version, userId);
       }),
     restore: () =>
