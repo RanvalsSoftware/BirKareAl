@@ -1,7 +1,8 @@
 import type { CatalogSnapshot, GenerationRecord, ProjectRecord } from '@birkare/database';
-export const GENERATION_PROMPT_VERSION = '2026-09-scope-v5';
+export const GENERATION_PROMPT_VERSION = '2026-09-filter-fidelity-v6';
 import { buildBeautyPrompt, buildGenderTransformationPrompt } from './beauty-prompt.js';
 import { buildTrendPrompt } from './trend-prompt.js';
+import { buildStudioPrompt } from './studio-prompt.js';
 import {
   characterPrompt,
   compositionPrompt,
@@ -29,6 +30,22 @@ export function buildGenerationPrompt(input: {
   project: ProjectRecord;
   catalog: CatalogSnapshot;
 }): string {
+  if (input.generation.recipe?.version === 2) {
+    const expectedMode =
+      input.generation.recipe.studio.kind === 'PRODUCT_STUDIO'
+        ? 'PRODUCT_STUDIO'
+        : input.generation.recipe.studio.kind;
+    if (input.project.mode !== expectedMode) {
+      throw new Error('Studio recipe does not match the immutable project mode');
+    }
+    return buildStudioPrompt({
+      recipe: input.generation.recipe.studio,
+      promptVersion: input.generation.recipe.promptVersion,
+      aspectRatio: input.generation.aspectRatio,
+      quality: input.generation.quality,
+      userInstruction: input.generation.userInstruction,
+    });
+  }
   const selection = resolveGenerationSelection(input.generation.recipe, input.project);
   const scene =
     input.catalog.scenes.find((item) => item.id === selection.sceneTemplateId && item.enabled) ??
@@ -59,6 +76,8 @@ export function buildGenerationPrompt(input: {
   const illustrativeStyle = ['drip-art', 'pop-art', 'watercolor', 'sketch', 'cartoon'].includes(
     style?.slug ?? '',
   );
+  const selectedStylePrompt = stylePrompt(style);
+  const selectedIntensityPrompt = intensityPrompt(recipe.filterIntensity, style);
   const identityRule = input.generation.preserveFace
     ? "Preserve the primary user's recognisable identity, facial geometry, eye shape, eye colour, nose, lips, jawline, skin tone, hairstyle, age appearance and body proportions. Preserve identifying facial details; translate texture into the selected artistic medium rather than requiring photographic pores in an illustration."
     : "Keep the result clearly based on the consented primary user image. Do not impersonate a real person or replace the primary user's identity.";
@@ -84,7 +103,13 @@ export function buildGenerationPrompt(input: {
   return [
     'Create one premium, polished AI-generated photo transformation using the provided input image.',
     'INPUT IMAGE 1 is the source photograph, not a style reference. Preserve its primary subject. If it contains no person, apply the edit to the actual landscape or object; do not invent a human.',
-    'PRIORITY: identity and anatomy, then edit scope, then scene and composition, then visual style. Catalogue descriptions never replace the source identity.',
+    'MANDATORY SELECTED VISUAL TREATMENT',
+    selectedStylePrompt,
+    selectedIntensityPrompt,
+    input.project.mode === 'AI_FILTER'
+      ? 'This is specifically a filter transformation. The finished image must visibly and unambiguously show the selected treatment at the requested strength while retaining the source setting, subject count, pose and composition. Do not substitute a generic portrait, unrelated scene or merely unchanged copy of the input.'
+      : 'Apply this selected treatment coherently to the completed scene. It must remain subordinate to identity, anatomy and the explicitly selected environment, but it may not be silently omitted or replaced by a generic look.',
+    'PRIORITY: safety, identity and anatomy are immutable constraints; within those constraints, faithfully execute the selected edit, scene and composition. Catalogue descriptions never replace the source identity.',
     'PRIMARY USER',
     identityRule,
     'Do not excessively beautify, reshape, slim, enlarge or age the primary user.',
@@ -99,10 +124,6 @@ export function buildGenerationPrompt(input: {
     input.project.mode === 'BACKGROUND_REPLACE' || input.project.mode === 'AI_FILTER'
       ? 'Retain the source camera angle, subject placement and proportions. Fit the requested output ratio without stretching the subject; extend peripheral surroundings when needed instead of cropping important features. Do not impose a new portrait pose.'
       : compositionPrompt(recipe.composition),
-    'STYLE AND FILTER',
-    stylePrompt(style),
-    'STYLE INTENSITY',
-    intensityPrompt(recipe.filterIntensity, style),
     'LIGHTING AND REALISM',
     'Use coherent light direction, contact shadows, natural perspective, believable depth of field and clean fine edges. Match the environment to the source lighting for background replacement. No waxy smoothing, cutout halos or conflicting reflections.',
     illustrativeStyle
@@ -115,6 +136,7 @@ export function buildGenerationPrompt(input: {
       : 'No additional user preference was provided.',
     'RESTRICTIONS',
     personCountRule,
+    'Before returning the result, verify that the mandatory selected visual treatment is present at the requested strength and that no unrelated setting, person, prop or style was introduced.',
     'Each depicted person must have natural anatomy, with no duplicated or extra body parts, distorted eyes, teeth or facial features, or merged bodies. No random text, captions, logos, signatures, sponsor marks, official-looking seals, UI elements, frames or borders.',
     ...(secondaryRequested
       ? [

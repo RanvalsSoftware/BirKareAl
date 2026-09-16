@@ -93,12 +93,22 @@ export default function RootLayout() {
           <Stack.Screen
             name="pro"
             options={{
-              presentation: 'fullScreenModal',
-              animation: reducedMotion ? 'none' : 'fade',
+              presentation: 'transparentModal',
+              animation: reducedMotion ? 'none' : 'slide_from_bottom',
+              contentStyle: { backgroundColor: 'transparent' },
+              gestureEnabled: true,
             }}
           />
           <Stack.Screen
             name="create"
+            options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="studio"
+            options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="transactions"
             options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
           />
           <Stack.Screen

@@ -1,11 +1,21 @@
 export type ImageReference = {
   buffer: Buffer;
   mimeType: 'image/jpeg' | 'image/png' | 'image/webp';
-  role: 'USER' | 'SCENE' | 'PERSON' | 'PREVIOUS_OUTPUT';
+  role:
+    | 'USER'
+    | 'PRIMARY_PERSON'
+    | 'PRODUCT'
+    | 'GARMENT'
+    | 'HAND'
+    | 'SCENE'
+    | 'PERSON'
+    | 'PREVIOUS_OUTPUT';
 };
 
 export type ImageGenerationInput = {
   requestId: string;
+  /** Server-selected and persisted before enqueueing, so retries cannot change price/model lanes. */
+  model?: string;
   prompt: string;
   sourceImages: ImageReference[];
   quality: 'low' | 'medium' | 'high';

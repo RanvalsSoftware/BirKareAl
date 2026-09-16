@@ -18,8 +18,10 @@ import {
 } from '@/features/auth/auth-ui';
 import { resetPasswordSchema, type ResetPasswordValues } from '@/features/auth/validation';
 import { authMailToken } from '@/features/auth/email-delivery';
+import { useCopy } from '@/features/settings/language-store';
 
 export default function ResetPasswordScreen() {
+  const copy = useCopy();
   const { token } = useLocalSearchParams<{ token?: string }>();
   const [tokenValue, setTokenValue] = useState(authMailToken(token));
   const confirmationInputRef = useRef<TextInput>(null);
@@ -27,7 +29,14 @@ export default function ResetPasswordScreen() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   useEffect(() => {
     const incoming = authMailToken(token);
-    if (incoming) setTokenValue(incoming);
+    if (!incoming) return;
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) setTokenValue(incoming);
+    });
+    return () => {
+      active = false;
+    };
   }, [token]);
   const goBack = () => {
     if (router.canGoBack()) {
@@ -55,7 +64,12 @@ export default function ResetPasswordScreen() {
   const submit = handleSubmit(async (values) => {
     const normalizedToken = authMailToken(tokenValue);
     if (normalizedToken.length < 40) {
-      setError('root', { message: 'Sıfırlama bağlantısı geçersiz veya süresi dolmuş.' });
+      setError('root', {
+        message: copy(
+          'Sıfırlama bağlantısı geçersiz veya süresi dolmuş.',
+          'The reset link is invalid or has expired.',
+        ),
+      });
       return;
     }
     try {
@@ -70,7 +84,10 @@ export default function ResetPasswordScreen() {
       router.replace('/(auth)/login');
     } catch (error) {
       setError('root', {
-        message: error instanceof Error ? error.message : 'Şifre güncellenemedi.',
+        message:
+          error instanceof Error
+            ? error.message
+            : copy('Şifre güncellenemedi.', 'Could not update the password.'),
       });
     }
   });
@@ -79,18 +96,24 @@ export default function ResetPasswordScreen() {
       <AuthBrandBar onBack={goBack} />
       <AuthLogo compact />
       <AuthTitle
-        eyebrow="HESAP GÜVENLİĞİ"
-        title="Yeni şifre belirle."
-        subtitle="Güçlü ve daha önce kullanmadığın bir şifre seç."
+        eyebrow={copy('HESAP GÜVENLİĞİ', 'ACCOUNT SECURITY')}
+        title={copy('Yeni şifre belirle.', 'Create a new password.')}
+        subtitle={copy(
+          'Güçlü ve daha önce kullanmadığın bir şifre seç.',
+          'Choose a strong password you have not used before.',
+        )}
       />
       <AuthFormCard>
         <FormField
-          label="Sıfırlama kodu"
-          accessibilityLabel="E-postadaki sıfırlama kodu"
+          label={copy('Sıfırlama kodu', 'Reset code')}
+          accessibilityLabel={copy('E-postadaki sıfırlama kodu', 'Reset code from your email')}
           autoCapitalize="none"
           autoCorrect={false}
           maxLength={512}
-          placeholder="E-postadaki kodun tamamını yapıştır"
+          placeholder={copy(
+            'E-postadaki kodun tamamını yapıştır',
+            'Paste the full code from your email',
+          )}
           value={tokenValue}
           onChangeText={setTokenValue}
           icon={<Ionicons color={authColors.muted} name="key-outline" size={17} />}
@@ -100,7 +123,7 @@ export default function ResetPasswordScreen() {
           name="password"
           render={({ field: { onBlur, onChange, value } }) => (
             <View style={styles.field}>
-              <Text style={styles.label}>Yeni şifre</Text>
+              <Text style={styles.label}>{copy('Yeni şifre', 'New password')}</Text>
               <View style={styles.inputRow}>
                 <Ionicons color={authColors.muted} name="lock-closed-outline" size={17} />
                 <TextInput
@@ -111,7 +134,7 @@ export default function ResetPasswordScreen() {
                   onBlur={onBlur}
                   onChangeText={onChange}
                   onSubmitEditing={() => confirmationInputRef.current?.focus()}
-                  placeholder="En az 10 karakter"
+                  placeholder={copy('En az 10 karakter', 'At least 10 characters')}
                   placeholderTextColor={authColors.muted}
                   rejectResponderTermination={false}
                   returnKeyType="next"
@@ -146,7 +169,7 @@ export default function ResetPasswordScreen() {
           name="passwordConfirmation"
           render={({ field: { onBlur, onChange, value } }) => (
             <View style={styles.field}>
-              <Text style={styles.label}>Şifre tekrar</Text>
+              <Text style={styles.label}>{copy('Şifre tekrar', 'Confirm password')}</Text>
               <View style={styles.inputRow}>
                 <Ionicons color={authColors.muted} name="shield-checkmark-outline" size={17} />
                 <TextInput
@@ -157,7 +180,7 @@ export default function ResetPasswordScreen() {
                   cursorColor={authColors.yellow}
                   onBlur={onBlur}
                   onChangeText={onChange}
-                  placeholder="Şifreni tekrar gir"
+                  placeholder={copy('Şifreni tekrar gir', 'Enter your password again')}
                   placeholderTextColor={authColors.muted}
                   rejectResponderTermination={false}
                   returnKeyType="done"
@@ -188,7 +211,10 @@ export default function ResetPasswordScreen() {
           )}
         />
         <AuthNote icon="lock-closed-outline" tone="warning">
-          Güvenlik için şifren değiştiğinde tüm açık oturumların kapatılır.
+          {copy(
+            'Güvenlik için şifren değiştiğinde tüm açık oturumların kapatılır.',
+            'For security, changing your password signs out all active sessions.',
+          )}
         </AuthNote>
         {errors.root?.message ? (
           <Text accessibilityLiveRegion="polite" style={styles.error}>
@@ -196,7 +222,7 @@ export default function ResetPasswordScreen() {
           </Text>
         ) : null}
         <GradientAuthButton icon="checkmark" loading={isSubmitting} onPress={() => void submit()}>
-          Şifreyi güncelle
+          {copy('Şifreyi güncelle', 'Update password')}
         </GradientAuthButton>
       </AuthFormCard>
     </AuthLayout>

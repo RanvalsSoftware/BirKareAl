@@ -1,19 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { apiRequest } from '@/api/client';
-import {
-  authMailToken,
-  EMAIL_REQUEST_NOTICE,
-} from '@/features/auth/email-delivery';
+import { authMailToken, EMAIL_REQUEST_NOTICE } from '@/features/auth/email-delivery';
 
 import {
   AuthBrandBar,
@@ -26,8 +17,10 @@ import {
   GradientAuthButton,
   authColors,
 } from '@/features/auth/auth-ui';
+import { useCopy } from '@/features/settings/language-store';
 
 export default function VerifyEmailScreen() {
+  const copy = useCopy();
   const {
     email: emailParam,
     token: tokenParam,
@@ -38,36 +31,30 @@ export default function VerifyEmailScreen() {
     delivery?: string;
   }>();
 
-  const email =
-    typeof emailParam === 'string'
-      ? emailParam.trim()
-      : '';
+  const email = typeof emailParam === 'string' ? emailParam.trim() : '';
 
   const inputRef = useRef<TextInput>(null);
   const operation = useRef(false);
 
-  const [token, setToken] = useState(
-    authMailToken(tokenParam),
-  );
+  const [token, setToken] = useState(authMailToken(tokenParam));
 
-  const [notice, setNotice] = useState<
-    string | null
-  >(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
-  const [error, setError] = useState<
-    string | null
-  >(null);
+  const [error, setError] = useState<string | null>(null);
 
   const [busy, setBusy] = useState(false);
-  const [resending, setResending] =
-    useState(false);
+  const [resending, setResending] = useState(false);
 
   useEffect(() => {
     const incoming = authMailToken(tokenParam);
-
-    if (incoming) {
-      setToken(incoming);
-    }
+    if (!incoming) return;
+    let active = true;
+    void Promise.resolve().then(() => {
+      if (active) setToken(incoming);
+    });
+    return () => {
+      active = false;
+    };
   }, [tokenParam]);
 
   useEffect(() => {
@@ -99,9 +86,7 @@ export default function VerifyEmailScreen() {
     const normalized = authMailToken(token);
 
     if (normalized.length < 40) {
-      setError(
-        'E-postadaki doğrulama kodunun tamamını gir.',
-      );
+      setError('E-postadaki doğrulama kodunun tamamını gir.');
 
       inputRef.current?.focus();
       return;
@@ -128,11 +113,7 @@ export default function VerifyEmailScreen() {
 
       router.replace('/(auth)/login');
     } catch (reason) {
-      setError(
-        reason instanceof Error
-          ? reason.message
-          : 'Kod doğrulanamadı.',
-      );
+      setError(reason instanceof Error ? reason.message : 'Kod doğrulanamadı.');
     } finally {
       operation.current = false;
       setBusy(false);
@@ -144,13 +125,8 @@ export default function VerifyEmailScreen() {
       return;
     }
 
-    if (
-      !email ||
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-    ) {
-      setError(
-        'Tekrar göndermek için kayıt ekranındaki e-posta adresin gerekli.',
-      );
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('Tekrar göndermek için kayıt ekranındaki e-posta adresin gerekli.');
       return;
     }
 
@@ -175,23 +151,13 @@ export default function VerifyEmailScreen() {
         },
       );
 
-      if (
-        result.developmentVerificationToken
-      ) {
-        setToken(
-          authMailToken(
-            result.developmentVerificationToken,
-          ),
-        );
+      if (result.developmentVerificationToken) {
+        setToken(authMailToken(result.developmentVerificationToken));
       }
 
       setNotice(EMAIL_REQUEST_NOTICE);
     } catch (reason) {
-      setError(
-        reason instanceof Error
-          ? reason.message
-          : 'E-posta gönderilemedi.',
-      );
+      setError(reason instanceof Error ? reason.message : 'E-posta gönderilemedi.');
     } finally {
       operation.current = false;
       setResending(false);
@@ -214,55 +180,36 @@ export default function VerifyEmailScreen() {
       <AuthLogo compact />
 
       <View style={styles.icon}>
-        <Ionicons
-          name="mail-open-outline"
-          size={27}
-          color="#FFC400"
-        />
+        <Ionicons name="mail-open-outline" size={27} color="#FFC400" />
       </View>
 
       <AuthTitle
-        eyebrow="GÜVENLİ BAŞLANGIÇ"
-        title="E-postanı doğrula."
-        subtitle={`Hesabını etkinleştirmek için ${
-          email || 'e-posta adresine'
-        } gelen doğrulama bağlantısını aç veya e-postadaki kodu buraya yapıştır.`}
+        eyebrow={copy('GÜVENLİ BAŞLANGIÇ', 'SECURE START')}
+        title={copy('E-postanı doğrula.', 'Verify your email.')}
+        subtitle={copy(
+          `Hesabını etkinleştirmek için ${email || 'e-posta adresine'} gelen doğrulama bağlantısını aç veya e-postadaki kodu buraya yapıştır.`,
+          `Open the verification link sent to ${email || 'your email address'} or paste the code here to activate your account.`,
+        )}
       />
 
       <AuthFormCard>
         {delivery === 'failed' ? (
-          <AuthNote
-            icon="alert-circle-outline"
-            tone="warning"
-          >
-            Hesabın oluşturuldu ancak doğrulama
-            e-postası gönderilemedi. Yeniden kayıt
-            olman gerekmiyor; aşağıdan e-postayı
-            tekrar göndermeyi deneyebilirsin.
+          <AuthNote icon="alert-circle-outline" tone="warning">
+            Hesabın oluşturuldu ancak doğrulama e-postası gönderilemedi. Yeniden kayıt olman
+            gerekmiyor; aşağıdan e-postayı tekrar göndermeyi deneyebilirsin.
           </AuthNote>
         ) : null}
 
         {/* DOĞRULAMA INPUT */}
         <View style={styles.field}>
-          <Text style={styles.label}>
-            Doğrulama kodu
-          </Text>
+          <Text style={styles.label}>{copy('Doğrulama kodu', 'Verification code')}</Text>
 
-          <View
-            style={[
-              styles.inputRow,
-              error && styles.inputRowError,
-            ]}
-          >
-            <Ionicons
-              color={authColors.yellow}
-              name="key-outline"
-              size={18}
-            />
+          <View style={[styles.inputRow, error && styles.inputRowError]}>
+            <Ionicons color={authColors.yellow} name="key-outline" size={18} />
 
             <TextInput
               ref={inputRef}
-              accessibilityLabel="Doğrulama kodu"
+              accessibilityLabel={copy('Doğrulama kodu', 'Verification code')}
               autoCapitalize="none"
               autoCorrect={false}
               autoComplete="off"
@@ -281,10 +228,11 @@ export default function VerifyEmailScreen() {
               onSubmitEditing={() => {
                 void verify();
               }}
-              placeholder="Doğrulama kodunu gir veya yapıştır"
-              placeholderTextColor={
-                authColors.muted
-              }
+              placeholder={copy(
+                'Doğrulama kodunu gir veya yapıştır',
+                'Enter or paste the verification code',
+              )}
+              placeholderTextColor={authColors.muted}
               rejectResponderTermination={false}
               returnKeyType="done"
               selectionColor={authColors.yellow}
@@ -303,41 +251,33 @@ export default function VerifyEmailScreen() {
                 onPress={clearToken}
                 style={styles.clearButton}
               >
-                <Ionicons
-                  color={authColors.secondary}
-                  name="close-circle"
-                  size={20}
-                />
+                <Ionicons color={authColors.secondary} name="close-circle" size={20} />
               </Pressable>
             ) : null}
           </View>
 
           <Text style={styles.helperText}>
-            E-postadaki doğrulama kodunu eksiksiz
-            olarak buraya yapıştır.
+            {copy(
+              'E-postadaki doğrulama kodunu eksiksiz olarak buraya yapıştır.',
+              'Paste the complete verification code from your email here.',
+            )}
           </Text>
         </View>
 
         {notice ? (
-          <AuthNote
-            icon="checkmark-circle-outline"
-            tone="success"
-          >
+          <AuthNote icon="checkmark-circle-outline" tone="success">
             {notice}
           </AuthNote>
         ) : null}
 
         {error ? (
-          <Text
-            accessibilityLiveRegion="polite"
-            style={styles.error}
-          >
+          <Text accessibilityLiveRegion="polite" style={styles.error}>
             {error}
           </Text>
         ) : null}
 
         <GradientAuthButton
-          accessibilityLabel="E-postamı doğrula"
+          accessibilityLabel={copy('E-postamı doğrula', 'Verify my email')}
           icon="checkmark"
           loading={busy}
           disabled={resending}
@@ -345,7 +285,7 @@ export default function VerifyEmailScreen() {
             void verify();
           }}
         >
-          E-postamı doğrula
+          {copy('E-postamı doğrula', 'Verify my email')}
         </GradientAuthButton>
       </AuthFormCard>
 
@@ -356,16 +296,12 @@ export default function VerifyEmailScreen() {
           }}
         >
           {resending
-            ? 'Talep işleniyor…'
-            : 'E-postayı tekrar gönder'}
+            ? copy('Talep işleniyor…', 'Processing…')
+            : copy('E-postayı tekrar gönder', 'Resend email')}
         </AuthLink>
 
-        <AuthLink
-          onPress={() =>
-            router.push('/(auth)/register')
-          }
-        >
-          E-posta adresini değiştir
+        <AuthLink onPress={() => router.push('/(auth)/register')}>
+          {copy('E-posta adresini değiştir', 'Change email address')}
         </AuthLink>
       </View>
     </AuthLayout>
@@ -401,10 +337,8 @@ const styles = StyleSheet.create({
 
   inputRow: {
     alignItems: 'center',
-    backgroundColor:
-      'rgba(255,255,255,0.025)',
-    borderColor:
-      'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(255,255,255,0.025)',
+    borderColor: 'rgba(255,255,255,0.15)',
     borderRadius: 16,
     borderWidth: 1,
     flexDirection: 'row',

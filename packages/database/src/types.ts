@@ -6,7 +6,7 @@ import type {
   GenerationStatus,
   ProjectMode,
 } from '@birkare/shared';
-import type { CatalogFeaturedPerson, CatalogItem } from '@birkare/shared';
+import type { CatalogFeaturedPerson, CatalogItem, ResolvedStudioSelection } from '@birkare/shared';
 import type { BeautySettings, GenderTransformation, TrendPreset } from '@birkare/shared';
 
 export type UserRole = 'USER' | 'SUPPORT' | 'MODERATOR' | 'ADMIN' | 'SUPER_ADMIN';
@@ -184,12 +184,28 @@ export type GenerationOutputRecord = {
 };
 
 /**
+ * Semantic input roles are persisted with the generation so workers never
+ * infer multi-image meaning from mutable project state or client ordering.
+ */
+export type GenerationInputRole =
+  'PRIMARY_USER' | 'PRODUCT' | 'PRIMARY_PERSON' | 'GARMENT' | 'HAND';
+
+export type GenerationInputRecord = {
+  id: string;
+  generationId: string;
+  assetId: string;
+  role: GenerationInputRole;
+  sortOrder: number;
+  createdAt: Date;
+};
+
+/**
  * A server-validated snapshot of the choices that produced a generation.
  * Keeping this on the generation (rather than only on the mutable project)
  * makes queue retries deterministic and prevents a later UI selection from
  * changing an already submitted job.
  */
-export type GenerationRecipe = {
+export type LegacyGenerationRecipe = {
   version: 1;
   /**
    * Server-validated catalog choices captured when the job was submitted.
@@ -217,6 +233,24 @@ export type GenerationRecipe = {
   character:
     { mode: 'FICTIONAL' } | { mode: 'LICENSED_REFERENCE'; referenceAssetId: string } | null;
 };
+
+/**
+ * Immutable, server-resolved studio plan. IDs originate from the public
+ * contract; routing, price and prompt versions are copied from the server
+ * registry before credits are reserved.
+ */
+export type StudioGenerationRecipe = {
+  version: 2;
+  studio: ResolvedStudioSelection;
+  catalogVersion: string;
+  promptVersion: string;
+  pricingVersion: string;
+  modelLane: 'FAST' | 'PREMIUM';
+  baseCredits: number;
+  hdExtraCredits: number;
+};
+
+export type GenerationRecipe = LegacyGenerationRecipe | StudioGenerationRecipe;
 
 export type GenerationMessageRecord = {
   id: string;
@@ -247,6 +281,7 @@ export type GenerationRecord = {
   provider: string;
   model: string;
   providerRequestId: string | null;
+  providerUsage: { inputTokens?: number; outputTokens?: number } | null;
   reservedCredits: number;
   chargedCredits: number;
   refundedCredits: number;
@@ -259,6 +294,7 @@ export type GenerationRecord = {
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;
+  inputs: GenerationInputRecord[];
   outputs: GenerationOutputRecord[];
 };
 
@@ -299,6 +335,16 @@ export type CreditTransactionRecord = {
   completedAt: Date | null;
 };
 
+export type GrantCreditsInput = {
+  userId: string;
+  amount: number;
+  type: Extract<CreditTransactionRecord['type'], 'PURCHASE' | 'SUBSCRIPTION_GRANT' | 'BONUS'>;
+  referenceType: string;
+  referenceId: string;
+  idempotencyKey: string;
+  description?: string;
+};
+
 export type IdempotencyRecord = {
   id: string;
   userId: string | null;
@@ -325,7 +371,10 @@ export type SupportTicketRecord = {
   updatedAt: Date;
   sentAt: Date | null;
 };
-export type CreateSupportTicketInput = Omit<SupportTicketRecord, 'id' | 'status' | 'createdAt' | 'updatedAt' | 'sentAt'>;
+export type CreateSupportTicketInput = Omit<
+  SupportTicketRecord,
+  'id' | 'status' | 'createdAt' | 'updatedAt' | 'sentAt'
+>;
 
 export type CatalogSnapshot = {
   scenes: CatalogItem[];
@@ -411,7 +460,13 @@ export type CreateGenerationInput = Pick<
   | 'provider'
   | 'model'
   | 'reservedCredits'
-> & { id?: string };
+> & {
+  id?: string;
+  compiledPrompt?: string | null;
+  promptVersion?: string | null;
+  /** Defaults to one PRIMARY_USER row for legacy callers. */
+  inputs?: Array<{ assetId: string; role: GenerationInputRole; sortOrder: number }>;
+};
 
 export interface BirKareRepository {
   readonly kind: 'memory' | 'prisma';
@@ -513,7 +568,7 @@ export interface BirKareRepository {
     input: Partial<
       Omit<
         GenerationRecord,
-        'id' | 'userId' | 'projectId' | 'sourceAssetId' | 'createdAt' | 'outputs'
+        'id' | 'userId' | 'projectId' | 'sourceAssetId' | 'createdAt' | 'inputs' | 'outputs'
       >
     >,
   ): Promise<GenerationRecord>;
@@ -544,12 +599,23 @@ export interface BirKareRepository {
     amount: number;
     reason?: string;
   }): Promise<CreditWalletRecord>;
+  grantCredits(input: GrantCreditsInput): Promise<{
+    wallet: CreditWalletRecord;
+    transaction: CreditTransactionRecord;
+    created: boolean;
+  }>;
   listCreditTransactions(userId: string): Promise<CreditTransactionRecord[]>;
 
   getIdempotency(route: string, key: string): Promise<IdempotencyRecord | null>;
   putIdempotency(input: Omit<IdempotencyRecord, 'id' | 'createdAt'>): Promise<IdempotencyRecord>;
   /** Only created=true owns the first and only automatic delivery attempt. */
-  claimSupportTicket(input: CreateSupportTicketInput): Promise<{ ticket: SupportTicketRecord; created: boolean }>;
+  claimSupportTicket(
+    input: CreateSupportTicketInput,
+  ): Promise<{ ticket: SupportTicketRecord; created: boolean }>;
   getSupportTicket(userId: string, ticketId: string): Promise<SupportTicketRecord | null>;
-  completeSupportTicketDelivery(userId: string, ticketId: string, status: 'SENT' | 'UNCONFIRMED'): Promise<SupportTicketRecord>;
+  completeSupportTicketDelivery(
+    userId: string,
+    ticketId: string,
+    status: 'SENT' | 'UNCONFIRMED',
+  ): Promise<SupportTicketRecord>;
 }

@@ -25,9 +25,13 @@ export function createUsersRouter(deps: ApiDependencies): Router {
     asyncHandler(async (req, res) => {
       const user = await deps.repository.getUserById(req.auth!.userId);
       if (!user) throw notFound('USER_NOT_FOUND', 'Kullanıcı bulunamadı.');
-      const wallet = await deps.repository.getWallet(user.id);
+      const [wallet, authProviders] = await Promise.all([
+        deps.repository.getWallet(user.id),
+        deps.repository.listAuthProviders(user.id),
+      ]);
       sendSuccess(res, req.requestId, {
         user: toPublicUser(user),
+        authProviders,
         preferences: user.preferences,
         wallet: { available: wallet.available, reserved: wallet.reserved },
       });

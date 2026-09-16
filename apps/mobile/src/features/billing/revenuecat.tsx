@@ -2,6 +2,7 @@ import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { useEffect, useSyncExternalStore } from 'react';
 import { AppState, Platform } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/api/client';
 import { useAuthStore } from '@/features/auth/auth-store';
 import { accountQueryKey } from '@/features/auth/account-query-cache';
 import { CREDIT_WALLET_QUERY_KEY } from './use-wallet';
@@ -84,12 +85,19 @@ export function RevenueCatBootstrap() {
       if (state.customerInfo === lastInfo) return;
       lastInfo = state.customerInfo;
       if (state.customerInfo && state.userId === getUserId()) {
-        // Read the authoritative backend wallet; never add credits on-device.
-        void queryClient
-          .invalidateQueries({
-            queryKey: accountQueryKey(CREDIT_WALLET_QUERY_KEY, state.userId ?? undefined),
-          })
-          .catch(() => undefined);
+        // RevenueCat CustomerInfo controls the paywall UI only. Ask the API to
+        // verify the same App User ID with RevenueCat's server API, grant any
+        // due period credits idempotently, and then reload the authoritative
+        // wallet. A client payload can never mint credits by itself.
+        void apiRequest('/v1/billing/revenuecat/sync', { method: 'POST' })
+          .catch(() => undefined)
+          .finally(() =>
+            queryClient
+              .invalidateQueries({
+                queryKey: accountQueryKey(CREDIT_WALLET_QUERY_KEY, state.userId ?? undefined),
+              })
+              .catch(() => undefined),
+          );
       }
     });
     const appState = AppState.addEventListener('change', (state) => {

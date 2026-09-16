@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../../middleware/auth.middleware.js';
+import { billingSyncRateLimit } from '../../middleware/rate-limit.middleware.js';
 import type { ApiDependencies } from '../../services/dependencies.js';
 import { asyncHandler, sendSuccess } from '../../services/http.js';
 
@@ -18,7 +19,7 @@ const revenueCatProducts = [
     id: 'pro.annual',
     packageIdentifier: '$rc_annual',
     kind: 'subscription',
-    creditPolicy: { cadence: 'monthly', amount: 100 },
+    creditPolicy: { cadence: 'monthly', amount: 80 },
     testStoreProductId: 'yearly',
     platformProductIds: { ios: 'com.birkareai.pro.yearly' },
   },
@@ -34,7 +35,45 @@ const revenueCatProducts = [
 
 export function createBillingRouter(deps: ApiDependencies): Router {
   const router = Router();
+
+  // RevenueCat calls this endpoint directly, so it must remain outside mobile
+  // JWT authentication. The service performs timing-safe token verification
+  // before touching a user or granting credits.
+  router.post(
+    '/revenuecat/webhook',
+    asyncHandler(async (req, res) => {
+      const result = await deps.revenueCatService.processWebhook(
+        req.get('authorization'),
+        req.body,
+        {
+          signature: req.get('x-revenuecat-webhook-signature'),
+          rawBody: req.rawBody,
+        },
+      );
+      sendSuccess(res, req.requestId, result);
+    }),
+  );
+
   router.use(requireAuth(deps.tokenService, deps.repository));
+
+  router.get(
+    '/revenuecat/status',
+    asyncHandler(async (req, res) => {
+      sendSuccess(res, req.requestId, await deps.revenueCatService.readStatus(req.auth!.userId));
+    }),
+  );
+
+  router.post(
+    '/revenuecat/sync',
+    billingSyncRateLimit,
+    asyncHandler(async (req, res) => {
+      sendSuccess(
+        res,
+        req.requestId,
+        await deps.revenueCatService.readStatus(req.auth!.userId, true),
+      );
+    }),
+  );
 
   router.get(
     '/wallet',

@@ -11,9 +11,24 @@ export const trendPresets = [
   },
   {
     id: 'pop_icon_80s',
-    name: '80’ler Pop İkonu',
-    description: 'Hacimli saçlar, deri detaylar ve retro sahne ışıkları.',
-    detail: 'Omuz üzerinden bakış, siyah deri ceket, mor ve mavi ışıklarla retro müzik stüdyosu.',
+    name: '80’ler Retro',
+    description: 'Pop sahnesi, şık akşam yemeği ve yakın portreyle üç retro görünüm.',
+    detail:
+      'Hacimli saçlar, deri detaylar ve pembe-mavi sahne ışıklarıyla güçlü bir 80’ler pop portresi.',
+  },
+  {
+    id: 'romantic_dinner_80s',
+    name: 'Şık Akşam Yemeği',
+    description: 'Mum ışığı, gece manzarası ve zarif 80’ler davet stili.',
+    detail:
+      'Kaynak fotoğraftaki kişileri koruyan, mumlarla aydınlanan şık bir masada sıcak altın ve pembe ışıklı 80’ler gecesi.',
+  },
+  {
+    id: 'romantic_closeup_80s',
+    name: 'Yakın Retro Portre',
+    description: 'Denim, deri ve neonlarla samimi analog yakın plan.',
+    detail:
+      'Retro lokanta atmosferinde denim ve deri detayları, doğrudan flaş ve kontrollü film dokusuyla yakın portre.',
   },
   {
     id: 'analog_90s',
@@ -62,6 +77,17 @@ export const trendPresets = [
 ] as const;
 
 export type TrendPresetId = (typeof trendPresets)[number]['id'];
+
+export const EIGHTIES_TREND_IDS = [
+  'pop_icon_80s',
+  'romantic_dinner_80s',
+  'romantic_closeup_80s',
+] as const satisfies readonly TrendPresetId[];
+
+export function isEightiesTrend(id: string | null | undefined): id is TrendPresetId {
+  return EIGHTIES_TREND_IDS.some((presetId) => presetId === id);
+}
+
 export function getTrendPreset(id: string | null | undefined) {
   return trendPresets.find((preset) => preset.id === id) ?? null;
 }

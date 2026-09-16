@@ -2043,7 +2043,10 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   sceneGridItem: {
-    width: '48.4%',
+    flexBasis: '46%',
+    flexGrow: 1,
+    maxWidth: '49%',
+    minWidth: 0,
   },
   sceneCard: {
     aspectRatio: 1122 / 1402,

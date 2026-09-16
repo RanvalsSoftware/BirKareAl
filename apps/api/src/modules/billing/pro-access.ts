@@ -1,16 +1,6 @@
-import type { BirKareRepository, GenerationRecipe, ProjectRecord } from '@birkare/database';
-import type { BirKareConfig } from '@birkare/config';
-import { createRevenueCatService, type RevenueCatService } from './revenuecat.service.js';
-
-const services = new WeakMap<BirKareRepository, RevenueCatService>();
-
-function service(config: BirKareConfig, repository: BirKareRepository): RevenueCatService {
-  const existing = services.get(repository);
-  if (existing) return existing;
-  const created = createRevenueCatService({ config, repository });
-  services.set(repository, created);
-  return created;
-}
+import type { BirKareRepository, LegacyGenerationRecipe, ProjectRecord } from '@birkare/database';
+import { premiumBeautySelections } from '@birkare/shared';
+import type { RevenueCatService } from './revenuecat.service.js';
 
 /**
  * Enforces Pro on the server immediately before credit reservation and queueing.
@@ -18,11 +8,12 @@ function service(config: BirKareConfig, repository: BirKareRepository): RevenueC
  * character flows or professional portraits.
  */
 export async function assertProGenerationAccess(input: {
-  config: BirKareConfig;
   repository: BirKareRepository;
+  revenueCatService: RevenueCatService;
   userId: string;
   project: ProjectRecord;
-  selection: NonNullable<GenerationRecipe['selection']> | ProjectRecord;
+  recipe: LegacyGenerationRecipe;
+  selection: NonNullable<LegacyGenerationRecipe['selection']> | ProjectRecord;
 }): Promise<void> {
   const catalog = await input.repository.getCatalog();
   const scene = input.selection.sceneTemplateId
@@ -38,10 +29,11 @@ export async function assertProGenerationAccess(input: {
     input.project.mode === 'PRO_PORTRAIT' ||
     input.project.mode === 'FAN_MOMENT' ||
     Boolean(input.selection.featuredPersonId) ||
+    Boolean(input.recipe.beauty && premiumBeautySelections(input.recipe.beauty).length) ||
     Boolean(scene?.isPro) ||
     Boolean(style?.isPro);
 
   if (requiresPro) {
-    await service(input.config, input.repository).assertActive(input.userId);
+    await input.revenueCatService.assertActive(input.userId);
   }
 }

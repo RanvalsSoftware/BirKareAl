@@ -27,7 +27,10 @@ type Preferences = {
   reducedMotion: boolean;
   glassEffects: boolean;
 };
-type AccountResponse = { preferences: Preferences };
+type AccountResponse = {
+  authProviders?: ('PASSWORD' | 'GOOGLE' | 'APPLE')[];
+  preferences: Preferences;
+};
 type Message = { text: string; error?: boolean } | null;
 
 function useFeedback() {
@@ -241,15 +244,6 @@ function Appearance() {
         description="Fotoğraflarını öne çıkaran siyah arka plan ve yumuşak cam yansımaları."
         tone="iridescent"
       />
-      <SettingsSectionTitle>TEMA</SettingsSectionTitle>
-      <View style={styles.previews}>
-        <ThemePreview dark />
-        <ThemePreview dark={false} />
-      </View>
-      <SettingsNote>
-        Bu sürüm yalnızca koyu temada çalışır. Cihazın açık temada olsa da BirKare’nin arka planı
-        siyah kalır.
-      </SettingsNote>
       <SettingsSectionTitle>EFEKTLER VE ERİŞİLEBİLİRLİK</SettingsSectionTitle>
       <GlassSettingsPanel>
         <GlassSettingsRow
@@ -283,7 +277,6 @@ function Appearance() {
             />
           }
         />
-        <GlassSettingsRow icon="language-outline" title="Uygulama dili" value="Türkçe" last />
       </GlassSettingsPanel>
       <Feedback message={feedback.message} />
       <SettingsNote>
@@ -292,48 +285,6 @@ function Appearance() {
           : 'Sistemin Hareketi Azalt ve Saydamlığı Azalt tercihleri her zaman korunur.'}
       </SettingsNote>
     </SettingsPage>
-  );
-}
-
-function ThemePreview({ dark }: { dark: boolean }) {
-  return (
-    <GlassSurface
-      radius={23}
-      tone={dark ? 'gold' : 'iridescent'}
-      selected={dark}
-      style={styles.themeCard}
-      contentStyle={styles.themeCardContent}
-      accessible
-      accessibilityLabel={dark ? 'Koyu tema, seçili' : 'Açık tema, bu sürümde kullanılamıyor'}
-    >
-      <View style={[styles.miniScreen, !dark && styles.miniScreenLight]}>
-        <View style={styles.miniHeader}>
-          <View style={[styles.miniAvatar, !dark && styles.miniAvatarLight]} />
-          <View style={[styles.miniLine, !dark && styles.miniLineLight]} />
-        </View>
-        <View style={[styles.miniHero, !dark && styles.miniHeroLight]}>
-          <Icon
-            name={dark ? 'moon-outline' : 'sunny-outline'}
-            size={29}
-            color={dark ? '#E9C662' : '#91829F'}
-          />
-        </View>
-        <View style={styles.miniRow}>
-          {[0, 1, 2].map((index) => (
-            <View key={index} style={[styles.miniTile, !dark && styles.miniTileLight]} />
-          ))}
-        </View>
-      </View>
-      <View style={styles.themeCaption}>
-        <Text style={[styles.themeTitle, dark && styles.goldText]}>{dark ? 'Koyu' : 'Açık'}</Text>
-        <Icon
-          name={dark ? 'checkmark-circle' : 'lock-closed-outline'}
-          size={18}
-          color={dark ? colors.accentYellow : '#97919F'}
-        />
-      </View>
-      <Text style={styles.themeDetail}>{dark ? 'Şu an kullanılıyor' : 'Bu sürümde yok'}</Text>
-    </GlassSurface>
   );
 }
 
@@ -517,6 +468,11 @@ function Security() {
     queryFn: () => apiRequest<{ items: Session[] }>('/v1/auth/sessions'),
     enabled: Boolean(userId),
   });
+  const accountQuery = useQuery({
+    queryKey: ['account-security', userId],
+    queryFn: () => apiRequest<AccountResponse>('/v1/me'),
+    enabled: Boolean(userId),
+  });
   const feedback = useFeedback();
   const [working, setWorking] = useState(false);
   const active =
@@ -524,6 +480,7 @@ function Security() {
       (session) =>
         !session.revokedAt && new Date(session.expiresAt).getTime() > query.dataUpdatedAt,
     ) ?? [];
+  const googleLinked = accountQuery.data?.authProviders?.includes('GOOGLE') === true;
   async function revoke(id: string) {
     setWorking(true);
     try {
@@ -567,19 +524,33 @@ function Security() {
       </GlassSettingsPanel>
       <SettingsSectionTitle>GOOGLE İLE GİRİŞ</SettingsSectionTitle>
       <View style={styles.googleButton}>
-        <GoogleSignInButton
-          label="Google hesabını bağla"
-          disabled={working}
-          onSuccess={async (token) => {
-            await useAuthStore.getState().linkGoogleAccount(token);
-            feedback.success('Google hesabın başarıyla bağlandı.');
-          }}
-          onError={feedback.error}
-        />
+        {googleLinked ? (
+          <GlassSettingsPanel tone="neutral">
+            <GlassSettingsRow
+              icon="checkmark-circle"
+              title="Google hesabı bağlı"
+              detail="Bu giriş yöntemi hesabında etkin"
+              value="Bağlı"
+              last
+            />
+          </GlassSettingsPanel>
+        ) : (
+          <GoogleSignInButton
+            label={accountQuery.isLoading ? 'Bağlantı kontrol ediliyor…' : 'Google hesabını bağla'}
+            disabled={working || accountQuery.isLoading}
+            onSuccess={async (token) => {
+              await useAuthStore.getState().linkGoogleAccount(token);
+              await accountQuery.refetch();
+              feedback.success('Google hesabın başarıyla bağlandı.');
+            }}
+            onError={feedback.error}
+          />
+        )}
       </View>
       <Text style={styles.helper}>
-        Mevcut hesabınla aynı e-posta adresine sahip Google hesabını doğrulayarak sonraki
-        girişlerinde kullanabilirsin.
+        {googleLinked
+          ? 'Google hesabın doğrulandı; sonraki girişlerinde bu yöntemi kullanabilirsin.'
+          : 'Mevcut hesabınla aynı e-posta adresine sahip Google hesabını doğrulayarak sonraki girişlerinde kullanabilirsin.'}
       </Text>
       <SettingsSectionTitle>AKTİF OTURUMLAR</SettingsSectionTitle>
       <GlassSettingsPanel>
@@ -735,44 +706,6 @@ function History() {
 
 const styles = StyleSheet.create({
   nameForm: { paddingVertical: 17, gap: 19 },
-  previews: { flexDirection: 'row', gap: 13, marginBottom: 13 },
-  themeCard: { flex: 1 },
-  themeCardContent: { padding: 13 },
-  miniScreen: {
-    backgroundColor: '#0A0A0B',
-    borderRadius: 13,
-    padding: 9,
-    borderWidth: 1,
-    borderColor: '#363339',
-    minHeight: 137,
-  },
-  miniScreenLight: { backgroundColor: '#E4E1E8', borderColor: '#BFB7C7' },
-  miniHeader: { flexDirection: 'row', gap: 5, alignItems: 'center' },
-  miniAvatar: { height: 13, width: 13, borderRadius: 7, backgroundColor: '#D6B45D' },
-  miniAvatarLight: { backgroundColor: '#A89BB6' },
-  miniLine: { height: 4, width: 42, backgroundColor: '#575056', borderRadius: 2 },
-  miniLineLight: { backgroundColor: '#BBB3C4' },
-  miniHero: {
-    marginTop: 10,
-    borderRadius: 8,
-    height: 58,
-    backgroundColor: '#242023',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  miniHeroLight: { backgroundColor: '#CCC3D7' },
-  miniRow: { flexDirection: 'row', gap: 4, marginTop: 9 },
-  miniTile: { flex: 1, height: 24, borderRadius: 5, backgroundColor: '#2C272C' },
-  miniTileLight: { backgroundColor: '#D3CBDD' },
-  themeCaption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 12,
-  },
-  themeTitle: { fontSize: 15, fontWeight: '600', color: '#B8B1C0' },
-  goldText: { color: colors.accentYellow },
-  themeDetail: { color: '#97909F', fontSize: 10, lineHeight: 15, marginTop: 3 },
   googleButton: { marginBottom: 9 },
   helper: { color: '#99949F', fontSize: 12, lineHeight: 19, marginBottom: 12 },
 });

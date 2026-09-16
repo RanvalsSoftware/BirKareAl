@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Icon } from '@/components';
@@ -17,29 +17,29 @@ export function IntensitySlider({
   label?: string;
 }) {
   const [width, setWidth] = useState(1);
-  const latest = useRef({ onChange, width, disabled });
-  latest.current = { onChange, width, disabled };
-  const responder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => !latest.current.disabled,
-      onMoveShouldSetPanResponder: (_, gesture) =>
-        !latest.current.disabled && Math.abs(gesture.dx) > Math.abs(gesture.dy),
-      onPanResponderGrant: (event) =>
-        latest.current.onChange(
-          Math.max(
-            0,
-            Math.min(100, Math.round((event.nativeEvent.locationX / latest.current.width) * 100)),
+  const responder = useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponder: () => !disabled,
+        onMoveShouldSetPanResponder: (_, gesture) =>
+          !disabled && Math.abs(gesture.dx) > Math.abs(gesture.dy),
+        onPanResponderGrant: (event) =>
+          onChange(
+            Math.max(
+              0,
+              Math.min(100, Math.round((event.nativeEvent.locationX / width) * 100)),
+            ),
           ),
-        ),
-      onPanResponderMove: (event) =>
-        latest.current.onChange(
-          Math.max(
-            0,
-            Math.min(100, Math.round((event.nativeEvent.locationX / latest.current.width) * 100)),
+        onPanResponderMove: (event) =>
+          onChange(
+            Math.max(
+              0,
+              Math.min(100, Math.round((event.nativeEvent.locationX / width) * 100)),
+            ),
           ),
-        ),
-    }),
-  ).current;
+      }),
+    [disabled, onChange, width],
+  );
   return (
     <View style={[styles.row, disabled && styles.disabled]}>
       <Pressable

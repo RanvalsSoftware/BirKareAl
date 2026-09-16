@@ -69,6 +69,9 @@ enum ProjectMode {
   FAN_MOMENT
   AI_FILTER
   PRO_PORTRAIT
+  PRODUCT_STUDIO
+  VIRTUAL_TRY_ON
+  NAIL_PREVIEW
 }
 
 enum ProjectStatus {
@@ -484,7 +487,7 @@ model Generation {
   compiledPrompt      String?
   promptVersion       String?
   provider            String            @default("OPENAI")
-  model               String            @default("gpt-image-1-mini")
+  model               String            @default("gpt-image-2")
   providerRequestId   String?
   providerUsage       Json?
   reservedCredits     Int               @default(0)

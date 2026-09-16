@@ -31,7 +31,7 @@ function resolveRevenueCatConfig(values) {
 
   const iosApiKey = validate(
     values.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY?.trim() ||
-      (release ? DEFAULT_IOS_PUBLIC_KEY : DEVELOPMENT_TEST_KEY),
+      DEFAULT_IOS_PUBLIC_KEY,
     'EXPO_PUBLIC_REVENUECAT_IOS_API_KEY',
     'appl_',
   );

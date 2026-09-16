@@ -4,6 +4,9 @@ export const PROJECT_MODES = [
   'FAN_MOMENT',
   'AI_FILTER',
   'PRO_PORTRAIT',
+  'PRODUCT_STUDIO',
+  'VIRTUAL_TRY_ON',
+  'NAIL_PREVIEW',
 ] as const;
 
 export type ProjectMode = (typeof PROJECT_MODES)[number];

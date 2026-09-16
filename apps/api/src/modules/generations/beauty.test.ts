@@ -5,7 +5,7 @@ import {
   CreateGenerationSchema,
   CreatePreviewGenerationSchema,
 } from '@birkare/contracts';
-import { catalogFixtures, type BeautySettings } from '@birkare/shared';
+import { catalogFixtures, premiumBeautySelections, type BeautySettings } from '@birkare/shared';
 import { buildGenerationPrompt, normalizeGenerationRecipe } from '@birkare/ai';
 import {
   buildBeautyPrompt,
@@ -88,25 +88,18 @@ test('beauty rejects out-of-range, unknown prompt fields, no-op, cross-mode and 
   }
 });
 
-test('PRO authorization fails closed server-side while zero-strength PRO layers do not block free layers', () => {
+test('premium beauty detection ignores zero-strength layers and identifies every paid PRO choice', () => {
   assert.doesNotThrow(() => assertBeautyAccess({ mode: 'AI_FILTER', beauty: beauty() }));
   for (const id of ['faceContour', 'youthfulLook'] as const) {
     const value = beauty();
+    assert.deepEqual(premiumBeautySelections(value), []);
     value.adjustments[id] = 1;
-    assert.throws(
-      () => assertBeautyAccess({ mode: 'AI_FILTER', beauty: value }),
-      /henüz kullanıma açılmadı/,
-    );
+    assert.deepEqual(premiumBeautySelections(value), [id]);
   }
   for (const preset of ['soft-glam', 'evening-glam'] as const) {
-    assert.throws(
-      () =>
-        assertBeautyAccess({
-          mode: 'AI_FILTER',
-          beauty: beauty({ makeup: { preset, intensity: 1 } }),
-        }),
-      /henüz kullanıma açılmadı/,
-    );
+    assert.deepEqual(premiumBeautySelections(beauty({ makeup: { preset, intensity: 1 } })), [
+      preset,
+    ]);
   }
 });
 

@@ -46,7 +46,7 @@ export default function SceneScreen() {
             palette={scene.palette}
             imageSource={scene.previewSource}
             icon={scene.icon}
-            badge={scene.isPro ? 'PRO' : `${scene.creditCost} kredi`}
+            badge={scene.isPro ? 'PRO · +1' : `+${scene.creditCost} kredi`}
             selected={chosen === scene.id}
             onPress={() =>
               set(

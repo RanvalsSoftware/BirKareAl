@@ -36,8 +36,10 @@ import {
   type SocialCompleteFormValues,
   type SocialCompleteValues,
 } from '@/features/auth/validation';
+import { useCopy } from '@/features/settings/language-store';
 
 export default function SocialCompleteScreen() {
+  const copy = useCopy();
   const completeSocialRegistration = useAuthStore((store) => store.completeSocialRegistration);
   const [pendingRegistration] = useState(getPendingSocialRegistration);
   const lastNameInput = useRef<TextInput>(null);
@@ -81,7 +83,7 @@ export default function SocialCompleteScreen() {
     if (!pendingRegistration) {
       setError('root', {
         message:
-          'Bu sosyal kayıt oturumu bulunamadı veya süresi doldu. Lütfen Google ile yeniden devam et.',
+          'Bu sosyal kayıt oturumu bulunamadı veya süresi doldu. Lütfen yeniden sosyal giriş yap.',
       });
       return;
     }
@@ -122,9 +124,12 @@ export default function SocialCompleteScreen() {
       <AuthBrandBar onBack={goBack} />
       <AuthLogo compact />
       <AuthTitle
-        eyebrow="PROFİLİ TAMAMLA"
-        title="Bilgilerini tamamla."
-        subtitle="Sosyal girişini tamamlamak için profil bilgilerini kontrol et."
+        eyebrow={copy('PROFİLİ TAMAMLA', 'COMPLETE PROFILE')}
+        title={copy('Bilgilerini tamamla.', 'Complete your details.')}
+        subtitle={copy(
+          'Sosyal girişini tamamlamak için profil bilgilerini kontrol et.',
+          'Review your profile details to complete social sign-in.',
+        )}
       />
       <AuthFormCard>
         <AuthNote
@@ -132,15 +137,15 @@ export default function SocialCompleteScreen() {
           tone={pendingRegistration ? 'neutral' : 'warning'}
         >
           {pendingRegistration
-            ? `Google ile doğrulanan hesap: ${pendingRegistration.profile.email}`
-            : 'Sosyal kayıt oturumun bulunamadı. Giriş ekranından Google ile yeniden devam et.'}
+            ? `${pendingRegistration.provider ?? 'Sosyal giriş'} ile doğrulanan hesap: ${pendingRegistration.profile.email}`
+            : 'Sosyal kayıt oturumun bulunamadı. Giriş ekranından yeniden devam et.'}
         </AuthNote>
         <Controller
           control={control}
           name="firstName"
           render={({ field: { onBlur, onChange, value, ref } }) => (
             <View style={styles.field}>
-              <Text style={styles.label}>Ad</Text>
+              <Text style={styles.label}>{copy('Ad', 'First name')}</Text>
               <View style={styles.inputRow}>
                 <Ionicons color={authColors.yellow} name="person-outline" size={18} />
                 <TextInput
@@ -155,7 +160,7 @@ export default function SocialCompleteScreen() {
                   onBlur={onBlur}
                   onChangeText={onChange}
                   onSubmitEditing={() => lastNameInput.current?.focus()}
-                  placeholder="Adın"
+                  placeholder={copy('Adın', 'Your first name')}
                   placeholderTextColor={authColors.muted}
                   rejectResponderTermination={false}
                   returnKeyType="next"
@@ -176,7 +181,7 @@ export default function SocialCompleteScreen() {
           name="lastName"
           render={({ field: { onBlur, onChange, value, ref } }) => (
             <View style={styles.field}>
-              <Text style={styles.label}>Soyad</Text>
+              <Text style={styles.label}>{copy('Soyad', 'Last name')}</Text>
               <View style={styles.inputRow}>
                 <Ionicons color={authColors.yellow} name="person-outline" size={18} />
                 <TextInput
@@ -194,7 +199,7 @@ export default function SocialCompleteScreen() {
                   onBlur={onBlur}
                   onChangeText={onChange}
                   onSubmitEditing={() => birthYearInput.current?.focus()}
-                  placeholder="Soyadın"
+                  placeholder={copy('Soyadın', 'Your last name')}
                   placeholderTextColor={authColors.muted}
                   rejectResponderTermination={false}
                   returnKeyType="next"
@@ -215,7 +220,7 @@ export default function SocialCompleteScreen() {
           name="birthYear"
           render={({ field: { onBlur, onChange, value, ref } }) => (
             <View style={styles.field}>
-              <Text style={styles.label}>Doğum yılı</Text>
+              <Text style={styles.label}>{copy('Doğum yılı', 'Birth year')}</Text>
               <View style={styles.inputRow}>
                 <Ionicons color={authColors.yellow} name="calendar-outline" size={18} />
                 <TextInput
@@ -258,14 +263,14 @@ export default function SocialCompleteScreen() {
             <CheckRow
               checked={value}
               documentLink={{
-                label: 'Kullanım Koşulları',
+                label: copy('Kullanım Koşulları', 'Terms of Use'),
                 onPress: () =>
                   router.push({ pathname: '/legal/[document]', params: { document: 'terms' } }),
               }}
               error={errors.acceptedTerms?.message}
               onPress={() => onChange(!value)}
             >
-              ’nı okudum ve kabul ediyorum.
+              {copy('’nı okudum ve kabul ediyorum.', ' — I have read and accept them.')}
             </CheckRow>
           )}
         />
@@ -276,14 +281,14 @@ export default function SocialCompleteScreen() {
             <CheckRow
               checked={value}
               documentLink={{
-                label: 'Gizlilik Politikası',
+                label: copy('Gizlilik Politikası', 'Privacy Policy'),
                 onPress: () =>
                   router.push({ pathname: '/legal/[document]', params: { document: 'privacy' } }),
               }}
               error={errors.acceptedPrivacy?.message}
               onPress={() => onChange(!value)}
             >
-              ’nı okudum ve kabul ediyorum.
+              {copy('’nı okudum ve kabul ediyorum.', ' — I have read and accept it.')}
             </CheckRow>
           )}
         />
@@ -296,7 +301,10 @@ export default function SocialCompleteScreen() {
               error={errors.acceptedAiDisclosure?.message}
               onPress={() => onChange(!value)}
             >
-              AI içerik açıklamasını kabul ediyorum.
+              {copy(
+                'AI içerik açıklamasını kabul ediyorum.',
+                'I accept the AI content disclosure.',
+              )}
             </CheckRow>
           )}
         />
@@ -309,7 +317,7 @@ export default function SocialCompleteScreen() {
               error={errors.acceptedAge?.message}
               onPress={() => onChange(!value)}
             >
-              18 yaşını doldurduğumu onaylıyorum.
+              {copy('18 yaşını doldurduğumu onaylıyorum.', 'I confirm that I am at least 18.')}
             </CheckRow>
           )}
         />
@@ -322,7 +330,7 @@ export default function SocialCompleteScreen() {
               error={errors.acceptedImageRights?.message}
               onPress={() => onChange(!value)}
             >
-              Fotoğraf kullanım hakkına sahibim.
+              {copy('Fotoğraf kullanım hakkına sahibim.', 'I have the right to use this photo.')}
             </CheckRow>
           )}
         />
@@ -331,7 +339,9 @@ export default function SocialCompleteScreen() {
             <View style={styles.successIcon}>
               <Ionicons color="#08180D" name="checkmark" size={19} />
             </View>
-            <Text style={styles.successText}>Başarıyla kayıt oldunuz.</Text>
+            <Text style={styles.successText}>
+              {copy('Başarıyla kayıt oldunuz.', 'Your account was created successfully.')}
+            </Text>
           </View>
         ) : null}
         <GradientAuthButton
@@ -339,7 +349,7 @@ export default function SocialCompleteScreen() {
           loading={isSubmitting}
           onPress={() => void submit()}
         >
-          Devam et
+          {copy('Devam et', 'Continue')}
         </GradientAuthButton>
         {errors.root?.message ? <Text style={styles.error}>{errors.root.message}</Text> : null}
       </AuthFormCard>
@@ -352,7 +362,7 @@ export default function SocialCompleteScreen() {
               onPress={Keyboard.dismiss}
               style={styles.keyboardDone}
             >
-              <Text style={styles.keyboardDoneText}>Tamam</Text>
+              <Text style={styles.keyboardDoneText}>{copy('Tamam', 'Done')}</Text>
             </Pressable>
           </View>
         </InputAccessoryView>

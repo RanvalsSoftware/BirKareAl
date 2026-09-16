@@ -7,3 +7,4 @@ export * from './envelope.js';
 export * from './errors.js';
 export * from './policy.js';
 export * from './quote.js';
+export * from './studio.js';

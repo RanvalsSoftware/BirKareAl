@@ -3,8 +3,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuthStore } from '@/features/auth/auth-store';
+import { AppleSignInButton } from '@/features/auth/apple-sign-in';
 import { GoogleSignInButton } from '@/features/auth/google-sign-in';
 import { setPendingSocialRegistration } from '@/features/auth/social-registration';
 import { consumePendingOnboardingCreateDraft } from '@/features/create/createFlow';
@@ -18,14 +19,16 @@ import {
   AuthTitle,
   Divider,
   GradientAuthButton,
-  SocialButton,
   authColors,
 } from '@/features/auth/auth-ui';
 import { loginSchema, type LoginValues } from '@/features/auth/validation';
+import { useCopy } from '@/features/settings/language-store';
 
 export default function LoginScreen() {
+  const copy = useCopy();
   const signIn = useAuthStore((store) => store.signIn);
   const signInWithGoogle = useAuthStore((store) => store.signInWithGoogle);
+  const signInWithApple = useAuthStore((store) => store.signInWithApple);
   const passwordInputRef = useRef<TextInput>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [socialError, setSocialError] = useState<string | null>(null);
@@ -68,7 +71,12 @@ export default function LoginScreen() {
     } catch (error) {
       setError('root', {
         message:
-          error instanceof Error ? error.message : 'Giriş yapılamadı. Lütfen tekrar deneyin.',
+          error instanceof Error
+            ? error.message
+            : copy(
+                'Giriş yapılamadı. Lütfen tekrar deneyin.',
+                'Could not sign in. Please try again.',
+              ),
       });
     }
   });
@@ -81,6 +89,7 @@ export default function LoginScreen() {
         setPendingSocialRegistration({
           pendingToken: result.pendingToken,
           profile: result.profile,
+          provider: 'Google',
         });
         router.push('/(auth)/social-complete');
         return;
@@ -94,36 +103,49 @@ export default function LoginScreen() {
     setSocialError(error.message);
   }, []);
 
-  const socialSignIn = (provider: 'apple') => {
-    const label = provider === 'apple' ? 'Apple' : 'Google';
-    Alert.alert(
-      `${label} ile giriş`,
-      `${label} kimliği ve sunucu tarafı ID-token doğrulaması bu dağıtım ortamı için henüz tanımlı değil. E-posta ile güvenle giriş yapabilir veya kayıt olabilirsin.`,
-    );
-  };
+  const completeAppleSignIn = useCallback(
+    async (input: { idToken: string; firstName?: string; lastName?: string }) => {
+      setSocialError(null);
+      const result = await signInWithApple(input);
+      if (result.kind === 'profile_completion_required') {
+        setPendingSocialRegistration({
+          pendingToken: result.pendingToken,
+          profile: result.profile,
+          provider: 'Apple',
+        });
+        router.push('/(auth)/social-complete');
+        return;
+      }
+      continueToStudio();
+    },
+    [continueToStudio, signInWithApple],
+  );
 
   return (
     <AuthLayout>
-      <AuthBrandBar actionLabel="Kayıt ol" onAction={() => router.push('/(auth)/register')} />
+      <AuthBrandBar
+        actionLabel={copy('Kayıt ol', 'Sign up')}
+        onAction={() => router.push('/(auth)/register')}
+      />
       <AuthHero variant="login" />
       <AuthTitle
-        eyebrow="STÜDYONA DÖN"
-        title="Tekrar hoş geldin."
-        subtitle="Hayalindeki kareler seni bekliyor."
+        eyebrow={copy('STÜDYONA DÖN', 'BACK TO YOUR STUDIO')}
+        title={copy('Tekrar hoş geldin.', 'Welcome back.')}
+        subtitle={copy('Hayalindeki kareler seni bekliyor.', 'Your next creation is waiting.')}
       />
       <AuthFormCard>
         <View style={styles.socials}>
           <GoogleSignInButton
+            label={copy('Google ile devam et', 'Continue with Google')}
             disabled={isSubmitting}
             onError={showGoogleError}
             onSuccess={completeGoogleSignIn}
           />
-          <SocialButton
-            icon={<Ionicons name="logo-apple" color="#fff" size={21} />}
-            onPress={() => socialSignIn('apple')}
-          >
-            Apple ile devam et
-          </SocialButton>
+          <AppleSignInButton
+            disabled={isSubmitting}
+            onError={showGoogleError}
+            onSuccess={completeAppleSignIn}
+          />
         </View>
         {socialError ? (
           <Text accessibilityLiveRegion="polite" style={styles.serverError}>
@@ -137,11 +159,11 @@ export default function LoginScreen() {
           name="email"
           render={({ field: { onBlur, onChange, value } }) => (
             <View style={styles.field}>
-              <Text style={styles.label}>E-posta</Text>
+              <Text style={styles.label}>{copy('E-posta', 'Email')}</Text>
               <View style={styles.inputRow}>
                 <Ionicons color={authColors.yellow} name="mail-outline" size={18} />
                 <TextInput
-                  accessibilityLabel="E-posta"
+                  accessibilityLabel={copy('E-posta', 'Email')}
                   autoCapitalize="none"
                   autoComplete="email"
                   autoCorrect={false}
@@ -172,18 +194,18 @@ export default function LoginScreen() {
           name="password"
           render={({ field: { onBlur, onChange, value } }) => (
             <View style={styles.field}>
-              <Text style={styles.label}>Şifre</Text>
+              <Text style={styles.label}>{copy('Şifre', 'Password')}</Text>
               <View style={styles.inputRow}>
                 <Ionicons color={authColors.yellow} name="lock-closed-outline" size={17} />
                 <TextInput
                   ref={passwordInputRef}
-                  accessibilityLabel="Şifre"
+                  accessibilityLabel={copy('Şifre', 'Password')}
                   autoComplete="current-password"
                   blurOnSubmit={false}
                   cursorColor={authColors.yellow}
                   onBlur={onBlur}
                   onChangeText={onChange}
-                  placeholder="Şifreni gir"
+                  placeholder={copy('Şifreni gir', 'Enter your password')}
                   placeholderTextColor={authColors.muted}
                   rejectResponderTermination={false}
                   returnKeyType="go"
@@ -194,7 +216,11 @@ export default function LoginScreen() {
                   value={value ?? ''}
                 />
                 <Pressable
-                  accessibilityLabel={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                  accessibilityLabel={
+                    showPassword
+                      ? copy('Şifreyi gizle', 'Hide password')
+                      : copy('Şifreyi göster', 'Show password')
+                  }
                   accessibilityRole="button"
                   hitSlop={10}
                   onPress={() => setShowPassword((current) => !current)}
@@ -216,7 +242,7 @@ export default function LoginScreen() {
 
         <View style={styles.forgot}>
           <AuthLink onPress={() => router.push('/(auth)/forgot-password')}>
-            Şifremi unuttum
+            {copy('Şifremi unuttum', 'Forgot password')}
           </AuthLink>
         </View>
         {errors.root?.message ? (
@@ -225,20 +251,25 @@ export default function LoginScreen() {
           </Text>
         ) : null}
         <GradientAuthButton
-          accessibilityLabel="Giriş yap"
+          accessibilityLabel={copy('Giriş yap', 'Sign in')}
           icon="arrow-forward"
           loading={isSubmitting}
           onPress={() => void submit()}
         >
-          Giriş yap
+          {copy('Giriş yap', 'Sign in')}
         </GradientAuthButton>
         <AuthNote>
-          Bilgilerin şifreli olarak korunur. Yalnızca senin onayınla fotoğrafın işlenir.
+          {copy(
+            'Bilgilerin şifreli olarak korunur. Yalnızca senin onayınla fotoğrafın işlenir.',
+            'Your information is encrypted. Your photo is processed only with your consent.',
+          )}
         </AuthNote>
       </AuthFormCard>
       <View style={styles.bottomText}>
-        <Text style={styles.bottomCopy}>Henüz hesabın yok mu? </Text>
-        <AuthLink onPress={() => router.push('/(auth)/register')}>Kayıt ol</AuthLink>
+        <Text style={styles.bottomCopy}>{copy('Henüz hesabın yok mu? ', 'New here? ')}</Text>
+        <AuthLink onPress={() => router.push('/(auth)/register')}>
+          {copy('Kayıt ol', 'Sign up')}
+        </AuthLink>
       </View>
     </AuthLayout>
   );

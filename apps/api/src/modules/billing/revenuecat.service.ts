@@ -1,9 +1,11 @@
-import { createHash, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import type { BirKareConfig } from '@birkare/config';
 import type { BirKareRepository, CreditTransactionRecord } from '@birkare/database';
-import { forbidden, unavailable } from '@birkare/shared';
+import { conflict, forbidden, unavailable } from '@birkare/shared';
 
 const REVENUECAT_API_BASE = 'https://api.revenuecat.com/v1';
+const REVENUECAT_EVENT_ID = /^[A-Za-z0-9._:$-]{1,200}$/;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export type RevenueCatPlan = 'monthly' | 'annual' | 'lifetime' | 'unknown';
 
@@ -73,6 +75,7 @@ type RevenueCatConfig = Pick<
   | 'REVENUECAT_ENABLED'
   | 'REVENUECAT_SECRET_API_KEY'
   | 'REVENUECAT_WEBHOOK_AUTH_TOKEN'
+  | 'REVENUECAT_WEBHOOK_SIGNING_SECRET'
   | 'REVENUECAT_ENTITLEMENT_ID'
   | 'REVENUECAT_OFFERING_ID'
   | 'REVENUECAT_MONTHLY_PRODUCT_IDS'
@@ -95,7 +98,12 @@ type Dependencies = {
 type CachedStatus = { expiresAt: number; value: RevenueCatSubscriptionStatus };
 
 function csvSet(value: string): Set<string> {
-  return new Set(value.split(',').map((item) => item.trim()).filter(Boolean));
+  return new Set(
+    value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean),
+  );
 }
 
 function validDate(value: string | null | undefined): Date | null {
@@ -119,6 +127,41 @@ function hashBody(value: unknown): string {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex');
 }
 
+function verifyWebhookSignature(input: {
+  header?: string;
+  rawBody?: Buffer;
+  secret: string;
+  now: Date;
+}): boolean {
+  if (!input.header || !input.rawBody) return false;
+  const parts = new Map(
+    input.header.split(',').map((part) => {
+      const [key, ...value] = part.trim().split('=');
+      return [key, value.join('=')] as const;
+    }),
+  );
+  const timestamp = parts.get('t');
+  const receivedHex = parts.get('v1');
+  if (
+    !timestamp ||
+    !/^\d{10}$/.test(timestamp) ||
+    !receivedHex ||
+    !/^[0-9a-f]{64}$/i.test(receivedHex)
+  ) {
+    return false;
+  }
+  const timestampSeconds = Number(timestamp);
+  if (Math.abs(Math.floor(input.now.getTime() / 1000) - timestampSeconds) > 5 * 60) return false;
+  const expectedHex = createHmac('sha256', input.secret)
+    .update(timestamp)
+    .update('.')
+    .update(input.rawBody)
+    .digest('hex');
+  const received = Buffer.from(receivedHex, 'hex');
+  const expected = Buffer.from(expectedHex, 'hex');
+  return received.length === expected.length && timingSafeEqual(received, expected);
+}
+
 export function createRevenueCatService(dependencies: Dependencies) {
   const { config, repository } = dependencies;
   const fetchImpl = dependencies.fetchImpl ?? fetch;
@@ -128,8 +171,13 @@ export function createRevenueCatService(dependencies: Dependencies) {
   const annualProducts = csvSet(config.REVENUECAT_ANNUAL_PRODUCT_IDS);
   const lifetimeProducts = csvSet(config.REVENUECAT_LIFETIME_PRODUCT_IDS);
 
+  // A mobile `appl_`/`goog_` public SDK key can read Store products on-device,
+  // but it must never be accepted as server authorization. Treating it as
+  // configured would make a completed Apple purchase fail later with a vague
+  // RevenueCat 401 while the credit wallet stays unchanged.
   const configured = () =>
-    config.REVENUECAT_ENABLED && Boolean(config.REVENUECAT_SECRET_API_KEY?.trim());
+    config.REVENUECAT_ENABLED &&
+    Boolean(config.REVENUECAT_SECRET_API_KEY?.trim().startsWith('sk_'));
 
   function planFor(productId: string | null): RevenueCatPlan {
     if (!productId) return 'unknown';
@@ -198,7 +246,10 @@ export function createRevenueCatService(dependencies: Dependencies) {
       type: plan === 'lifetime' ? 'PURCHASE' : 'SUBSCRIPTION_GRANT',
       referenceType: 'REVENUECAT',
       referenceId: productId,
-      idempotencyKey: `revenuecat:${plan}:${productId}:${periodKey}`,
+      // Credit idempotency keys are globally unique in the repository. Include
+      // the account so one subscriber can never suppress another subscriber's
+      // monthly grant for the same product and calendar period.
+      idempotencyKey: `revenuecat:${userId}:${plan}:${productId}:${periodKey}`,
       description:
         plan === 'monthly'
           ? 'BirKare Pro aylık dönem kredisi'
@@ -286,21 +337,51 @@ export function createRevenueCatService(dependencies: Dependencies) {
   async function processWebhook(
     authorization: string | undefined,
     payload: RevenueCatWebhookEvent,
+    verification?: { signature?: string; rawBody?: Buffer },
   ): Promise<{ duplicate: boolean; processed: boolean; status?: RevenueCatSubscriptionStatus }> {
     const expected = config.REVENUECAT_WEBHOOK_AUTH_TOKEN?.trim();
     if (!expected || !authorization || !safeTokenEquals(authorization, expected)) {
       throw forbidden('REVENUECAT_WEBHOOK_UNAUTHORIZED', 'Webhook doğrulaması başarısız.');
     }
+    const signingSecret = config.REVENUECAT_WEBHOOK_SIGNING_SECRET?.trim();
+    if (
+      signingSecret &&
+      !verifyWebhookSignature({
+        header: verification?.signature,
+        rawBody: verification?.rawBody,
+        secret: signingSecret,
+        now: now(),
+      })
+    ) {
+      throw forbidden(
+        'REVENUECAT_WEBHOOK_SIGNATURE_INVALID',
+        'Webhook imza doğrulaması başarısız.',
+      );
+    }
     const event = payload.event;
     const eventId = event?.id?.trim();
-    const userId = (event?.app_user_id || event?.original_app_user_id)?.trim();
-    if (!eventId || !userId) {
-      throw forbidden('REVENUECAT_WEBHOOK_INVALID', 'Webhook event kimliği veya kullanıcı kimliği eksik.');
+    const userId = [event?.app_user_id, event?.original_app_user_id, ...(event?.aliases ?? [])]
+      .map((value) => value?.trim())
+      .find((value): value is string => Boolean(value && UUID.test(value)));
+    if (!eventId || !REVENUECAT_EVENT_ID.test(eventId) || !userId) {
+      throw forbidden(
+        'REVENUECAT_WEBHOOK_INVALID',
+        'Webhook event kimliği veya BirKare kullanıcı kimliği geçersiz.',
+      );
     }
 
     const route = 'POST:/v1/billing/revenuecat/webhook';
+    const requestHash = hashBody(payload);
     const existing = await repository.getIdempotency(route, eventId);
-    if (existing) return { duplicate: true, processed: true };
+    if (existing) {
+      if (existing.requestHash !== requestHash) {
+        throw conflict(
+          'REVENUECAT_WEBHOOK_CONFLICT',
+          'Aynı event kimliği farklı bir içerikle tekrar kullanılamaz.',
+        );
+      }
+      return { duplicate: true, processed: true };
+    }
 
     const user = await repository.getUserById(userId);
     let status: RevenueCatSubscriptionStatus | undefined;
@@ -312,9 +393,9 @@ export function createRevenueCatService(dependencies: Dependencies) {
       userId: user?.id ?? null,
       route,
       key: eventId,
-      requestHash: hashBody(payload),
+      requestHash,
       responseCode: 200,
-      responseBody: { processed: Boolean(user), type: event.type ?? 'UNKNOWN' },
+      responseBody: { processed: Boolean(user), type: event?.type ?? 'UNKNOWN' },
       expiresAt: new Date(now().getTime() + 400 * 24 * 60 * 60 * 1000),
     });
     return { duplicate: false, processed: Boolean(user), ...(status ? { status } : {}) };

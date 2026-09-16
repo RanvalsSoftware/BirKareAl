@@ -1,4 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
+import assert from 'node:assert/strict';
+import { createHmac } from 'node:crypto';
+import { describe, it } from 'node:test';
 import type {
   BirKareRepository,
   CreditTransactionRecord,
@@ -9,6 +11,7 @@ import type { BirKareConfig } from '@birkare/config';
 import { createRevenueCatService } from './revenuecat.service.js';
 
 const fixedNow = new Date('2026-09-11T12:00:00.000Z');
+const USER_ID = '00000000-0000-4000-8000-000000000001';
 
 function config(overrides: Partial<BirKareConfig> = {}) {
   return {
@@ -21,7 +24,7 @@ function config(overrides: Partial<BirKareConfig> = {}) {
     REVENUECAT_ANNUAL_PRODUCT_IDS: 'yearly,com.birkareai.pro.yearly',
     REVENUECAT_LIFETIME_PRODUCT_IDS: 'lifetime,com.birkareai.pro.lifetime',
     REVENUECAT_MONTHLY_CREDITS: 80,
-    REVENUECAT_ANNUAL_MONTHLY_CREDITS: 100,
+    REVENUECAT_ANNUAL_MONTHLY_CREDITS: 80,
     REVENUECAT_LIFETIME_CREDITS: 200,
     REVENUECAT_REQUEST_TIMEOUT_MS: 5000,
     REVENUECAT_CACHE_TTL_MS: 0,
@@ -47,7 +50,10 @@ function subscriber(productId: string, input?: { expires?: string | null; sandbo
           purchase_date: subscription.purchase_date,
         },
       },
-      subscriptions: productId === 'lifetime' || productId.endsWith('.lifetime') ? {} : { [productId]: subscription },
+      subscriptions:
+        productId === 'lifetime' || productId.endsWith('.lifetime')
+          ? {}
+          : { [productId]: subscription },
       non_subscriptions:
         productId === 'lifetime' || productId.endsWith('.lifetime')
           ? {
@@ -66,13 +72,14 @@ function subscriber(productId: string, input?: { expires?: string | null; sandbo
   };
 }
 
-function fixture(payload: unknown) {
+function fixture(payload: unknown, configOverrides: Partial<BirKareConfig> = {}) {
   const idempotency = new Map<string, unknown>();
   const grants = new Map<string, CreditTransactionRecord>();
+  let grantCalls = 0;
   let available = 0;
   const wallet = (): CreditWalletRecord => ({
     id: 'wallet-1',
-    userId: 'user-1',
+    userId: USER_ID,
     available,
     reserved: 0,
     lifetimeEarned: Math.max(available, 0),
@@ -82,12 +89,13 @@ function fixture(payload: unknown) {
     updatedAt: fixedNow,
   });
   const repository = {
-    getUserById: vi.fn(async (id: string) =>
-      id === 'user-1'
+    getUserById: async (id: string) =>
+      id === USER_ID
         ? ({ id, deletedAt: null } as Awaited<ReturnType<BirKareRepository['getUserById']>>)
         : null,
-    getWallet: vi.fn(async () => wallet()),
-    grantCredits: vi.fn(async (input: GrantCreditsInput) => {
+    getWallet: async () => wallet(),
+    grantCredits: async (input: GrantCreditsInput) => {
+      grantCalls += 1;
       const previous = grants.get(input.idempotencyKey);
       if (previous) return { wallet: wallet(), transaction: previous, created: false };
       available += input.amount;
@@ -108,62 +116,82 @@ function fixture(payload: unknown) {
       } satisfies CreditTransactionRecord;
       grants.set(input.idempotencyKey, transaction);
       return { wallet: wallet(), transaction, created: true };
-    }),
-    getIdempotency: vi.fn(async (route: string, key: string) => idempotency.get(`${route}:${key}`) ?? null),
-    putIdempotency: vi.fn(async (record: { route: string; key: string }) => {
+    },
+    getIdempotency: async (route: string, key: string) =>
+      idempotency.get(`${route}:${key}`) ?? null,
+    putIdempotency: async (record: { route: string; key: string }) => {
       const value = { ...record, id: 'idem-1', createdAt: fixedNow };
       idempotency.set(`${record.route}:${record.key}`, value);
       return value;
-    }),
+    },
   } as unknown as BirKareRepository;
-  const fetchImpl = vi.fn(async () =>
+  const fetchImpl = async () =>
     new Response(JSON.stringify(payload), {
       status: 200,
       headers: { 'content-type': 'application/json' },
-    }),
-  );
+    });
   const service = createRevenueCatService({
-    config: config(),
+    config: config(configOverrides),
     repository,
     fetchImpl,
     now: () => fixedNow,
   });
-  return { service, repository, fetchImpl, grants, wallet };
+  return { service, repository, fetchImpl, grants, wallet, grantCalls: () => grantCalls };
 }
 
 describe('RevenueCat server verification and credit grants', () => {
   it('grants one monthly period exactly once', async () => {
     const f = fixture(subscriber('com.birkareai.pro.monthly'));
-    const first = await f.service.readStatus('user-1', true);
-    const second = await f.service.readStatus('user-1', true);
-    expect(first).toMatchObject({ active: true, plan: 'monthly', creditsGranted: 80, environment: 'sandbox' });
-    expect(second.creditsGranted).toBe(0);
-    expect(f.wallet().available).toBe(80);
-    expect(f.repository.grantCredits).toHaveBeenCalledTimes(2);
+    const first = await f.service.readStatus(USER_ID, true);
+    const second = await f.service.readStatus(USER_ID, true);
+    assert.deepEqual(
+      {
+        active: first.active,
+        plan: first.plan,
+        creditsGranted: first.creditsGranted,
+        environment: first.environment,
+      },
+      { active: true, plan: 'monthly', creditsGranted: 80, environment: 'sandbox' },
+    );
+    assert.equal(second.creditsGranted, 0);
+    assert.equal(f.wallet().available, 80);
+    assert.equal(f.grantCalls(), 2);
+    assert.match([...f.grants.keys()][0]!, new RegExp(`revenuecat:${USER_ID}:monthly`));
   });
 
   it('grants the current month for an annual subscriber without backfill', async () => {
     const f = fixture(subscriber('com.birkareai.pro.yearly'));
-    const status = await f.service.readStatus('user-1', true);
-    expect(status).toMatchObject({ active: true, plan: 'annual', creditsGranted: 100 });
-    expect([...f.grants.keys()][0]).toContain('2026-09');
+    const status = await f.service.readStatus(USER_ID, true);
+    assert.deepEqual(
+      { active: status.active, plan: status.plan, creditsGranted: status.creditsGranted },
+      { active: true, plan: 'annual', creditsGranted: 80 },
+    );
+    assert.match([...f.grants.keys()][0]!, /2026-09/);
   });
 
   it('grants lifetime starting credits once and reports no expiration', async () => {
     const f = fixture(subscriber('com.birkareai.pro.lifetime', { expires: null }));
-    const first = await f.service.readStatus('user-1', true);
-    const second = await f.service.readStatus('user-1', true);
-    expect(first).toMatchObject({ active: true, plan: 'lifetime', expiresAt: null, creditsGranted: 200 });
-    expect(second.creditsGranted).toBe(0);
-    expect(f.wallet().available).toBe(200);
+    const first = await f.service.readStatus(USER_ID, true);
+    const second = await f.service.readStatus(USER_ID, true);
+    assert.deepEqual(
+      {
+        active: first.active,
+        plan: first.plan,
+        expiresAt: first.expiresAt,
+        creditsGranted: first.creditsGranted,
+      },
+      { active: true, plan: 'lifetime', expiresAt: null, creditsGranted: 200 },
+    );
+    assert.equal(second.creditsGranted, 0);
+    assert.equal(f.wallet().available, 200);
   });
 
   it('does not grant an expired entitlement', async () => {
     const f = fixture(subscriber('monthly', { expires: '2026-09-10T12:00:00.000Z' }));
-    const status = await f.service.readStatus('user-1', true);
-    expect(status.active).toBe(false);
-    expect(status.creditsGranted).toBe(0);
-    expect(f.repository.grantCredits).not.toHaveBeenCalled();
+    const status = await f.service.readStatus(USER_ID, true);
+    assert.equal(status.active, false);
+    assert.equal(status.creditsGranted, 0);
+    assert.equal(f.grantCalls(), 0);
   });
 
   it('fails closed when RevenueCat is disabled', async () => {
@@ -172,8 +200,15 @@ describe('RevenueCat server verification and credit grants', () => {
       repository: {} as BirKareRepository,
       now: () => fixedNow,
     });
-    expect(await service.readStatus('user-1')).toMatchObject({ configured: false, active: false });
-    await expect(service.assertActive('user-1')).rejects.toMatchObject({ code: 'BIRKARE_PRO_REQUIRED' });
+    const status = await service.readStatus(USER_ID);
+    assert.deepEqual(
+      { configured: status.configured, active: status.active },
+      { configured: false, active: false },
+    );
+    await assert.rejects(
+      service.assertActive(USER_ID),
+      (error: unknown) => (error as { code?: string }).code === 'BIRKARE_PRO_REQUIRED',
+    );
   });
 
   it('authenticates and de-duplicates RevenueCat webhooks', async () => {
@@ -183,22 +218,94 @@ describe('RevenueCat server verification and credit grants', () => {
       event: {
         id: 'event-1',
         type: 'INITIAL_PURCHASE',
-        app_user_id: 'user-1',
+        app_user_id: USER_ID,
         product_id: 'monthly',
         entitlement_ids: ['create_an_app_called_birkare_pro'],
         environment: 'SANDBOX',
       },
     };
-    await expect(f.service.processWebhook('wrong-token', payload)).rejects.toMatchObject({
-      code: 'REVENUECAT_WEBHOOK_UNAUTHORIZED',
+    await assert.rejects(
+      f.service.processWebhook('wrong-token', payload),
+      (error: unknown) => (error as { code?: string }).code === 'REVENUECAT_WEBHOOK_UNAUTHORIZED',
+    );
+    const first = await f.service.processWebhook(
+      'Bearer webhook-token-at-least-24-characters',
+      payload,
+    );
+    assert.deepEqual(
+      { duplicate: first.duplicate, processed: first.processed },
+      {
+        duplicate: false,
+        processed: true,
+      },
+    );
+    assert.deepEqual(
+      await f.service.processWebhook('webhook-token-at-least-24-characters', payload),
+      {
+        duplicate: true,
+        processed: true,
+      },
+    );
+
+    await assert.rejects(
+      f.service.processWebhook('webhook-token-at-least-24-characters', {
+        ...payload,
+        event: { ...payload.event, product_id: 'yearly' },
+      }),
+      (error: unknown) => (error as { code?: string }).code === 'REVENUECAT_WEBHOOK_CONFLICT',
+    );
+  });
+
+  it('rejects invalid event identifiers and accepts a BirKare UUID from aliases', async () => {
+    const f = fixture(subscriber('monthly'));
+    await assert.rejects(
+      f.service.processWebhook('webhook-token-at-least-24-characters', {
+        event: { id: '../event', app_user_id: 'anonymous-revenuecat-id' },
+      }),
+      (error: unknown) => (error as { code?: string }).code === 'REVENUECAT_WEBHOOK_INVALID',
+    );
+
+    const result = await f.service.processWebhook('webhook-token-at-least-24-characters', {
+      event: {
+        id: 'event-alias-1',
+        type: 'INITIAL_PURCHASE',
+        app_user_id: '$RCAnonymousID:fixture',
+        aliases: ['$RCAnonymousID:fixture', USER_ID],
+      },
     });
-    expect(await f.service.processWebhook('Bearer webhook-token-at-least-24-characters', payload)).toMatchObject({
-      duplicate: false,
-      processed: true,
+    assert.equal(result.processed, true);
+  });
+
+  it('verifies the RevenueCat HMAC over the exact raw body and rejects stale signatures', async () => {
+    const signingSecret = 'fixture-revenuecat-signing-secret-at-least-32';
+    const payload = {
+      event: { id: 'event-hmac-1', type: 'RENEWAL', app_user_id: USER_ID },
+    };
+    const rawBody = Buffer.from(JSON.stringify(payload));
+    const timestamp = String(Math.floor(fixedNow.getTime() / 1000));
+    const signature = createHmac('sha256', signingSecret)
+      .update(`${timestamp}.`)
+      .update(rawBody)
+      .digest('hex');
+    const f = fixture(subscriber('monthly'), {
+      REVENUECAT_WEBHOOK_SIGNING_SECRET: signingSecret,
     });
-    expect(await f.service.processWebhook('webhook-token-at-least-24-characters', payload)).toEqual({
-      duplicate: true,
-      processed: true,
-    });
+
+    const accepted = await f.service.processWebhook(
+      'webhook-token-at-least-24-characters',
+      payload,
+      { signature: `t=${timestamp},v1=${signature}`, rawBody },
+    );
+    assert.equal(accepted.processed, true);
+
+    await assert.rejects(
+      f.service.processWebhook(
+        'webhook-token-at-least-24-characters',
+        { event: { ...payload.event, id: 'event-hmac-2' } },
+        { signature: `t=${Number(timestamp) - 301},v1=${signature}`, rawBody },
+      ),
+      (error: unknown) =>
+        (error as { code?: string }).code === 'REVENUECAT_WEBHOOK_SIGNATURE_INVALID',
+    );
   });
 });

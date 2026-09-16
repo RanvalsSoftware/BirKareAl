@@ -44,6 +44,26 @@ vi.mock('react-native-reanimated', () => ({
   default: { View: 'AnimatedView', Image: 'AnimatedImage' },
 }));
 vi.mock('@/hooks/useReducedMotion', () => ({ useReducedMotion: () => false }));
+vi.mock('@/features/settings/appearance-store', () => ({
+  useAppearanceStore: (selector: (state: { theme: 'dark' }) => unknown) =>
+    selector({ theme: 'dark' }),
+}));
+vi.mock('@/features/settings/language-store', () => ({
+  useCopy: () => (turkish: string) => turkish,
+}));
+vi.mock('@/theme', () => ({
+  colors: {
+    background: '#050505',
+    surface: '#101010',
+    surfaceElevated: '#171717',
+    surfaceSoft: '#1A1A1A',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#B2B2B2',
+    textMuted: '#747474',
+    border: 'rgba(255,255,255,0.07)',
+    borderStrong: 'rgba(255,255,255,0.11)',
+  },
+}));
 
 function descendants(element: unknown): ReactElement<Record<string, unknown>>[] {
   if (!isValidElement<Record<string, unknown>>(element)) return [];

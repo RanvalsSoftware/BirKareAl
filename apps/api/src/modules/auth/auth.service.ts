@@ -32,7 +32,9 @@ import {
   mailUnavailable,
   type MailService,
 } from '../../services/mail.service.js';
-import type { GoogleIdentityVerifier, VerifiedGoogleIdentity } from './google-id-token.service.js';
+import type { GoogleIdentityVerifier } from './google-id-token.service.js';
+import type { AppleIdentityVerifier } from './apple-id-token.service.js';
+import type { SocialAuthProvider } from '@birkare/database';
 
 export type AuthRequestContext = {
   deviceId?: string;
@@ -76,6 +78,14 @@ export type SocialProfileCompletionRequiredResponse = {
 };
 
 export type GoogleLoginResponse = AuthSessionResponse | SocialProfileCompletionRequiredResponse;
+export type SocialLoginResponse = AuthSessionResponse | SocialProfileCompletionRequiredResponse;
+
+type VerifiedSocialIdentity = {
+  subject: string;
+  email: string;
+  givenName?: string;
+  familyName?: string;
+};
 
 const toPublicUser = (user: UserRecord): PublicUser => ({
   id: user.id,
@@ -156,6 +166,7 @@ export class AuthService {
       Partial<Pick<BirKareConfig, 'MAIL_APP_SCHEME'>>,
     private readonly googleIdentityVerifier: GoogleIdentityVerifier,
     private readonly mailService: MailService = new DisabledMailService(),
+    private readonly appleIdentityVerifier?: AppleIdentityVerifier,
   ) {}
 
   async register(input: RegisterInput, context: AuthRequestContext): Promise<RegistrationResponse> {
@@ -368,24 +379,55 @@ export class AuthService {
     context: AuthRequestContext,
   ): Promise<GoogleLoginResponse> {
     const identity = await this.googleIdentityVerifier.verify(input.idToken);
-    const linkedUser = await this.repository.getUserByAuthAccount('GOOGLE', identity.subject);
-    if (linkedUser) return this.createGoogleSession(linkedUser, input, context);
+    return this.loginWithVerifiedSocialIdentity('GOOGLE', identity, input, context);
+  }
 
-    // Deliberately do not auto-link a Google identity to a pre-existing
-    // password account just because the e-mail strings match. The user must
-    // authenticate to that account and explicitly link it via google/link.
+  async appleLogin(
+    input: SocialLoginInput,
+    context: AuthRequestContext,
+  ): Promise<SocialLoginResponse> {
+    if (!this.appleIdentityVerifier) {
+      throw unavailable(
+        'AUTH_APPLE_NOT_CONFIGURED',
+        'Apple ile giriş henüz bu ortam için yapılandırılmadı.',
+      );
+    }
+    const identity = await this.appleIdentityVerifier.verify(input.idToken);
+    return this.loginWithVerifiedSocialIdentity(
+      'APPLE',
+      {
+        ...identity,
+        ...(input.firstName ? { givenName: input.firstName } : {}),
+        ...(input.lastName ? { familyName: input.lastName } : {}),
+      },
+      input,
+      context,
+    );
+  }
+
+  private async loginWithVerifiedSocialIdentity(
+    provider: SocialAuthProvider,
+    identity: VerifiedSocialIdentity,
+    input: SocialLoginInput,
+    context: AuthRequestContext,
+  ): Promise<SocialLoginResponse> {
+    const linkedUser = await this.repository.getUserByAuthAccount(provider, identity.subject);
+    if (linkedUser) return this.createSocialSession(linkedUser, input, context);
+
+    // Deliberately do not auto-link a social identity to a pre-existing
+    // password account merely because the email strings match.
     const existingEmailUser = await this.repository.getUserByEmail(identity.email);
     if (existingEmailUser) {
       throw conflict(
         'AUTH_SOCIAL_ACCOUNT_LINK_REQUIRED',
-        'Bu e-posta ile bir hesap zaten var. Önce mevcut hesabınla giriş yapıp Google hesabını bağla.',
+        'Bu e-posta ile bir hesap zaten var. Önce mevcut hesabınla giriş yapıp sosyal hesabını bağla.',
       );
     }
 
     const pendingToken = createOpaqueToken();
     await this.repository.createPendingSocialLogin({
       tokenHash: hashToken(pendingToken),
-      provider: 'GOOGLE',
+      provider,
       providerAccountId: identity.subject,
       providerEmail: identity.email,
       givenName: identity.givenName ?? null,
@@ -416,14 +458,14 @@ export class AuthService {
     if (!dateOfBirth) {
       throw badRequest('AUTH_SOCIAL_PROFILE_REQUIRED', 'Doğum tarihi gereklidir.');
     }
-    const pending = await this.repository.consumePendingSocialLogin(
-      hashToken(input.pendingToken),
-      'GOOGLE',
-    );
+    const pendingTokenHash = hashToken(input.pendingToken);
+    const pending =
+      (await this.repository.consumePendingSocialLogin(pendingTokenHash, 'GOOGLE')) ??
+      (await this.repository.consumePendingSocialLogin(pendingTokenHash, 'APPLE'));
     if (!pending) {
       throw unauthorized(
         'AUTH_SOCIAL_PENDING_TOKEN_INVALID',
-        'Sosyal kayıt oturumu geçersiz veya süresi dolmuş. Lütfen Google ile tekrar devam edin.',
+        'Sosyal kayıt oturumu geçersiz veya süresi dolmuş. Lütfen yeniden sosyal giriş yapın.',
       );
     }
 
@@ -431,17 +473,18 @@ export class AuthService {
       pending.provider,
       pending.providerAccountId,
     );
-    if (linkedUser) return this.createGoogleSession(linkedUser, input, context);
+    if (linkedUser) return this.createSocialSession(linkedUser, input, context);
 
     const existingEmailUser = await this.repository.getUserByEmail(pending.providerEmail);
     if (existingEmailUser) {
       throw conflict(
         'AUTH_SOCIAL_ACCOUNT_LINK_REQUIRED',
-        'Bu e-posta ile bir hesap zaten var. Önce mevcut hesabınla giriş yapıp Google hesabını bağla.',
+        'Bu e-posta ile bir hesap zaten var. Önce mevcut hesabınla giriş yapıp sosyal hesabını bağla.',
       );
     }
 
-    const user = await this.createGoogleUser(
+    const user = await this.createSocialUser(
+      pending.provider,
       {
         subject: pending.providerAccountId,
         email: pending.providerEmail,
@@ -451,7 +494,7 @@ export class AuthService {
       input,
       dateOfBirth,
     );
-    return this.createGoogleSession(user, input, context);
+    return this.createSocialSession(user, input, context);
   }
 
   /**
@@ -488,13 +531,6 @@ export class AuthService {
     return { linked: true };
   }
 
-  async socialLogin(): Promise<never> {
-    throw unavailable(
-      'AUTH_SOCIAL_NOT_CONFIGURED',
-      'Google ve Apple kimlik doğrulaması sunucu doğrulaması yapılandırılmadan etkinleştirilemez.',
-    );
-  }
-
   private async createSession(
     user: UserRecord,
     input: Partial<AuthRequestContext>,
@@ -515,8 +551,9 @@ export class AuthService {
     return { session, refreshToken };
   }
 
-  private async createGoogleUser(
-    identity: VerifiedGoogleIdentity,
+  private async createSocialUser(
+    provider: SocialAuthProvider,
+    identity: VerifiedSocialIdentity,
     registration: SocialRegistrationInput,
     dateOfBirth = ensureAdult(registration.dateOfBirth),
   ): Promise<UserRecord> {
@@ -531,7 +568,7 @@ export class AuthService {
         lastName: registration.lastName || identity.familyName || null,
         locale: registration.locale,
         dateOfBirth,
-        provider: 'GOOGLE',
+        provider,
         providerAccountId: identity.subject,
         providerEmail: identity.email,
         consents: createRequiredConsentRecords(registration.consent, 'SOCIAL_REGISTRATION'),
@@ -540,21 +577,21 @@ export class AuthService {
       // A concurrent request can create the same provider mapping between our
       // initial lookup and the insert. Resolve that safe race to the one
       // account rather than creating duplicate sessions or accounts.
-      const linkedUser = await this.repository.getUserByAuthAccount('GOOGLE', identity.subject);
+      const linkedUser = await this.repository.getUserByAuthAccount(provider, identity.subject);
       if (linkedUser) return linkedUser;
 
       const existingEmailUser = await this.repository.getUserByEmail(identity.email);
       if (existingEmailUser) {
         throw conflict(
           'AUTH_SOCIAL_ACCOUNT_LINK_REQUIRED',
-          'Bu e-posta ile bir hesap zaten var. Önce mevcut hesabınla giriş yapıp Google hesabını bağla.',
+          'Bu e-posta ile bir hesap zaten var. Önce mevcut hesabınla giriş yapıp sosyal hesabını bağla.',
         );
       }
       throw error;
     }
   }
 
-  private async createGoogleSession(
+  private async createSocialSession(
     user: UserRecord,
     input: Partial<AuthRequestContext>,
     context: AuthRequestContext,

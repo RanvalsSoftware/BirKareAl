@@ -23,8 +23,10 @@ import {
 } from '@/features/auth/auth-ui';
 import { registerSchema, type RegisterValues } from '@/features/auth/validation';
 import { verificationRecoveryParams } from '@/features/auth/email-delivery';
+import { useCopy } from '@/features/settings/language-store';
 
 export default function RegisterScreen() {
+  const copy = useCopy();
   const signInWithGoogle = useAuthStore((store) => store.signInWithGoogle);
   const lastNameInputRef = useRef<TextInput>(null);
   const emailInputRef = useRef<TextInput>(null);
@@ -157,18 +159,22 @@ export default function RegisterScreen() {
   return (
     <AuthLayout>
       <AuthBrandBar
-        actionLabel="Giriş yap"
+        actionLabel={copy('Giriş yap', 'Sign in')}
         onAction={() => router.replace('/(auth)/login')}
         onBack={goBack}
       />
       <AuthHero variant="register" />
       <AuthTitle
-        eyebrow="YENİ STÜDYO"
-        title="Hesabını oluştur."
-        subtitle="Hayalindeki kareleri saklayacağın kişisel stüdyona hoş geldin."
+        eyebrow={copy('YENİ STÜDYO', 'NEW STUDIO')}
+        title={copy('Hesabını oluştur.', 'Create your account.')}
+        subtitle={copy(
+          'Hayalindeki kareleri saklayacağın kişisel stüdyona hoş geldin.',
+          'Welcome to your personal studio for every image you imagine.',
+        )}
       />
       <AuthFormCard>
         <GoogleSignInButton
+          label={copy('Google ile devam et', 'Continue with Google')}
           disabled={isSubmitting}
           onError={showGoogleError}
           onSuccess={completeGoogleSignIn}
@@ -178,14 +184,14 @@ export default function RegisterScreen() {
             {socialError}
           </Text>
         ) : null}
-        <Divider>veya e-posta ile kayıt ol</Divider>
+        <Divider>{copy('veya e-posta ile kayıt ol', 'or sign up with email')}</Divider>
         <View style={styles.names}>
           <Controller
             control={control}
             name="firstName"
             render={({ field: { onBlur, onChange, value } }) => (
               <View style={[styles.field, styles.nameField]}>
-                <Text style={styles.label}>Ad</Text>
+                <Text style={styles.label}>{copy('Ad', 'First name')}</Text>
                 <View style={styles.inputRow}>
                   <Ionicons color={authColors.yellow} name="person-outline" size={16} />
                   <TextInput
@@ -196,7 +202,7 @@ export default function RegisterScreen() {
                     onBlur={onBlur}
                     onChangeText={onChange}
                     onSubmitEditing={() => lastNameInputRef.current?.focus()}
-                    placeholder="Adın"
+                    placeholder={copy('Adın', 'Your first name')}
                     placeholderTextColor={authColors.muted}
                     rejectResponderTermination={false}
                     returnKeyType="next"
@@ -217,7 +223,7 @@ export default function RegisterScreen() {
             name="lastName"
             render={({ field: { onBlur, onChange, value } }) => (
               <View style={[styles.field, styles.nameField]}>
-                <Text style={styles.label}>Soyad</Text>
+                <Text style={styles.label}>{copy('Soyad', 'Last name')}</Text>
                 <View style={styles.inputRow}>
                   <Ionicons color={authColors.yellow} name="person-outline" size={16} />
                   <TextInput
@@ -229,7 +235,7 @@ export default function RegisterScreen() {
                     onBlur={onBlur}
                     onChangeText={onChange}
                     onSubmitEditing={() => emailInputRef.current?.focus()}
-                    placeholder="Soyadın"
+                    placeholder={copy('Soyadın', 'Your last name')}
                     placeholderTextColor={authColors.muted}
                     rejectResponderTermination={false}
                     returnKeyType="next"
@@ -251,7 +257,7 @@ export default function RegisterScreen() {
           name="email"
           render={({ field: { onBlur, onChange, value } }) => (
             <View style={styles.field}>
-              <Text style={styles.label}>E-posta</Text>
+              <Text style={styles.label}>{copy('E-posta', 'Email')}</Text>
               <View style={styles.inputRow}>
                 <Ionicons color={authColors.yellow} name="mail-outline" size={18} />
                 <TextInput
@@ -287,7 +293,7 @@ export default function RegisterScreen() {
           name="birthYear"
           render={({ field: { onBlur, onChange, value } }) => (
             <View style={styles.field}>
-              <Text style={styles.label}>Doğum yılı</Text>
+              <Text style={styles.label}>{copy('Doğum yılı', 'Birth year')}</Text>
               <View style={styles.inputRow}>
                 <Ionicons color={authColors.yellow} name="calendar-outline" size={17} />
                 <TextInput
@@ -321,7 +327,7 @@ export default function RegisterScreen() {
           name="password"
           render={({ field: { onBlur, onChange, value } }) => (
             <View style={styles.field}>
-              <Text style={styles.label}>Şifre</Text>
+              <Text style={styles.label}>{copy('Şifre', 'Password')}</Text>
               <View style={styles.inputRow}>
                 <Ionicons color={authColors.yellow} name="lock-closed-outline" size={17} />
                 <TextInput
@@ -333,7 +339,7 @@ export default function RegisterScreen() {
                   onBlur={onBlur}
                   onChangeText={onChange}
                   onSubmitEditing={() => confirmationInputRef.current?.focus()}
-                  placeholder="En az 10 karakter"
+                  placeholder={copy('En az 10 karakter', 'At least 10 characters')}
                   placeholderTextColor={authColors.muted}
                   rejectResponderTermination={false}
                   returnKeyType="next"
@@ -368,7 +374,7 @@ export default function RegisterScreen() {
           name="passwordConfirmation"
           render={({ field: { onBlur, onChange, value } }) => (
             <View style={styles.field}>
-              <Text style={styles.label}>Şifre tekrar</Text>
+              <Text style={styles.label}>{copy('Şifre tekrar', 'Confirm password')}</Text>
               <View style={styles.inputRow}>
                 <Ionicons color={authColors.yellow} name="shield-checkmark-outline" size={17} />
                 <TextInput
@@ -379,7 +385,7 @@ export default function RegisterScreen() {
                   cursorColor={authColors.yellow}
                   onBlur={onBlur}
                   onChangeText={onChange}
-                  placeholder="Şifreni tekrar gir"
+                  placeholder={copy('Şifreni tekrar gir', 'Enter your password again')}
                   placeholderTextColor={authColors.muted}
                   rejectResponderTermination={false}
                   returnKeyType="done"
@@ -411,7 +417,9 @@ export default function RegisterScreen() {
         />
         <View style={styles.consentHeader}>
           <Ionicons color={authColors.yellow} name="sparkles-outline" size={15} />
-          <Text style={styles.consentHeaderText}>Güvenli kullanım onayları</Text>
+          <Text style={styles.consentHeaderText}>
+            {copy('Güvenli kullanım onayları', 'Safe-use consents')}
+          </Text>
         </View>
         <Controller
           control={control}
@@ -420,14 +428,14 @@ export default function RegisterScreen() {
             <CheckRow
               checked={value}
               documentLink={{
-                label: 'Kullanım Koşulları',
+                label: copy('Kullanım Koşulları', 'Terms of Use'),
                 onPress: () =>
                   router.push({ pathname: '/legal/[document]', params: { document: 'terms' } }),
               }}
               error={errors.acceptedTerms?.message}
               onPress={() => onChange(!value)}
             >
-              ’nı okudum ve kabul ediyorum.
+              {copy('’nı okudum ve kabul ediyorum.', ' — I have read and accept them.')}
             </CheckRow>
           )}
         />
@@ -438,14 +446,14 @@ export default function RegisterScreen() {
             <CheckRow
               checked={value}
               documentLink={{
-                label: 'Gizlilik Politikası',
+                label: copy('Gizlilik Politikası', 'Privacy Policy'),
                 onPress: () =>
                   router.push({ pathname: '/legal/[document]', params: { document: 'privacy' } }),
               }}
               error={errors.acceptedPrivacy?.message}
               onPress={() => onChange(!value)}
             >
-              ’nı okudum ve kabul ediyorum.
+              {copy('’nı okudum ve kabul ediyorum.', ' — I have read and accept it.')}
             </CheckRow>
           )}
         />
@@ -458,7 +466,10 @@ export default function RegisterScreen() {
               error={errors.acceptedAiDisclosure?.message}
               onPress={() => onChange(!value)}
             >
-              Sonuçların AI ile oluşturulabileceğini ve etiketleneceğini kabul ediyorum.
+              {copy(
+                'Sonuçların AI ile oluşturulabileceğini ve etiketleneceğini kabul ediyorum.',
+                'I understand that results may be AI-generated and labeled.',
+              )}
             </CheckRow>
           )}
         />
@@ -471,7 +482,7 @@ export default function RegisterScreen() {
               error={errors.acceptedAge?.message}
               onPress={() => onChange(!value)}
             >
-              18 yaşını doldurduğumu onaylıyorum.
+              {copy('18 yaşını doldurduğumu onaylıyorum.', 'I confirm that I am at least 18.')}
             </CheckRow>
           )}
         />
@@ -484,7 +495,10 @@ export default function RegisterScreen() {
               error={errors.acceptedImageRights?.message}
               onPress={() => onChange(!value)}
             >
-              Yüklediğim fotoğraf için gerekli kullanım hakkına sahibim.
+              {copy(
+                'Yüklediğim fotoğraf için gerekli kullanım hakkına sahibim.',
+                'I have the necessary rights to use the photo I upload.',
+              )}
             </CheckRow>
           )}
         />
@@ -498,21 +512,27 @@ export default function RegisterScreen() {
             <View style={styles.successIcon}>
               <Ionicons color="#08180D" name="checkmark" size={19} />
             </View>
-            <Text style={styles.successText}>Başarıyla kayıt oldunuz.</Text>
+            <Text style={styles.successText}>
+              {copy('Başarıyla kayıt oldunuz.', 'Your account was created successfully.')}
+            </Text>
           </View>
         ) : null}
         <GradientAuthButton
-          accessibilityLabel="Kayıt ol"
+          accessibilityLabel={copy('Kayıt ol', 'Sign up')}
           icon="arrow-forward"
           loading={isSubmitting}
           onPress={() => void submit()}
         >
-          Kayıt ol
+          {copy('Kayıt ol', 'Sign up')}
         </GradientAuthButton>
       </AuthFormCard>
       <View style={styles.bottomText}>
-        <Text style={styles.bottomCopy}>Zaten hesabın var mı? </Text>
-        <AuthLink onPress={() => router.replace('/(auth)/login')}>Giriş yap</AuthLink>
+        <Text style={styles.bottomCopy}>
+          {copy('Zaten hesabın var mı? ', 'Already have an account? ')}
+        </Text>
+        <AuthLink onPress={() => router.replace('/(auth)/login')}>
+          {copy('Giriş yap', 'Sign in')}
+        </AuthLink>
       </View>
     </AuthLayout>
   );

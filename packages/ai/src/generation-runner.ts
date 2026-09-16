@@ -2,6 +2,7 @@ import type { BirKareConfig } from '@birkare/config';
 import type {
   BirKareRepository,
   CatalogSnapshot,
+  GenerationInputRole,
   GenerationRecord,
   ProjectRecord,
 } from '@birkare/database';
@@ -9,8 +10,16 @@ import type { StorageProvider } from '@birkare/storage';
 import {
   ASPECT_RATIO_TO_SIZE,
   ApiError,
+  FASHION_SCENE_IDS,
   GENERATION_STAGES,
+  NAIL_PRESET_IDS,
+  NAIL_TASK_IDS,
+  PRODUCT_CATEGORY_IDS,
+  PRODUCT_SCENE_IDS,
+  PRODUCT_TASK_IDS,
   TERMINAL_GENERATION_STATUSES,
+  TRY_ON_TASK_IDS,
+  calculateStudioCreditQuote,
   evaluateProductPolicy,
 } from '@birkare/shared';
 import { buildGenerationPrompt, GENERATION_PROMPT_VERSION } from './prompt-builder.js';
@@ -75,6 +84,124 @@ type ActiveCatalogSelection = {
   featuredPerson: CatalogSnapshot['featuredPeople'][number] | null;
 };
 
+const requiredInputRoles = (generation: GenerationRecord): GenerationInputRole[] => {
+  if (generation.recipe?.version !== 2) return ['PRIMARY_USER'];
+  switch (generation.recipe.studio.kind) {
+    case 'PRODUCT_STUDIO':
+      return ['PRODUCT'];
+    case 'VIRTUAL_TRY_ON':
+      return ['PRIMARY_PERSON', 'GARMENT'];
+    case 'NAIL_PREVIEW':
+      return ['HAND'];
+  }
+};
+
+const providerRole = (role: GenerationInputRole): ImageReference['role'] => {
+  switch (role) {
+    case 'PRIMARY_USER':
+      return 'USER';
+    case 'PRIMARY_PERSON':
+      return 'PRIMARY_PERSON';
+    case 'PRODUCT':
+      return 'PRODUCT';
+    case 'GARMENT':
+      return 'GARMENT';
+    case 'HAND':
+      return 'HAND';
+  }
+};
+
+/**
+ * A v2 recipe plus its compiled prompt is an immutable execution authorization.
+ * Validate the snapshot itself without re-resolving mutable current registry
+ * data, so an already queued job remains deterministic after a catalog deploy.
+ */
+function assertStudioRecipeSnapshot(generation: GenerationRecord, project: ProjectRecord): void {
+  if (generation.recipe?.version !== 2) return;
+  const recipe = generation.recipe;
+  if (project.mode !== recipe.studio.kind) {
+    throw new ApiError({
+      statusCode: 422,
+      code: 'STUDIO_RECIPE_MODE_INVALID',
+      message: 'Stüdyo üretim tarifi proje modu ile eşleşmiyor.',
+    });
+  }
+  const safeVersion = (value: unknown) =>
+    typeof value === 'string' && /^[A-Za-z0-9._-]{1,96}$/.test(value);
+  if (
+    !safeVersion(recipe.catalogVersion) ||
+    !safeVersion(recipe.promptVersion) ||
+    !safeVersion(recipe.pricingVersion)
+  ) {
+    throw new ApiError({
+      statusCode: 422,
+      code: 'STUDIO_RECIPE_VERSION_INVALID',
+      message: 'Stüdyo üretim tarifinin sürüm bilgisi doğrulanamadı.',
+    });
+  }
+  const includes = (values: readonly string[], value: unknown) =>
+    typeof value === 'string' && values.includes(value);
+  const validSelection =
+    recipe.studio.kind === 'PRODUCT_STUDIO'
+      ? includes(PRODUCT_CATEGORY_IDS, recipe.studio.categoryId) &&
+        includes(PRODUCT_SCENE_IDS, recipe.studio.sceneId) &&
+        includes(PRODUCT_TASK_IDS, recipe.studio.taskType)
+      : recipe.studio.kind === 'VIRTUAL_TRY_ON'
+        ? includes(FASHION_SCENE_IDS, recipe.studio.sceneId) &&
+          includes(TRY_ON_TASK_IDS, recipe.studio.taskType)
+        : recipe.studio.kind === 'NAIL_PREVIEW'
+          ? includes(NAIL_PRESET_IDS, recipe.studio.presetId) &&
+            includes(NAIL_TASK_IDS, recipe.studio.taskType)
+          : false;
+  if (!validSelection) {
+    throw new ApiError({
+      statusCode: 422,
+      code: 'STUDIO_RECIPE_SELECTION_INVALID',
+      message: 'Stüdyo sahnesi veya preset seçimi doğrulanamadı.',
+    });
+  }
+  if (
+    !['FAST', 'PREMIUM'].includes(recipe.modelLane) ||
+    !Number.isInteger(recipe.baseCredits) ||
+    recipe.baseCredits < 1 ||
+    recipe.baseCredits > 50 ||
+    !Number.isInteger(recipe.hdExtraCredits) ||
+    recipe.hdExtraCredits < 0 ||
+    recipe.hdExtraCredits > 20
+  ) {
+    throw new ApiError({
+      statusCode: 422,
+      code: 'STUDIO_RECIPE_SNAPSHOT_INVALID',
+      message: 'Stüdyo üretim tarifinin sunucu kaydı doğrulanamadı.',
+    });
+  }
+  const expectedCredits = calculateStudioCreditQuote({
+    quality: generation.quality,
+    numberOfImages: generation.requestedImageCount,
+    baseCredits: recipe.baseCredits,
+    hdExtraCredits: recipe.hdExtraCredits,
+    label: 'Stüdyo üretimi',
+  }).creditCost;
+  if (generation.reservedCredits !== expectedCredits) {
+    throw new ApiError({
+      statusCode: 422,
+      code: 'STUDIO_RECIPE_CREDIT_MISMATCH',
+      message: 'Stüdyo üretiminin kredi rezervasyonu doğrulanamadı.',
+    });
+  }
+  if (
+    generation.promptVersion !== recipe.promptVersion ||
+    !generation.compiledPrompt ||
+    generation.compiledPrompt.length > 100_000
+  ) {
+    throw new ApiError({
+      statusCode: 422,
+      code: 'STUDIO_PROMPT_SNAPSHOT_INVALID',
+      message: 'Stüdyo üretiminin değişmez prompt kaydı doğrulanamadı.',
+    });
+  }
+}
+
 /**
  * Re-check every queued catalog choice. The API validates selections at submit
  * time, but an administrator can disable a scene or filter before the worker
@@ -86,6 +213,9 @@ function resolveActiveCatalogSelection(input: {
   project: ProjectRecord;
   catalog: CatalogSnapshot;
 }): ActiveCatalogSelection {
+  // Studio IDs are resolved from the versioned server registry and snapshotted
+  // in recipe v2; they must never fall back to mutable portrait catalog slots.
+  if (input.generation.recipe?.version === 2) return { featuredPerson: null };
   const selection = resolveGenerationSelection(input.generation.recipe, input.project);
   const scene = selection.sceneTemplateId
     ? input.catalog.scenes.find((item) => item.id === selection.sceneTemplateId)
@@ -158,7 +288,8 @@ function resolveApprovedCharacterReference(input: {
   featuredPerson: CatalogSnapshot['featuredPeople'][number] | null;
 }): ApprovedCharacterReference | null {
   const selectedPerson = input.featuredPerson;
-  const requestedCharacter = input.generation.recipe?.character ?? null;
+  const requestedCharacter =
+    input.generation.recipe?.version === 1 ? input.generation.recipe.character : null;
   if (!selectedPerson) {
     if (requestedCharacter) {
       throw new ApiError({
@@ -310,20 +441,75 @@ export async function runGeneration(
       });
     }
     const project = await repository.getProjectById(generation.projectId);
-    const sourceAsset = await repository.getAssetById(generation.sourceAssetId);
-    if (
-      !project ||
-      project.userId !== generation.userId ||
-      !sourceAsset ||
-      sourceAsset.ownerId !== generation.userId ||
-      sourceAsset.status !== 'READY'
-    ) {
+    if (!project || project.userId !== generation.userId) {
       throw new ApiError({
         statusCode: 422,
         code: 'GENERATION_INVALID_SOURCE',
         message: 'Kaynak fotoğraf üretim için hazır değil.',
       });
     }
+    assertStudioRecipeSnapshot(generation, project);
+
+    const persistedInputs = generation.inputs?.length
+      ? [...generation.inputs].sort((left, right) => left.sortOrder - right.sortOrder)
+      : [
+          {
+            assetId: generation.sourceAssetId,
+            role: 'PRIMARY_USER' as const,
+            sortOrder: 0,
+          },
+        ];
+    const expectedRoles = requiredInputRoles(generation);
+    if (
+      persistedInputs.length !== expectedRoles.length ||
+      new Set(persistedInputs.map((item) => item.assetId)).size !== persistedInputs.length ||
+      expectedRoles.some(
+        (role, index) =>
+          persistedInputs[index]?.role !== role ||
+          persistedInputs[index]?.sortOrder !== index ||
+          persistedInputs.filter((item) => item.role === role).length !== 1,
+      )
+    ) {
+      throw new ApiError({
+        statusCode: 422,
+        code: 'GENERATION_INPUT_ROLES_INVALID',
+        message: 'Üretim için gereken kaynak görseller doğrulanamadı.',
+      });
+    }
+    const currentGeneration = generation;
+    const preparedInputs = await Promise.all(
+      persistedInputs.map(async (item) => {
+        const asset = await repository.getAssetById(item.assetId);
+        if (
+          !asset ||
+          asset.ownerId !== currentGeneration.userId ||
+          asset.status !== 'READY' ||
+          asset.deletedAt ||
+          (currentGeneration.recipe?.version === 2 && asset.type !== 'USER_SOURCE') ||
+          !isSupportedSourceMimeType(asset.mimeType)
+        ) {
+          throw new ApiError({
+            statusCode: 422,
+            code: 'GENERATION_INVALID_SOURCE',
+            message: 'Kaynak fotoğraf üretim için hazır değil.',
+          });
+        }
+        const bytes = await storage.getObject(asset.storageKey);
+        if (!hasExpectedMagicBytes(bytes, asset.mimeType)) {
+          await repository.updateAsset(asset.id, { status: 'REJECTED' });
+          throw new ApiError({
+            statusCode: 422,
+            code: 'ASSET_INVALID_IMAGE',
+            message: 'Yüklenen dosya geçerli bir görsel değil.',
+          });
+        }
+        return {
+          asset,
+          reference: { buffer: bytes, mimeType: asset.mimeType, role: providerRole(item.role) },
+        };
+      }),
+    );
+    const sourceAsset = preparedInputs[0]!.asset;
 
     await setStage(repository, generation.id, 'VALIDATING');
     const localPolicy = evaluateProductPolicy(generation.userInstruction ?? '');
@@ -345,29 +531,13 @@ export async function runGeneration(
       });
       return;
     }
-    if (!isSupportedSourceMimeType(sourceAsset.mimeType)) {
-      throw new ApiError({
-        statusCode: 422,
-        code: 'ASSET_MIME_UNSUPPORTED',
-        message: 'Kaynak görsel türü desteklenmiyor.',
-      });
-    }
-    const sourceBytes = await storage.getObject(sourceAsset.storageKey);
-    if (!hasExpectedMagicBytes(sourceBytes, sourceAsset.mimeType)) {
-      await repository.updateAsset(sourceAsset.id, { status: 'REJECTED' });
-      throw new ApiError({
-        statusCode: 422,
-        code: 'ASSET_INVALID_IMAGE',
-        message: 'Yüklenen dosya geçerli bir görsel değil.',
-      });
-    }
     generation = (await repository.getGenerationById(generation.id))!;
     if (!generation || TERMINAL_GENERATION_STATUSES.has(generation.status)) return;
     await setStage(repository, generation.id, 'MODERATING_INPUT');
     const moderation = await moderationProvider.moderateText({
       text: generation.userInstruction ?? '',
       requestId: input.requestId,
-      sourceImages: [{ buffer: sourceBytes, mimeType: sourceAsset.mimeType, role: 'USER' }],
+      sourceImages: preparedInputs.map((item) => item.reference),
     });
     // Input moderation is a network wait. Respect a cancellation received
     // during it before overwriting the status or calling the paid renderer.
@@ -410,13 +580,7 @@ export async function runGeneration(
     const activeSelection = resolveActiveCatalogSelection({ generation, project, catalog });
     const featuredPerson = activeSelection.featuredPerson;
     const approvedReference = resolveApprovedCharacterReference({ generation, featuredPerson });
-    const sourceImages: ImageReference[] = [
-      {
-        buffer: sourceBytes,
-        mimeType: sourceAsset.mimeType,
-        role: 'USER',
-      },
-    ];
+    const sourceImages: ImageReference[] = preparedInputs.map((item) => item.reference);
     if (approvedReference) {
       const referenceAsset = await repository.getAssetById(approvedReference.referenceAssetId);
       if (
@@ -446,12 +610,18 @@ export async function runGeneration(
         role: 'PERSON',
       });
     }
-    const prompt = buildGenerationPrompt({ generation, project, catalog });
+    const prompt =
+      generation.recipe?.version === 2
+        ? generation.compiledPrompt!
+        : buildGenerationPrompt({ generation, project, catalog });
     await repository.updateGeneration(generation.id, {
       compiledPrompt: prompt,
-      promptVersion: GENERATION_PROMPT_VERSION,
+      promptVersion:
+        generation.recipe?.version === 2
+          ? generation.recipe.promptVersion
+          : GENERATION_PROMPT_VERSION,
       provider: imageProvider.name.toUpperCase(),
-      model: config.OPENAI_IMAGE_MODEL,
+      model: generation.model,
       status: 'GENERATING',
       stage: 'OPENAI_IMAGE_GENERATION',
       progress: GENERATION_STAGES.GENERATING.progress,
@@ -460,6 +630,7 @@ export async function runGeneration(
 
     const response = await imageProvider.generate({
       requestId: input.requestId,
+      model: generation.model,
       prompt,
       sourceImages,
       quality: qualityForProvider(generation.quality),
@@ -528,6 +699,7 @@ export async function runGeneration(
       stage: 'COMPLETED',
       progress: 100,
       providerRequestId: response.providerRequestId ?? null,
+      providerUsage: response.usage ?? null,
       chargedCredits: generation.reservedCredits,
       completedAt: new Date(),
     });

@@ -405,8 +405,9 @@ test('reserved work blocks deletion without changing user status or creating a m
   );
 });
 
-test('appearance contract is dark-only with real persisted glass and motion values', async () => {
-  assert.equal(UpdatePreferencesSchema.safeParse({ theme: 'light' }).success, false);
+test('appearance contract accepts dark and light themes with persisted glass and motion values', async () => {
+  assert.equal(UpdatePreferencesSchema.safeParse({ theme: 'light' }).success, true);
+  assert.equal(UpdatePreferencesSchema.safeParse({ theme: 'system' }).success, false);
   assert.equal(UpdatePreferencesSchema.safeParse({ glassEffects: 'false' }).success, false);
   const preferences = UpdatePreferencesSchema.parse({
     theme: 'dark',

@@ -2,7 +2,7 @@
 
 ## Kapsam ve canlıya geçiş sınırı
 
-Bu değişiklik **mobil SDK entegrasyonudur**: mevcut BirKare hesap girişi ve **Krediler > BirKare Pro** kartı; RevenueCat satın alma, müşteri bilgileri, entitlement kontrolü, geri yükleme, Paywall ve Customer Center ile bağlanır. `react-native-purchases` ve `react-native-purchases-ui` birlikte **10.9.1** sürümüne sabitlenmiştir.
+Bu entegrasyon mobil SDK ile backend doğrulamasını birlikte kapsar: mevcut BirKare hesap girişi ve **Krediler > BirKare Pro** kartı; RevenueCat satın alma, müşteri bilgileri, entitlement kontrolü, geri yükleme, Paywall ve Customer Center ile bağlanır. Backend aynı kullanıcı kimliğini RevenueCat REST API üzerinden doğrular, webhook olaylarını kimlik doğrulamalı ve idempotent işler, Pro özelliklerini sunucuda korur ve plan kredilerini yalnız bir kez verir. `react-native-purchases` ve `react-native-purchases-ui` birlikte **10.9.1** sürümüne sabitlenmiştir.
 
 Tam entitlement kimliği:
 
@@ -10,11 +10,11 @@ Tam entitlement kimliği:
 create_an_app_called_birkare_pro
 ```
 
-Kullanıcının verdiği public `test_` SDK anahtarı yalnızca development ortamının varsayılanıdır. Gizli bir sunucu anahtarı değildir. Production/staging ve mevcut release bayrakları test anahtarını reddeder.
+iOS development ve App Store Sandbox derlemeleri, RevenueCat'teki iOS uygulamasının `appl_` public SDK anahtarını kullanır. Android development henüz `test_` Test Store anahtarını kullanabilir. Bu anahtarların hiçbiri gizli sunucu anahtarı değildir. Production/staging ve mevcut release bayrakları `test_` anahtarını reddeder.
 
-**Bu PR tamamlanmış backend ödeme/kredi ekonomisi değildir.** Telefonda kredi eklenmez; mevcut API/worker kredi ayırma, harcama ve iade akışı değiştirilmez. Webhook, yenileme başına kredi, yıllık/ömür boyu kredi takvimi ve sunucuda Pro yetkilendirmesi bu aşamada eklenmemiştir. Backend'in mevcut premium güzellik koruması bir istemci `isPro` değeriyle atlatılmaz. Mevcut tek seferlik kredi paketi düğmeleri ve örnek hesap hareketleri bu değişikliğin dışındadır.
+Telefonda kredi eklenmez. Satın alma veya restore sonrasında mobil uygulama `/v1/billing/revenuecat/sync` çağırır; API entitlement'ı RevenueCat'ten tekrar okuyup krediyi veri tabanında idempotent verir. Webhook aynı doğrulamayı bağımsız olarak tetikler. Ömür boyu plan sınırsız AI üretimi anlamına gelmez; yalnız yapılandırılmış tek seferlik kredi hakkını verir.
 
-**Gerçek ücretli ürünleri henüz yayına açmayın.** Önce sunucuda doğrulanmış Pro erişimiyle gerçek özellikler açılmalı, kredi hakları ve yenileme kuralları netleşmelidir. Ömür boyu plan sınırsız AI üretimi anlamına gelmez. Eski kartın “aylık 80 kredi, öncelikli sıra” vaadi kaldırılmıştır; bu yararlar SDK bağlantısıyla kendiliğinden gerçekleşmez.
+**Gerçek ücretli ürünleri ancak backend secret ve webhook ayarları tamamlandıktan sonra açın.** Public `test_` SDK anahtarı sunucunun satın almayı doğrulaması için yeterli değildir.
 
 ## 1. Bağımlılıkları kurma
 
@@ -55,15 +55,27 @@ Android plugin'i banka uygulamasından ödeme doğrulamasına dönüş için Mai
 
 Mevcut projeyi kullanın; aynı isimde ikinci proje açmayın. Aşağıdaki ürünleri **varsa yeniden oluşturmak yerine kontrol edin**:
 
-| Product ID | Ürün türü | Offering paket türü |
-| --- | --- | --- |
-| `monthly` | Otomatik yenilenen aylık abonelik | Monthly / `$rc_monthly` |
-| `yearly` | Otomatik yenilenen yıllık abonelik | Annual / `$rc_annual` |
-| `lifetime` | Tek ödemeli, tüketilmeyen ürün | Lifetime / `$rc_lifetime` |
+| Product ID | Ürün türü                          | Offering paket türü       |
+| ---------- | ---------------------------------- | ------------------------- |
+| `monthly`  | Otomatik yenilenen aylık abonelik  | Monthly / `$rc_monthly`   |
+| `yearly`   | Otomatik yenilenen yıllık abonelik | Annual / `$rc_annual`     |
+| `lifetime` | Tek ödemeli, tüketilmeyen ürün     | Lifetime / `$rc_lifetime` |
 
 Üç ürünü de `create_an_app_called_birkare_pro` entitlement'ına bağlayın. Bir offering oluşturun veya mevcut olanı kullanın (örneğin `default`); üç paket türünü ekleyip geçerli/current offering olarak belirleyin. Uygulama `getOfferings().current` içindeki `monthly`, `annual`, `lifetime` alanlarını kullanır. Ürün kimliği `yearly` ile RevenueCat paket kimliği `$rc_annual` aynı kavram değildir. Gerçek Android mağazası ve base plan kimlikleri farklı olabilir.
 
 Fiyatlar `product.priceString` üzerinden yerelleştirilmiş mağaza fiyatlarıdır; telefonda sabit TL fiyatı veya sahte indirim hesaplanmaz.
+
+BirKare'nin kabul edilen Türkiye fiyat ve kredi politikası:
+
+| Plan          | Mağaza hedef fiyatı |            Sunucu kredi hakkı |
+| ------------- | ------------------: | ----------------------------: |
+| Aylık Pro     |        ₺299,99 / ay |               Her ay 80 kredi |
+| Yıllık Pro    |     ₺2.499,99 / yıl |     Her ay 80 kredi (960/yıl) |
+| Ömür Boyu Pro | ₺4.999,99 tek ödeme | Bir kez 200 başlangıç kredisi |
+
+Bu TL fiyatlarını App Store Connect, Google Play Console ve RevenueCat ürün eşlemesinde operatör ayarlar; uygulama kodu mağazanın döndürdüğü yerelleştirilmiş fiyatı gösterir. Ömür boyu ürün aylık kredi yenilemez ve sınırsız üretim vermez.
+
+Ek kredi tüketilebilir ürünleri mağazalarda ayrıca oluşturulacaksa hedef set `20 / ₺99,99`, `60 / ₺249,99`, `150 / ₺499,99` şeklindedir. Krediler yalnız doğrulanmış mağaza işlemi veya webhook sonrası backend tarafından idempotent verilmelidir; mevcut mobil kartlardaki butonlar gerçek ürün eşlemesi tamamlanana kadar ödeme başlatmaz.
 
 Bu offering'e bağlı bir Paywall oluşturup yayımlayın. **Pro teklifini aç**, exact entitlement için `presentPaywallIfNeeded` çağırır. Kartlardaki planlar ayrıca orijinal offering paketiyle `purchasePackage` kullanır; bunun için RevenueCat tasarımı bir Paywall şart değildir.
 
@@ -84,8 +96,16 @@ Başka bir ekranda kullanım:
 import { useRevenueCat } from '@/features/billing/revenuecat';
 
 const {
-  isPro, customerInfo, entitlement, ready, busy,
-  purchase, restore, presentPaywall, presentCustomerCenter, refresh,
+  isPro,
+  customerInfo,
+  entitlement,
+  ready,
+  busy,
+  purchase,
+  restore,
+  presentPaywall,
+  presentCustomerCenter,
+  refresh,
 } = useRevenueCat();
 
 // isPro, customerInfo.entitlements.active[
@@ -103,7 +123,7 @@ Hesap değiştiği anda eski müşteri ve offering ekrandan temizlenir. Native h
 
 Restore/transfer davranışını RevenueCat panelinde hesap sahipliği politikanıza göre belirleyin. Aynı Apple/Google mağaza hesabını kullanan iki BirKare hesabını mutlaka test edin. BirKare hesabını silmek mağaza aboneliğini otomatik iptal etmez. Customer Center kapandıktan sonra müşteri bilgileri yeniden okunur.
 
-## 6. Canlı anahtarlar ve kalan backend işleri
+## 6. Canlı anahtarlar ve backend doğrulaması
 
 Mağaza derlemesinde gerçek platform **public SDK** anahtarları kullanılır:
 
@@ -115,17 +135,63 @@ EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY=goog_YOUR_ANDROID_PUBLIC_KEY
 
 Mevcut public HTTPS API ve destek e-postası release kontrolleri devam eder. Bu koruma iki platform anahtarını da ister; `test_`, `sk_` veya yanlış platform anahtarıyla release oluşturulamaz. Apple/Google sandbox, RevenueCat Test Store'dan farklıdır: mağaza sandbox testlerinde platform public anahtarları kullanılır.
 
-Gerçek ödemeden önce: mağaza ürünlerini bağlama; premium API işlemlerinde sunucuda entitlement doğrulama; webhook kimlik doğrulama ve kalıcı olay kaydı; aynı işlem/yenilemede yalnız bir kez kredi; sandbox/canlı ayrımı; iptal-bitiş ayrımı; iade, transfer, yıllık ve ömür boyu kredi kuralları. Secret API ve webhook anahtarları yalnızca sunucu ortamına eklenir; mobil, sohbet veya Git'e konulmaz.
+API/worker runtime ortamına, RevenueCat panelinden alınan **secret REST API key** ve panelde webhook Authorization alanına da yazacağınız en az 24 karakterlik rastgele token eklenir:
 
-## 7. Testler
+```env
+REVENUECAT_ENABLED=true
+REVENUECAT_SECRET_API_KEY=sk_YOUR_REVENUECAT_SECRET_KEY
+REVENUECAT_WEBHOOK_AUTH_TOKEN=GENERATE_A_LONG_RANDOM_VALUE
+REVENUECAT_WEBHOOK_SIGNING_SECRET=REVENUECAT_WEBHOOK_HMAC_SIGNING_SECRET
+REVENUECAT_ENTITLEMENT_ID=create_an_app_called_birkare_pro
+REVENUECAT_OFFERING_ID=birkare_pro
+REVENUECAT_MONTHLY_PRODUCT_IDS=monthly,com.birkareai.pro.monthly
+REVENUECAT_ANNUAL_PRODUCT_IDS=yearly,com.birkareai.pro.yearly
+REVENUECAT_LIFETIME_PRODUCT_IDS=lifetime,com.birkareai.pro.lifetime
+```
+
+Webhook URL'i public API adresinizde `POST /v1/billing/revenuecat/webhook` olur. RevenueCat panelindeki Authorization header değeri `REVENUECAT_WEBHOOK_AUTH_TOKEN` ile aynı olmalıdır. Webhook ayarındaki HMAC imzalamayı açın ve oluşan signing secret'ı `REVENUECAT_WEBHOOK_SIGNING_SECRET` olarak yalnız backend ortamına koyun. Backend imzayı tam ham JSON gövdesi üzerinde doğrular, beş dakikadan eski imzayı reddeder ve aynı event kimliğinin farklı içerikle tekrar kullanılmasını engeller. Mobil kullanıcı kimliği e-posta değil BirKare `user.id` değeridir. Sunucu durum/senkronizasyon uçları sırasıyla `GET /v1/billing/revenuecat/status` ve `POST /v1/billing/revenuecat/sync`tir; ikisi mobil JWT ister ve zorunlu senkronizasyon kullanıcı bazında hız sınırlıdır.
+
+## 7. Entegrasyonu tamamlamak için sağlanacak bilgiler
+
+Değerleri sohbet mesajına yapıştırmayın. Public SDK anahtarlarını mobil environment'a; `.p8`, `sk_` ve webhook sırlarını parola yöneticisine veya sunucunun secret/environment alanına koyun.
+
+### RevenueCat'ten
+
+- Mevcut projenin **Project ID** değeri (`proj_...`); yalnız yönetim ve doğrulama için.
+- iOS uygulamasının **Public SDK key** değeri (`appl_...`); mobil derlemeye girebilir.
+- Backend için izinleri yalnız gerekli okuma kapsamıyla sınırlandırılmış **Secret API key** (`sk_...`); telefona ve Git'e giremez.
+- Webhook ayarında seçtiğiniz en az 32 bayt rastgele **Authorization header** değeri.
+- Webhook HMAC etkinleştirildikten sonra gösterilen **signing secret**.
+- Dashboard ekranından app, entitlement, current offering ve package eşleşmelerinin görüntüsü veya kimlikleri: iOS app, `create_an_app_called_birkare_pro`, `birkare_pro`, `$rc_monthly`, `$rc_annual`, `$rc_lifetime`.
+
+### App Store Connect'ten
+
+- App'in sayısal **Apple ID** değeri ve Bundle ID doğrulaması: `com.birkareai.mobile`.
+- **In-App Purchase Key** için ayrı `.p8` dosyası, Key ID ve Issuer ID. Bu dosya yalnız RevenueCat'e yüklenir; repo/backend/mobil uygulamaya konmaz.
+- Ürün içe aktarmayı RevenueCat üzerinden yapmak istersen ayrıca **App Store Connect API key** `.p8`, Key ID, Issuer ID ve Vendor Number. Bu anahtar In-App Purchase Key ile aynı dosya değildir.
+- App Store Connect'te ürünlerin durumu ve tam kimlikleri: `com.birkareai.pro.monthly`, `com.birkareai.pro.yearly`, `com.birkareai.pro.lifetime`.
+- Paid Apps Agreement, vergi ve banka bilgilerinin tamamlandığına dair durum.
+
+### Canlı backend adresi belli olunca
+
+- Dışarıdan erişilebilir HTTPS API kökü; webhook tam adresi bunun sonuna `/v1/billing/revenuecat/webhook` eklenerek oluşturulur.
+- Webhook'un sandbox, production veya ikisini birden kabul edeceği kararı. İlk doğrulamada ayrı sandbox webhook'u önerilir.
+
+Bu bilgiler tamamlanmadan iOS public anahtarıyla ürünleri listelemek mümkün olabilir; ancak satın alma doğrulaması, entitlement senkronizasyonu ve güvenli kredi verme hattı canlıya hazır sayılmaz.
+
+## 8. Testler
+
+Aylık, yıllık ve ömür boyu kredi tutarları environment ile değiştirilebilir. Kredi anahtarı kullanıcı + plan + ürün + dönem bileşimidir; aynı webhook, tekrar açılış veya restore ikinci kez kredi vermez ve başka kullanıcının hakkını engellemez.
 
 Controller testleri: exact entitlement, tek kurulum, desteklenmeyen ortam, hesap değiştirme, geç dönen yanıt/satın alma, çıkış, çift tıklama, paket doğrulama, iptal, bekleyen ödeme, ağ hatası, geri yükleme, offering hatası, Paywall sonuçları, Customer Center dönüşü, listener güvenliği ve süre bitimi.
 
 Config testleri: development varsayılanları, platform anahtar ayrımı, release bayrakları, test ve secret anahtarının reddedilmesi.
 
+Backend testleri: exact entitlement ve ürün-plan eşlemesi, aktif/süresi dolmuş abonelik, aylık/yıllık/ömür boyu idempotent kredi, webhook Authorization doğrulaması ve olay tekrarının engellenmesi.
+
 Cihazda ayrıca her üç Test Store paketi, ödeme iptali, restore, Customer Center, arka plan/ön plan, yeniden açma, hesap değiştirme, ağ kesintisi ve entitlement bitimini test edin. Sonra gerçek Apple/Google sandbox testlerini yapın. CI tip/birim testleri ve native proje üretimi, imzalı cihaz derlemesi veya gerçek satın alma testiyle aynı değildir.
 
-İlk kaynak kontrolünde RevenueCat değişikliklerinden önce mevcut API typecheck'i `apps/api/src/modules/support/support.routes.test.ts:138` içindeki `PASSWORD_RESET` / `EmailTokenType` uyumsuzluğunda durdu. Bu mobil PR, ilgisiz backend testi hatasını değiştirmez; bütün monorepo testlerinin geçtiği iddia edilmemelidir.
+Release öncesi RevenueCat Test Store, Apple sandbox ve Google Play test track ayrı ayrı doğrulanmalıdır. Test Store anahtarıyla oluşturulan bir native development build, App Store/Play Store canlı ödeme doğrulamasının yerine geçmez.
 
 ## Resmî kaynaklar
 

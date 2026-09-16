@@ -18,7 +18,7 @@ const PLAN_COPY: Record<ProPlanId, Omit<ProPlan, 'id' | 'package'>> = {
   },
   annual: {
     label: 'Yıllık',
-    note: 'Her ay 100 kredi',
+    note: 'Her ay 80 kredi',
     featured: true,
   },
   lifetime: {
@@ -38,7 +38,18 @@ export function plansFromOffering(offering: PurchasesOffering | null): ProPlan[]
   };
 
   return (Object.keys(PLAN_COPY) as ProPlanId[]).flatMap((id) => {
-    const pkg = packages[id];
+    // A custom package named 'Yearly' has no offering.annual slot. Resolve only
+    // known product IDs from this offering; never invent or cross-store fetch.
+    const productIds: Record<ProPlanId, readonly string[]> = {
+      monthly: ['monthly', 'com.birkareai.pro.monthly'],
+      annual: ['yearly', 'com.birkareai.pro.yearly'],
+      lifetime: ['lifetime', 'com.birkareai.pro.lifetime'],
+    };
+    const pkg =
+      packages[id] ??
+      offering.availablePackages?.find((candidate) =>
+        productIds[id].includes(candidate.product.identifier),
+      );
     return pkg ? [{ id, package: pkg, ...PLAN_COPY[id] }] : [];
   });
 }

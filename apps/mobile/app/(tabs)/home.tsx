@@ -39,7 +39,11 @@ import {
 } from '@/features/create/createFlow';
 import { useAuthStore, type AuthUser } from '@/features/auth/auth-store';
 import { useAvailableCredits } from '@/features/billing/use-wallet';
+import type { StudioModeCard } from '@/features/studio/catalog';
+import { resetStudioFlow, updateStudioFlow } from '@/features/studio/studioFlow';
+import { useStudioCatalog } from '@/features/studio/useStudioCatalog';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useCopy } from '@/features/settings/language-store';
 import { colors, gradients, radii, spacing, typography } from '@/theme';
 
 type IconName = ComponentProps<typeof Icon>['name'];
@@ -118,6 +122,16 @@ const homeSlides: HomeSlide[] = [
 // cards so their names, artwork, order and production presets cannot diverge.
 const popularSceneCards = experienceScenes;
 
+// The home rail intentionally keeps the compact, familiar artwork. The Studio
+// landing page owns the newer wide campaign covers, so changing one surface no
+// longer unexpectedly changes the other.
+const homeStudioArtwork: Record<StudioModeCard['id'], ImageSourcePropType> = {
+  'product-shoot': require('../../assets/products/ui/categories/cosmetics-alt.webp'),
+  'product-catalog': require('../../assets/products/ui/scenes/glass-surface.webp'),
+  'virtual-try-on': require('../../assets/products/ui/fashion/modest-premium.webp'),
+  'nail-preview': require('../../assets/products/ui/nails/classic-red.webp'),
+};
+
 function displayFirstName(user: AuthUser | null): string | null {
   const firstName = user?.firstName?.trim();
   if (firstName) return firstName;
@@ -132,11 +146,13 @@ function displayFirstName(user: AuthUser | null): string | null {
 }
 
 export default function HomeScreen() {
+  const copy = useCopy();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const user = useAuthStore((store) => store.user);
   const availableCredits = useAvailableCredits();
+  const { studioModeCards } = useStudioCatalog();
   const { reset: resetCreateFlow, set: setCreateFlow } = useCreateFlow();
   const sliderRef = useRef<ScrollView>(null);
   const [activeSlide, setActiveSlide] = useState(0);
@@ -187,7 +203,13 @@ export default function HomeScreen() {
   return (
     <ScrollView
       style={styles.screen}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing.xs }]}
+      contentContainerStyle={[
+        styles.content,
+        {
+          paddingTop: insets.top + spacing.xs,
+          paddingBottom: Math.max(insets.bottom, spacing.md) + 48,
+        },
+      ]}
       showsVerticalScrollIndicator={false}
     >
       <GlassSurface tone="gold" radius={30} contentStyle={styles.topBar}>
@@ -196,19 +218,23 @@ export default function HomeScreen() {
       </GlassSurface>
 
       <View style={styles.greetingBlock}>
-        <Text style={styles.greeting}>{firstName ? `Merhaba, ${firstName}` : 'Merhaba'}</Text>
-        <Text style={styles.greetingHint}>Bugün ne yaratmak istersin?</Text>
+        <Text style={styles.greeting}>
+          {firstName ? `${copy('Merhaba', 'Hello')}, ${firstName}` : copy('Merhaba', 'Hello')}
+        </Text>
+        <Text style={styles.greetingHint}>
+          {copy('Bugün ne yaratmak istersin?', 'What would you like to create today?')}
+        </Text>
       </View>
 
       <View style={styles.modeRow} accessibilityRole="tablist">
-        <CategoryChip label="Görsel" selected icon="image-outline" />
+        <CategoryChip label={copy('Görsel', 'Image')} selected icon="image-outline" />
         <CategoryChip
-          label="Kurgusal"
+          label={copy('Kurgusal', 'Fictional')}
           onPress={() => router.push('/create/person' as never)}
           icon="sparkles-outline"
         />
         <CategoryChip
-          label="AI Araçları"
+          label={copy('AI Araçları', 'AI Tools')}
           onPress={() => router.push('/(tabs)/explore' as never)}
           icon="construct-outline"
         />
@@ -259,6 +285,15 @@ export default function HomeScreen() {
           }}
         />
         <QuickAction
+          icon="people-outline"
+          title="Kurgusal karakter"
+          onPress={() => {
+            resetCreateFlow();
+            setCreateFlow({ mode: 'scene', sourceKind: 'fictional' });
+            router.push('/create/upload?source=fictional' as never);
+          }}
+        />
+        <QuickAction
           icon="color-filter-outline"
           title="Filtre dene"
           onPress={() => router.push('/filters' as never)}
@@ -270,7 +305,7 @@ export default function HomeScreen() {
         />
       </View>
 
-      <SectionHeader title="Popüler sahneler" />
+      <SectionHeader title={copy('Popüler sahneler', 'Popular scenes')} />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -296,7 +331,7 @@ export default function HomeScreen() {
         ))}
       </ScrollView>
 
-      <SectionHeader title="Akımlar" />
+      <SectionHeader title={copy('Akımlar', 'Trends')} />
       <TrendRail
         onSelect={(id) => {
           resetCreateFlow();
@@ -305,8 +340,35 @@ export default function HomeScreen() {
       />
 
       <SectionHeader
-        title="AI filtreler"
-        action="Filtreleri aç"
+        title={copy('Ürün & Stil Stüdyosu', 'Product & Style Studio')}
+        action={copy('Tümünü aç', 'View all')}
+        onActionPress={() => router.push('/studio' as never)}
+      />
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.horizontalList}
+      >
+        {studioModeCards.map((item) => (
+          <StudioHomeCard
+            key={item.id}
+            item={item}
+            imageSource={homeStudioArtwork[item.id]}
+            onPress={() => {
+              resetStudioFlow(item.mode);
+              updateStudioFlow({
+                sceneId: 'defaultSceneId' in item ? item.defaultSceneId : null,
+                presetId: 'defaultPresetId' in item ? item.defaultPresetId : null,
+              });
+              router.push(`/studio/${item.mode}` as never);
+            }}
+          />
+        ))}
+      </ScrollView>
+
+      <SectionHeader
+        title={copy('AI filtreler', 'AI filters')}
+        action={copy('Filtreleri aç', 'View filters')}
         onActionPress={() => router.push('/filters' as never)}
       />
       <ScrollView
@@ -329,8 +391,8 @@ export default function HomeScreen() {
       </ScrollView>
 
       <SectionHeader
-        title="Kurgusal karakterler"
-        action="Keşfet"
+        title={copy('Kurgusal karakterler', 'Fictional characters')}
+        action={copy('Keşfet', 'Explore')}
         onActionPress={() => router.push('/create/person' as never)}
       />
       <ScrollView
@@ -433,14 +495,16 @@ function QuickAction({
   title: string;
   onPress: () => void;
 }) {
+  const { fontScale } = useWindowDimensions();
   const reducedMotion = useReducedMotion();
   const scale = useSharedValue(1);
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const accessibleHeight = Math.round(124 + Math.max(0, fontScale - 1) * 54);
   function animate(pressed: boolean) {
     scale.set(reducedMotion ? 1 : withSpring(pressed ? 0.965 : 1, { damping: 18, stiffness: 320 }));
   }
   return (
-    <Animated.View style={[styles.quickAction, animatedStyle]}>
+    <Animated.View style={[styles.quickAction, { height: accessibleHeight }, animatedStyle]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={title}
@@ -469,9 +533,11 @@ function QuickAction({
           <Text numberOfLines={2} style={styles.quickActionText}>
             {title === 'Fotoğraf yükle'
               ? 'Fotoğraf\nyükle'
-              : title === 'Filtre dene'
-                ? 'Filtre\ndene'
-                : 'AI\naraçları'}
+              : title === 'Kurgusal karakter'
+                ? 'Kurgusal\nkarakter'
+                : title === 'Filtre dene'
+                  ? 'Filtre\ndene'
+                  : 'AI\naraçları'}
           </Text>
           <LinearGradient
             colors={['#8146D9', '#B15DC0', '#E78D3D']}
@@ -482,6 +548,48 @@ function QuickAction({
         </GlassSurface>
       </Pressable>
     </Animated.View>
+  );
+}
+
+function StudioHomeCard({
+  item,
+  imageSource,
+  onPress,
+}: {
+  item: StudioModeCard;
+  imageSource: ImageSourcePropType;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityLabel={`${item.name}, ${item.creditCost} krediden başlayan`}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={({ pressed }) => [styles.studioCard, pressed && styles.pressed]}
+    >
+      <LinearGradient colors={item.palette} style={StyleSheet.absoluteFill} />
+      <Image
+        source={imageSource}
+        resizeMode="cover"
+        style={[styles.studioCardImage, item.mode === 'fashion' && styles.studioFashionImage]}
+      />
+      <LinearGradient
+        colors={['rgba(5,5,5,0.02)', 'rgba(5,5,5,0.82)']}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={styles.studioCardBadge}>
+        <Icon name="flash" size={13} color={colors.accentYellow} />
+        <Text style={styles.studioCardBadgeText}>{item.creditCost}+ kredi</Text>
+      </View>
+      <View style={styles.studioCardCopy}>
+        <Text numberOfLines={1} style={styles.studioCardTitle}>
+          {item.name}
+        </Text>
+        <Text numberOfLines={2} style={styles.studioCardDescription}>
+          {item.description}
+        </Text>
+      </View>
+    </Pressable>
   );
 }
 
@@ -543,7 +651,7 @@ const styles = StyleSheet.create({
   greetingBlock: { marginTop: spacing.lg },
   greeting: { ...typography.h2, color: colors.textPrimary },
   greetingHint: { ...typography.caption, color: colors.textMuted, marginTop: 1 },
-  modeRow: { flexDirection: 'row', gap: 8, marginTop: spacing.md },
+  modeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: spacing.md },
   sliderContent: {
     marginTop: spacing.lg,
     gap: spacing.sm,
@@ -607,11 +715,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.28)',
   },
   paginationDotActive: { width: 22, backgroundColor: colors.accentYellow },
-  quickActions: { flexDirection: 'row', gap: 10, marginTop: spacing.lg },
+  quickActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: spacing.lg,
+  },
   quickAction: {
-    aspectRatio: 0.9,
+    flexBasis: '47%',
+    flexGrow: 1,
     minHeight: 124,
-    flex: 1,
     borderRadius: 23,
   },
   quickActionPressable: { flex: 1, borderRadius: 23 },
@@ -644,6 +757,38 @@ const styles = StyleSheet.create({
     width: 22,
   },
   horizontalList: { gap: 12, paddingRight: spacing.lg },
+  studioCard: {
+    backgroundColor: colors.surface,
+    borderColor: 'rgba(255,206,64,0.28)',
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    height: 210,
+    overflow: 'hidden',
+    width: 158,
+  },
+  studioCardImage: { height: '100%', width: '100%' },
+  studioFashionImage: { transform: [{ scale: 1.08 }, { translateY: 10 }] },
+  studioCardBadge: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(5,5,5,0.68)',
+    borderRadius: radii.pill,
+    flexDirection: 'row',
+    gap: 4,
+    left: 9,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    position: 'absolute',
+    top: 9,
+  },
+  studioCardBadgeText: { color: '#FFE69B', fontSize: 10, fontWeight: '800' },
+  studioCardCopy: { bottom: 10, left: 10, position: 'absolute', right: 10 },
+  studioCardTitle: { ...typography.label, color: colors.textPrimary, fontWeight: '900' },
+  studioCardDescription: {
+    ...typography.caption,
+    color: '#DED9D0',
+    lineHeight: 15,
+    marginTop: 2,
+  },
   sceneCard: {
     // The shared category artwork is 1122 × 1402. Matching that 4:5 canvas
     // keeps the same full composition visible here and in onboarding step 2.

@@ -7,10 +7,10 @@ import {
 } from './revenuecat.cjs';
 
 describe('RevenueCat public build configuration', () => {
-  it('uses Test Store keys only in development', () => {
+  it('uses the App Store app on iOS and Test Store only for Android development', () => {
     const config = resolveRevenueCatConfig({});
-    expect(config.iosApiKey.startsWith('test_')).toBe(true);
-    expect(config.androidApiKey).toBe(config.iosApiKey);
+    expect(config.iosApiKey).toBe(DEFAULT_IOS_PUBLIC_KEY);
+    expect(config.androidApiKey.startsWith('test_')).toBe(true);
     expect(config.entitlementId).toBe(ENTITLEMENT_ID);
     expect(config.offeringId).toBe(OFFERING_ID);
   });

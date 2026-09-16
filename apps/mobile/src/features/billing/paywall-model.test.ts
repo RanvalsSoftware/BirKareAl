@@ -29,7 +29,7 @@ describe('custom BirKare Pro paywall model', () => {
     const plans = plansFromOffering({ monthly, annual, lifetime } as PurchasesOffering);
     expect(plans.map((plan) => [plan.id, plan.note])).toEqual([
       ['monthly', 'Her ay 80 kredi'],
-      ['annual', 'Her ay 100 kredi'],
+      ['annual', 'Her ay 80 kredi'],
       ['lifetime', '200 başlangıç kredisi · Kalıcı Pro'],
     ]);
   });

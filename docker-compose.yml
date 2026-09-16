@@ -35,6 +35,14 @@ services:
       - '8025:8025'
       - '1025:1025'
 
+  storage-init:
+    image: alpine:3.21
+    user: '0:0'
+    volumes:
+      - local-storage:/srv/app/.local-storage
+    command: ['sh', '-c', 'chown -R 1000:1000 /srv/app/.local-storage']
+    restart: 'no'
+
   migrate:
     build:
       context: .
@@ -73,6 +81,8 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
+      storage-init:
+        condition: service_completed_successfully
     ports:
       - '4000:4000'
     volumes:
@@ -97,6 +107,8 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
+      storage-init:
+        condition: service_completed_successfully
     volumes:
       - local-storage:/srv/app/.local-storage
 

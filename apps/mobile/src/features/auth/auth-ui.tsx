@@ -26,6 +26,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useCopy } from '@/features/settings/language-store';
 
 const brandLogoMark = require('../../../assets/onboarding/images/brand/logo-gold-icon.png');
 
@@ -104,12 +105,13 @@ export function AuthLayout({ children }: PropsWithChildren) {
 }
 
 export function AuthBrandBar({ actionLabel, onAction, onBack }: BrandBarProps) {
+  const copy = useCopy();
   return (
     <View style={styles.brandBar}>
       <View style={styles.brandLeading}>
         {onBack ? (
           <Pressable
-            accessibilityLabel="Geri"
+            accessibilityLabel={copy('Geri', 'Back')}
             accessibilityRole="button"
             hitSlop={8}
             onPress={onBack}
@@ -125,7 +127,9 @@ export function AuthBrandBar({ actionLabel, onAction, onBack }: BrandBarProps) {
               <Text style={styles.brandWordmarkText}>BirKare</Text>
               <Text style={styles.brandWordmarkAi}> ΛI</Text>
             </View>
-            <Text style={styles.brandTagline}>Hayalindeki kareye gir.</Text>
+            <Text style={styles.brandTagline}>
+              {copy('Hayalindeki kareye gir.', 'Step into your vision.')}
+            </Text>
           </View>
         </View>
       </View>
@@ -145,6 +149,7 @@ export function AuthBrandBar({ actionLabel, onAction, onBack }: BrandBarProps) {
 }
 
 export function AuthLogo({ compact = false }: { compact?: boolean }) {
+  const copy = useCopy();
   return (
     <View style={[styles.logoWrap, compact && styles.logoWrapCompact]}>
       <View style={styles.logoAura}>
@@ -161,7 +166,9 @@ export function AuthLogo({ compact = false }: { compact?: boolean }) {
             <Text style={styles.logoWordmarkAi}> AI</Text>
           </View>
           <View style={styles.logoCaptionLine} />
-          <Text style={styles.logoCaptionText}>Yaratıcı stüdyon</Text>
+          <Text style={styles.logoCaptionText}>
+            {copy('Yaratıcı stüdyon', 'Your creative studio')}
+          </Text>
         </View>
       ) : null}
     </View>
@@ -354,6 +361,7 @@ export function PasswordFormField({
   value,
   ...inputProps
 }: Omit<TextInputProps, 'secureTextEntry'> & { label: string; error?: string; icon?: ReactNode }) {
+  const copy = useCopy();
   const [visible, setVisible] = useState(false);
   const [focused, setFocused] = useState(false);
   return (
@@ -395,7 +403,11 @@ export function PasswordFormField({
           }}
         />
         <Pressable
-          accessibilityLabel={visible ? 'Şifreyi gizle' : 'Şifreyi göster'}
+          accessibilityLabel={
+            visible
+              ? copy('Şifreyi gizle', 'Hide password')
+              : copy('Şifreyi göster', 'Show password')
+          }
           accessibilityRole="button"
           hitSlop={10}
           onPress={() => setVisible((value) => !value)}
@@ -432,6 +444,7 @@ export function GradientAuthButton({
   accessibilityLabel?: string;
   icon?: keyof typeof Ionicons.glyphMap;
 }) {
+  const copy = useCopy();
   const unavailable = disabled || loading;
   return (
     <Pressable
@@ -452,7 +465,9 @@ export function GradientAuthButton({
         start={{ x: 0.02, y: 0.1 }}
         style={styles.gradientButton}
       >
-        <Text style={styles.gradientButtonText}>{loading ? 'İşleniyor…' : children}</Text>
+        <Text style={styles.gradientButtonText}>
+          {loading ? copy('İşleniyor…', 'Processing…') : children}
+        </Text>
         {icon && !loading ? <Ionicons color="#090909" name={icon} size={19} /> : null}
       </LinearGradient>
     </Pressable>
@@ -474,6 +489,7 @@ export function SocialButton({
   disabled?: boolean;
   loading?: boolean;
 }) {
+  const copy = useCopy();
   return (
     <Pressable
       accessibilityLabel={children}
@@ -490,7 +506,7 @@ export function SocialButton({
     >
       <View style={styles.socialIcon}>{icon}</View>
       <Text style={[styles.socialText, tone === 'light' && styles.socialTextLight]}>
-        {loading ? 'Google açılıyor…' : children}
+        {loading ? copy('Google açılıyor…', 'Opening Google…') : children}
       </Text>
       {!loading ? (
         <Ionicons
@@ -512,11 +528,13 @@ export function AuthLink({ children, onPress }: { children: ReactNode; onPress: 
   );
 }
 
-export function Divider({ children = 'veya e-posta ile' }: { children?: string }) {
+export function Divider({ children }: { children?: string }) {
+  const copy = useCopy();
+  const label = children ?? copy('veya e-posta ile', 'or continue with email');
   return (
     <View style={styles.divider}>
       <View style={styles.line} />
-      <Text style={styles.dividerText}>{children}</Text>
+      <Text style={styles.dividerText}>{label}</Text>
       <View style={styles.line} />
     </View>
   );
@@ -741,7 +759,13 @@ const styles = StyleSheet.create({
   noteText: { color: authColors.secondary, flex: 1, fontSize: 12, lineHeight: 18 },
   noteTextSuccess: { color: '#B7F4C7' },
   fieldWrap: { marginTop: 16 },
-  label: { color: '#EFEFEF', fontSize: 13, fontWeight: '800', letterSpacing: 0.1, marginBottom: 8 },
+  label: {
+    color: '#EFEFEF',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.1,
+    marginBottom: 8,
+  },
   inputShell: {
     alignItems: 'center',
     backgroundColor: 'transparent',

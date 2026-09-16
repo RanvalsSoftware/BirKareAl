@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { ProBadge } from '@/components';
 import { colors, radii, spacing, typography } from '@/theme';
@@ -44,32 +44,36 @@ export function SubscriptionCard() {
 
   return (
     <LinearGradient colors={['#17130A', '#111111', '#171019']} style={styles.card}>
-      <View style={styles.header}>
-        <ProBadge label={billing.isPro ? 'BirKare Pro · Aktif' : 'BirKare Pro'} />
-        <View style={styles.statusIcon}>
-          <Ionicons
-            name={billing.isPro ? 'checkmark' : 'star'}
-            size={20}
-            color={colors.accentYellow}
+      <View style={styles.hero}>
+        <View style={styles.copy}>
+          <ProBadge label={billing.isPro ? 'BirKare Pro · Aktif' : 'BirKare Pro'} />
+          <Text style={styles.title}>
+            {billing.isPro ? 'Pro hesabınız hazır.' : 'Premium sahnelerin kilidini açın.'}
+          </Text>
+          <Text style={styles.text}>
+            {billing.isPro
+              ? expiresText
+                ? `${billing.entitlement?.willRenew ? 'Yenileme tarihi' : 'Erişim bitişi'}: ${expiresText}`
+                : 'Süresiz Pro erişimi · Otomatik yenileme yok.'
+              : 'Aylık, yıllık ve ömür boyu seçeneklerini mağazanın güncel yerel fiyatlarıyla inceleyin.'}
+          </Text>
+        </View>
+        <View style={styles.crownFrame}>
+          <Image
+            accessibilityIgnoresInvertColors
+            source={require('../../../assets/credits/pro-crown.png')}
+            resizeMode="contain"
+            style={styles.crown}
           />
         </View>
       </View>
 
-      <Text style={styles.title}>
-        {billing.isPro ? 'Pro hesabınız hazır.' : 'Premium sahnelerin kilidini açın.'}
-      </Text>
-      <Text style={styles.text}>
-        {billing.isPro
-          ? expiresText
-            ? `${billing.entitlement?.willRenew ? 'Yenileme tarihi' : 'Erişim bitişi'}: ${expiresText}`
-            : 'Süresiz Pro erişimi · Otomatik yenileme yok.'
-          : 'Aylık, yıllık ve ömür boyu seçeneklerini mağazanın güncel yerel fiyatlarıyla inceleyin.'}
-      </Text>
-
       {billing.isTestStore ? (
         <Text style={styles.test}>TEST ORTAMI · Gerçek ücret alınmaz.</Text>
       ) : null}
-      {billing.status === 'connecting' ? <Text style={styles.text}>Mağaza hazırlanıyor…</Text> : null}
+      {billing.status === 'connecting' ? (
+        <Text style={styles.text}>Mağaza hazırlanıyor…</Text>
+      ) : null}
       {billing.error ? (
         <Text accessibilityRole="alert" style={styles.warning}>
           {billing.error}
@@ -124,21 +128,32 @@ export function SubscriptionCard() {
 const styles = StyleSheet.create({
   card: {
     marginTop: spacing.md,
-    padding: spacing.lg,
+    padding: 16,
     borderRadius: radii.xl,
     borderWidth: 1,
-    borderColor: 'rgba(255,196,0,0.32)',
+    borderColor: 'rgba(255,211,84,0.6)',
+    shadowColor: colors.accentYellow,
+    shadowOpacity: 0.13,
+    shadowRadius: 15,
+    shadowOffset: { width: 0, height: 6 },
   },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  statusIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: colors.accentYellowSoft,
+  hero: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  copy: { flex: 1, minWidth: 0 },
+  crownFrame: {
+    width: 78,
+    height: 78,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,211,84,0.55)',
+    backgroundColor: '#140F08',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: colors.accentYellow,
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
   },
-  title: { ...typography.h3, color: colors.textPrimary, marginTop: 14 },
+  crown: { width: 70, height: 70 },
+  title: { ...typography.h3, color: colors.textPrimary, marginTop: 8 },
   text: { ...typography.caption, color: colors.textSecondary, lineHeight: 19, marginTop: 6 },
   test: { ...typography.overline, color: colors.accentYellow, marginTop: 10 },
   warning: { ...typography.caption, color: colors.accentYellow, lineHeight: 19, marginTop: 10 },
