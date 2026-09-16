@@ -124,8 +124,12 @@ export function SubscriptionCard() {
               pressed && !disabled && styles.pressed,
             ]}
             onPress={() => {
-              void billing.presentCustomerCenter().then((result) => {
-                if (result.kind === 'error' || result.kind === 'pending') notify(result);
+              void billing.presentCustomerCenter().then(async (result) => {
+                if (result.kind === 'error' || result.kind === 'pending') {
+                  notify(result);
+                  return;
+                }
+                await billing.refreshFresh();
               });
             }}
           >
