@@ -61,9 +61,14 @@ export function CustomProPaywall() {
     expiredAt && Number.isFinite(Date.parse(expiredAt))
       ? new Date(expiredAt).toLocaleDateString('tr-TR')
       : null;
-  const activeNote = date
-    ? `${billing.entitlement?.willRenew ? 'Yenileme' : 'Erişim bitişi'}: ${date}`
-    : 'Kalıcı Pro erişimi · AI üretimleri kredi kullanır.';
+  const activeNote = billing.subscriptionCancelled
+    ? date
+      ? `Abonelik iptal edildi · Pro erişimin ${date} tarihine kadar devam eder.`
+      : 'Abonelik iptal edildi · Otomatik yenileme kapalı.'
+    : date
+      ? `${billing.entitlement?.willRenew ? 'Yenileme' : 'Erişim bitişi'}: ${date}`
+      : 'Kalıcı Pro erişimi · AI üretimleri kredi kullanır.';
+
   const priceMismatch =
     billing.appEnv !== 'production'
       ? plans.find(
@@ -75,12 +80,23 @@ export function CustomProPaywall() {
             ),
         )
       : undefined;
+
   const priceWarning = priceMismatch
-    ? `${priceMismatch.label} App Store fiyatı politika ile eşleşmiyor. Beklenen TRY fiyatı ₺${MOBILE_PRO_PRICE_POLICY[
-        priceMismatch.id
-      ].toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`
+    ? priceMismatch.package.product.currencyCode !== 'TRY'
+      ? `${priceMismatch.label} mağazadan ${priceMismatch.package.product.currencyCode} olarak geliyor. Türkiye fiyatını test etmek için Apple Sandbox / Google Play test hesabının mağaza bölgesini Türkiye yapın. BirKare fiyatı dönüştürmez; mağazanın gerçek priceString değeri gösterilir.`
+      : `${priceMismatch.label} mağaza fiyatı politika ile eşleşmiyor. Beklenen TRY fiyatı ₺${MOBILE_PRO_PRICE_POLICY[
+          priceMismatch.id
+        ].toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. App Store Connect / Google Play Console fiyatını kontrol edin.`
     : null;
+
+  const cancellationStatus = billing.subscriptionCancelled
+    ? date
+      ? `Abonelik iptal edildi. Pro erişimi ${date} tarihine kadar devam eder.`
+      : 'Abonelik iptal edildi. Otomatik yenileme kapalı.'
+    : null;
+
   const status =
+    cancellationStatus ||
     priceWarning ||
     billing.error ||
     (!billing.ready
@@ -123,7 +139,10 @@ export function CustomProPaywall() {
           message={
             <View>
               {status ? (
-                <Text accessibilityRole="alert" style={s.message}>
+                <Text
+                  accessibilityRole="alert"
+                  style={[s.message, billing.subscriptionCancelled && s.cancelledMessage]}
+                >
                   {status}
                 </Text>
               ) : null}
@@ -172,6 +191,7 @@ const s = StyleSheet.create({
     elevation: 24,
   },
   message: { color: '#E0C17A', fontSize: 12, lineHeight: 18, textAlign: 'center', padding: 8 },
+  cancelledMessage: { color: '#FF9C91' },
   link: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   linkText: { color: '#B5A3C9', fontSize: 11, textDecorationLine: 'underline' },
 });
