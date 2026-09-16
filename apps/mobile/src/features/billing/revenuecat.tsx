@@ -120,6 +120,17 @@ export function useRevenueCat() {
   );
   const belongsToUser = Boolean(userId) && state.userId === userId;
   const customerInfo = belongsToUser ? state.customerInfo : null;
+  const entitlement = customerInfo?.entitlements.active[entitlementId];
+  const subscriptionCancelled = Boolean(
+    entitlement?.expirationDate && entitlement.willRenew === false,
+  );
+  const subscriptionStatus = !entitlement
+    ? ('inactive' as const)
+    : subscriptionCancelled
+      ? ('cancelled' as const)
+      : entitlement.expirationDate
+        ? ('active' as const)
+        : ('lifetime' as const);
   const testEnvironmentLabel = isTestStore
     ? 'REVENUECAT TEST STORE · GERÇEK ÜCRET ALINMAZ'
     : appEnv !== 'production'
@@ -131,7 +142,9 @@ export function useRevenueCat() {
     offering: belongsToUser ? state.offering : null,
     creditProducts: belongsToUser ? state.creditProducts : [],
     isPro: hasPro(customerInfo, entitlementId),
-    entitlement: customerInfo?.entitlements.active[entitlementId],
+    entitlement,
+    subscriptionCancelled,
+    subscriptionStatus,
     entitlementId,
     offeringId,
     appEnv,
