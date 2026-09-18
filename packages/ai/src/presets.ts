@@ -8,7 +8,7 @@ const SCENE_PRESETS: Record<string, string> = {
   'award-night':
     'An original elegant evening reception on a waterfront terrace, with a night skyline, illuminated bridge and warm city lights reflected on dark water. Suggest a refined awards-night atmosphere with discreet warm practical lighting and distant indistinct guests, not a trophy. Keep the face naturally exposed against deep navy surroundings with accurate glass and water reflections. No real ceremony, branded backdrop, trophy, celebrity, readable signage or claim that an actual prize was won.',
   'red-carpet':
-    'An original film-premiere red carpet at night, with velvet barriers receding in correct perspective, a refined entrance and distant indistinct photographers. Balance a soft key light with restrained flash highlights. Keep the face the visual focus without blown-out skin, overlapping limbs or objects growing out of the head. No real event logos, film titles, brand walls or readable text.',
+    'A believable fictional red-carpet entrance at night photographed like a real event arrival, with simple velvet barriers, a practical venue entrance and a small number of distant indistinct photographers. Preserve the source-supported pose and framing instead of forcing a walking or over-the-shoulder pose. Use restrained direct-flash highlights mixed with warm practical venue light, slight real-world exposure falloff and natural background depth. Keep skin texture and fabric response photographic rather than glossy or airbrushed. Avoid excessive bloom, perfect luxury-ad lighting, synthetic bokeh or an over-designed premiere set. No real event logos, film titles, brand walls or readable text.',
   'luxury-car':
     'A modern city at night with one parked, unbranded premium vehicle beside the subject. Use localized wet-street reflections and controlled distant bokeh. Keep the car at realistic scale with consistent wheel geometry, ground contact and reflected light. Use a soft neutral key on the face and subtle street-light rims. No body merged into the car, purple skin, plastic paint, vehicle emblems or readable plates.',
   'istanbul-sunset':
@@ -16,7 +16,7 @@ const SCENE_PRESETS: Record<string, string> = {
   'cosmic-camp':
     'A quiet rocky night campsite under a plausible star field, with a small unbranded tent and a warm lantern. Balance lantern light with cool sky fill so facial detail remains legible. Keep tent scale, ground contact, shadows and depth coherent. No flames touching the subject, giant planets, duplicated stars, franchise objects or readable text.',
   'waterfront-night':
-    'A blue-hour waterfront promenade overlooking a modern skyline and an illuminated suspension bridge. Layer warm window lights behind the subject, with long gold and blue reflections on gently rippled water. Keep architectural verticals straight and bridge cables physically coherent. Light the subject with a soft neutral nearby practical light and subtle cool sky fill; retain a readable face without making it look like daytime. Keep railings and the waterline behind the subject, never intersecting the body.',
+    'A real-looking public waterfront promenade during blue hour, with an ordinary modern skyline, a believable illuminated suspension bridge and naturally uneven city window lights in the distance. Keep reflections restrained, broken by real water movement rather than long perfect mirror streaks. Preserve slightly imperfect real-world architecture, atmospheric depth and practical urban lighting instead of creating a futuristic skyline or luxury advertising set. Use a soft neutral nearby practical light on the subject with subtle cool ambient sky fill, retaining natural skin color and realistic shadow falloff. Keep architectural verticals plausible, bridge cables coherent, and railings and the waterline behind the subject without intersecting the body. Avoid exaggerated neon, excessive bloom, artificial HDR and overly cinematic blue-orange grading.',
   'coastal-terrace':
     'A shaded Mediterranean stone terrace above a clear turquoise cove, framed by a wooden pergola and pink bougainvillea. Include restrained linen seating, distant white sailboats and sunlit coastal hills. Use bright natural daylight softened by overhead shade, warm reflected light from stone and realistic blue water bounce. Keep the horizon level, boats distant and the subject at believable terrace scale. Do not place furniture or plants across the face or limbs; avoid artificial tropical oversaturation.',
   'window-portrait':
@@ -240,6 +240,8 @@ age and hairstyle. Do not invent a suit or accessories when clothing preservatio
   }
   return `
 Build the selected environment around the source subject with believable scale and perspective.
+Treat the source person's existing pose, visible anatomy and source-supported framing as the photographic anchor.
+Adapt the environment and requested composition around that anchor rather than rebuilding the person to fit a catalogue pose.
 If no environment is specified, retain the original setting. Scene descriptions define setting,
 not a new identity or mandatory wardrobe. No real event, brand, public figure or documentary claim.`;
 }
@@ -270,13 +272,13 @@ export function intensityPrompt(value: number, style: CatalogItem | null = null)
 export function compositionPrompt(composition: LegacyGenerationRecipe['composition']): string {
   const shot = {
     CLOSE_SELFIE:
-      'Use a close handheld smartphone selfie composition with natural, undistorted facial perspective.',
+      'Prefer a close handheld smartphone selfie composition when the source framing supports it. Preserve natural, undistorted facial perspective and do not invent a new extended arm or phone when neither is supported by the source.',
     PORTRAIT:
-      'Use a chest-up portrait with comfortable headroom within the requested aspect ratio.',
+      'Prefer a chest-up portrait with comfortable headroom when supported by the source. If the source is tighter, preserve the closest natural source-supported portrait framing rather than inventing unseen torso anatomy.',
     HALF_BODY:
-      'Use a waist-up composition with balanced spacing within the requested aspect ratio.',
+      'Use a waist-up composition only when the source provides enough visible body information to preserve anatomy faithfully. Otherwise use the closest natural source-supported framing and adapt the scene around it.',
     FULL_BODY:
-      'Use a full-body composition within the requested aspect ratio; keep hands and feet inside frame.',
+      'Use a full-body composition only when the source contains enough visible body information to reconstruct it faithfully. Otherwise use the closest natural source-supported framing; never invent major unseen body regions merely to satisfy full-body framing.',
   }[composition.shotType];
   const angle = {
     EYE_LEVEL: 'Use an eye-level camera angle.',
