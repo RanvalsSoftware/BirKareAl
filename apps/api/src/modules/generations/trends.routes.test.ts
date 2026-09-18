@@ -7,6 +7,7 @@ import { catalogFixtures } from '@birkare/shared';
 import type { ApiDependencies } from '../../services/dependencies.js';
 import { TokenService } from '../../services/token.service.js';
 import { createErrorMiddleware } from '../../middleware/error.middleware.js';
+import { generationRateLimit } from '../../middleware/rate-limit.middleware.js';
 import { createGenerationsRouter } from './generations.routes.js';
 
 test('HTTP trends validate quote, snapshot choice, replay safely, preview and revise from original', async () => {
@@ -200,6 +201,10 @@ test('HTTP trends validate quote, snapshot choice, replay safely, preview and re
       previewRecipe?.version === 1 ? previewRecipe.trendPreset : undefined,
       'old_money_portrait',
     );
+    // The test intentionally exercises several write routes in one minute.
+    // Reset the in-memory limiter between independent scenarios so the tool
+    // revision assertions test source fidelity rather than rate limiting.
+    (generationRateLimit as unknown as { resetKey: (key: string) => void }).resetKey(user.id);
     const toolStarted = await post(
       '',
       {
