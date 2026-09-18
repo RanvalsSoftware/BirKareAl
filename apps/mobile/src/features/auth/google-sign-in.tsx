@@ -1,11 +1,15 @@
-import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { useState } from 'react';
-import { Platform } from 'react-native';
+import { Image, Platform, StyleSheet } from 'react-native';
+import { useCopy } from '@/features/settings/language-store';
 import { SocialButton } from './auth-ui';
 import { GoogleAuthError, googleConfigurationError, googleSignInError } from './google-errors';
 
 type NativeGoogleSignIn = typeof import('@react-native-google-signin/google-signin');
+
+const GOOGLE_BRAND_ICON =
+  'data:image/png;base64,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';
+
 
 type GoogleConfigExtra = {
   googleIosClientId?: string;
@@ -133,12 +137,13 @@ function configureGoogle(
  * the BirKare server verifies before granting its own application session.
  */
 export function GoogleSignInButton({
-  label = 'Google ile devam et',
+  label = 'Google ile giriş yap',
   forceReauthentication = false,
   disabled = false,
   onError,
   onSuccess,
 }: GoogleSignInButtonProps) {
+  const copy = useCopy();
   const [isWorking, setIsWorking] = useState(false);
   const clientIds = getGoogleOAuthClientIds();
   const configurationError = getConfigurationError(clientIds);
@@ -196,8 +201,16 @@ export function GoogleSignInButton({
   return (
     <SocialButton
       disabled={disabled || isWorking}
-      icon={<Ionicons name="logo-google" color="#191919" size={19} />}
+      icon={
+        <Image
+          accessibilityIgnoresInvertColors
+          resizeMode="contain"
+          source={{ uri: GOOGLE_BRAND_ICON }}
+          style={styles.googleIcon}
+        />
+      }
       loading={isWorking}
+      loadingLabel={copy('Google açılıyor…', 'Opening Google…')}
       onPress={startGoogleSignIn}
       tone="light"
     >
@@ -205,3 +218,7 @@ export function GoogleSignInButton({
     </SocialButton>
   );
 }
+
+const styles = StyleSheet.create({
+  googleIcon: { height: 20, width: 20 },
+});
