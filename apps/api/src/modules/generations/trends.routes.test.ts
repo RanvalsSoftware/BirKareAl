@@ -142,6 +142,19 @@ test('HTTP trends validate quote, snapshot choice, replay safely, preview and re
     assert.equal(fourHdQuote.status, 200);
     assert.equal(fourHdQuote.body.data.creditCost, 48);
     assert.equal(fourHdQuote.body.data.canGenerate, false);
+
+    const sceneQuote = await post('/quote', {
+      ...payload,
+      mode: 'FULL_SCENE',
+      quality: 'STANDARD',
+      trendPreset: undefined,
+      stylePresetId: null,
+      sceneTemplateId: catalogFixtures.scenes[0]!.id,
+      preserveClothes: true,
+    });
+    assert.equal(sceneQuote.status, 200);
+    assert.equal(sceneQuote.body.data.creditCost, 7);
+    assert.equal(sceneQuote.body.data.modelLane, 'PREMIUM');
     const before = await repository.getWallet(user.id);
     for (const change of [
       { stylePresetId: catalogFixtures.styles.find((s) => s.slug === 'studio')!.id },
