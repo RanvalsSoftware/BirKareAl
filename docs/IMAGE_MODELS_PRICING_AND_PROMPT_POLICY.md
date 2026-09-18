@@ -109,6 +109,7 @@ Kod tabanında şu kapsam ayrı ve sunucu tarafında derlenir:
 - 13 filtre/stil için düşük, orta ve yüksek yoğunluk birbirinden farklıdır; toplam 39 yoğunluk yönü test edilir.
 - 11 akımın her birinde sahne, kıyafet, kamera ve ışık ayrı tarif edilir; kamera/poz yönleri kaynak fotoğraftaki görünür anatomi ve kadrajla sınırlandırılır.
 - 7 güzellik ayarı ve 3 makyaj seçeneği toplam 10 farklı prompt üretir.
+- Arka plan değiştir, ışığı düzelt, profesyonel portre ve fotoğrafı genişlet araçlarında mobil istemci model promptu göndermez; yalnız allowlist `toolPreset` kimliği gönderir ve gerçek edit talimatı backend'de derlenir.
 - Kullanıcı metni en fazla 1000 karakterdir ve kimlik, anatomi, güvenlik, model ya da çıktı kurallarını geçersiz kılamaz.
 - Kaynak kişi, kişi sayısı, yüz geometrisi, ten tonu, belirgin işaretler ve gerçekçi anatomi korunur.
 - Sıfır yoğunlukta seçili trend uygulanmaz; düşük/orta/yüksek yoğunluk gerçekten farklı talimat üretir.
