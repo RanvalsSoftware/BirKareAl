@@ -208,6 +208,7 @@ export function normalizeGenerationRecipe(
     ...(recipe.beauty ? { beauty: recipe.beauty } : {}),
     ...(recipe.transformation ? { transformation: recipe.transformation } : {}),
     ...(recipe.trendPreset ? { trendPreset: recipe.trendPreset } : {}),
+    ...(recipe.toolPreset ? { toolPreset: recipe.toolPreset } : {}),
   };
 }
 
