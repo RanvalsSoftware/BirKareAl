@@ -211,8 +211,8 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
   ]);
 
   const arcStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(arcProgress.get(), [0, 0.14, 1], [0, 0.42, 1]),
-    transform: [{ scale: interpolate(arcProgress.get(), [0, 1], [0.06, 1]) }],
+    opacity: interpolate(arcProgress.get(), [0, 0.12, 1], [0, 0.5, 1]),
+    transform: [{ scale: interpolate(arcProgress.get(), [0, 1], [0.18, 1]) }],
   }));
   const goldFinishStyle = useAnimatedStyle(() => ({
     opacity: interpolate(goldFinish.get(), [0, 1], [0, 1]),
@@ -244,8 +244,8 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
         />
       </Animated.View>
       <View accessibilityLabel="BirKare AI açılıyor" style={styles.logoCanvas}>
-        <View pointerEvents="none" style={styles.logoOrbitTop} />
-        <View pointerEvents="none" style={styles.logoOrbitBottom} />
+        <View pointerEvents="none" style={styles.logoFrameTopRight} />
+        <View pointerEvents="none" style={styles.logoFrameBottomLeft} />
         <LinearGradient
           colors={['rgba(255,196,0,0)', 'rgba(255,196,0,0.065)', 'rgba(255,196,0,0)']}
           end={{ x: 0.9, y: 0.9 }}
@@ -261,7 +261,9 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
         />
         <View pointerEvents="none" style={styles.logoHeroLayer}>
           <Animated.View pointerEvents="none" style={[styles.logoBloom, bloomStyle]} />
+          <Animated.View pointerEvents="none" style={[styles.logoArcGlow, bloomStyle]} />
           <Animated.View pointerEvents="none" style={[styles.logoArc, arcStyle]} />
+          <View pointerEvents="none" style={styles.logoArcBottomGlow} />
           <Animated.View style={[styles.logoMarkSlot, markStyle]}>
             <Image source={onboardingImages.brandMark} style={styles.logoMarkImage} />
           </Animated.View>
@@ -1549,25 +1551,25 @@ const styles = StyleSheet.create({
     flex: 1,
     overflow: 'hidden',
   },
-  logoOrbitTop: {
-    borderColor: 'rgba(255,196,0,0.22)',
-    borderRadius: 430,
+  logoFrameTopRight: {
+    borderColor: 'rgba(255,196,0,0.30)',
+    borderRadius: 500,
     borderWidth: 1,
-    height: 860,
+    height: 1000,
     position: 'absolute',
-    right: -515,
-    top: -475,
-    width: 860,
+    right: -635,
+    top: -535,
+    width: 1000,
   },
-  logoOrbitBottom: {
+  logoFrameBottomLeft: {
     borderColor: 'rgba(255,196,0,0.17)',
-    borderRadius: 390,
+    borderRadius: 570,
     borderWidth: 1,
-    bottom: -545,
-    height: 780,
-    left: -420,
+    bottom: -715,
+    height: 1140,
+    left: -735,
     position: 'absolute',
-    width: 780,
+    width: 1140,
   },
   logoWarmVeil: {
     bottom: 0,
@@ -1592,27 +1594,55 @@ const styles = StyleSheet.create({
     top: 0,
   },
   logoBloom: {
-    backgroundColor: 'rgba(255,196,0,0.08)',
-    borderRadius: 180,
-    height: 360,
+    backgroundColor: 'rgba(255,196,0,0.075)',
+    borderRadius: 210,
+    height: 420,
     left: '50%',
-    marginLeft: -180,
-    marginTop: -180,
+    marginLeft: -210,
+    marginTop: -210,
     position: 'absolute',
     top: '50%',
-    width: 360,
+    width: 420,
+  },
+  logoArcGlow: {
+    borderColor: 'rgba(255,210,90,0.13)',
+    borderRadius: 210,
+    borderWidth: 10,
+    height: 420,
+    left: '50%',
+    marginLeft: -210,
+    marginTop: -210,
+    position: 'absolute',
+    top: '50%',
+    width: 420,
   },
   logoArc: {
-    borderColor: 'rgba(255,196,0,0.82)',
-    borderRadius: 180,
-    borderWidth: 1.15,
-    height: 360,
+    borderColor: 'rgba(255,196,0,0.86)',
+    borderRadius: 210,
+    borderWidth: 1.3,
+    height: 420,
     left: '50%',
-    marginLeft: -180,
-    marginTop: -180,
+    marginLeft: -210,
+    marginTop: -210,
     position: 'absolute',
     top: '50%',
-    width: 360,
+    width: 420,
+  },
+  logoArcBottomGlow: {
+    backgroundColor: 'rgba(255,196,0,0.34)',
+    borderRadius: 999,
+    height: 5,
+    left: '50%',
+    marginLeft: -72,
+    marginTop: 205,
+    opacity: 0.88,
+    position: 'absolute',
+    shadowColor: '#FFC400',
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 18,
+    top: '50%',
+    width: 144,
   },
   logoMarkSlot: {
     height: 188,
