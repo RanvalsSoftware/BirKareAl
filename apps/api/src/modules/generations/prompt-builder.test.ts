@@ -72,14 +72,21 @@ test('every selectable edit is charged once per output and identity preservation
         mode: 'FULL_SCENE',
         quality: 'STANDARD',
         numberOfImages: 1,
+        premiumModel: true,
         hasSceneTemplate: true,
       },
-      expected: 5,
+      expected: 7,
     },
     {
       label: 'trend',
-      input: { mode: 'AI_FILTER', quality: 'STANDARD', numberOfImages: 1, hasTrend: true },
-      expected: 6,
+      input: {
+        mode: 'AI_FILTER',
+        quality: 'STANDARD',
+        numberOfImages: 1,
+        premiumModel: true,
+        hasTrend: true,
+      },
+      expected: 8,
     },
     {
       label: 'standard beauty',
@@ -141,9 +148,10 @@ test('every selectable edit is charged once per output and identity preservation
       mode: 'AI_FILTER',
       quality: 'HD',
       numberOfImages: 4,
+      premiumModel: true,
       hasTrend: true,
     }).creditCost,
-    36,
+    48,
     'base and trend cost must both scale with the four generated outputs',
   );
   assert.equal(
