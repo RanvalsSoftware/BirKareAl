@@ -1124,12 +1124,16 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
         recipe.selection?.stylePresetId,
         await deps.repository.getCatalog(),
       );
-      // Portrait tools are recomputed from the original, never recursively from an AI output.
-      const revisionSourceId =
-        recipe.beauty || recipe.transformation || recipe.trendPreset
-          ? parent.sourceAssetId
-          : output.assetId;
-      if (recipe.beauty || recipe.transformation || recipe.trendPreset) {
+      // Identity-sensitive and bounded edit tools are always recomputed from the original upload.
+      // Never recursively edit a generated output for beauty, trends, relighting, portrait,
+      // background replacement or canvas expansion because each generation would compound drift.
+      const requiresOriginalSource =
+        Boolean(recipe.beauty) ||
+        Boolean(recipe.transformation) ||
+        Boolean(recipe.trendPreset) ||
+        Boolean(recipe.toolPreset);
+      const revisionSourceId = requiresOriginalSource ? parent.sourceAssetId : output.assetId;
+      if (requiresOriginalSource) {
         const source = await deps.repository.getAssetById(revisionSourceId);
         if (
           !source ||
