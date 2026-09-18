@@ -61,7 +61,12 @@ jobs:
             .
 
       - name: Audit release images before publishing
+        env:
+          AUDIT_SENTINEL: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          umask 077
+          printf 'OPENAI_API_KEY=%s\n' "${AUDIT_SENTINEL}" > .env
+          trap 'rm -f .env' EXIT
           node scripts/audit-release-images.mjs \
             "${API_IMAGE}:${RELEASE_TAG}" \
             "${WORKER_IMAGE}:${RELEASE_TAG}"
