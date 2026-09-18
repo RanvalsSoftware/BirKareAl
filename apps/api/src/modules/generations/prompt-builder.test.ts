@@ -248,7 +248,7 @@ test('every new scene resolves to its own environment, not an unrelated legacy f
   const expectations = {
     'stadium-night': /football stadium/,
     'award-night': /waterfront terrace/,
-    'red-carpet': /film-premiere red carpet/,
+    'red-carpet': /fictional red-carpet entrance/,
     'luxury-car': /parked, unbranded premium vehicle/,
     'istanbul-sunset': /waterfront city terrace/,
     'cosmic-camp': /rocky night campsite/,
@@ -266,6 +266,60 @@ test('every new scene resolves to its own environment, not an unrelated legacy f
     assert.match(background, /original face, hairstyle, clothing/);
     assert.match(background, /pose and expression/);
   }
+});
+
+test('human photographic scenes inherit source-fidelity and anti-CGI rules', () => {
+  const generation = {
+    preserveFace: true,
+    preserveClothes: true,
+    aspectRatio: '4:5',
+    userInstruction: null,
+    recipe: {
+      version: 1,
+      filterIntensity: 60,
+      character: null,
+      composition: {
+        shotType: 'HALF_BODY',
+        cameraAngle: 'EYE_LEVEL',
+        subjectPosition: 'CENTER',
+        backgroundDepth: 'BALANCED',
+      },
+      selection: {
+        sceneTemplateId: scene('waterfront-night').id,
+        stylePresetId: catalogFixtures.styles.find((entry) => entry.slug === 'natural-light')!.id,
+        featuredPersonId: null,
+      },
+    },
+  } as GenerationRecord;
+  const project = {
+    mode: 'FULL_SCENE',
+    composition: 'MEDIUM',
+    sceneTemplateId: scene('waterfront-night').id,
+    stylePresetId: catalogFixtures.styles.find((entry) => entry.slug === 'natural-light')!.id,
+    featuredPersonId: null,
+  } as ProjectRecord;
+  const prompt = buildGenerationPrompt({ generation, project, catalog: catalogFixtures });
+  assert.match(prompt, /SOURCE PHOTOGRAPH AUTHORITY/);
+  assert.match(prompt, /PHOTOGRAPHIC REALISM TARGET/);
+  assert.match(prompt, /not as AI artwork, CGI, 3D rendering/);
+  assert.match(prompt, /Do not invent, extend or reconstruct unseen body regions/);
+  assert.match(prompt, /real-looking public waterfront promenade/);
+  assert.match(prompt, /Avoid exaggerated neon, excessive bloom, artificial HDR/);
+});
+
+test('composition never requires invented body regions just to satisfy framing', () => {
+  assert.match(compositionPrompt({
+    shotType: 'HALF_BODY',
+    cameraAngle: 'EYE_LEVEL',
+    subjectPosition: 'CENTER',
+    backgroundDepth: 'BALANCED',
+  }), /only when the source provides enough visible body information/);
+  assert.match(compositionPrompt({
+    shotType: 'FULL_BODY',
+    cameraAngle: 'EYE_LEVEL',
+    subjectPosition: 'CENTER',
+    backgroundDepth: 'BALANCED',
+  }), /never invent major unseen body regions/);
 });
 
 test('filter and portrait modes cannot inherit a stale scene background', () => {
