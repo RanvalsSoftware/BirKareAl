@@ -28,17 +28,19 @@ Identity, anatomy and source-supported framing always take priority over a catal
 
 export const HUMAN_PHOTOREALISM_CORE = `PHOTOGRAPHIC REALISM TARGET
 
-The final result must read as a genuine photograph captured with a real camera and physically plausible lighting, not as AI artwork, CGI, 3D rendering, a game cinematic or a synthetic digital composite.
+Make the finished result explicitly photorealistic. It must feel like a genuine photograph captured in a real moment with a real camera and physically plausible light, not like AI artwork, CGI, 3D rendering, a game cinematic or a synthetic digital composite.
 
-When people are visible, retain natural photographic imperfections and fine detail where present:
-- skin pores and subtle tonal variation
+Favor grounded, authentic, naturally imperfect photography over over-staged perfection. Unless the selected style explicitly requires otherwise, avoid glossy campaign polish, dramatic movie-poster grading and artificial spectacle.
+
+When people are visible, retain real photographic detail where present:
+- pores, fine lines and subtle skin-tone variation
 - individual and flyaway hair strands
-- realistic fabric wrinkles, seams and material response
 - natural facial asymmetry
+- realistic fabric wear, wrinkles, seams and material response
 - plausible lens perspective and depth falloff
 - physically consistent contact shadows and reflected light
 
-For objects and environments, preserve believable material texture, small real-world irregularities, surface response, perspective, contact shadows and reflections instead of making surfaces unnaturally perfect.
+For objects and environments, retain believable material texture, small real-world irregularities, atmospheric depth, surface response, perspective, contact shadows and reflections instead of making surfaces unnaturally perfect.
 
 Avoid:
 - plastic or waxy skin
@@ -51,4 +53,4 @@ Avoid:
 - synthetic background bokeh that does not correspond to real light sources
 - over-smoothed architecture, water, pavement, fabric or object surfaces
 
-Prefer restrained, imperfect real-world lighting over glossy advertising-render lighting unless the selected workflow explicitly requests a stylized illustration.`;
+The scene may become more polished, but it must still look physically photographed rather than digitally rendered.`;
