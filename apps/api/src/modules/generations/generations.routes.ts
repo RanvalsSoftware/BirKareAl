@@ -279,6 +279,7 @@ function createGenerationRecipe(
     beauty?: LegacyGenerationRecipe['beauty'];
     transformation?: LegacyGenerationRecipe['transformation'];
     trendPreset?: LegacyGenerationRecipe['trendPreset'];
+    toolPreset?: LegacyGenerationRecipe['toolPreset'];
   },
   character: CharacterAuthorization | null,
   selection: GenerationSelectionInput,
@@ -296,6 +297,7 @@ function createGenerationRecipe(
     ...(input.beauty ? { beauty: input.beauty } : {}),
     ...(input.transformation ? { transformation: input.transformation } : {}),
     ...(input.trendPreset ? { trendPreset: input.trendPreset } : {}),
+    ...(input.toolPreset ? { toolPreset: input.toolPreset } : {}),
     composition: input.compositionDetails ?? legacyComposition(input.composition),
     character: character
       ? character.mode === 'LICENSED_REFERENCE'
@@ -418,16 +420,21 @@ type ModelLaneInput = {
   hasBeauty?: boolean;
   hasTransformation?: boolean;
   hasFeaturedPerson?: boolean;
+  hasTrend?: boolean;
 };
 
 /**
  * Model choice is derived only from the server-validated request snapshot.
- * Preview always stays on Flare; identity-sensitive final edits use Sunburst.
+ * Preview always stays on Flare. Standard/HD full-scene and trend transforms
+ * use the precision lane because they rebuild substantial surroundings while
+ * preserving a real person's identity and source-supported anatomy.
  */
 function usesPremiumImageModel(input: ModelLaneInput): boolean {
   if (input.quality === 'PREVIEW') return false;
   return (
+    input.mode === 'FULL_SCENE' ||
     input.mode === 'PRO_PORTRAIT' ||
+    Boolean(input.hasTrend) ||
     Boolean(input.hasBeauty) ||
     Boolean(input.hasTransformation) ||
     Boolean(input.hasFeaturedPerson)
@@ -482,6 +489,7 @@ async function reserveCreateAndEnqueue(
           hasBeauty: Boolean(input.recipe.beauty),
           hasTransformation: Boolean(input.recipe.transformation),
           hasFeaturedPerson: Boolean(pricedSelection!.featuredPersonId),
+          hasTrend: Boolean(input.recipe.trendPreset),
         });
   const model = configuredImageModel(deps, premiumModel);
   const quote =
@@ -609,6 +617,7 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
         hasBeauty: Boolean(req.body.beauty),
         hasTransformation: Boolean(req.body.transformation),
         hasFeaturedPerson: Boolean(req.body.featuredPersonId),
+        hasTrend: Boolean(req.body.trendPreset),
       });
       const quote = calculateCreditQuote({
         mode: req.body.mode,
@@ -1115,12 +1124,16 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
         recipe.selection?.stylePresetId,
         await deps.repository.getCatalog(),
       );
-      // Portrait tools are recomputed from the original, never recursively from an AI output.
-      const revisionSourceId =
-        recipe.beauty || recipe.transformation || recipe.trendPreset
-          ? parent.sourceAssetId
-          : output.assetId;
-      if (recipe.beauty || recipe.transformation || recipe.trendPreset) {
+      // Identity-sensitive and bounded edit tools are always recomputed from the original upload.
+      // Never recursively edit a generated output for beauty, trends, relighting, portrait,
+      // background replacement or canvas expansion because each generation would compound drift.
+      const requiresOriginalSource =
+        Boolean(recipe.beauty) ||
+        Boolean(recipe.transformation) ||
+        Boolean(recipe.trendPreset) ||
+        Boolean(recipe.toolPreset);
+      const revisionSourceId = requiresOriginalSource ? parent.sourceAssetId : output.assetId;
+      if (requiresOriginalSource) {
         const source = await deps.repository.getAssetById(revisionSourceId);
         if (
           !source ||

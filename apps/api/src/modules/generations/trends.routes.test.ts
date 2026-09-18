@@ -7,6 +7,7 @@ import { catalogFixtures } from '@birkare/shared';
 import type { ApiDependencies } from '../../services/dependencies.js';
 import { TokenService } from '../../services/token.service.js';
 import { createErrorMiddleware } from '../../middleware/error.middleware.js';
+import { generationRateLimit } from '../../middleware/rate-limit.middleware.js';
 import { createGenerationsRouter } from './generations.routes.js';
 
 test('HTTP trends validate quote, snapshot choice, replay safely, preview and revise from original', async () => {
@@ -118,16 +119,21 @@ test('HTTP trends validate quote, snapshot choice, replay safely, preview and re
           creditCost: number;
           availableCredits: number;
           canGenerate: boolean;
+          modelLane: 'FAST' | 'PREMIUM';
         };
         error: { code: string };
       },
     };
   };
   try {
-    assert.equal((await post('/quote', payload)).status, 200);
+    const previewQuote = await post('/quote', payload);
+    assert.equal(previewQuote.status, 200);
+    assert.equal(previewQuote.body.data.creditCost, 3);
+    assert.equal(previewQuote.body.data.modelLane, 'FAST');
     const hdQuote = await post('/quote', { ...payload, quality: 'HD' });
     assert.equal(hdQuote.status, 200);
-    assert.equal(hdQuote.body.data.creditCost, 9);
+    assert.equal(hdQuote.body.data.creditCost, 12);
+    assert.equal(hdQuote.body.data.modelLane, 'PREMIUM');
     assert.equal(hdQuote.body.data.canGenerate, true);
     const fourHdQuote = await post('/quote', {
       ...payload,
@@ -135,8 +141,21 @@ test('HTTP trends validate quote, snapshot choice, replay safely, preview and re
       numberOfImages: 4,
     });
     assert.equal(fourHdQuote.status, 200);
-    assert.equal(fourHdQuote.body.data.creditCost, 36);
+    assert.equal(fourHdQuote.body.data.creditCost, 48);
     assert.equal(fourHdQuote.body.data.canGenerate, false);
+
+    const sceneQuote = await post('/quote', {
+      ...payload,
+      mode: 'FULL_SCENE',
+      quality: 'STANDARD',
+      trendPreset: undefined,
+      stylePresetId: null,
+      sceneTemplateId: catalogFixtures.scenes[0]!.id,
+      preserveClothes: true,
+    });
+    assert.equal(sceneQuote.status, 200);
+    assert.equal(sceneQuote.body.data.creditCost, 7);
+    assert.equal(sceneQuote.body.data.modelLane, 'PREMIUM');
     const before = await repository.getWallet(user.id);
     for (const change of [
       { stylePresetId: catalogFixtures.styles.find((s) => s.slug === 'studio')!.id },
@@ -182,6 +201,50 @@ test('HTTP trends validate quote, snapshot choice, replay safely, preview and re
       previewRecipe?.version === 1 ? previewRecipe.trendPreset : undefined,
       'old_money_portrait',
     );
+    // The test intentionally exercises several write routes in one minute.
+    // Reset the in-memory limiter between independent scenarios so the tool
+    // revision assertions test source fidelity rather than rate limiting.
+    (generationRateLimit as unknown as { resetKey: (key: string) => void }).resetKey(user.id);
+    const toolStarted = await post(
+      '',
+      {
+        ...payload,
+        trendPreset: undefined,
+        toolPreset: 'light',
+        preserveClothes: true,
+      },
+      'tool-test-start',
+    );
+    assert.equal(toolStarted.status, 202);
+    const toolId = toolStarted.body.data.generationId;
+    const toolGeneration = await repository.getGenerationById(toolId);
+    assert.equal(
+      toolGeneration?.recipe?.version === 1 ? toolGeneration.recipe.toolPreset : undefined,
+      'light',
+    );
+    assert.equal(toolGeneration?.sourceAssetId, source.id);
+    const toolOutput = await repository.addGenerationOutput({
+      generationId: toolId,
+      assetId: 'tool-generated-output',
+      variantIndex: 0,
+      selected: true,
+      watermarkApplied: false,
+      disclosureType: 'AI_GENERATED',
+    });
+    await repository.updateGeneration(toolId, { status: 'COMPLETED' });
+    const toolRevision = await post(
+      `/${toolId}/revisions`,
+      { sourceOutputId: toolOutput.id, instruction: 'Keep the exposure natural', quality: 'PREVIEW' },
+      'tool-test-revision',
+    );
+    assert.equal(toolRevision.status, 202);
+    const revisedTool = await repository.getGenerationById(toolRevision.body.data.generationId);
+    assert.equal(revisedTool?.sourceAssetId, source.id);
+    assert.equal(
+      revisedTool?.recipe?.version === 1 ? revisedTool.recipe.toolPreset : undefined,
+      'light',
+    );
+
     const output = await repository.addGenerationOutput({
       generationId: id,
       assetId: 'test-generated-output',
@@ -224,7 +287,7 @@ test('HTTP trends validate quote, snapshot choice, replay safely, preview and re
     assert.equal(invalid.status, 400);
     assert.equal(invalid.body.error.code, 'TREND_ORIGINAL_REQUIRED');
     assert.deepEqual(await repository.getWallet(user.id), priorInvalid);
-    assert.equal(queued.length, 3);
+    assert.equal(queued.length, 5);
   } finally {
     server.closeAllConnections();
     await new Promise<void>((resolve, reject) =>

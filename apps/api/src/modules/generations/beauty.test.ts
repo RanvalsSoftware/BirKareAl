@@ -135,6 +135,8 @@ test('all ten beauty prompts are distinct, bounded and retain independent layer 
     assert.match(prompt, new RegExp(`${id}:`));
     assert.match(prompt, /original position|MARKS LOCK/);
     assert.match(prompt, /No makeup change requested/);
+    assert.match(prompt, /CHANGE ONLY the explicitly selected beauty layers/);
+    assert.match(prompt, /KEEP EVERYTHING ELSE THE SAME/);
     assert.doesNotMatch(prompt, /MAKEUP \(one preset only\)/);
     prompts.add(prompt);
   }
@@ -215,6 +217,8 @@ test('gender presentation is an explicit separate creative transformation, never
     catalog: catalogFixtures,
   });
   assert.match(prompt, /explicitly selected a masculine/);
+  assert.match(prompt, /CHANGE ONLY presentation cues/);
+  assert.match(prompt, /KEEP identity, body shape, pose, framing and environment the same/);
   assert.match(prompt, /not an inference or claim/);
   assert.doesNotMatch(prompt, /beauty retouch|catalog face as the source/);
 });

@@ -67,6 +67,7 @@ describe('source -> editor -> review navigation', () => {
       trendPreset: null,
       sourceUri: null,
       sourceRightsConfirmed: false,
+      quality: 'Standart',
     });
   });
 

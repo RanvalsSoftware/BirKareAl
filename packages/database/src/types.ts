@@ -7,7 +7,7 @@ import type {
   ProjectMode,
 } from '@birkare/shared';
 import type { CatalogFeaturedPerson, CatalogItem, ResolvedStudioSelection } from '@birkare/shared';
-import type { BeautySettings, GenderTransformation, TrendPreset } from '@birkare/shared';
+import type { AiToolPreset, BeautySettings, GenderTransformation, TrendPreset } from '@birkare/shared';
 
 export type UserRole = 'USER' | 'SUPPORT' | 'MODERATOR' | 'ADMIN' | 'SUPER_ADMIN';
 export type UserStatus =
@@ -223,6 +223,7 @@ export type LegacyGenerationRecipe = {
   beauty?: BeautySettings;
   transformation?: GenderTransformation;
   trendPreset?: TrendPreset;
+  toolPreset?: AiToolPreset;
   composition: {
     shotType: 'CLOSE_SELFIE' | 'PORTRAIT' | 'HALF_BODY' | 'FULL_BODY';
     cameraAngle: 'EYE_LEVEL' | 'SLIGHTLY_LOW' | 'SLIGHTLY_HIGH';

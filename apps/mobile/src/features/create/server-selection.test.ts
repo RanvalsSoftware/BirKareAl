@@ -14,6 +14,7 @@ import { fictionalSourceSelection } from './source-selection';
 import type { CreateFlow } from './createFlow';
 import { emptyBeautySettings, withBeautyIntensity } from '../beauty/settings';
 import { trendCreationSelection, trendPresets } from '../trends/presets';
+import { getToolPreset } from './tool-presets';
 
 const flow = (update: Partial<CreateFlow> = {}): CreateFlow => ({
   mode: 'scene',
@@ -84,6 +85,15 @@ describe('server selection for the simplified editor', () => {
         resolveCreateFlow(flow({ ...trendCreationSelection('analog_90s'), filterIntensity }))
           .filterIntensity,
       ).toBe(filterIntensity);
+    },
+  );
+
+  it.each(['background', 'light', 'portrait', 'extend'] as const)(
+    'serializes %s as a bounded server tool preset without a client-authored prompt',
+    (tool) => {
+      const selection = resolveCreateFlow(flow(getToolPreset(tool)!));
+      expect(selection.toolPreset).toBe(tool);
+      expect(selection.customInstruction).toBeUndefined();
     },
   );
 
