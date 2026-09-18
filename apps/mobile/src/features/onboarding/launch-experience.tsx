@@ -228,77 +228,118 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
     ],
   }));
   const shimmerStyle = useAnimatedStyle(() => ({
-    opacity: 0.16 + beamPulse.get() * 0.34,
-    transform: [
-      { translateX: interpolate(beamTravel.get(), [0, 1], [-36, 42]) },
-      { translateY: interpolate(beamTravel.get(), [0, 1], [-10, 16]) },
-    ],
+    opacity: 0.34 + beamPulse.get() * 0.5,
   }));
 
   return (
     <SafeAreaView edges={['top', 'bottom']} style={styles.logoSafe}>
       <LinearGradient colors={['#000000', '#030200', '#000000']} style={StyleSheet.absoluteFill} />
       <View accessibilityLabel="BirKare AI açılıyor" style={styles.logoCanvas}>
-        <Animated.View pointerEvents="none" style={[styles.logoBeamTopGroup, topBeamStyle]}>
-          <View style={[styles.logoBeamArc, styles.logoBeamTopArc, styles.logoBeamArcHalo]} />
-          <View style={[styles.logoBeamArc, styles.logoBeamTopArc, styles.logoBeamArcWide]} />
-          <View style={[styles.logoBeamArc, styles.logoBeamTopArc, styles.logoBeamArcCore]} />
-          <View
-            style={[
-              styles.logoBeamArc,
-              styles.logoBeamTopArc,
-              styles.logoBeamArcParallel,
-              styles.logoBeamArcSecondary,
-            ]}
-          />
-          <View
-            style={[
-              styles.logoBeamArc,
-              styles.logoBeamTopArc,
-              styles.logoBeamArcParallelFar,
-              styles.logoBeamArcTertiary,
-            ]}
-          />
-        </Animated.View>
-
-        <Animated.View pointerEvents="none" style={[styles.logoBeamBottomGroup, bottomBeamStyle]}>
-          <View style={[styles.logoBeamArc, styles.logoBeamBottomArc, styles.logoBeamArcHalo]} />
-          <View style={[styles.logoBeamArc, styles.logoBeamBottomArc, styles.logoBeamArcWide]} />
-          <View style={[styles.logoBeamArc, styles.logoBeamBottomArc, styles.logoBeamArcCore]} />
-          <View
-            style={[
-              styles.logoBeamArc,
-              styles.logoBeamBottomArc,
-              styles.logoBeamArcParallel,
-              styles.logoBeamArcSecondary,
-            ]}
-          />
-          <View
-            style={[
-              styles.logoBeamArc,
-              styles.logoBeamBottomArc,
-              styles.logoBeamArcParallelFar,
-              styles.logoBeamArcTertiary,
-            ]}
-          />
-        </Animated.View>
-
-        <Animated.View pointerEvents="none" style={[styles.logoBeamShimmerTop, shimmerStyle]}>
+        <View pointerEvents="none" style={styles.logoBeamTopViewport}>
+          <Animated.View style={[styles.logoBeamTopGroup, topBeamStyle]}>
+            <View style={[styles.logoBeamArc, styles.logoBeamTopArc, styles.logoBeamArcHalo]} />
+            <View style={[styles.logoBeamArc, styles.logoBeamTopArc, styles.logoBeamArcWide]} />
+            <View style={[styles.logoBeamArc, styles.logoBeamTopArc, styles.logoBeamArcCore]} />
+            <View
+              style={[
+                styles.logoBeamArc,
+                styles.logoBeamTopArc,
+                styles.logoBeamArcParallel,
+                styles.logoBeamArcSecondary,
+              ]}
+            />
+            <View
+              style={[
+                styles.logoBeamArc,
+                styles.logoBeamTopArc,
+                styles.logoBeamArcParallelFar,
+                styles.logoBeamArcTertiary,
+              ]}
+            />
+          </Animated.View>
           <LinearGradient
-            colors={['rgba(255,196,0,0)', 'rgba(255,235,156,0.9)', 'rgba(255,196,0,0)']}
-            end={{ x: 1, y: 0.55 }}
-            start={{ x: 0, y: 0.45 }}
+            colors={[
+              'rgba(0,0,0,0.02)',
+              'rgba(0,0,0,0.24)',
+              'rgba(0,0,0,0.74)',
+              'rgba(0,0,0,0.30)',
+              'rgba(0,0,0,0.02)',
+            ]}
+            end={{ x: 1, y: 0.5 }}
+            locations={[0, 0.2, 0.5, 0.78, 1]}
+            start={{ x: 0, y: 0.5 }}
             style={StyleSheet.absoluteFill}
           />
-        </Animated.View>
-        <Animated.View pointerEvents="none" style={[styles.logoBeamShimmerBottom, shimmerStyle]}>
+          <Animated.View style={[styles.logoBeamShimmerTopLeft, shimmerStyle]}>
+            <LinearGradient
+              colors={['rgba(255,196,0,0)', 'rgba(255,240,179,0.96)', 'rgba(255,196,0,0)']}
+              end={{ x: 1, y: 0.5 }}
+              start={{ x: 0, y: 0.5 }}
+              style={StyleSheet.absoluteFill}
+            />
+          </Animated.View>
+          <Animated.View style={[styles.logoBeamShimmerTopRight, shimmerStyle]}>
+            <LinearGradient
+              colors={['rgba(255,196,0,0)', 'rgba(255,240,179,0.92)', 'rgba(255,196,0,0)']}
+              end={{ x: 1, y: 0.5 }}
+              start={{ x: 0, y: 0.5 }}
+              style={StyleSheet.absoluteFill}
+            />
+          </Animated.View>
+        </View>
+
+        <View pointerEvents="none" style={styles.logoBeamBottomViewport}>
+          <Animated.View style={[styles.logoBeamBottomGroup, bottomBeamStyle]}>
+            <View style={[styles.logoBeamArc, styles.logoBeamBottomArc, styles.logoBeamArcHalo]} />
+            <View style={[styles.logoBeamArc, styles.logoBeamBottomArc, styles.logoBeamArcWide]} />
+            <View style={[styles.logoBeamArc, styles.logoBeamBottomArc, styles.logoBeamArcCore]} />
+            <View
+              style={[
+                styles.logoBeamArc,
+                styles.logoBeamBottomArc,
+                styles.logoBeamArcParallel,
+                styles.logoBeamArcSecondary,
+              ]}
+            />
+            <View
+              style={[
+                styles.logoBeamArc,
+                styles.logoBeamBottomArc,
+                styles.logoBeamArcParallelFar,
+                styles.logoBeamArcTertiary,
+              ]}
+            />
+          </Animated.View>
           <LinearGradient
-            colors={['rgba(255,196,0,0)', 'rgba(255,235,156,0.72)', 'rgba(255,196,0,0)']}
-            end={{ x: 1, y: 0.55 }}
-            start={{ x: 0, y: 0.45 }}
+            colors={[
+              'rgba(0,0,0,0.02)',
+              'rgba(0,0,0,0.24)',
+              'rgba(0,0,0,0.72)',
+              'rgba(0,0,0,0.28)',
+              'rgba(0,0,0,0.02)',
+            ]}
+            end={{ x: 1, y: 0.5 }}
+            locations={[0, 0.2, 0.5, 0.78, 1]}
+            start={{ x: 0, y: 0.5 }}
             style={StyleSheet.absoluteFill}
           />
-        </Animated.View>
+          <Animated.View style={[styles.logoBeamShimmerBottomLeft, shimmerStyle]}>
+            <LinearGradient
+              colors={['rgba(255,196,0,0)', 'rgba(255,240,179,0.9)', 'rgba(255,196,0,0)']}
+              end={{ x: 1, y: 0.5 }}
+              start={{ x: 0, y: 0.5 }}
+              style={StyleSheet.absoluteFill}
+            />
+          </Animated.View>
+          <Animated.View style={[styles.logoBeamShimmerBottomRight, shimmerStyle]}>
+            <LinearGradient
+              colors={['rgba(255,196,0,0)', 'rgba(255,240,179,0.96)', 'rgba(255,196,0,0)']}
+              end={{ x: 1, y: 0.5 }}
+              start={{ x: 0, y: 0.5 }}
+              style={StyleSheet.absoluteFill}
+            />
+          </Animated.View>
+        </View>
 
         <Animated.View style={[styles.logoMarkSlot, markStyle]}>
           <Image source={onboardingImages.brandMark} style={styles.logoMarkImage} />
@@ -1585,23 +1626,39 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  logoBeamTopGroup: {
-    height: 1700,
-    left: -150,
+  logoBeamTopViewport: {
+    height: 246,
+    left: 0,
+    overflow: 'hidden',
     position: 'absolute',
+    right: 0,
     top: 0,
-    width: 1700,
+  },
+  logoBeamBottomViewport: {
+    bottom: 0,
+    height: 246,
+    left: 0,
+    overflow: 'hidden',
+    position: 'absolute',
+    right: 0,
+  },
+  logoBeamTopGroup: {
+    height: 640,
+    left: -835,
+    position: 'absolute',
+    top: -500,
+    width: 1380,
   },
   logoBeamBottomGroup: {
-    bottom: -136,
-    height: 1700,
-    left: -150,
+    height: 640,
+    left: -835,
     position: 'absolute',
-    width: 1700,
+    top: 118,
+    width: 1380,
   },
   logoBeamArc: {
     borderColor: 'transparent',
-    borderRadius: 850,
+    borderRadius: 690,
     bottom: 0,
     left: 0,
     position: 'absolute',
@@ -1615,82 +1672,96 @@ const styles = StyleSheet.create({
     borderColor: '#FFC400',
   },
   logoBeamArcHalo: {
-    borderWidth: 11,
-    opacity: 0.075,
+    borderWidth: 14,
+    opacity: 0.07,
     shadowColor: '#FFC400',
     shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.9,
-    shadowRadius: 24,
+    shadowOpacity: 0.95,
+    shadowRadius: 28,
   },
   logoBeamArcWide: {
-    borderWidth: 5,
-    opacity: 0.2,
+    borderWidth: 6,
+    opacity: 0.18,
     shadowColor: '#FFB800',
     shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.75,
-    shadowRadius: 14,
+    shadowOpacity: 0.85,
+    shadowRadius: 16,
   },
   logoBeamArcCore: {
-    borderWidth: 1.8,
+    borderWidth: 1.7,
     opacity: 0.98,
-    shadowColor: '#FFE7A0',
+    shadowColor: '#FFF0B5',
     shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.95,
-    shadowRadius: 8,
+    shadowOpacity: 0.98,
+    shadowRadius: 9,
   },
   logoBeamArcParallel: {
-    bottom: -16,
-    left: -16,
-    right: -16,
-    top: -16,
+    bottom: -13,
+    left: -13,
+    right: -13,
+    top: -13,
   },
   logoBeamArcParallelFar: {
-    bottom: -34,
-    left: -34,
-    right: -34,
-    top: -34,
+    bottom: -27,
+    left: -27,
+    right: -27,
+    top: -27,
   },
   logoBeamArcSecondary: {
     borderWidth: 1.35,
-    opacity: 0.56,
-    shadowColor: '#FFC400',
+    opacity: 0.63,
+    shadowColor: '#FFD64D',
     shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.65,
-    shadowRadius: 7,
+    shadowOpacity: 0.72,
+    shadowRadius: 8,
   },
   logoBeamArcTertiary: {
     borderWidth: 1,
-    opacity: 0.28,
+    opacity: 0.34,
     shadowColor: '#FFC400',
     shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.42,
-    shadowRadius: 5,
+    shadowOpacity: 0.48,
+    shadowRadius: 6,
   },
-  logoBeamShimmerTop: {
+  logoBeamShimmerTopLeft: {
     borderRadius: 999,
-    height: 4,
+    height: 5,
+    left: -18,
+    overflow: 'hidden',
     position: 'absolute',
-    right: -6,
-    shadowColor: '#FFD75C',
-    shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.65,
-    shadowRadius: 12,
-    top: 92,
-    transform: [{ rotate: '-34deg' }],
-    width: 208,
+    top: 124,
+    transform: [{ rotate: '-31deg' }],
+    width: 132,
   },
-  logoBeamShimmerBottom: {
+  logoBeamShimmerTopRight: {
     borderRadius: 999,
-    bottom: 72,
-    height: 4,
+    height: 5,
+    overflow: 'hidden',
     position: 'absolute',
-    right: -8,
-    shadowColor: '#FFD75C',
-    shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.58,
-    shadowRadius: 12,
-    transform: [{ rotate: '34deg' }],
-    width: 208,
+    right: -28,
+    top: 24,
+    transform: [{ rotate: '-17deg' }],
+    width: 154,
+  },
+  logoBeamShimmerBottomLeft: {
+    borderRadius: 999,
+    bottom: 66,
+    height: 5,
+    left: -18,
+    overflow: 'hidden',
+    position: 'absolute',
+    transform: [{ rotate: '30deg' }],
+    width: 132,
+  },
+  logoBeamShimmerBottomRight: {
+    borderRadius: 999,
+    bottom: 10,
+    height: 5,
+    overflow: 'hidden',
+    position: 'absolute',
+    right: -28,
+    transform: [{ rotate: '17deg' }],
+    width: 154,
   },
   logoMarkSlot: {
     height: 175,
