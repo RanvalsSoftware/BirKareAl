@@ -24,6 +24,26 @@ const DIRECTIONS: Record<TrendPreset, TrendDirection> = {
     light:
       'Magenta stage light from one side, blue edge light from the other and soft neutral facial fill. Use restrained haze, fine analog grain and subtle highlight halation. Preserve leather grain, hair strands and skin texture; avoid neon-colored skin and plastic sharpening.',
   },
+  romantic_dinner_80s: {
+    scene:
+      'An elegant fictional 1980s evening restaurant beside large windows with a distant, unbranded night skyline. A candlelit table, coupe glasses, dark tableware and a restrained burgundy floral arrangement create foreground depth. Preserve exactly the people visible in the source photograph; never invent a date, partner, waiter or extra guest.',
+    styling:
+      'Original polished 1980s evening wardrobe adapted individually to each visible source person: tasteful jewel-tone satin or clean dark tailoring, understated period jewelry and naturally voluminous grooming. Preserve every person’s existing hair color, hairline, recognizable facial features, apparent age and body proportions. Clothing must remain elegant and non-branded rather than copying a film, celebrity or catalogue outfit.',
+    camera:
+      'A seated waist-up portrait at intimate conversational distance, photographed at eye level. If multiple people exist in the source, arrange only those same people close together with natural shoulder contact while keeping every face clear and distinct. If one person exists, make a confident solo dinner portrait. Keep hands anatomically plausible around the table and do not merge bodies, glassware or cutlery.',
+    light:
+      'Warm candle and tungsten key light on faces, a soft magenta practical glow in the room and subtle cool city separation through the windows. Add restrained analog grain, gentle highlight halation and realistic low-light depth. Preserve natural skin color and texture; avoid orange faces, heavy glamour smoothing or excessive pink cast.',
+  },
+  romantic_closeup_80s: {
+    scene:
+      'A fictional late-1980s diner or roadside hangout at night with a softly blurred jukebox, chrome details, pink practical lights and an unbranded classic car glimpsed outside. Preserve exactly the people in the source image and keep background patrons absent or indistinct so no extra focal person appears.',
+    styling:
+      'Original relaxed 1980s styling with washed denim, a simple top and an unbranded black leather jacket distributed naturally across the visible source people. Add modest period volume to the existing hairstyles without changing their color, length or hairline. Keep makeup restrained and photographic, with pores and individual features intact.',
+    camera:
+      'A close shoulder-to-shoulder portrait with a casual snapshot feeling and mild handheld tilt. Multiple source people may lean together naturally while remaining individually recognizable; a single source person remains a solo portrait. Keep faces unobstructed, shoulders connected correctly and foreground arms at believable scale.',
+    light:
+      'Soft direct-camera flash balanced with warm diner bulbs and localized pink-blue neon reflections. Use muted analog color, fine film grain and subtle halation while retaining eye detail, denim texture and believable skin tones. Avoid uniform magenta skin, crushed shadows, plastic sharpening and heavy cinematic haze.',
+  },
   analog_90s: {
     scene:
       'A quiet side street at dusk with a concrete wall, parked cars, distant streetlamps and a muted evening sky. Retain recognizable mundane urban detail rather than replacing it with a glamorous city skyline.',
@@ -123,7 +143,7 @@ export function buildTrendPrompt(
     .slice(0, 1000);
   return [
     'Create one original photographic fashion transformation of INPUT IMAGE 1, the consented source photograph.',
-    'IDENTITY LOCK: The source is the only identity reference. Preserve its recognizable person, facial structure, eyes, nose, lips, skin tone, distinguishing marks, apparent age and body proportions. Preserve natural skin texture. Never copy the face, ethnicity, hair color or age of a catalogue example. If no person is visible, do not invent one; apply only the compatible lighting/environment treatment to the actual subject.',
+    'IDENTITY LOCK: The source is the only identity reference. Preserve every recognizable person and each person’s facial structure, eyes, nose, lips, skin tone, distinguishing marks, apparent age and body proportions. Preserve the exact number of visible people: never add a partner, remove, merge or replace a person. Preserve natural skin texture. Never copy the face, ethnicity, hair color or age of a catalogue example. If no person is visible, do not invent one; apply only the compatible lighting/environment treatment to the actual subject.',
     'PRIORITY: identity, anatomy and safety first; requested intensity second; art direction third. The following art direction describes the full-strength target, not mandatory changes at low strength. Do not combine this preset with a beauty filter or another style.',
     `TRANSFORMATION INTENSITY\n${strength}`,
     ...(intensity === 0

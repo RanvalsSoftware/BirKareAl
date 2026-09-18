@@ -8,7 +8,7 @@ import {
   scenePrompt,
   stylePrompt,
 } from '@birkare/ai';
-import { catalogFixtures } from '@birkare/shared';
+import { calculateCreditQuote, catalogFixtures } from '@birkare/shared';
 import type { GenerationRecord, ProjectRecord } from '@birkare/database';
 
 const scene = (slug: string) => {
@@ -16,6 +16,155 @@ const scene = (slug: string) => {
   assert.ok(item, slug);
   return item;
 };
+
+test('Flare and Sunburst lanes use the agreed server-owned credit policy', () => {
+  for (const [quality, fast, premium] of [
+    ['PREVIEW', 1, 1],
+    ['STANDARD', 4, 6],
+    ['HD', 7, 10],
+  ] as const) {
+    assert.equal(
+      calculateCreditQuote({ mode: 'AI_FILTER', quality, numberOfImages: 1 }).creditCost,
+      fast,
+    );
+    assert.equal(
+      calculateCreditQuote({
+        mode: 'AI_FILTER',
+        quality,
+        numberOfImages: 1,
+        premiumModel: true,
+      }).creditCost,
+      premium,
+    );
+  }
+  assert.equal(
+    calculateCreditQuote({
+      mode: 'FULL_SCENE',
+      quality: 'HD',
+      numberOfImages: 1,
+      premiumModel: true,
+      hasSceneTemplate: true,
+      hasFeaturedPerson: true,
+    }).creditCost,
+    13,
+  );
+  assert.equal(
+    calculateCreditQuote({
+      mode: 'PRO_PORTRAIT',
+      quality: 'HD',
+      numberOfImages: 1,
+      premiumModel: true,
+    }).creditCost,
+    12,
+  );
+});
+
+test('every selectable edit is charged once per output and identity preservation stays included', () => {
+  const cases = [
+    {
+      label: 'filter',
+      input: { mode: 'AI_FILTER', quality: 'STANDARD', numberOfImages: 1, hasFilter: true },
+      expected: 5,
+    },
+    {
+      label: 'scene',
+      input: {
+        mode: 'FULL_SCENE',
+        quality: 'STANDARD',
+        numberOfImages: 1,
+        hasSceneTemplate: true,
+      },
+      expected: 5,
+    },
+    {
+      label: 'trend',
+      input: { mode: 'AI_FILTER', quality: 'STANDARD', numberOfImages: 1, hasTrend: true },
+      expected: 6,
+    },
+    {
+      label: 'standard beauty',
+      input: {
+        mode: 'AI_FILTER',
+        quality: 'STANDARD',
+        numberOfImages: 1,
+        premiumModel: true,
+        beautyTier: 'STANDARD',
+      },
+      expected: 7,
+    },
+    {
+      label: 'premium beauty',
+      input: {
+        mode: 'AI_FILTER',
+        quality: 'STANDARD',
+        numberOfImages: 1,
+        premiumModel: true,
+        beautyTier: 'PREMIUM',
+      },
+      expected: 8,
+    },
+    {
+      label: 'fictional character',
+      input: {
+        mode: 'FAN_MOMENT',
+        quality: 'STANDARD',
+        numberOfImages: 1,
+        premiumModel: true,
+        hasFeaturedPerson: true,
+      },
+      expected: 8,
+    },
+    {
+      label: 'pro portrait',
+      input: {
+        mode: 'PRO_PORTRAIT',
+        quality: 'STANDARD',
+        numberOfImages: 1,
+        premiumModel: true,
+      },
+      expected: 8,
+    },
+  ] as const;
+
+  for (const entry of cases) {
+    const quote = calculateCreditQuote(entry.input);
+    assert.equal(quote.creditCost, entry.expected, entry.label);
+    assert.equal(
+      quote.breakdown.reduce((sum, item) => sum + item.credits, 0),
+      entry.expected,
+      `${entry.label} breakdown`,
+    );
+  }
+
+  assert.equal(
+    calculateCreditQuote({
+      mode: 'AI_FILTER',
+      quality: 'HD',
+      numberOfImages: 4,
+      hasTrend: true,
+    }).creditCost,
+    36,
+    'base and trend cost must both scale with the four generated outputs',
+  );
+  assert.equal(
+    calculateCreditQuote({
+      mode: 'FULL_SCENE',
+      quality: 'HD',
+      numberOfImages: 1,
+      premiumModel: true,
+      hasFilter: true,
+      hasSceneTemplate: true,
+      hasFeaturedPerson: true,
+    }).creditCost,
+    14,
+    'scene, filter and character are independent selected additions',
+  );
+  assert.equal(
+    calculateCreditQuote({ mode: 'AI_FILTER', quality: 'STANDARD', numberOfImages: 1 }).creditCost,
+    4,
+    'face and identity preservation are included rather than charged as hidden modifiers',
+  );
+});
 
 function sourceEditFixture(mode: ProjectRecord['mode'], featuredPersonId: string | null = null) {
   return {
@@ -99,12 +248,17 @@ test('every new scene resolves to its own environment, not an unrelated legacy f
   const expectations = {
     'stadium-night': /football stadium/,
     'award-night': /waterfront terrace/,
+    'red-carpet': /film-premiere red carpet/,
+    'luxury-car': /parked, unbranded premium vehicle/,
+    'istanbul-sunset': /waterfront city terrace/,
+    'cosmic-camp': /rocky night campsite/,
     'waterfront-night': /suspension bridge/,
     'coastal-terrace': /Mediterranean/,
     'window-portrait': /window light/,
     'neon-drive': /sports coupe/,
     'alpine-lake': /alpine lake/,
   };
+  assert.equal(Object.keys(expectations).length, catalogFixtures.scenes.length);
   for (const [slug, pattern] of Object.entries(expectations)) {
     assert.match(scenePrompt(scene(slug), 'FULL_SCENE'), pattern);
     const background = scenePrompt(scene(slug), 'BACKGROUND_REPLACE');
@@ -282,8 +436,15 @@ test('generation uses captured style and intensity together, not current project
   const prompt = buildGenerationPrompt({ generation, project, catalog: catalogFixtures });
   assert.match(prompt, /faint warm key-light lift/);
   assert.match(prompt, /25\/100/);
+  assert.match(prompt, /specifically a filter transformation/);
+  assert.ok(
+    prompt.indexOf('MANDATORY SELECTED VISUAL TREATMENT') < prompt.indexOf('PRIMARY USER'),
+    'selected filter must appear near the start of the instruction',
+  );
   assert.doesNotMatch(prompt, /understated analog film response/);
   assert.match(prompt, /Keep the original setting/);
+  const legacyRecipe = generation.recipe;
+  assert.ok(legacyRecipe?.version === 1);
   const cartoon = [...catalogFixtures.styles, ...catalogFixtures.filters].find(
     (entry) => entry.slug === 'cartoon',
   )!;
@@ -291,7 +452,7 @@ test('generation uses captured style and intensity together, not current project
     generation: {
       ...generation,
       recipe: {
-        ...generation.recipe!,
+        ...legacyRecipe,
         filterIntensity: 100,
         selection: { sceneTemplateId: null, stylePresetId: cartoon.id, featuredPersonId: null },
       },

@@ -1,0 +1,50 @@
+[
+  {
+    "file": "scene-galata.png",
+    "width": 480,
+    "height": 640,
+    "source": "ChatGPT Image 14 Eyl 2026 11_48_19.png",
+    "bytes": 549877,
+    "sha256": "59578a5936eaf86db3a7af681355f2fd7e86e56d223f261a15fae8382f63efa6"
+  },
+  {
+    "file": "scene-cappadocia.png",
+    "width": 480,
+    "height": 640,
+    "source": "ChatGPT Image 14 Eyl 2026 11_48_27.png",
+    "bytes": 566107,
+    "sha256": "22f890123dfe777260efca3b2080b5033d065c57c5ca2bdc14dbd026683f28db"
+  },
+  {
+    "file": "scene-portrait.png",
+    "width": 480,
+    "height": 640,
+    "source": "ChatGPT Image 14 Eyl 2026 11_48_44.png",
+    "bytes": 460959,
+    "sha256": "236cb18463ed97a1d153b0dca868f7831628587587905eca6f5853b8d6192cac"
+  },
+  {
+    "file": "icon-infinity.png",
+    "width": 192,
+    "height": 192,
+    "source": "ChatGPT Image 14 Eyl 2026 11_48_49.png",
+    "bytes": 62541,
+    "sha256": "a2970debf3b541404e30d9beb786874fca59ba1d7978b4a50ad35274a7bf79c5"
+  },
+  {
+    "file": "icon-people.png",
+    "width": 192,
+    "height": 192,
+    "source": "ChatGPT Image 14 Eyl 2026 11_48_53.png",
+    "bytes": 57558,
+    "sha256": "c813ef6d837de5f1bf0134fdd3690e743d522ea21dac7315c043b66c9e2d423c"
+  },
+  {
+    "file": "icon-wand.png",
+    "width": 192,
+    "height": 192,
+    "source": "ChatGPT Image 14 Eyl 2026 11_48_59.png",
+    "bytes": 56939,
+    "sha256": "8351ab84fa24fe05718606ff93fa718f85baa10c643729fcac2a2447a668445f"
+  }
+]

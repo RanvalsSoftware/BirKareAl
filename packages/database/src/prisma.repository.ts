@@ -22,9 +22,11 @@ import type {
   CreatePendingSocialLoginInput,
   CreditTransactionRecord,
   CreditWalletRecord,
+  GrantCreditsInput,
   EmailTokenRecord,
   EmailTokenType,
   GenerationMessageRecord,
+  GenerationInputRecord,
   GenerationOutputRecord,
   GenerationRecord,
   IdempotencyRecord,
@@ -180,13 +182,25 @@ function toOutput(row: any): GenerationOutputRecord {
   };
 }
 
+function toGenerationInput(row: any): GenerationInputRecord {
+  return {
+    id: row.id,
+    generationId: row.generationId,
+    assetId: row.assetId,
+    role: row.role as GenerationInputRecord['role'],
+    sortOrder: row.sortOrder,
+    createdAt: new Date(row.createdAt),
+  };
+}
+
 function toGeneration(row: any): GenerationRecord {
+  const inputs = Array.isArray(row.inputs) ? row.inputs.map(toGenerationInput) : [];
   return {
     id: row.id,
     userId: row.userId,
     projectId: row.projectId,
     parentGenerationId: row.parentGenerationId ?? null,
-    sourceAssetId: row.sourceAssetId ?? row.inputs?.[0]?.assetId,
+    sourceAssetId: row.sourceAssetId ?? inputs[0]?.assetId,
     status: row.status,
     stage: row.stage ?? null,
     progress: row.progress,
@@ -202,6 +216,7 @@ function toGeneration(row: any): GenerationRecord {
     provider: row.provider,
     model: row.model,
     providerRequestId: row.providerRequestId ?? null,
+    providerUsage: (row.providerUsage ?? null) as GenerationRecord['providerUsage'],
     reservedCredits: row.reservedCredits,
     chargedCredits: row.chargedCredits,
     refundedCredits: row.refundedCredits,
@@ -214,6 +229,7 @@ function toGeneration(row: any): GenerationRecord {
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
     deletedAt: asDate(row.deletedAt),
+    inputs,
     outputs: (row.outputs ?? []).map(toOutput),
   };
 }
@@ -921,6 +937,9 @@ export class PrismaRepository implements BirKareRepository {
   }
 
   async createGeneration(input: CreateGenerationInput): Promise<GenerationRecord> {
+    const inputs = input.inputs?.length
+      ? input.inputs
+      : [{ assetId: input.sourceAssetId, role: 'PRIMARY_USER' as const, sortOrder: 0 }];
     const row = await this.prisma.generation.create({
       data: {
         id: input.id,
@@ -934,13 +953,15 @@ export class PrismaRepository implements BirKareRepository {
         preserveClothes: input.preserveClothes,
         recipe: input.recipe,
         userInstruction: input.userInstruction,
+        compiledPrompt: input.compiledPrompt ?? null,
+        promptVersion: input.promptVersion ?? null,
         provider: input.provider,
         model: input.model,
         reservedCredits: input.reservedCredits,
         status: 'QUEUED',
         stage: 'QUEUE_WAIT',
         progress: 25,
-        inputs: { create: { assetId: input.sourceAssetId, role: 'PRIMARY_USER', sortOrder: 0 } },
+        inputs: { create: inputs },
       },
       include: { outputs: true, inputs: true },
     });
@@ -1085,6 +1106,60 @@ export class PrismaRepository implements BirKareRepository {
     return this.adjustReservedCredits(input, 'release');
   }
 
+  async grantCredits(input: GrantCreditsInput): Promise<{
+    wallet: CreditWalletRecord;
+    transaction: CreditTransactionRecord;
+    created: boolean;
+  }> {
+    return this.prisma.$transaction(async (tx: PrismaClientLike) => {
+      await this.lockWritableAccount(tx, input.userId);
+      const existing = await tx.creditTransaction.findUnique({
+        where: { idempotencyKey: input.idempotencyKey },
+      });
+      if (existing) {
+        if (
+          existing.userId !== input.userId ||
+          existing.type !== input.type ||
+          existing.referenceType !== input.referenceType ||
+          existing.referenceId !== input.referenceId
+        ) {
+          throw conflict(
+            'IDEMPOTENCY_KEY_REUSED',
+            'Bu Idempotency-Key farklı bir kredi işlemiyle zaten kullanıldı.',
+          );
+        }
+        const wallet = await tx.creditWallet.findUniqueOrThrow({
+          where: { userId: input.userId },
+        });
+        return { wallet: toWallet(wallet), transaction: toTransaction(existing), created: false };
+      }
+      const wallet = await tx.creditWallet.update({
+        where: { userId: input.userId },
+        data: {
+          available: { increment: input.amount },
+          lifetimeEarned: { increment: input.amount },
+          version: { increment: 1 },
+        },
+      });
+      const transaction = await tx.creditTransaction.create({
+        data: {
+          userId: input.userId,
+          type: input.type,
+          status: 'COMPLETED',
+          amount: input.amount,
+          availableAfter: wallet.available,
+          reservedAfter: wallet.reserved,
+          referenceType: input.referenceType,
+          referenceId: input.referenceId,
+          idempotencyKey: input.idempotencyKey,
+          description: input.description,
+          completedAt: new Date(),
+        },
+      });
+      return { wallet: toWallet(wallet), transaction: toTransaction(transaction), created: true };
+    });
+  }
+
   private async adjustReservedCredits(
     input: { userId: string; generationId: string; amount: number; reason?: string },
     action: 'capture' | 'release',
@@ -1158,11 +1233,19 @@ export class PrismaRepository implements BirKareRepository {
     return rows.map(toTransaction);
   }
 
-  async claimSupportTicket(input: CreateSupportTicketInput): Promise<{ ticket: SupportTicketRecord; created: boolean }> {
+  async claimSupportTicket(
+    input: CreateSupportTicketInput,
+  ): Promise<{ ticket: SupportTicketRecord; created: boolean }> {
     const id = randomUUID();
-    const where = { userId_idempotencyKey: { userId: input.userId, idempotencyKey: input.idempotencyKey } };
+    const where = {
+      userId_idempotencyKey: { userId: input.userId, idempotencyKey: input.idempotencyKey },
+    };
     try {
-      const ticket = await this.prisma.supportTicket.upsert({ where, create: { id, ...input }, update: {} });
+      const ticket = await this.prisma.supportTicket.upsert({
+        where,
+        create: { id, ...input },
+        update: {},
+      });
       return { ticket, created: ticket.id === id };
     } catch (error) {
       // Some Prisma versions emulate upsert. Its unique constraint still elects
@@ -1178,8 +1261,15 @@ export class PrismaRepository implements BirKareRepository {
     return this.prisma.supportTicket.findFirst({ where: { id: ticketId, userId } });
   }
 
-  async completeSupportTicketDelivery(userId: string, ticketId: string, status: 'SENT' | 'UNCONFIRMED'): Promise<SupportTicketRecord> {
-    await this.prisma.supportTicket.updateMany({ where: { id: ticketId, userId, status: 'PENDING' }, data: { status, sentAt: status === 'SENT' ? new Date() : null } });
+  async completeSupportTicketDelivery(
+    userId: string,
+    ticketId: string,
+    status: 'SENT' | 'UNCONFIRMED',
+  ): Promise<SupportTicketRecord> {
+    await this.prisma.supportTicket.updateMany({
+      where: { id: ticketId, userId, status: 'PENDING' },
+      data: { status, sentAt: status === 'SENT' ? new Date() : null },
+    });
     const ticket = await this.getSupportTicket(userId, ticketId);
     if (!ticket) throw notFound('SUPPORT_TICKET_NOT_FOUND', 'Destek talebi bulunamadı.');
     return ticket;

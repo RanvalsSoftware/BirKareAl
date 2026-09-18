@@ -1,12 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { getTrendPreset, trendCreationSelection, trendPresets } from './presets';
+import {
+  EIGHTIES_TREND_IDS,
+  getTrendPreset,
+  isEightiesTrend,
+  trendCreationSelection,
+  trendPresets,
+} from './presets';
 import { TREND_PRESET_IDS } from '../../../../../packages/shared/src/trends';
 
 describe('curated trends', () => {
-  it('contains exactly the nine themes with supplied artwork, without inventing a tenth', () => {
+  it('contains nine collections and two server-owned 80s variants', () => {
     expect(trendPresets.map((trend) => trend.id)).toEqual([
       'kpop_star',
       'pop_icon_80s',
+      'romantic_dinner_80s',
+      'romantic_closeup_80s',
       'analog_90s',
       'y2k_celebrity',
       'red_carpet_glam',
@@ -15,10 +23,20 @@ describe('curated trends', () => {
       'streetwear_editorial',
       'neon_club_night',
     ]);
-    expect(new Set(trendPresets.map((trend) => trend.id)).size).toBe(9);
+    expect(new Set(trendPresets.map((trend) => trend.id)).size).toBe(11);
     expect(trendPresets.map((trend) => trend.id)).toEqual(TREND_PRESET_IDS);
     expect(getTrendPreset('dreamy_soft_idol')).toBeNull();
     expect(getTrendPreset(undefined)).toBeNull();
+  });
+
+  it('groups the three 80s looks without treating unrelated trends as variants', () => {
+    expect(EIGHTIES_TREND_IDS).toEqual([
+      'pop_icon_80s',
+      'romantic_dinner_80s',
+      'romantic_closeup_80s',
+    ]);
+    expect(isEightiesTrend('romantic_dinner_80s')).toBe(true);
+    expect(isEightiesTrend('analog_90s')).toBe(false);
   });
 
   it.each(trendPresets)(

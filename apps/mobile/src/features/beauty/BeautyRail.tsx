@@ -9,16 +9,19 @@ export function BeautyRail({
   options = beautyOptions,
   selectedId,
   settings,
+  proUnlocked = false,
   onSelect,
 }: {
   options?: BeautyOption[];
   selectedId?: BeautyOptionId;
   settings?: BeautySettings;
+  proUnlocked?: boolean;
   onSelect: (option: BeautyOption) => void;
 }) {
   return (
     <ScrollView
       horizontal
+      style={styles.scroll}
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.rail}
     >
@@ -30,10 +33,10 @@ export function BeautyRail({
           <Pressable
             key={option.id}
             accessibilityRole="button"
-            accessibilityLabel={`${option.number}. ${option.name}${option.isPro ? ', PRO yakında' : ''}${intensity ? `, yoğunluk yüzde ${intensity}` : ''}`}
+            accessibilityLabel={`${option.number}. ${option.name}${option.isPro ? (proUnlocked ? ', PRO' : ', PRO kilitli') : ''}${intensity ? `, yoğunluk yüzde ${intensity}` : ''}`}
             accessibilityState={{ selected }}
             accessibilityHint={
-              settings && !option.isPro
+              settings && (!option.isPro || proUnlocked)
                 ? intensity > 0
                   ? 'Bu dokunuşu kaldırmak için dokun.'
                   : 'Bu dokunuşu uygulamak için dokun.'
@@ -60,7 +63,11 @@ export function BeautyRail({
             </View>
             {option.isPro ? (
               <View style={styles.pro}>
-                <Icon name="lock-closed" size={9} color={colors.accentYellow} />
+                <Icon
+                  name={proUnlocked ? 'sparkles' : 'lock-closed'}
+                  size={9}
+                  color={colors.accentYellow}
+                />
                 <Text style={styles.proText}>PRO</Text>
               </View>
             ) : null}
@@ -89,6 +96,7 @@ export function BeautyRail({
 }
 
 const styles = StyleSheet.create({
+  scroll: { flexGrow: 0, flexShrink: 0 },
   rail: { gap: 10, paddingVertical: 8, paddingRight: 4 },
   card: {
     width: 124,

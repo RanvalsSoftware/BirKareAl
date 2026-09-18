@@ -8,6 +8,7 @@ import { emptyBeautySettings, hasBeautyAdjustments } from './settings';
 
 const mocks = vi.hoisted(() => ({
   push: vi.fn(),
+  isPro: false,
   params: {} as { selected?: string },
   options: [
     {
@@ -84,6 +85,9 @@ vi.mock('@/features/auth/require-authenticated', () => ({
   RequireAuthenticated: ({ children }: PropsWithChildren) => children,
 }));
 vi.mock('@/features/billing/use-wallet', () => ({ useAvailableCredits: () => 20 }));
+vi.mock('@/features/billing/revenuecat', () => ({
+  useRevenueCat: () => ({ isPro: mocks.isPro }),
+}));
 vi.mock('@/features/beauty/catalog', () => ({ beautyOptions: mocks.options }));
 vi.mock('./catalog', () => ({ beautyOptions: mocks.options }));
 vi.mock('@/features/beauty/BeautyRail', () => import('./BeautyRail'));
@@ -129,6 +133,7 @@ async function mount() {
 beforeEach(async () => {
   vi.clearAllMocks();
   mocks.params = {};
+  mocks.isPro = false;
   resetCreateFlow();
   await mount();
 });
@@ -182,17 +187,27 @@ describe('beauty editor real state and selection', () => {
     expect(footer().props.disabled).toBe(true);
   });
 
-  it('shows locked PRO previews without enabling a pro adjustment or bypassing the footer', async () => {
+  it('opens the Pro sheet without mutating a locked premium adjustment', async () => {
     const before = getCreateFlow().beauty;
     await tap(6);
     expect(getCreateFlow().beauty).toBe(before);
     expect(getCreateFlow().beauty?.adjustments.faceContour).toBe(0);
     expect(card(6).props.accessibilityState.selected).toBe(false);
-    expect(renderer.root.findByType(host('IntensitySlider')).props.disabled).toBe(true);
-    expect(footer().props.disabled).toBe(true);
-    await tap(6);
-    expect(getCreateFlow().beauty).toBe(before);
+    expect(mocks.push).toHaveBeenCalledWith('/pro');
     expect(footer().props.disabled).toBe(false);
+  });
+
+  it('lets a verified Pro user enable, adjust and remove a premium layer', async () => {
+    await act(async () => renderer.unmount());
+    mocks.isPro = true;
+    await mount();
+    await tap(6);
+    expect(getCreateFlow().beauty?.adjustments.faceContour).toBe(20);
+    expect(card(6).props.accessibilityState.selected).toBe(true);
+    expect(renderer.root.findByType(host('IntensitySlider')).props.disabled).toBe(false);
+    await tap(6);
+    expect(getCreateFlow().beauty?.adjustments.faceContour).toBe(0);
+    expect(card(6).props.accessibilityState.selected).toBe(false);
   });
 
   it('resets all applied layers and leaves source images and dark preview surfaces unchanged', async () => {

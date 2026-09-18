@@ -1,0 +1,244 @@
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
+import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+
+import { ProBadge } from '@/components';
+import { colors, radii, spacing, typography } from '@/theme';
+import { useRevenueCat } from './revenuecat';
+import type { BillingResult } from './revenuecat-client';
+
+function notify(result: BillingResult, restoring = false) {
+  if (result.kind === 'cancelled') return;
+  if (result.kind === 'pending' || result.kind === 'error') {
+    Alert.alert(result.kind === 'pending' ? 'Onay bekleniyor' : 'BirKare Pro', result.message);
+    return;
+  }
+  Alert.alert(
+    'BirKare Pro',
+    result.isPro
+      ? restoring
+        ? 'Pro erişiminiz geri yüklendi.'
+        : 'Pro erişiminiz aktif.'
+      : 'Bu hesap için aktif Pro hakkı bulunamadı. Yeni bir ödeme yaptıysanız tekrar satın almayın; biraz sonra durumu yenileyin.',
+  );
+}
+
+export function SubscriptionCard() {
+  const billing = useRevenueCat();
+  const { refresh } = billing;
+
+  useFocusEffect(
+    useCallback(() => {
+      void refresh();
+    }, [refresh]),
+  );
+
+  const expiration = billing.entitlement?.expirationDate;
+  const expiresText =
+    expiration && Number.isFinite(Date.parse(expiration))
+      ? new Date(expiration).toLocaleDateString('tr-TR')
+      : null;
+  const cancelled = billing.subscriptionCancelled;
+  const disabled = billing.busy || (!billing.ready && billing.status !== 'connecting');
+
+  const badgeLabel = cancelled
+    ? 'BirKare Pro · İptal edildi'
+    : billing.isPro
+      ? 'BirKare Pro · Aktif'
+      : 'BirKare Pro';
+
+  const title = cancelled
+    ? 'Aboneliğiniz iptal edildi.'
+    : billing.isPro
+      ? 'Pro hesabınız hazır.'
+      : 'Premium sahnelerin kilidini açın.';
+
+  const description = cancelled
+    ? expiresText
+      ? `Pro erişiminiz ${expiresText} tarihine kadar devam eder. Bu tarihten sonra otomatik yenileme yapılmaz.`
+      : 'Otomatik yenileme kapatıldı.'
+    : billing.isPro
+      ? expiresText
+        ? `${billing.entitlement?.willRenew ? 'Yenileme tarihi' : 'Erişim bitişi'}: ${expiresText}`
+        : 'Süresiz Pro erişimi · Otomatik yenileme yok.'
+      : 'Aylık, yıllık ve ömür boyu seçeneklerini mağazanın güncel yerel fiyatlarıyla inceleyin.';
+
+  return (
+    <LinearGradient colors={['#17130A', '#111111', '#171019']} style={styles.card}>
+      <View style={styles.hero}>
+        <View style={styles.copy}>
+          <ProBadge label={badgeLabel} />
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.text}>{description}</Text>
+        </View>
+        <View style={styles.crownFrame}>
+          <Image
+            accessibilityIgnoresInvertColors
+            source={require('../../../assets/credits/pro-crown.png')}
+            resizeMode="contain"
+            style={styles.crown}
+          />
+        </View>
+      </View>
+
+      {cancelled ? (
+        <View accessibilityRole="alert" style={styles.cancelledBox}>
+          <Ionicons name="close-circle" size={18} color="#FF8D80" />
+          <Text style={styles.cancelledText}>
+            İptal edildi{expiresText ? ` · ${expiresText} tarihine kadar kullanabilirsiniz.` : ''}
+          </Text>
+        </View>
+      ) : null}
+
+      {billing.testEnvironmentLabel ? (
+        <Text style={styles.test}>{billing.testEnvironmentLabel}</Text>
+      ) : null}
+      {billing.status === 'connecting' ? (
+        <Text style={styles.text}>Mağaza hazırlanıyor…</Text>
+      ) : null}
+      {billing.error ? (
+        <Text accessibilityRole="alert" style={styles.warning}>
+          {billing.error}
+        </Text>
+      ) : null}
+
+      {!billing.isPro ? (
+        <Pressable
+          accessibilityRole="button"
+          style={({ pressed }) => [styles.primary, pressed && styles.pressed]}
+          onPress={() => router.push('/pro' as never)}
+        >
+          <Text style={styles.primaryText}>Pro’yu incele</Text>
+          <Ionicons name="arrow-forward" size={22} color={colors.background} />
+        </Pressable>
+      ) : (
+        <View style={styles.actions}>
+          <Pressable
+            accessibilityRole="button"
+            disabled={disabled}
+            style={({ pressed }) => [
+              styles.secondary,
+              disabled && styles.disabled,
+              pressed && !disabled && styles.pressed,
+            ]}
+            onPress={() => {
+              void billing.presentCustomerCenter().then(async (result) => {
+                if (result.kind === 'error' || result.kind === 'pending') {
+                  notify(result);
+                  return;
+                }
+                await billing.refreshFresh();
+              });
+            }}
+          >
+            <Text style={styles.secondaryText}>
+              {billing.busy ? 'Mağaza güncelleniyor…' : 'Aboneliği yönet'}
+            </Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            disabled={disabled}
+            style={({ pressed }) => [
+              styles.linkButton,
+              disabled && styles.disabled,
+              pressed && !disabled && styles.pressed,
+            ]}
+            onPress={() => void billing.restore().then((result) => notify(result, true))}
+          >
+            <Text style={styles.link}>Satın alımları geri yükle</Text>
+          </Pressable>
+        </View>
+      )}
+    </LinearGradient>
+  );
+}
+
+const styles = StyleSheet.create({
+  card: {
+    marginTop: spacing.md,
+    padding: 16,
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    borderColor: 'rgba(255,211,84,0.6)',
+    shadowColor: colors.accentYellow,
+    shadowOpacity: 0.13,
+    shadowRadius: 15,
+    shadowOffset: { width: 0, height: 6 },
+  },
+  hero: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  copy: { flex: 1, minWidth: 0 },
+  crownFrame: {
+    width: 78,
+    height: 78,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,211,84,0.55)',
+    backgroundColor: '#140F08',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.accentYellow,
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+  },
+  crown: { width: 70, height: 70 },
+  title: { ...typography.h3, color: colors.textPrimary, marginTop: 8 },
+  text: { ...typography.caption, color: colors.textSecondary, lineHeight: 19, marginTop: 6 },
+  cancelledBox: {
+    minHeight: 42,
+    marginTop: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,141,128,0.36)',
+    backgroundColor: 'rgba(255,92,75,0.08)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  cancelledText: {
+    ...typography.caption,
+    color: '#FFB0A7',
+    lineHeight: 18,
+    flex: 1,
+  },
+  test: {
+    ...typography.overline,
+    color: colors.accentYellow,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,211,84,0.3)',
+    borderRadius: 9,
+    padding: 7,
+    textAlign: 'center',
+  },
+  warning: { ...typography.caption, color: colors.accentYellow, lineHeight: 19, marginTop: 10 },
+  primary: {
+    minHeight: 50,
+    borderRadius: 14,
+    backgroundColor: colors.accentYellow,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 9,
+    marginTop: 16,
+    paddingHorizontal: 16,
+  },
+  primaryText: { ...typography.bodyStrong, color: colors.background },
+  actions: { marginTop: 14, gap: 4 },
+  secondary: {
+    minHeight: 48,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.accentYellow,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryText: { ...typography.label, color: colors.accentYellow },
+  linkButton: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  link: { ...typography.label, color: colors.textSecondary },
+  disabled: { opacity: 0.45 },
+  pressed: { opacity: 0.75 },
+});

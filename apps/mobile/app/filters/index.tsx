@@ -48,6 +48,7 @@ export default function FiltersScreen() {
       <SearchBar value={query} onChangeText={setQuery} placeholder="Filtre ara…" />
       <ScrollView
         horizontal
+        style={styles.chipScroll}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.chips}
         accessibilityRole="tablist"
@@ -61,46 +62,77 @@ export default function FiltersScreen() {
           />
         ))}
       </ScrollView>
-      {category === 'Güzellik' ? <BeautyRail options={beautyOptions.filter((option) => !query || option.name.toLocaleLowerCase('tr-TR').includes(query.toLocaleLowerCase('tr-TR')))} onSelect={(option) => { resetCreateFlow(); router.push({ pathname: '/beauty', params: { selected: option.id } } as never); }} /> : null}
-      {category === 'Tümü' || category === 'Dönüşüm' ? <View style={styles.grid}><VisualTile title="Cinsiyet değiştirme" subtitle="Yaratıcı AI görünüm dönüşümü" imageSource={genderPreview} icon="✧" palette={['#18151D', '#BBA476']} badge="AI" onPress={() => { resetCreateFlow(); router.push('/gender-change' as never); }} /></View> : null}
-      {category !== 'Güzellik' && category !== 'Dönüşüm' ? <>
-      <View style={styles.titleRow}>
-        <Text style={styles.title}>{category === 'Tümü' ? 'Tüm filtreler' : category}</Text>
-        <Text style={styles.count}>{items.length} filtre</Text>
-      </View>
-      {items.length ? (
-        <View style={styles.grid}>
-          {items.map((item) => (
-            <VisualTile
-              key={item.id}
-              title={item.name}
-              subtitle="AI filtre"
-              palette={item.palette}
-              icon={item.icon}
-              imageSource={item.previewSource}
-              badge={item.isPro ? 'PRO' : 'AI'}
-              onPress={() => router.push(`/filters/${item.slug}` as never)}
-            />
-          ))}
-        </View>
-      ) : (
-        <EmptyState
-          icon="search-outline"
-          title="Filtre bulunamadı"
-          detail="Farklı bir arama veya kategori seçmeyi dene."
-          action="Tüm filtreleri gör"
-          onAction={() => {
-            setQuery('');
-            setCategory('Tümü');
+      {category === 'Güzellik' ? (
+        <BeautyRail
+          options={beautyOptions.filter(
+            (option) =>
+              !query ||
+              option.name.toLocaleLowerCase('tr-TR').includes(query.toLocaleLowerCase('tr-TR')),
+          )}
+          onSelect={(option) => {
+            resetCreateFlow();
+            router.push({ pathname: '/beauty', params: { selected: option.id } } as never);
           }}
         />
-      )}</> : null}
+      ) : null}
+      {category === 'Tümü' || category === 'Dönüşüm' ? (
+        <View style={styles.grid}>
+          <VisualTile
+            title="Cinsiyet değiştirme"
+            subtitle="Yaratıcı AI görünüm dönüşümü"
+            imageSource={genderPreview}
+            icon="✧"
+            palette={['#18151D', '#BBA476']}
+            badge="AI"
+            onPress={() => {
+              resetCreateFlow();
+              router.push('/gender-change' as never);
+            }}
+          />
+        </View>
+      ) : null}
+      {category !== 'Güzellik' && category !== 'Dönüşüm' ? (
+        <>
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>{category === 'Tümü' ? 'Tüm filtreler' : category}</Text>
+            <Text style={styles.count}>{items.length} filtre</Text>
+          </View>
+          {items.length ? (
+            <View style={styles.grid}>
+              {items.map((item) => (
+                <VisualTile
+                  key={item.id}
+                  title={item.name}
+                  subtitle="AI filtre"
+                  palette={item.palette}
+                  icon={item.icon}
+                  imageSource={item.previewSource}
+                  badge={item.isPro ? 'PRO' : 'AI'}
+                  onPress={() => router.push(`/filters/${item.slug}` as never)}
+                />
+              ))}
+            </View>
+          ) : (
+            <EmptyState
+              icon="search-outline"
+              title="Filtre bulunamadı"
+              detail="Farklı bir arama veya kategori seçmeyi dene."
+              action="Tüm filtreleri gör"
+              onAction={() => {
+                setQuery('');
+                setCategory('Tümü');
+              }}
+            />
+          )}
+        </>
+      ) : null}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   content: { paddingBottom: 42 },
+  chipScroll: { flexGrow: 0, flexShrink: 0 },
   chips: { gap: 8, paddingVertical: spacing.md, paddingRight: spacing.lg },
   titleRow: {
     flexDirection: 'row',

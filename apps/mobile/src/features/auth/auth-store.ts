@@ -22,7 +22,7 @@ type AuthSessionResponse = {
   user: AuthUser;
 };
 
-type PendingGoogleRegistrationResponse = {
+type PendingSocialRegistrationResponse = {
   needsProfileCompletion: true;
   pendingToken: string;
   profile: PendingSocialProfile;
@@ -34,7 +34,7 @@ export type PendingSocialProfile = {
   lastName: string | null;
 };
 
-export type GoogleSignInResult =
+export type SocialSignInResult =
   | { kind: 'authenticated' }
   | { kind: 'profile_completion_required'; pendingToken: string; profile: PendingSocialProfile };
 
@@ -51,8 +51,8 @@ export type CompleteSocialRegistrationInput = {
 };
 
 function requiresSocialProfileCompletion(
-  input: AuthSessionResponse | PendingGoogleRegistrationResponse,
-): input is PendingGoogleRegistrationResponse {
+  input: AuthSessionResponse | PendingSocialRegistrationResponse,
+): input is PendingSocialRegistrationResponse {
   return 'needsProfileCompletion' in input && input.needsProfileCompletion;
 }
 
@@ -62,7 +62,12 @@ type AuthState = {
   user: AuthUser | null;
   bootstrap: () => Promise<void>;
   signIn: (input: { email: string; password: string }) => Promise<void>;
-  signInWithGoogle: (idToken: string) => Promise<GoogleSignInResult>;
+  signInWithGoogle: (idToken: string) => Promise<SocialSignInResult>;
+  signInWithApple: (input: {
+    idToken: string;
+    firstName?: string;
+    lastName?: string;
+  }) => Promise<SocialSignInResult>;
   linkGoogleAccount: (idToken: string) => Promise<void>;
   completeSocialRegistration: (input: CompleteSocialRegistrationInput) => Promise<void>;
   signOut: () => Promise<void>;
@@ -127,9 +132,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ state: 'authenticated', accessToken: session.accessToken, user: session.user });
   },
   async signInWithGoogle(idToken) {
-    const result = await apiRequest<AuthSessionResponse | PendingGoogleRegistrationResponse>(
+    const result = await apiRequest<AuthSessionResponse | PendingSocialRegistrationResponse>(
       '/v1/auth/google',
       { method: 'POST', body: JSON.stringify({ idToken }) },
+      { authenticated: false },
+    );
+    if (requiresSocialProfileCompletion(result)) {
+      return {
+        kind: 'profile_completion_required',
+        pendingToken: result.pendingToken,
+        profile: result.profile,
+      };
+    }
+
+    invalidateSessionRequests();
+    await saveRefreshToken(result.refreshToken);
+    set({ state: 'authenticated', accessToken: result.accessToken, user: result.user });
+    return { kind: 'authenticated' };
+  },
+  async signInWithApple(input) {
+    const result = await apiRequest<AuthSessionResponse | PendingSocialRegistrationResponse>(
+      '/v1/auth/apple',
+      { method: 'POST', body: JSON.stringify(input) },
       { authenticated: false },
     );
     if (requiresSocialProfileCompletion(result)) {

@@ -98,9 +98,47 @@ const RawEnvSchema = z.object({
   GOOGLE_WEB_CLIENT_ID: DefaultedGoogleClientId(DEFAULT_GOOGLE_WEB_CLIENT_ID),
   APPLE_BUNDLE_ID: OptionalEnvString(z.string().trim().min(3).max(255)),
 
+  // RevenueCat public SDK keys stay in Expo config. The REST secret and
+  // webhook authorization token below are backend-only and are used to turn a
+  // verified entitlement into server-side Pro access and idempotent credits.
+  REVENUECAT_ENABLED: BooleanFromEnv.default('false'),
+  REVENUECAT_SECRET_API_KEY: OptionalEnvString(z.string().trim().min(10).max(2048)),
+  REVENUECAT_WEBHOOK_AUTH_TOKEN: OptionalEnvString(z.string().trim().min(24).max(2048)),
+  REVENUECAT_WEBHOOK_SIGNING_SECRET: OptionalEnvString(z.string().trim().min(32).max(2048)),
+  REVENUECAT_ENTITLEMENT_ID: z
+    .string()
+    .trim()
+    .min(1)
+    .max(128)
+    .default('create_an_app_called_birkare_pro'),
+  REVENUECAT_OFFERING_ID: z.string().trim().min(1).max(128).default('birkare_pro'),
+  REVENUECAT_MONTHLY_PRODUCT_IDS: z
+    .string()
+    .trim()
+    .min(1)
+    .default('monthly,com.birkareai.pro.monthly'),
+  REVENUECAT_ANNUAL_PRODUCT_IDS: z
+    .string()
+    .trim()
+    .min(1)
+    .default('yearly,com.birkareai.pro.yearly'),
+  REVENUECAT_LIFETIME_PRODUCT_IDS: z
+    .string()
+    .trim()
+    .min(1)
+    .default('lifetime,com.birkareai.pro.lifetime'),
+  REVENUECAT_MONTHLY_CREDITS: z.coerce.number().int().min(0).max(100_000).default(80),
+  REVENUECAT_ANNUAL_MONTHLY_CREDITS: z.coerce.number().int().min(0).max(100_000).default(80),
+  REVENUECAT_LIFETIME_CREDITS: z.coerce.number().int().min(0).max(100_000).default(200),
+  REVENUECAT_REQUEST_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(30_000).default(8_000),
+  REVENUECAT_CACHE_TTL_MS: z.coerce.number().int().min(0).max(300_000).default(30_000),
+
   OPENAI_API_KEY: OptionalEnvString(z.string().min(10)),
   OPENAI_TEXT_MODEL: z.string().min(1).default('gpt-4.1-mini'),
-  OPENAI_IMAGE_MODEL: z.string().min(1).default('gpt-image-1-mini'),
+  /** Fast/default lane: previews, filters, trends and ordinary scene work. */
+  OPENAI_IMAGE_MODEL: z.string().min(1).default('gpt-image-2.5-flare'),
+  /** Precision lane: beauty, gender presentation, Pro portrait and character identity work. */
+  OPENAI_IMAGE_PREMIUM_MODEL: z.string().min(1).default('gpt-image-2.5-sunburst'),
   OPENAI_MODERATION_MODEL: z.string().min(1).default('omni-moderation-latest'),
   AI_PROVIDER: z.enum(['fake', 'openai', 'disabled']).default('fake'),
   ENABLE_INLINE_WORKER: BooleanFromEnv.default('true'),
@@ -124,6 +162,15 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): BirKareConf
   }
   if (source.EXPO_PUBLIC_SMTP_PASSWORD?.trim()) {
     throw new Error('SMTP_PASSWORD yalnızca server environment içinde tanımlanmalıdır.');
+  }
+  if (
+    source.EXPO_PUBLIC_REVENUECAT_SECRET_API_KEY?.trim() ||
+    source.EXPO_PUBLIC_REVENUECAT_WEBHOOK_AUTH_TOKEN?.trim() ||
+    source.EXPO_PUBLIC_REVENUECAT_WEBHOOK_SIGNING_SECRET?.trim()
+  ) {
+    throw new Error(
+      'RevenueCat secret ve webhook token yalnızca server environment içinde tanımlanmalıdır.',
+    );
   }
   const parsed = RawEnvSchema.safeParse(source);
   if (!parsed.success) {
@@ -168,6 +215,28 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): BirKareConf
   }
   if (config.AI_PROVIDER === 'openai' && !config.OPENAI_API_KEY) {
     throw new Error('AI_PROVIDER=openai iken OPENAI_API_KEY zorunludur.');
+  }
+  if (
+    config.REVENUECAT_ENABLED &&
+    (!config.REVENUECAT_SECRET_API_KEY || !config.REVENUECAT_WEBHOOK_AUTH_TOKEN)
+  ) {
+    throw new Error(
+      'REVENUECAT_ENABLED=true iken REVENUECAT_SECRET_API_KEY ve REVENUECAT_WEBHOOK_AUTH_TOKEN zorunludur.',
+    );
+  }
+  if (
+    isProductionLike &&
+    config.REVENUECAT_ENABLED &&
+    !config.REVENUECAT_SECRET_API_KEY?.startsWith('sk_')
+  ) {
+    throw new Error(
+      'Production ortamında REVENUECAT_SECRET_API_KEY için RevenueCat Secret API key (sk_...) kullanılmalıdır.',
+    );
+  }
+  if (isProductionLike && config.REVENUECAT_ENABLED && !config.REVENUECAT_WEBHOOK_SIGNING_SECRET) {
+    throw new Error(
+      'Production ortamında RevenueCat webhook HMAC doğrulaması için REVENUECAT_WEBHOOK_SIGNING_SECRET zorunludur.',
+    );
   }
   if (isProductionLike && !config.JWT_ACCESS_SECRET) {
     throw new Error('Production ortamında JWT_ACCESS_SECRET zorunludur.');

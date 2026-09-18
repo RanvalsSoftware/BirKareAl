@@ -12,6 +12,7 @@ import { useAuthBootstrap } from '@/features/auth/use-auth-bootstrap';
 import { bindAccountQueryCache } from '@/features/auth/account-query-cache';
 import { apiRequest } from '@/api/client';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { RevenueCatBootstrap } from '@/features/billing/revenuecat';
 
 // Keep the native black-and-gold mark on screen until the first React frame is
 // actually laid out. Calling this at module scope is important on a cold start.
@@ -34,7 +35,10 @@ function Providers({ children }: PropsWithChildren) {
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#050505' }}>
       <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        <QueryClientProvider client={queryClient}>
+          <RevenueCatBootstrap />
+          {children}
+        </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
@@ -45,10 +49,12 @@ export default function RootLayout() {
   const splashHidden = useRef(false);
   const reducedMotion = useReducedMotion();
   const userId = useAuthStore((state) => state.user?.id);
+
   useEffect(() => {
     Appearance.setColorScheme('dark');
     void useAppearanceStore.getState().hydrate();
   }, []);
+
   useEffect(() => {
     if (!userId) return;
     let active = true;
@@ -65,7 +71,6 @@ export default function RootLayout() {
 
   const hideNativeSplash = useCallback(() => {
     if (splashHidden.current) return;
-
     splashHidden.current = true;
     requestAnimationFrame(() => SplashScreen.hide());
   }, []);
@@ -86,7 +91,24 @@ export default function RootLayout() {
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen
+            name="pro"
+            options={{
+              presentation: 'transparentModal',
+              animation: reducedMotion ? 'none' : 'slide_from_bottom',
+              contentStyle: { backgroundColor: 'transparent' },
+              gestureEnabled: true,
+            }}
+          />
+          <Stack.Screen
             name="create"
+            options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="studio"
+            options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="transactions"
             options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
           />
           <Stack.Screen

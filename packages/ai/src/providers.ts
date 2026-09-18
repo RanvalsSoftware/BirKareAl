@@ -64,10 +64,11 @@ export class OpenAIImageGenerationProvider implements ImageGenerationProvider {
       maxRetries: 0,
       ...(this.transport ? { fetch: this.transport.fetch } : {}),
     });
-    // GPT-Image-1 Mini is the requested low-cost profile. Unlike GPT-Image-2,
-    // it accepts three fixed canvases, so preserve orientation while mapping
-    // BirKare's more flexible mobile sizes to the nearest supported canvas.
-    const modelSize = this.config.OPENAI_IMAGE_MODEL.startsWith('gpt-image-1')
+    // Legacy GPT Image 1 variants accept only three fixed canvases. GPT Image
+    // 2 supports BirKare's exact aspect-ratio sizes and always uses high input
+    // fidelity for edit requests, so input_fidelity must not be sent.
+    const model = input.model ?? this.config.OPENAI_IMAGE_MODEL;
+    const modelSize = model.startsWith('gpt-image-1')
       ? input.size === '1024x1024'
         ? '1024x1024'
         : input.size === '1536x1024'
@@ -75,7 +76,7 @@ export class OpenAIImageGenerationProvider implements ImageGenerationProvider {
           : '1024x1536'
       : input.size;
     const base = {
-      model: this.config.OPENAI_IMAGE_MODEL,
+      model,
       prompt: input.prompt,
       size: modelSize,
       quality: input.quality,
@@ -95,7 +96,10 @@ export class OpenAIImageGenerationProvider implements ImageGenerationProvider {
                 input.sourceImages.map(async (source: any, index: number) => {
                   if (!imported.toFile) throw new Error('OpenAI SDK toFile helper is unavailable.');
                   const extension = source.mimeType.split('/')[1];
-                  return imported.toFile(source.buffer, `reference-${index}.${extension}`, {
+                  const role = String(source.role ?? 'reference')
+                    .toLowerCase()
+                    .replace('_', '-');
+                  return imported.toFile(source.buffer, `${index + 1}-${role}.${extension}`, {
                     type: source.mimeType,
                   });
                 }),
@@ -111,7 +115,24 @@ export class OpenAIImageGenerationProvider implements ImageGenerationProvider {
         : [],
     );
     if (!images.length) throw new Error('OpenAI Images API bir görsel döndürmedi.');
-    return { providerRequestId: response._request_id, images };
+    const usage = response.usage as
+      { input_tokens?: number; output_tokens?: number } | null | undefined;
+    return {
+      providerRequestId: response._request_id,
+      images,
+      ...(usage
+        ? {
+            usage: {
+              ...(typeof usage.input_tokens === 'number'
+                ? { inputTokens: usage.input_tokens }
+                : {}),
+              ...(typeof usage.output_tokens === 'number'
+                ? { outputTokens: usage.output_tokens }
+                : {}),
+            },
+          }
+        : {}),
+    };
   }
 }
 

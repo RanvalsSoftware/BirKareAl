@@ -5,10 +5,15 @@ import { createLogger, type Logger } from '@birkare/logger';
 import { createStorageProvider, type StorageProvider } from '@birkare/storage';
 import { AuthService } from '../modules/auth/auth.service.js';
 import { GoogleIdTokenService } from '../modules/auth/google-id-token.service.js';
+import { AppleIdTokenService } from '../modules/auth/apple-id-token.service.js';
 import { createGenerationQueue, type GenerationQueue } from '../queues/generation.queue.js';
 import { PasswordService } from './password.service.js';
 import { TokenService } from './token.service.js';
 import { createMailService, type MailService } from './mail.service.js';
+import {
+  createRevenueCatService,
+  type RevenueCatService,
+} from '../modules/billing/revenuecat.service.js';
 
 export type ApiDependencies = {
   config: BirKareConfig;
@@ -19,6 +24,7 @@ export type ApiDependencies = {
   passwordService: PasswordService;
   authService: AuthService;
   mailService: MailService;
+  revenueCatService: RevenueCatService;
   generationQueue: GenerationQueue;
 };
 
@@ -29,7 +35,9 @@ export async function createApiDependencies(config = getConfig()): Promise<ApiDe
   const tokenService = new TokenService(config);
   const passwordService = new PasswordService(config.PASSWORD_PEPPER);
   const googleIdentityVerifier = new GoogleIdTokenService(config);
+  const appleIdentityVerifier = new AppleIdTokenService(config);
   const mailService = createMailService(config, logger);
+  const revenueCatService = createRevenueCatService({ config, repository });
   const authService = new AuthService(
     repository,
     passwordService,
@@ -37,6 +45,7 @@ export async function createApiDependencies(config = getConfig()): Promise<ApiDe
     config,
     googleIdentityVerifier,
     mailService,
+    appleIdentityVerifier,
   );
   const generationQueue = await createGenerationQueue({ config, repository, storage, logger });
   return {
@@ -48,6 +57,7 @@ export async function createApiDependencies(config = getConfig()): Promise<ApiDe
     passwordService,
     authService,
     mailService,
+    revenueCatService,
     generationQueue,
   };
 }

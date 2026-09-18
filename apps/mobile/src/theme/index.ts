@@ -21,7 +21,7 @@ export const colors = {
   border: 'rgba(255,255,255,0.10)',
   borderStrong: 'rgba(255,255,255,0.17)',
   overlay: 'rgba(0,0,0,0.58)',
-  transparent: 'transparent'
+  transparent: 'transparent',
 } as const;
 
 export const gradients = {
@@ -29,7 +29,7 @@ export const gradients = {
   warm: ['#8B35E7', '#D545E6', '#FFC400'] as const,
   hero: ['#21122F', '#151515', '#563900'] as const,
   midnight: ['#13102A', '#111111', '#251B05'] as const,
-  card: ['#181818', '#0D0D0D'] as const
+  card: ['#181818', '#0D0D0D'] as const,
 } as const;
 
 export const spacing = {
@@ -40,7 +40,7 @@ export const spacing = {
   lg: 20,
   xl: 24,
   xxl: 32,
-  xxxl: 40
+  xxxl: 40,
 } as const;
 
 export const radii = {
@@ -48,7 +48,7 @@ export const radii = {
   md: 16,
   lg: 20,
   xl: 26,
-  pill: 999
+  pill: 999,
 } as const;
 
 export const typography = {
@@ -65,15 +65,15 @@ export const typography = {
     lineHeight: 15,
     fontWeight: '800' as const,
     letterSpacing: 0.8,
-    textTransform: 'uppercase' as const
-  }
+    textTransform: 'uppercase' as const,
+  },
 } as const;
 
 export const layout = {
   screenHorizontal: spacing.lg,
   bottomNavHeight: 72,
   minTouchTarget: 44,
-  maxContentWidth: 680
+  maxContentWidth: 680,
 } as const;
 
 export const shadows = {
@@ -82,21 +82,21 @@ export const shadows = {
       shadowColor: colors.accentYellow,
       shadowOpacity: 0.28,
       shadowRadius: 16,
-      shadowOffset: { width: 0, height: 7 }
+      shadowOffset: { width: 0, height: 7 },
     },
     android: { elevation: 8 },
-    default: {}
+    default: {},
   }),
   floating: Platform.select({
     ios: {
       shadowColor: '#000',
       shadowOpacity: 0.35,
       shadowRadius: 15,
-      shadowOffset: { width: 0, height: 7 }
+      shadowOffset: { width: 0, height: 7 },
     },
     android: { elevation: 6 },
-    default: {}
-  })
+    default: {},
+  }),
 };
 
 export const theme = { colors, gradients, spacing, radii, typography, layout, shadows };

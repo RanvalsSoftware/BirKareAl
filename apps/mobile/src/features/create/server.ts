@@ -15,8 +15,15 @@ import type {
 const MAX_SOURCE_IMAGE_BYTES = 15 * 1024 * 1024;
 const SOURCE_READ_TIMEOUT_MS = 30_000;
 
-type ServerProjectMode =
-  'BACKGROUND_REPLACE' | 'FULL_SCENE' | 'FAN_MOMENT' | 'AI_FILTER' | 'PRO_PORTRAIT';
+export type ServerProjectMode =
+  | 'BACKGROUND_REPLACE'
+  | 'FULL_SCENE'
+  | 'FAN_MOMENT'
+  | 'AI_FILTER'
+  | 'PRO_PORTRAIT'
+  | 'PRODUCT_STUDIO'
+  | 'VIRTUAL_TRY_ON'
+  | 'NAIL_PREVIEW';
 type ServerGenerationQuality = 'PREVIEW' | 'STANDARD' | 'HD';
 type ServerComposition = 'SELFIE' | 'CLOSE' | 'MEDIUM' | 'WIDE';
 
@@ -77,6 +84,11 @@ export type UploadedSourceAsset = {
   asset: ServerAsset;
   mimeType: 'image/jpeg' | 'image/png' | 'image/webp';
   sizeBytes: number;
+};
+
+export type LocalSourceImage = {
+  sourceUri: string | null;
+  sourceName: string | null;
 };
 
 export type StartedGeneration = {
@@ -518,7 +530,7 @@ function safeFileName(
   return `${stem || 'kaynak-gorsel'}.${extension}`;
 }
 
-async function readSourceImage(flow: CreateFlow): Promise<{
+async function readSourceImage(flow: LocalSourceImage): Promise<{
   bytes: ArrayBuffer;
   fileName: string;
   mimeType: 'image/jpeg' | 'image/png' | 'image/webp';
@@ -658,10 +670,10 @@ async function putSourceImage(input: {
   }
 }
 
-async function uploadSourceAsset(
-  flow: CreateFlow,
+export async function uploadSourceAsset(
+  flow: LocalSourceImage,
   assertCurrentSession: () => void,
-  onProgress?: StartCreateGenerationOptions['onProgress'],
+  onProgress?: (stage: 'READING' | 'UPLOADING') => void,
 ): Promise<UploadedSourceAsset> {
   assertCurrentSession();
   onProgress?.('READING');

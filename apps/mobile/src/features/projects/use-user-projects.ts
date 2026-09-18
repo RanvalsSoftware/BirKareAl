@@ -9,7 +9,14 @@ import { accountQueryKey } from '@/features/auth/account-query-cache';
 export const USER_PROJECTS_QUERY_KEY = ['projects', 'current-user'] as const;
 
 type ProjectMode =
-  'FULL_SCENE' | 'FAN_MOMENT' | 'AI_FILTER' | 'PRO_PORTRAIT' | 'BACKGROUND_REPLACE';
+  | 'FULL_SCENE'
+  | 'FAN_MOMENT'
+  | 'AI_FILTER'
+  | 'PRO_PORTRAIT'
+  | 'BACKGROUND_REPLACE'
+  | 'PRODUCT_STUDIO'
+  | 'VIRTUAL_TRY_ON'
+  | 'NAIL_PREVIEW';
 
 type ProjectListItem = {
   id: string;

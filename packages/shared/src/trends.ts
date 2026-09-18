@@ -2,6 +2,8 @@
 export const TREND_PRESET_IDS = [
   'kpop_star',
   'pop_icon_80s',
+  'romantic_dinner_80s',
+  'romantic_closeup_80s',
   'analog_90s',
   'y2k_celebrity',
   'red_carpet_glam',

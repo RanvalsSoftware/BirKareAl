@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CreditBadge, GlassSurface, Icon, Notice, Screen } from '@/components';
@@ -9,9 +9,9 @@ import { IntensitySlider } from '@/features/beauty/IntensitySlider';
 import { intensityDescription } from '@/features/beauty/settings';
 import { useCreateFlow } from '@/features/create/createFlow';
 import { CreateHeader, FieldLabel, MiniChoice, WizardFooter } from '@/features/create/components';
-import { trends } from '@/features/trends/catalog';
+import { eightiesTrends, trends } from '@/features/trends/catalog';
 import { TrendRail } from '@/features/trends/TrendRail';
-import { trendCreationSelection } from '@/features/trends/presets';
+import { isEightiesTrend, trendCreationSelection } from '@/features/trends/presets';
 import { colors, typography } from '@/theme';
 
 export default function TrendScreen() {
@@ -45,6 +45,7 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
   const [showOriginal, setShowOriginal] = useState(false);
   const [advanced, setAdvanced] = useState(false);
   const credits = useAvailableCredits();
+  const isEighties = isEightiesTrend(trend.id);
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
@@ -54,7 +55,13 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
       numberOfImages: 1,
     });
   }, [flow, set, trend.id]);
-  const tinted = ['kpop_star', 'pop_icon_80s', 'neon_club_night'].includes(trend.id);
+  const tinted = [
+    'kpop_star',
+    'pop_icon_80s',
+    'romantic_dinner_80s',
+    'romantic_closeup_80s',
+    'neon_club_night',
+  ].includes(trend.id);
   const canContinue = flow.filterIntensity > 0;
 
   return (
@@ -66,9 +73,61 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
         fallback="/(tabs)/home"
       />
       <View style={styles.toolbar}>
-        <Text style={styles.hint}>9 özgün fotoğraf estetiği</Text>
+        <Text style={styles.hint}>
+          {isEighties ? '3 özgün 80’ler görünümü' : '9 akım koleksiyonu'}
+        </Text>
         <CreditBadge credits={credits} />
       </View>
+      {isEighties ? (
+        <View style={styles.collection}>
+          <View style={styles.collectionHeading}>
+            <View>
+              <Text style={styles.collectionTitle}>80’ler koleksiyonu</Text>
+              <Text style={styles.small}>Görünümü seç · seçim üretimden önce değiştirilebilir</Text>
+            </View>
+            <View style={styles.collectionCount}>
+              <Text style={styles.collectionCountText}>3 stil</Text>
+            </View>
+          </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.variantRail}
+          >
+            {eightiesTrends.map((variant) => {
+              const selected = variant.id === trend.id;
+              return (
+                <Pressable
+                  key={variant.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${variant.name}. ${variant.description}`}
+                  accessibilityState={{ selected }}
+                  onPress={() => router.replace(`/trends/${variant.id}` as never)}
+                  style={({ pressed }) => [
+                    styles.variantCard,
+                    selected && styles.variantSelected,
+                    pressed && styles.variantPressed,
+                  ]}
+                >
+                  <Image source={variant.source} style={styles.variantImage} resizeMode="cover" />
+                  <LinearGradient
+                    colors={['transparent', 'rgba(5,5,5,.98)']}
+                    style={styles.variantShade}
+                  />
+                  {selected ? (
+                    <View style={styles.variantCheck}>
+                      <Icon name="checkmark" size={13} color="#171000" />
+                    </View>
+                  ) : null}
+                  <Text style={styles.variantName} numberOfLines={2}>
+                    {variant.name}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+      ) : null}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Kaynak fotoğrafı görmek için basılı tut"
@@ -245,6 +304,68 @@ const styles = StyleSheet.create({
   },
   hint: { ...typography.caption, color: colors.textSecondary },
   small: { fontSize: 11, lineHeight: 17, color: colors.textMuted },
+  collection: {
+    marginBottom: 16,
+    paddingVertical: 14,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#F5C8422E',
+  },
+  collectionHeading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 10,
+  },
+  collectionTitle: { color: '#fff', fontSize: 16, fontWeight: '700', marginBottom: 2 },
+  collectionCount: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+    backgroundColor: '#F5C84218',
+    borderWidth: 1,
+    borderColor: '#F5C84266',
+  },
+  collectionCountText: { color: colors.accentYellow, fontSize: 11, fontWeight: '700' },
+  variantRail: { gap: 10, paddingRight: 4 },
+  variantCard: {
+    width: 116,
+    height: 154,
+    borderRadius: 19,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#FFFFFF2B',
+    backgroundColor: '#171619',
+  },
+  variantSelected: {
+    borderWidth: 2,
+    borderColor: colors.accentYellow,
+  },
+  variantPressed: { opacity: 0.78 },
+  variantImage: { width: '100%', height: '100%' },
+  variantShade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 78 },
+  variantName: {
+    position: 'absolute',
+    left: 9,
+    right: 8,
+    bottom: 9,
+    color: '#fff',
+    fontSize: 12,
+    lineHeight: 15,
+    fontWeight: '700',
+  },
+  variantCheck: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 23,
+    height: 23,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.accentYellow,
+  },
   preview: {
     height: 380,
     borderRadius: 28,

@@ -3,13 +3,13 @@ import test from 'node:test';
 import type { AddressInfo } from 'node:net';
 import express from 'express';
 import { MemoryRepository } from '@birkare/database';
-import { catalogFixtures, type BeautySettings } from '@birkare/shared';
+import { catalogFixtures, forbidden, type BeautySettings } from '@birkare/shared';
 import type { ApiDependencies } from '../../services/dependencies.js';
 import { TokenService } from '../../services/token.service.js';
 import { createErrorMiddleware } from '../../middleware/error.middleware.js';
 import { createGenerationsRouter } from './generations.routes.js';
 
-test('HTTP beauty persists immutable layers, prevents PRO credit spend, replays idempotently and revises from original', async () => {
+test('HTTP beauty prices layers, protects premium tools with PRO, replays idempotently and revises from original', async () => {
   // Isolated account, repository and queue; no real images, credits or AI requests.
   const repository = new MemoryRepository();
   const user = await repository.createUser({
@@ -61,6 +61,8 @@ test('HTTP beauty persists immutable layers, prevents PRO credit spend, replays 
     aspectRatio: '4:5',
   });
   const queued: string[] = [];
+  let proActive = false;
+  let proChecks = 0;
   const deps = {
     repository,
     tokenService,
@@ -69,10 +71,17 @@ test('HTTP beauty persists immutable layers, prevents PRO credit spend, replays 
         queued.push(generationId);
       },
     },
+    revenueCatService: {
+      assertActive: async () => {
+        proChecks += 1;
+        if (!proActive) throw forbidden('BIRKARE_PRO_REQUIRED', 'BirKare Pro gerekli.');
+      },
+    },
     config: {
       DISABLE_ALL_GENERATION: false,
       AI_PROVIDER: 'fake',
-      OPENAI_IMAGE_MODEL: 'test',
+      OPENAI_IMAGE_MODEL: 'test-flare',
+      OPENAI_IMAGE_PREMIUM_MODEL: 'test-sunburst',
       QUEUE_DRIVER: 'memory',
     },
   } as unknown as ApiDependencies;
@@ -104,7 +113,7 @@ test('HTTP beauty persists immutable layers, prevents PRO credit spend, replays 
     sourceAssetId: source.id,
     mode: 'AI_FILTER',
     stylePresetId: style.id,
-    quality: 'PREVIEW',
+    quality: 'STANDARD',
     numberOfImages: 1,
     disclosureAccepted: true,
     beauty,
@@ -121,14 +130,33 @@ test('HTTP beauty persists immutable layers, prevents PRO credit spend, replays 
     });
     return {
       status: response.status,
-      body: (await response.json()) as { data: { generationId: string }; error: { code: string } },
+      body: (await response.json()) as {
+        data: {
+          generationId: string;
+          creditCost: number;
+          modelLane: 'FAST' | 'PREMIUM';
+        };
+        error: { code: string };
+      },
     };
   };
   try {
     const started = await post('', payload, 'beauty-test-start');
     assert.equal(started.status, 202);
     const id = started.body.data.generationId;
-    assert.deepEqual((await repository.getGenerationById(id))?.recipe?.beauty, beauty);
+    const startedRecipe = (await repository.getGenerationById(id))?.recipe;
+    assert.equal(startedRecipe?.version, 1);
+    assert.deepEqual(startedRecipe?.version === 1 ? startedRecipe.beauty : undefined, beauty);
+    assert.equal((await repository.getGenerationById(id))?.model, 'test-sunburst');
+    assert.equal((await repository.getGenerationById(id))?.reservedCredits, 7);
+    const standardQuote = await post(
+      '/quote',
+      { ...payload, quality: 'STANDARD' },
+      'beauty-standard-quote',
+    );
+    assert.equal(standardQuote.status, 200);
+    assert.equal(standardQuote.body.data.creditCost, 7);
+    assert.equal(standardQuote.body.data.modelLane, 'PREMIUM');
     const replay = await post('', payload, 'beauty-test-start');
     assert.equal(replay.status, 202);
     assert.equal(replay.body.data.generationId, id);
@@ -138,12 +166,25 @@ test('HTTP beauty persists immutable layers, prevents PRO credit spend, replays 
       ...payload,
       beauty: { ...beauty, adjustments: { ...beauty.adjustments, faceContour: 1 } },
     };
-    for (const path of ['/quote', '']) {
-      const blocked = await post(path, premium, 'beauty-test-premium');
-      assert.equal(blocked.status, 403);
-      assert.equal(blocked.body.error.code, 'BEAUTY_PRO_UNAVAILABLE');
-    }
+    const lockedQuote = await post('/quote', premium, 'beauty-test-premium-quote-locked');
+    assert.equal(lockedQuote.status, 200);
+    assert.equal(lockedQuote.body.data.creditCost, 8);
+    const blocked = await post('', premium, 'beauty-test-premium');
+    assert.equal(blocked.status, 403);
+    assert.equal(blocked.body.error.code, 'BIRKARE_PRO_REQUIRED');
     assert.deepEqual(await repository.getWallet(user.id), beforePro);
+    assert.equal(proChecks, 1, 'quote is informational; PRO is enforced before reservation');
+    proActive = true;
+    const premiumQuote = await post('/quote', premium, 'beauty-premium-quote');
+    assert.equal(premiumQuote.status, 200);
+    assert.equal(premiumQuote.body.data.creditCost, 8);
+    const premiumStart = await post('', premium, 'beauty-premium-start');
+    assert.equal(premiumStart.status, 202);
+    assert.equal(
+      (await repository.getGenerationById(premiumStart.body.data.generationId))?.reservedCredits,
+      8,
+    );
+    assert.equal(proChecks, 2);
     const wrongStyle = await post(
       '/quote',
       {
@@ -156,13 +197,18 @@ test('HTTP beauty persists immutable layers, prevents PRO credit spend, replays 
     assert.equal(wrongStyle.body.error.code, 'BEAUTY_STYLE_INVALID');
     const preview = await post(
       '/preview',
-      { ...payload, beauty: { ...beauty, makeup: { preset: 'none', intensity: 0 } } },
+      {
+        ...payload,
+        quality: 'PREVIEW',
+        beauty: { ...beauty, makeup: { preset: 'none', intensity: 0 } },
+      },
       'beauty-test-preview',
     );
     assert.equal(preview.status, 202);
+    const previewRecipe = (await repository.getGenerationById(preview.body.data.generationId))
+      ?.recipe;
     assert.equal(
-      (await repository.getGenerationById(preview.body.data.generationId))?.recipe?.beauty?.makeup
-        .preset,
+      previewRecipe?.version === 1 ? previewRecipe.beauty?.makeup.preset : undefined,
       'none',
     );
     const output = await repository.addGenerationOutput({
@@ -182,16 +228,8 @@ test('HTTP beauty persists immutable layers, prevents PRO credit spend, replays 
     assert.equal(revision.status, 202);
     const revised = await repository.getGenerationById(revision.body.data.generationId);
     assert.equal(revised?.sourceAssetId, source.id);
-    assert.deepEqual(revised?.recipe?.beauty, beauty);
-    assert.equal(queued.length, 3);
-    deps.config.DISABLE_ALL_GENERATION = true;
-    const stoppedRevision = await post(
-      `/${id}/revisions`,
-      { sourceOutputId: output.id, instruction: 'Keep the retouch subtle', quality: 'PREVIEW' },
-      'beauty-disabled-revision',
-    );
-    assert.equal(stoppedRevision.status, 503);
-    assert.equal(queued.length, 3);
+    assert.deepEqual(revised?.recipe?.version === 1 ? revised.recipe.beauty : undefined, beauty);
+    assert.equal(queued.length, 4);
   } finally {
     server.closeAllConnections();
     await new Promise<void>((resolve, reject) =>

@@ -1,5 +1,6 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 import { resolvePublicMobileConfig } from './config/public-env.cjs';
+import { resolveRevenueCatConfig } from './config/revenuecat.cjs';
 
 const appName = 'BirKare AI';
 const googleClientIdSuffix = '.apps.googleusercontent.com';
@@ -38,16 +39,17 @@ const plugins: NonNullable<ExpoConfig['plugins']> = [
   'expo-router',
   './plugins/with-development-url-scheme',
   './plugins/with-android-release-signing',
+  './plugins/with-revenuecat',
   [
     'expo-splash-screen',
     {
       image: './assets/onboarding/images/brand/logo-gold-icon.png',
       imageWidth: 196,
       resizeMode: 'contain',
-      backgroundColor: '#050505',
+      backgroundColor: '#000000',
       dark: {
         image: './assets/onboarding/images/brand/logo-gold-icon.png',
-        backgroundColor: '#050505',
+        backgroundColor: '#000000',
       },
     },
   ],
@@ -103,6 +105,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     package: 'com.birkareai.mobile',
+    permissions: ['com.android.vending.BILLING'],
     // First Play upload. Increment manually and sync native Gradle before each
     // new upload; eas.json intentionally does not rewrite this dynamic config.
     versionCode: 1,
@@ -121,6 +124,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     appName,
     ...publicConfig,
+    revenueCat: resolveRevenueCatConfig(process.env),
     // Client IDs are public application identifiers. Accept the server-style
     // variable names as a build-time fallback so one EAS environment can power
     // both the API verifier and this mobile config. OAuth client secrets stay

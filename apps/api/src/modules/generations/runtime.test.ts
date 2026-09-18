@@ -7,13 +7,18 @@ import {
   DisabledModerationProvider,
   OpenAIImageGenerationProvider,
   OpenAIModerationProvider,
+  STUDIO_CATALOG_VERSION,
+  STUDIO_PRICING_VERSION,
+  STUDIO_PROMPT_VERSION,
+  buildStudioPrompt,
+  getStudioSelection,
   providerFailure,
   runGeneration,
   type ImageGenerationInput,
   type ImageGenerationProvider,
   type ModerationProvider,
 } from '@birkare/ai';
-import { MemoryRepository } from '@birkare/database';
+import { MemoryRepository, type StudioGenerationRecipe } from '@birkare/database';
 import type { StorageProvider } from '@birkare/storage';
 import { ApiError } from '@birkare/shared';
 
@@ -83,11 +88,37 @@ test('SDK image editing uses the configured model, supported canvas and original
   const result = await provider.generate(render);
   assert.match(body, /gpt-image-1-mini/);
   assert.match(body, /1024x1536/);
-  assert.match(body, /reference-0.png/);
+  assert.match(body, /1-user.png/);
   assert.match(body, /name="moderation"\r\n\r\nauto/);
   assert.doesNotMatch(body, /input_fidelity/);
   assert.equal(result.images.length, 1);
   assert.equal(result.providerRequestId, 'req_test_safe');
+});
+
+test('GPT Image 2 keeps the exact requested ratio, high-fidelity default and usage metrics', async () => {
+  let form: FormData | undefined;
+  const provider = new OpenAIImageGenerationProvider(
+    { OPENAI_API_KEY: 'test-not-a-real-key', OPENAI_IMAGE_MODEL: 'gpt-image-1-mini' },
+    {
+      fetch: async (_url, init) => {
+        form = await new Response(init?.body, { headers: init?.headers }).formData();
+        return new Response(
+          JSON.stringify({
+            data: [{ b64_json: png.toString('base64') }],
+            usage: { input_tokens: 321, output_tokens: 654 },
+          }),
+          {
+            headers: { 'Content-Type': 'application/json', 'x-request-id': 'req_gpt_image_2' },
+          },
+        );
+      },
+    },
+  );
+  const result = await provider.generate({ ...render, model: 'gpt-image-2.5-flare' });
+  assert.equal(form?.get('model'), 'gpt-image-2.5-flare');
+  assert.equal(form?.get('size'), '1024x1280');
+  assert.equal(form?.get('input_fidelity'), null);
+  assert.deepEqual(result.usage, { inputTokens: 321, outputTokens: 654 });
 });
 
 test('SDK sends PNG and JPEG source bytes unchanged to the image edit endpoint', async () => {
@@ -111,7 +142,7 @@ test('SDK sends PNG and JPEG source bytes unchanged to the image edit endpoint',
           const files = [...body.values()].filter((value) => typeof value !== 'string');
           assert.equal(files.length, 1);
           assert.equal(files[0]!.type, source.mimeType);
-          assert.equal(files[0]!.name, `reference-0.${source.extension}`);
+          assert.equal(files[0]!.name, `1-user.${source.extension}`);
           assert.deepEqual(Buffer.from(await files[0]!.arrayBuffer()), source.buffer);
           assert.equal(body.get('model'), 'gpt-image-1-mini');
           assert.equal(body.get('quality'), 'low');
@@ -397,11 +428,199 @@ async function fixture() {
   return { repository, user, walletBefore, generation, storage, logger, logs };
 }
 
+async function virtualTryOnFixture(invalidInputOrder = false) {
+  const context = await fixture();
+  const primary = await context.repository.getAssetById(context.generation.sourceAssetId);
+  assert.ok(primary);
+  const garmentBytes = Buffer.concat([png, Buffer.from([0x01])]);
+  const garment = await context.repository.createAsset({
+    ownerId: context.user.id,
+    type: 'USER_SOURCE',
+    storageProvider: 'local',
+    storageKey: 'test/garment.png',
+    originalName: null,
+    mimeType: 'image/png',
+    sizeBytes: garmentBytes.length,
+    sha256: null,
+  });
+  await context.repository.updateAsset(garment.id, { status: 'READY' });
+  await context.storage.putObject({
+    key: garment.storageKey,
+    body: garmentBytes,
+    contentType: garment.mimeType,
+    metadata: {},
+  });
+  const project = await context.repository.createProject({
+    userId: context.user.id,
+    title: 'Virtual try-on runtime test',
+    mode: 'VIRTUAL_TRY_ON',
+    sourceAssetId: primary.id,
+    sceneTemplateId: null,
+    stylePresetId: null,
+    featuredPersonId: null,
+    composition: 'WIDE',
+    aspectRatio: '4:5',
+  });
+  const plan = getStudioSelection({
+    kind: 'VIRTUAL_TRY_ON',
+    sceneId: 'fashion-luxury-boutique',
+  });
+  assert.equal(plan.kind, 'VIRTUAL_TRY_ON');
+  const recipe: StudioGenerationRecipe = {
+    version: 2,
+    studio: {
+      kind: plan.kind,
+      sceneId: plan.sceneId,
+      taskType: plan.taskType,
+    },
+    catalogVersion: STUDIO_CATALOG_VERSION,
+    promptVersion: STUDIO_PROMPT_VERSION,
+    pricingVersion: STUDIO_PRICING_VERSION,
+    modelLane: plan.modelLane,
+    baseCredits: plan.baseCredits,
+    hdExtraCredits: plan.hdExtraCredits,
+  };
+  const compiledPrompt = buildStudioPrompt({
+    recipe: recipe.studio,
+    promptVersion: recipe.promptVersion,
+    aspectRatio: '4:5',
+    quality: 'STANDARD',
+    userInstruction: 'Keep the styling understated.',
+  });
+  const generation = await context.repository.createGeneration({
+    userId: context.user.id,
+    projectId: project.id,
+    sourceAssetId: primary.id,
+    parentGenerationId: null,
+    quality: 'STANDARD',
+    requestedImageCount: 1,
+    aspectRatio: '4:5',
+    preserveFace: true,
+    preserveClothes: true,
+    recipe,
+    userInstruction: 'Keep the styling understated.',
+    compiledPrompt,
+    promptVersion: recipe.promptVersion,
+    provider: 'FAKE',
+    model: 'test-premium',
+    reservedCredits: 10,
+    inputs: invalidInputOrder
+      ? [
+          { assetId: garment.id, role: 'GARMENT', sortOrder: 0 },
+          { assetId: primary.id, role: 'PRIMARY_PERSON', sortOrder: 1 },
+        ]
+      : [
+          { assetId: primary.id, role: 'PRIMARY_PERSON', sortOrder: 0 },
+          { assetId: garment.id, role: 'GARMENT', sortOrder: 1 },
+        ],
+  });
+  await context.repository.reserveCredits({
+    userId: context.user.id,
+    generationId: generation.id,
+    amount: 10,
+  });
+  return { ...context, generation, garmentBytes, compiledPrompt };
+}
+
+test('studio worker validates, moderates and renders every typed input in deterministic order', async () => {
+  const context = await virtualTryOnFixture();
+  assert.ok(context.generation.recipe?.version === 2);
+  const previousPromptVersion = '2026-09-14-studio-prompts-v0';
+  const immutablePrompt = `${context.compiledPrompt}\n\nIMMUTABLE_QUEUE_SNAPSHOT`;
+  context.generation = await context.repository.updateGeneration(context.generation.id, {
+    recipe: { ...context.generation.recipe, promptVersion: previousPromptVersion },
+    promptVersion: previousPromptVersion,
+    compiledPrompt: immutablePrompt,
+  });
+  let moderatedRoles: string[] = [];
+  let renderedRoles: string[] = [];
+  let renderedPrompt = '';
+  const moderationProvider: ModerationProvider = {
+    name: 'fake',
+    async moderateText(input) {
+      moderatedRoles = input.sourceImages?.map((image) => image.role) ?? [];
+      assert.deepEqual(input.sourceImages?.[0]?.buffer, png);
+      assert.deepEqual(input.sourceImages?.[1]?.buffer, context.garmentBytes);
+      return { flagged: false, categories: [] };
+    },
+  };
+  const fakeProvider = new FakeImageGenerationProvider();
+  const imageProvider: ImageGenerationProvider = {
+    name: 'fake',
+    async generate(input) {
+      renderedRoles = input.sourceImages.map((image) => image.role);
+      renderedPrompt = input.prompt;
+      return fakeProvider.generate(input);
+    },
+  };
+  await runGeneration(
+    { generationId: context.generation.id, requestId: 'studio-multi-input' },
+    {
+      ...context,
+      imageProvider,
+      moderationProvider,
+      config: { OPENAI_IMAGE_MODEL: 'test-fast' },
+    },
+  );
+  assert.deepEqual(moderatedRoles, ['PRIMARY_PERSON', 'GARMENT']);
+  assert.deepEqual(renderedRoles, ['PRIMARY_PERSON', 'GARMENT']);
+  assert.equal(
+    renderedPrompt,
+    immutablePrompt,
+    'queued work must use its submitted prompt snapshot after a prompt registry deploy',
+  );
+  assert.equal(
+    (await context.repository.getGenerationById(context.generation.id))?.status,
+    'COMPLETED',
+  );
+});
+
+test('studio worker rejects malformed input role order before moderation or paid rendering', async () => {
+  const context = await virtualTryOnFixture(true);
+  let moderationCalls = 0;
+  let renderCalls = 0;
+  await runGeneration(
+    { generationId: context.generation.id, requestId: 'studio-invalid-input-order' },
+    {
+      ...context,
+      moderationProvider: {
+        name: 'fake',
+        async moderateText() {
+          moderationCalls += 1;
+          return { flagged: false, categories: [] };
+        },
+      },
+      imageProvider: {
+        name: 'fake',
+        async generate() {
+          renderCalls += 1;
+          throw new Error('must-not-render');
+        },
+      },
+      config: { OPENAI_IMAGE_MODEL: 'test-fast' },
+    },
+  );
+  const result = await context.repository.getGenerationById(context.generation.id);
+  assert.equal(result?.status, 'FAILED');
+  assert.equal(result?.failureCode, 'GENERATION_INPUT_ROLES_INVALID');
+  assert.equal(result?.refundedCredits, 10);
+  assert.equal(moderationCalls, 0);
+  assert.equal(renderCalls, 0);
+});
+
 test('full runner saves a result and captures credits once, including queue redelivery', async () => {
   const context = await fixture();
+  let submittedModel: string | undefined;
+  const fakeProvider = new FakeImageGenerationProvider();
   const dependencies = {
     ...context,
-    imageProvider: new FakeImageGenerationProvider(),
+    imageProvider: {
+      name: 'fake' as const,
+      async generate(input: ImageGenerationInput) {
+        submittedModel = input.model;
+        return fakeProvider.generate(input);
+      },
+    },
     moderationProvider: new FakeModerationProvider(),
     config: { OPENAI_IMAGE_MODEL: 'test' },
   };
@@ -411,6 +630,7 @@ test('full runner saves a result and captures credits once, including queue rede
   const result = await context.repository.getGenerationById(job.generationId);
   assert.equal(result?.status, 'COMPLETED');
   assert.equal(result?.outputs.length, 1);
+  assert.equal(submittedModel, context.generation.model);
   assert.equal(result?.chargedCredits, 2);
   const wallet = await context.repository.getWallet(context.user.id);
   assert.equal(wallet.reserved, 0);

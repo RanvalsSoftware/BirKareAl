@@ -29,7 +29,7 @@ export const scenes: CatalogItem[] = [
     palette: ['#183A4E', '#50621B'],
     icon: '⚽',
     previewSource: require('../../assets/onboarding/images/scenes/stadium.png'),
-    creditCost: 2,
+    creditCost: 1,
   },
   {
     id: 'scene-award-night',
@@ -41,7 +41,7 @@ export const scenes: CatalogItem[] = [
     palette: ['#57310F', '#B56A17'],
     icon: '✦',
     previewSource: require('../../assets/onboarding/images/scenes/gift.png'),
-    creditCost: 2,
+    creditCost: 1,
   },
   {
     id: 'scene-city-glow',
@@ -53,7 +53,7 @@ export const scenes: CatalogItem[] = [
     palette: ['#27104C', '#135E73'],
     icon: '◈',
     previewSource: require('../../assets/onboarding/images/scenes/light-cities.png'),
-    creditCost: 2,
+    creditCost: 1,
   },
   {
     id: 'scene-coastal-day',
@@ -65,7 +65,7 @@ export const scenes: CatalogItem[] = [
     palette: ['#075B70', '#E2B35B'],
     icon: '☼',
     previewSource: require('../../assets/onboarding/images/scenes/beach.png'),
-    creditCost: 2,
+    creditCost: 1,
   },
   {
     id: 'scene-studio-ink',
@@ -77,7 +77,7 @@ export const scenes: CatalogItem[] = [
     palette: ['#202020', '#565656'],
     icon: '◐',
     previewSource: require('../../assets/onboarding/images/scenes/portrait-change.png'),
-    creditCost: 3,
+    creditCost: 1,
     isPro: true,
   },
   {
@@ -90,7 +90,7 @@ export const scenes: CatalogItem[] = [
     palette: ['#3B0E5F', '#2C8BA2'],
     icon: '✧',
     previewSource: require('../../assets/onboarding/images/scenes/neon.png'),
-    creditCost: 3,
+    creditCost: 1,
     isPro: true,
   },
   {
@@ -103,7 +103,7 @@ export const scenes: CatalogItem[] = [
     palette: ['#18364A', '#E99742'],
     icon: '△',
     previewSource: require('../../assets/onboarding/images/scenes/background-change.png'),
-    creditCost: 2,
+    creditCost: 1,
   },
 ];
 
@@ -118,7 +118,7 @@ export const filters: CatalogItem[] = [
     palette: ['#315F54', '#C7B582'],
     icon: '☀',
     previewSource: require('../../assets/onboarding/images/filters/natural.png'),
-    creditCost: 0,
+    creditCost: 1,
     ai: true,
   },
   {
@@ -131,7 +131,7 @@ export const filters: CatalogItem[] = [
     palette: ['#D74673', '#4422A8'],
     icon: '✺',
     previewSource: require('../../assets/onboarding/images/filters/dripart.png'),
-    creditCost: 3,
+    creditCost: 1,
     ai: true,
     isPro: true,
   },
@@ -145,7 +145,7 @@ export const filters: CatalogItem[] = [
     palette: ['#FF534B', '#FFB703'],
     icon: '▦',
     previewSource: require('../../assets/onboarding/images/filters/popart.png'),
-    creditCost: 3,
+    creditCost: 1,
     ai: true,
   },
   {
@@ -158,7 +158,7 @@ export const filters: CatalogItem[] = [
     palette: ['#2B3F59', '#C7843E'],
     icon: '◉',
     previewSource: require('../../assets/onboarding/images/filters/hdr.png'),
-    creditCost: 0,
+    creditCost: 1,
     ai: true,
   },
   {
@@ -171,7 +171,7 @@ export const filters: CatalogItem[] = [
     palette: ['#5F243D', '#B78258'],
     icon: '◌',
     previewSource: require('../../assets/onboarding/images/filters/bokeh.png'),
-    creditCost: 0,
+    creditCost: 1,
     ai: true,
   },
   {
@@ -197,7 +197,7 @@ export const filters: CatalogItem[] = [
     palette: ['#6E3B2D', '#C99B57'],
     icon: '◒',
     previewSource: require('../../assets/onboarding/images/filters/vintage.png'),
-    creditCost: 0,
+    creditCost: 1,
     ai: true,
   },
   {
@@ -210,7 +210,7 @@ export const filters: CatalogItem[] = [
     palette: ['#101010', '#8B8B8B'],
     icon: '◑',
     previewSource: require('../../assets/onboarding/images/filters/siyah-beyaz.png'),
-    creditCost: 0,
+    creditCost: 1,
     ai: true,
   },
   {
@@ -292,7 +292,7 @@ export const fictionalPeople: CatalogItem[] = [
     palette: ['#195982', '#203543'],
     icon: 'DA',
     previewSource: require('../../assets/onboarding/images/demos/demo-01.png'),
-    creditCost: 4,
+    creditCost: 2,
     ai: true,
   },
   {
@@ -305,7 +305,7 @@ export const fictionalPeople: CatalogItem[] = [
     palette: ['#7B1E67', '#EC5E98'],
     icon: 'MN',
     previewSource: require('../../assets/onboarding/images/demos/demo-02.png'),
-    creditCost: 4,
+    creditCost: 2,
     ai: true,
   },
   {
@@ -318,7 +318,7 @@ export const fictionalPeople: CatalogItem[] = [
     palette: ['#664213', '#B37938'],
     icon: 'AK',
     previewSource: require('../../assets/onboarding/images/demos/demo-03.png'),
-    creditCost: 4,
+    creditCost: 2,
     ai: true,
   },
   {
@@ -331,7 +331,7 @@ export const fictionalPeople: CatalogItem[] = [
     palette: ['#373A74', '#9E7BC3'],
     icon: 'LV',
     previewSource: require('../../assets/onboarding/images/demos/demo-04.png'),
-    creditCost: 4,
+    creditCost: 2,
     ai: true,
   },
   {
@@ -344,16 +344,22 @@ export const fictionalPeople: CatalogItem[] = [
     palette: ['#3D4E2A', '#B78B45'],
     icon: 'ES',
     previewSource: require('../../assets/onboarding/images/demos/demo-05.png'),
-    creditCost: 4,
+    creditCost: 2,
     ai: true,
   },
 ];
 
 export const aiTools: CatalogItem[] = [
   {
-    id: 'tool-gender-change', slug: 'gender-change', name: 'Cinsiyet değiştirme',
-    subtitle: 'Seçtiğin kadınsı veya erkeksi AI görünümü', kind: 'tool', category: 'AI araçları',
-    palette: ['#18151D', '#BBA476'], icon: '✧', ai: true,
+    id: 'tool-gender-change',
+    slug: 'gender-change',
+    name: 'Cinsiyet değiştirme',
+    subtitle: 'Seçtiğin kadınsı veya erkeksi AI görünümü',
+    kind: 'tool',
+    category: 'AI araçları',
+    palette: ['#18151D', '#BBA476'],
+    icon: '✧',
+    ai: true,
     previewSource: require('../../assets/beauty/gender-change.png'),
   },
   {
@@ -366,7 +372,7 @@ export const aiTools: CatalogItem[] = [
     category: 'AI araçları',
     palette: ['#31175D', '#7550A4'],
     icon: '◫',
-    creditCost: 2,
+    creditCost: 1,
     ai: true,
   },
   {
@@ -421,4 +427,12 @@ export const filterCategories = [
   'Sinematik',
   'Portre',
 ];
-export const projectCategories = ['Tümü', 'Favoriler', 'Sahneler', 'Filtreler'];
+export const projectCategories = [
+  'Tümü',
+  'Favoriler',
+  'Sahneler',
+  'Filtreler',
+  'Ürünler',
+  'Kıyafet',
+  'Tırnak',
+];

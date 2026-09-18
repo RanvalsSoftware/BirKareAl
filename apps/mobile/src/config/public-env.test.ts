@@ -115,6 +115,20 @@ describe('mobile release configuration', () => {
     }
   });
 
+  it('allows RevenueCat public identifiers consumed separately by app.config', () => {
+    expect(
+      resolvePublicMobileConfig({
+        EXPO_PUBLIC_REVENUECAT_IOS_API_KEY: 'test_public',
+        EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY: 'test_public',
+        EXPO_PUBLIC_REVENUECAT_OFFERING_ID: 'birkare_pro',
+      }),
+    ).toEqual({
+      appEnv: 'development',
+      apiBaseUrl: 'http://localhost:4000',
+      supportEmail: 'birkareal@ranvals.com',
+    });
+  });
+
   it('uses explicit store AAB profiles with distinct EAS environments', () => {
     expect(eas.cli.appVersionSource).toBe('local');
     expect(eas.build.staging).toMatchObject({

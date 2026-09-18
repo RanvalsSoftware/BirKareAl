@@ -25,7 +25,7 @@ import { useAvailableCredits } from '@/features/billing/use-wallet';
 import { useAuthStore } from '@/features/auth/auth-store';
 import { useUserProjects, type UserProject } from '@/features/projects/use-user-projects';
 
-type ProjectCategory = 'Sahneler' | 'Filtreler';
+type ProjectCategory = 'Sahneler' | 'Filtreler' | 'Ürünler' | 'Kıyafet' | 'Tırnak';
 
 const MODE_DISPLAY: Record<
   UserProject['mode'],
@@ -66,6 +66,24 @@ const MODE_DISPLAY: Record<
     palette: ['#2C4559', '#BF8339'],
     icon: '◈',
   },
+  PRODUCT_STUDIO: {
+    category: 'Ürünler',
+    fallbackTitle: 'Ürün çekimi',
+    palette: ['#33230E', '#B68738'],
+    icon: '◫',
+  },
+  VIRTUAL_TRY_ON: {
+    category: 'Kıyafet',
+    fallbackTitle: 'Kıyafet deneme',
+    palette: ['#3B2C41', '#9A6F91'],
+    icon: '◇',
+  },
+  NAIL_PREVIEW: {
+    category: 'Tırnak',
+    fallbackTitle: 'Manikür önizleme',
+    palette: ['#4A0D1F', '#B14469'],
+    icon: '✦',
+  },
 };
 
 function formatProjectDate(value: string): string {
@@ -101,10 +119,10 @@ export default function ProjectsScreen() {
   const projectsQuery = useUserProjects();
   const [selected, setSelected] = useState('Tümü');
   const [visibleError, setVisibleError] = useState<string | null>(null);
-  const projects = projectsQuery.data ?? [];
+  const projects = projectsQuery.data;
   const cards = useMemo(
     () =>
-      projects.map((project) => {
+      (projects ?? []).map((project) => {
         const display = MODE_DISPLAY[project.mode];
         return {
           ...project,
@@ -123,7 +141,12 @@ export default function ProjectsScreen() {
   );
 
   useEffect(() => {
-    if (projectsQuery.error) setVisibleError(queryErrorMessage(projectsQuery.error));
+    if (!projectsQuery.error) return;
+    const timeout = setTimeout(
+      () => setVisibleError(queryErrorMessage(projectsQuery.error)),
+      0,
+    );
+    return () => clearTimeout(timeout);
   }, [projectsQuery.error]);
 
   useEffect(() => {
@@ -168,7 +191,7 @@ export default function ProjectsScreen() {
             <ActivityIndicator color={colors.accentYellow} />
             <Text style={styles.loadingText}>Projelerin yükleniyor…</Text>
           </View>
-        ) : projectsQuery.isError && !projects.length ? (
+        ) : projectsQuery.isError && !(projects?.length ?? 0) ? (
           <EmptyState
             icon="cloud-offline-outline"
             title="Projelerine ulaşılamadı"

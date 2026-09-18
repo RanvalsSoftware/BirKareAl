@@ -1,5 +1,12 @@
 import { z } from 'zod';
-import { TREND_PRESET_IDS } from '@birkare/shared';
+import {
+  FASHION_SCENE_IDS,
+  NAIL_PRESET_IDS,
+  PRODUCT_CATEGORY_IDS,
+  PRODUCT_SCENE_IDS,
+  STUDIO_MODES,
+  TREND_PRESET_IDS,
+} from '@birkare/shared';
 import { BeautySettingsSchema, GenderTransformationSchema } from './beauty.js';
 import {
   AspectRatioSchema,
@@ -8,7 +15,29 @@ import {
   UuidSchema,
 } from './common.js';
 
-export const QuoteGenerationSchema = z.object({
+export const StudioSelectionSchema = z.discriminatedUnion('kind', [
+  z
+    .object({
+      kind: z.literal('PRODUCT_STUDIO'),
+      categoryId: z.enum(PRODUCT_CATEGORY_IDS),
+      sceneId: z.enum(PRODUCT_SCENE_IDS),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal('VIRTUAL_TRY_ON'),
+      sceneId: z.enum(FASHION_SCENE_IDS),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal('NAIL_PREVIEW'),
+      presetId: z.enum(NAIL_PRESET_IDS),
+    })
+    .strict(),
+]);
+
+const QuoteGenerationObjectSchema = z.object({
   mode: ProjectModeSchema,
   quality: GenerationQualitySchema,
   numberOfImages: z.number().int().min(1).max(4),
@@ -18,6 +47,7 @@ export const QuoteGenerationSchema = z.object({
   beauty: BeautySettingsSchema.optional(),
   transformation: GenderTransformationSchema.optional(),
   trendPreset: z.enum(TREND_PRESET_IDS).optional(),
+  studio: StudioSelectionSchema.optional(),
 });
 
 export const GenerationCompositionDetailsSchema = z
@@ -33,6 +63,8 @@ export const GenerationCompositionDetailsSchema = z
 const GenerationRequestSchema = z.object({
   projectId: UuidSchema,
   sourceAssetId: UuidSchema,
+  /** Required only by VIRTUAL_TRY_ON and persisted as the GARMENT input role. */
+  secondarySourceAssetId: UuidSchema.optional(),
   mode: ProjectModeSchema,
   sceneTemplateId: UuidSchema.nullable().optional(),
   featuredPersonId: UuidSchema.nullable().optional(),
@@ -44,6 +76,7 @@ const GenerationRequestSchema = z.object({
   beauty: BeautySettingsSchema.optional(),
   transformation: GenderTransformationSchema.optional(),
   trendPreset: z.enum(TREND_PRESET_IDS).optional(),
+  studio: StudioSelectionSchema.optional(),
   /** This only selects a catalog record; clients never send a reference image or a public-figure name. */
   characterMode: z.enum(['FICTIONAL', 'LICENSED_REFERENCE']).optional(),
   aspectRatio: AspectRatioSchema.default('4:5'),
@@ -52,13 +85,118 @@ const GenerationRequestSchema = z.object({
   preserveFace: z.boolean().default(true),
   preserveClothes: z.boolean().default(true),
   customInstruction: z.string().trim().max(1000).optional(),
+  /** Studio-specific name used by the product UI; compiled only as an untrusted preference. */
+  userNotes: z.string().trim().max(1000).optional(),
   disclosureAccepted: z.literal(true),
+});
+
+type ModeSelectionInput = {
+  mode: z.infer<typeof ProjectModeSchema>;
+  studio?: z.infer<typeof StudioSelectionSchema>;
+  secondarySourceAssetId?: string;
+  sceneTemplateId?: string | null;
+  featuredPersonId?: string | null;
+  stylePresetId?: string | null;
+  beauty?: unknown;
+  transformation?: unknown;
+  trendPreset?: unknown;
+  characterMode?: unknown;
+};
+
+function validateStudioSelection(
+  input: ModeSelectionInput,
+  ctx: z.RefinementCtx,
+  requireInputAssets: boolean,
+): boolean {
+  const isStudioMode = STUDIO_MODES.includes(input.mode as (typeof STUDIO_MODES)[number]);
+  if (!isStudioMode) {
+    if (input.studio) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['studio'],
+        message: 'Stüdyo seçimi yalnızca ürün, kıyafet veya tırnak akışında kullanılabilir.',
+      });
+    }
+    if (input.secondarySourceAssetId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['secondarySourceAssetId'],
+        message: 'İkinci kaynak görsel yalnızca kıyafet denemesinde kullanılabilir.',
+      });
+    }
+    return false;
+  }
+
+  const expectedKind = {
+    PRODUCT_STUDIO: 'PRODUCT_STUDIO',
+    VIRTUAL_TRY_ON: 'VIRTUAL_TRY_ON',
+    NAIL_PREVIEW: 'NAIL_PREVIEW',
+  }[input.mode as (typeof STUDIO_MODES)[number]];
+  if (!input.studio || input.studio.kind !== expectedKind) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['studio'],
+      message: 'Stüdyo seçimi üretim modu ile eşleşmelidir.',
+    });
+  }
+  if (
+    input.sceneTemplateId ||
+    input.featuredPersonId ||
+    input.stylePresetId ||
+    input.beauty ||
+    input.transformation ||
+    input.trendPreset ||
+    input.characterMode
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['studio'],
+      message:
+        'Stüdyo akışları portre sahnesi, filtre, karakter veya güzellik aracıyla birleştirilemez.',
+    });
+  }
+  if (requireInputAssets && input.mode === 'VIRTUAL_TRY_ON' && !input.secondarySourceAssetId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['secondarySourceAssetId'],
+      message: 'Kıyafet denemesi için kıyafet fotoğrafı gereklidir.',
+    });
+  }
+  if (input.mode !== 'VIRTUAL_TRY_ON' && input.secondarySourceAssetId) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['secondarySourceAssetId'],
+      message: 'İkinci kaynak görsel yalnızca kıyafet denemesinde kullanılabilir.',
+    });
+  }
+  return true;
+}
+
+export const QuoteGenerationSchema = QuoteGenerationObjectSchema.superRefine((input, ctx) => {
+  validateStudioSelection(input, ctx, false);
 });
 
 function validateGenerationSelection(
   input: z.infer<typeof GenerationRequestSchema>,
   ctx: z.RefinementCtx,
 ) {
+  if (validateStudioSelection(input, ctx, true)) {
+    if (input.customInstruction && input.userNotes) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['userNotes'],
+        message: 'Stüdyo notunu yalnızca bir alanda gönderin.',
+      });
+    }
+    return;
+  }
+  if (input.userNotes) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['userNotes'],
+      message: 'userNotes yalnızca ürün, kıyafet veya tırnak akışında kullanılabilir.',
+    });
+  }
   if (
     input.trendPreset &&
     (input.mode !== 'AI_FILTER' ||
@@ -172,3 +310,4 @@ export const GenerationMessageSchema = z.object({ content: z.string().trim().min
 export type CreateGenerationInput = z.infer<typeof CreateGenerationSchema>;
 export type CreatePreviewGenerationInput = z.infer<typeof CreatePreviewGenerationSchema>;
 export type GenerationCompositionDetails = z.infer<typeof GenerationCompositionDetailsSchema>;
+export type StudioSelectionInput = z.infer<typeof StudioSelectionSchema>;

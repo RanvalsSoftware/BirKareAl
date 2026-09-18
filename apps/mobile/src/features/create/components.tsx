@@ -1,5 +1,13 @@
 import * as Haptics from 'expo-haptics';
-import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { AppleGlassButton, BackButton, Icon, PrimaryButton, ProgressSteps } from '@/components';
@@ -77,8 +85,13 @@ export function CreateSegmentedControl<T extends string>({
   onChange: (value: T) => void;
   options: readonly { value: T; label: string; icon: React.ComponentProps<typeof Icon>['name'] }[];
 }) {
+  const { width, fontScale } = useWindowDimensions();
+  const stacked = width < 360 || fontScale > 1.2;
   return (
-    <View accessibilityRole="tablist" style={styles.segmentedControl}>
+    <View
+      accessibilityRole="tablist"
+      style={[styles.segmentedControl, stacked && styles.segmentedControlStacked]}
+    >
       {options.map((option) => {
         const selected = option.value === value;
         return (
@@ -94,6 +107,7 @@ export function CreateSegmentedControl<T extends string>({
             }}
             style={({ pressed }) => [
               styles.segment,
+              stacked && styles.segmentStacked,
               selected && styles.segmentSelected,
               pressed && !selected && styles.segmentPressed,
             ]}
@@ -111,7 +125,10 @@ export function CreateSegmentedControl<T extends string>({
               size={18}
               color={selected ? colors.accentYellow : colors.textSecondary}
             />
-            <Text style={[styles.segmentLabel, selected && styles.segmentLabelSelected]}>
+            <Text
+              numberOfLines={2}
+              style={[styles.segmentLabel, selected && styles.segmentLabelSelected]}
+            >
               {option.label}
             </Text>
           </Pressable>
@@ -262,8 +279,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.045)',
     overflow: 'hidden',
   },
+  segmentedControlStacked: {
+    borderRadius: radii.lg,
+    flexWrap: 'wrap',
+    overflow: 'visible',
+  },
   segment: {
     flex: 1,
+    minWidth: 0,
     minHeight: 50,
     paddingHorizontal: 7,
     borderRadius: radii.pill,
@@ -274,6 +297,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 5,
     overflow: 'hidden',
+  },
+  segmentStacked: {
+    flexBasis: '47%',
+    flexGrow: 1,
   },
   segmentSelected: {
     shadowColor: colors.accentYellow,
@@ -287,6 +314,8 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textSecondary,
     fontWeight: '800',
+    flexShrink: 1,
+    minWidth: 0,
     textAlign: 'center',
   },
   segmentLabelSelected: { color: colors.accentYellow },

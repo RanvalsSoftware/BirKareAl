@@ -51,7 +51,7 @@ export const experienceScenes: readonly ExperienceScene[] = [
     icon: 'people-outline',
     source: require('../../assets/onboarding/images/categories/talent.png'),
     palette: ['#121D31', '#3E6A47'],
-    creditCost: 3,
+    creditCost: 4,
     preset: {
       mode: 'character',
       sceneId: 'scene-stadium-lights',
@@ -72,7 +72,7 @@ export const experienceScenes: readonly ExperienceScene[] = [
     icon: 'layers-outline',
     source: require('../../assets/onboarding/images/categories/background.png'),
     palette: ['#422516', '#E39A51'],
-    creditCost: 1,
+    creditCost: 2,
     preset: {
       mode: 'background',
       sceneId: 'scene-sunset-terrace',
@@ -93,7 +93,7 @@ export const experienceScenes: readonly ExperienceScene[] = [
     icon: 'color-palette-outline',
     source: require('../../assets/onboarding/images/categories/sanatsal.png'),
     palette: ['#007B96', '#ED297D'],
-    creditCost: 1,
+    creditCost: 2,
     preset: {
       mode: 'filter',
       sceneId: null,
@@ -135,7 +135,7 @@ export const experienceScenes: readonly ExperienceScene[] = [
     icon: 'film-outline',
     source: require('../../assets/onboarding/images/categories/cinematic.png'),
     palette: ['#101923', '#6B431F'],
-    creditCost: 2,
+    creditCost: 3,
     preset: {
       mode: 'scene',
       sceneId: 'scene-city-glow',

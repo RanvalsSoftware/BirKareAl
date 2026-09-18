@@ -204,7 +204,7 @@ export default function ExploreScreen() {
                         : item.kind === 'filter' || item.slug === 'gender-change'
                           ? 'AI'
                           : item.creditCost
-                            ? `${item.creditCost} kredi`
+                            ? `+${item.creditCost} kredi`
                             : 'Ücretsiz'
                     }
                     onPress={() => open(item)}

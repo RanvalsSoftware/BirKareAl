@@ -71,7 +71,8 @@ test('HTTP trends validate quote, snapshot choice, replay safely, preview and re
     config: {
       DISABLE_ALL_GENERATION: false,
       AI_PROVIDER: 'fake',
-      OPENAI_IMAGE_MODEL: 'test',
+      OPENAI_IMAGE_MODEL: 'test-flare',
+      OPENAI_IMAGE_PREMIUM_MODEL: 'test-sunburst',
       QUEUE_DRIVER: 'memory',
     },
   } as unknown as ApiDependencies;
@@ -111,11 +112,31 @@ test('HTTP trends validate quote, snapshot choice, replay safely, preview and re
     });
     return {
       status: response.status,
-      body: (await response.json()) as { data: { generationId: string }; error: { code: string } },
+      body: (await response.json()) as {
+        data: {
+          generationId: string;
+          creditCost: number;
+          availableCredits: number;
+          canGenerate: boolean;
+        };
+        error: { code: string };
+      },
     };
   };
   try {
     assert.equal((await post('/quote', payload)).status, 200);
+    const hdQuote = await post('/quote', { ...payload, quality: 'HD' });
+    assert.equal(hdQuote.status, 200);
+    assert.equal(hdQuote.body.data.creditCost, 9);
+    assert.equal(hdQuote.body.data.canGenerate, true);
+    const fourHdQuote = await post('/quote', {
+      ...payload,
+      quality: 'HD',
+      numberOfImages: 4,
+    });
+    assert.equal(fourHdQuote.status, 200);
+    assert.equal(fourHdQuote.body.data.creditCost, 36);
+    assert.equal(fourHdQuote.body.data.canGenerate, false);
     const before = await repository.getWallet(user.id);
     for (const change of [
       { stylePresetId: catalogFixtures.styles.find((s) => s.slug === 'studio')!.id },
@@ -131,10 +152,11 @@ test('HTTP trends validate quote, snapshot choice, replay safely, preview and re
     assert.equal(started.status, 202);
     const id = started.body.data.generationId;
     const job = await repository.getGenerationById(id);
-    assert.equal(job?.recipe?.trendPreset, 'kpop_star');
-    assert.equal(job?.recipe?.filterIntensity, 80);
+    assert.equal(job?.recipe?.version === 1 ? job.recipe.trendPreset : undefined, 'kpop_star');
+    assert.equal(job?.recipe?.version === 1 ? job.recipe.filterIntensity : undefined, 80);
     assert.equal(job?.preserveClothes, false);
-    assert.deepEqual(job?.recipe?.selection, {
+    assert.equal(job?.model, 'test-flare');
+    assert.deepEqual(job?.recipe?.version === 1 ? job.recipe.selection : undefined, {
       sceneTemplateId: null,
       featuredPersonId: null,
       stylePresetId: style.id,
@@ -154,8 +176,10 @@ test('HTTP trends validate quote, snapshot choice, replay safely, preview and re
       'trend-test-preview',
     );
     assert.equal(preview.status, 202);
+    const previewRecipe = (await repository.getGenerationById(preview.body.data.generationId))
+      ?.recipe;
     assert.equal(
-      (await repository.getGenerationById(preview.body.data.generationId))?.recipe?.trendPreset,
+      previewRecipe?.version === 1 ? previewRecipe.trendPreset : undefined,
       'old_money_portrait',
     );
     const output = await repository.addGenerationOutput({
@@ -180,11 +204,17 @@ test('HTTP trends validate quote, snapshot choice, replay safely, preview and re
     assert.equal(revision.status, 202);
     const revised = await repository.getGenerationById(revision.body.data.generationId);
     assert.equal(revised?.sourceAssetId, source.id);
-    assert.equal(revised?.recipe?.trendPreset, 'kpop_star');
-    assert.equal(revised?.recipe?.selection?.stylePresetId, style.id);
+    assert.equal(
+      revised?.recipe?.version === 1 ? revised.recipe.trendPreset : undefined,
+      'kpop_star',
+    );
+    assert.equal(
+      revised?.recipe?.version === 1 ? revised.recipe.selection?.stylePresetId : undefined,
+      style.id,
+    );
     assert.equal(
       revised?.reservedCredits,
-      1,
+      3,
       'Mutable project characters must not add a surcharge to the original trend recipe',
     );
 
