@@ -200,6 +200,46 @@ test('HTTP trends validate quote, snapshot choice, replay safely, preview and re
       previewRecipe?.version === 1 ? previewRecipe.trendPreset : undefined,
       'old_money_portrait',
     );
+    const toolStarted = await post(
+      '',
+      {
+        ...payload,
+        trendPreset: undefined,
+        toolPreset: 'light',
+        preserveClothes: true,
+      },
+      'tool-test-start',
+    );
+    assert.equal(toolStarted.status, 202);
+    const toolId = toolStarted.body.data.generationId;
+    const toolGeneration = await repository.getGenerationById(toolId);
+    assert.equal(
+      toolGeneration?.recipe?.version === 1 ? toolGeneration.recipe.toolPreset : undefined,
+      'light',
+    );
+    assert.equal(toolGeneration?.sourceAssetId, source.id);
+    const toolOutput = await repository.addGenerationOutput({
+      generationId: toolId,
+      assetId: 'tool-generated-output',
+      variantIndex: 0,
+      selected: true,
+      watermarkApplied: false,
+      disclosureType: 'AI_GENERATED',
+    });
+    await repository.updateGeneration(toolId, { status: 'COMPLETED' });
+    const toolRevision = await post(
+      `/${toolId}/revisions`,
+      { sourceOutputId: toolOutput.id, instruction: 'Keep the exposure natural', quality: 'PREVIEW' },
+      'tool-test-revision',
+    );
+    assert.equal(toolRevision.status, 202);
+    const revisedTool = await repository.getGenerationById(toolRevision.body.data.generationId);
+    assert.equal(revisedTool?.sourceAssetId, source.id);
+    assert.equal(
+      revisedTool?.recipe?.version === 1 ? revisedTool.recipe.toolPreset : undefined,
+      'light',
+    );
+
     const output = await repository.addGenerationOutput({
       generationId: id,
       assetId: 'test-generated-output',
@@ -242,7 +282,7 @@ test('HTTP trends validate quote, snapshot choice, replay safely, preview and re
     assert.equal(invalid.status, 400);
     assert.equal(invalid.body.error.code, 'TREND_ORIGINAL_REQUIRED');
     assert.deepEqual(await repository.getWallet(user.id), priorInvalid);
-    assert.equal(queued.length, 3);
+    assert.equal(queued.length, 5);
   } finally {
     server.closeAllConnections();
     await new Promise<void>((resolve, reject) =>
