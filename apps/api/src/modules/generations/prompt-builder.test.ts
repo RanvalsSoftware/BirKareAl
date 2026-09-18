@@ -386,7 +386,7 @@ test('human photographic scenes inherit source-fidelity and anti-CGI rules', () 
   assert.match(prompt, /SOURCE PHOTOGRAPH AUTHORITY/);
   assert.match(prompt, /PHOTOGRAPHIC REALISM TARGET/);
   assert.match(prompt, /not as AI artwork, CGI, 3D rendering/);
-  assert.match(prompt, /Do not invent, extend or reconstruct unseen body regions/);
+  assert.match(prompt, /do not invent, extend or reconstruct unseen body regions/i);
   assert.match(prompt, /real-looking public waterfront promenade/);
   assert.match(prompt, /Avoid exaggerated neon, excessive bloom, artificial HDR/);
 
