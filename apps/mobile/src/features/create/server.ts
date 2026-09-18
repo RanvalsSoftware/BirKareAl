@@ -26,6 +26,7 @@ export type ServerProjectMode =
   | 'NAIL_PREVIEW';
 type ServerGenerationQuality = 'PREVIEW' | 'STANDARD' | 'HD';
 type ServerComposition = 'SELFIE' | 'CLOSE' | 'MEDIUM' | 'WIDE';
+type ServerToolPreset = 'background' | 'light' | 'portrait' | 'extend';
 
 type ServerAsset = {
   id: string;
@@ -59,6 +60,7 @@ export type CreateFlowServerSelection = {
   beauty?: BeautySettings;
   transformation?: GenderTransformation;
   trendPreset?: TrendPresetId;
+  toolPreset?: ServerToolPreset;
   title: string;
   mode: ServerProjectMode;
   quality: ServerGenerationQuality;
@@ -255,6 +257,18 @@ const TITLE_BY_MODE: Record<CreateMode, string> = {
   background: 'Arka plan değiştir',
 };
 
+function serverToolPreset(value: string | null | undefined): ServerToolPreset | undefined {
+  switch (value) {
+    case 'background':
+    case 'light':
+    case 'portrait':
+    case 'extend':
+      return value;
+    default:
+      return undefined;
+  }
+}
+
 function flowError(code: CreateFlowServerErrorCode, message: string): never {
   throw new CreateFlowServerError(code, message);
 }
@@ -374,6 +388,7 @@ export function resolveCreateFlow(flow: CreateFlow): CreateFlowServerSelection {
   }
 
   const customInstruction = flow.customInstruction.trim();
+  const toolPreset = serverToolPreset(flow.toolId);
   return {
     title: flow.beauty
       ? 'Güzellik Stüdyosu'
@@ -396,6 +411,7 @@ export function resolveCreateFlow(flow: CreateFlow): CreateFlowServerSelection {
     ...(flow.beauty ? { beauty: flow.beauty } : {}),
     ...(flow.transformation ? { transformation: flow.transformation } : {}),
     ...(flow.trendPreset ? { trendPreset: flow.trendPreset } : {}),
+    ...(toolPreset ? { toolPreset } : {}),
     ...(customInstruction ? { customInstruction } : {}),
   };
 }
@@ -411,6 +427,7 @@ function quotePayload(selection: CreateFlowServerSelection) {
     ...(selection.beauty ? { beauty: selection.beauty } : {}),
     ...(selection.transformation ? { transformation: selection.transformation } : {}),
     ...(selection.trendPreset ? { trendPreset: selection.trendPreset } : {}),
+    ...(selection.toolPreset ? { toolPreset: selection.toolPreset } : {}),
   };
 }
 
@@ -854,6 +871,7 @@ export async function startCreateGeneration(
         ...(selection.beauty ? { beauty: selection.beauty } : {}),
         ...(selection.transformation ? { transformation: selection.transformation } : {}),
         ...(selection.trendPreset ? { trendPreset: selection.trendPreset } : {}),
+        ...(selection.toolPreset ? { toolPreset: selection.toolPreset } : {}),
         ...(selection.customInstruction ? { customInstruction: selection.customInstruction } : {}),
         // The review step presents the AI-content disclosure before this helper is called.
         disclosureAccepted: true,
