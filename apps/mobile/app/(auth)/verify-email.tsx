@@ -136,7 +136,13 @@ export default function VerifyEmailScreen() {
 
     successTimer.current = setTimeout(
       () => {
-        router.replace('/(auth)/login');
+        router.replace({
+          pathname: '/(auth)/login',
+          params: {
+            verified: '1',
+            ...(email ? { email } : {}),
+          },
+        } as never);
       },
       reducedMotion ? 500 : 1550,
     );
