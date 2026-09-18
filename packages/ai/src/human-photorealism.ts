@@ -28,7 +28,7 @@ Identity, anatomy and source-supported framing always take priority over a catal
 
 export const HUMAN_PHOTOREALISM_CORE = `PHOTOGRAPHIC REALISM TARGET
 
-Make the finished result explicitly photorealistic. It must feel like a genuine photograph captured in a real moment with a real camera and physically plausible light, not like AI artwork, CGI, 3D rendering, a game cinematic or a synthetic digital composite.
+Make the finished result explicitly photorealistic. It must feel like a genuine photograph captured in a real moment with a real camera and physically plausible light, not as AI artwork, CGI, 3D rendering, a game cinematic or a synthetic digital composite.
 
 Favor grounded, authentic, naturally imperfect photography over over-staged perfection. If the selected scene, style or preset explicitly calls for editorial or campaign polish, keep that polish restrained and physically photographed; otherwise avoid glossy campaign perfection, dramatic movie-poster grading and artificial spectacle.
 
