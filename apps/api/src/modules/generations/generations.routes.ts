@@ -418,16 +418,21 @@ type ModelLaneInput = {
   hasBeauty?: boolean;
   hasTransformation?: boolean;
   hasFeaturedPerson?: boolean;
+  hasTrend?: boolean;
 };
 
 /**
  * Model choice is derived only from the server-validated request snapshot.
- * Preview always stays on Flare; identity-sensitive final edits use Sunburst.
+ * Preview always stays on Flare. Standard/HD full-scene and trend transforms
+ * use the precision lane because they rebuild substantial surroundings while
+ * preserving a real person's identity and source-supported anatomy.
  */
 function usesPremiumImageModel(input: ModelLaneInput): boolean {
   if (input.quality === 'PREVIEW') return false;
   return (
+    input.mode === 'FULL_SCENE' ||
     input.mode === 'PRO_PORTRAIT' ||
+    Boolean(input.hasTrend) ||
     Boolean(input.hasBeauty) ||
     Boolean(input.hasTransformation) ||
     Boolean(input.hasFeaturedPerson)
@@ -482,6 +487,7 @@ async function reserveCreateAndEnqueue(
           hasBeauty: Boolean(input.recipe.beauty),
           hasTransformation: Boolean(input.recipe.transformation),
           hasFeaturedPerson: Boolean(pricedSelection!.featuredPersonId),
+          hasTrend: Boolean(input.recipe.trendPreset),
         });
   const model = configuredImageModel(deps, premiumModel);
   const quote =
@@ -609,6 +615,7 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
         hasBeauty: Boolean(req.body.beauty),
         hasTransformation: Boolean(req.body.transformation),
         hasFeaturedPerson: Boolean(req.body.featuredPersonId),
+        hasTrend: Boolean(req.body.trendPreset),
       });
       const quote = calculateCreditQuote({
         mode: req.body.mode,
