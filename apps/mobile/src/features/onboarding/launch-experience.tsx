@@ -139,9 +139,7 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
   const arcProgress = useSharedValue(0);
   const bloomScale = useSharedValue(0.76);
   const bloomOpacity = useSharedValue(0.13);
-  // Gold light opens horizontally from the center before the brand mark lifts.
-  const flareProgress = useSharedValue(0);
-  // A restrained gold finish fades in only after the center-line/ring motion
+  // A restrained gold finish fades in only after the circular reveal
   // has completed, matching the warmer final frame without losing the black start.
   const goldFinish = useSharedValue(0);
 
@@ -160,16 +158,11 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
       wordOpacity.set(1);
       bloomScale.set(1);
       bloomOpacity.set(0.17);
-      flareProgress.set(1);
       goldFinish.set(1);
     } else {
-      // First: a perfectly straight gold line opens from the exact center.
-      flareProgress.set(
-        withDelay(90, withTiming(1, { duration: 760, easing: Easing.out(Easing.cubic) })),
-      );
-      // Then: the circular trace grows cleanly from the same center point.
+      // The circular trace grows cleanly from the exact center.
       arcProgress.set(
-        withDelay(360, withTiming(1, { duration: 820, easing: Easing.out(Easing.cubic) })),
+        withDelay(140, withTiming(1, { duration: 900, easing: Easing.out(Easing.cubic) })),
       );
       markOpacity.set(withTiming(1, { duration: 220 }));
       markScale.set(withSpring(1, motion.spring));
@@ -203,14 +196,12 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
       cancelAnimation(arcProgress);
       cancelAnimation(bloomScale);
       cancelAnimation(bloomOpacity);
-      cancelAnimation(flareProgress);
       cancelAnimation(goldFinish);
     };
   }, [
     arcProgress,
     bloomOpacity,
     bloomScale,
-    flareProgress,
     goldFinish,
     markOpacity,
     markScale,
@@ -222,17 +213,6 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
   const arcStyle = useAnimatedStyle(() => ({
     opacity: interpolate(arcProgress.get(), [0, 0.14, 1], [0, 0.42, 1]),
     transform: [{ scale: interpolate(arcProgress.get(), [0, 1], [0.06, 1]) }],
-  }));
-  const flareStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(flareProgress.get(), [0, 0.12, 0.72, 1], [0, 1, 0.82, 0.18]),
-    transform: [{ scaleX: interpolate(flareProgress.get(), [0, 1], [0.02, 1]) }],
-  }));
-  const flareGlowStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(flareProgress.get(), [0, 0.16, 0.76, 1], [0, 0.42, 0.18, 0]),
-    transform: [
-      { scaleX: interpolate(flareProgress.get(), [0, 1], [0.01, 1]) },
-      { scaleY: interpolate(flareProgress.get(), [0, 0.55, 1], [0.35, 1.1, 0.72]) },
-    ],
   }));
   const goldFinishStyle = useAnimatedStyle(() => ({
     opacity: interpolate(goldFinish.get(), [0, 1], [0, 1]),
@@ -279,8 +259,6 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
           pointerEvents="none"
           style={styles.logoTopShade}
         />
-        <Animated.View pointerEvents="none" style={[styles.logoCenterFlareGlow, flareGlowStyle]} />
-        <Animated.View pointerEvents="none" style={[styles.logoCenterFlare, flareStyle]} />
         <View pointerEvents="none" style={styles.logoHeroLayer}>
           <Animated.View pointerEvents="none" style={[styles.logoBloom, bloomStyle]} />
           <Animated.View pointerEvents="none" style={[styles.logoArc, arcStyle]} />
@@ -1623,33 +1601,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: '50%',
     width: 360,
-  },
-  logoCenterFlare: {
-    backgroundColor: '#FFD54A',
-    borderRadius: 999,
-    height: 1.5,
-    left: '50%',
-    marginLeft: -180,
-    position: 'absolute',
-    top: '50%',
-    width: 360,
-    zIndex: 3,
-  },
-  logoCenterFlareGlow: {
-    backgroundColor: 'rgba(255,196,0,0.22)',
-    borderRadius: 999,
-    height: 14,
-    left: '50%',
-    marginLeft: -190,
-    marginTop: -6,
-    position: 'absolute',
-    shadowColor: '#FFC400',
-    shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.58,
-    shadowRadius: 18,
-    top: '50%',
-    width: 380,
-    zIndex: 2,
   },
   logoArc: {
     borderColor: 'rgba(255,196,0,0.82)',
