@@ -1,7 +1,9 @@
+import { Ionicons } from '@expo/vector-icons';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { useEffect, useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform } from 'react-native';
 import { useCopy } from '@/features/settings/language-store';
+import { SocialButton } from './auth-ui';
 
 type AppleSignInButtonProps = {
   disabled?: boolean;
@@ -107,24 +109,15 @@ export function AppleSignInButton({
   };
 
   return (
-    <View
-      pointerEvents={disabled || working ? 'none' : 'auto'}
-      style={[styles.container, disabled ? styles.disabled : null]}
+    <SocialButton
+      disabled={disabled || working}
+      icon={<Ionicons name="logo-apple" color="#111111" size={22} />}
+      loading={working}
+      loadingLabel={copy('Apple açılıyor…', 'Opening Apple…')}
+      onPress={signIn}
+      tone="light"
     >
-      <AppleAuthentication.AppleAuthenticationButton
-        accessibilityLabel={copy('Apple ile devam et', 'Continue with Apple')}
-        buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
-        buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
-        cornerRadius={16}
-        onPress={signIn}
-        style={styles.button}
-      />
-    </View>
+      {copy('Apple ile giriş yap', 'Sign in with Apple')}
+    </SocialButton>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { marginTop: 10 },
-  button: { height: 54, width: '100%' },
-  disabled: { opacity: 0.55 },
-});
