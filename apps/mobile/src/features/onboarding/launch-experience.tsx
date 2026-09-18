@@ -1582,7 +1582,7 @@ const styles = StyleSheet.create({
   logoWordMask: {
     height: 70,
     overflow: 'hidden',
-    transform: [{ translateY: 44 }],
+    transform: [{ translateY: 58 }],
   },
   logoWordLine: {
     alignItems: 'baseline',
@@ -1614,7 +1614,7 @@ const styles = StyleSheet.create({
   },
   logoCaption: {
     marginTop: 11,
-    transform: [{ translateY: 44 }],
+    transform: [{ translateY: 58 }],
   },
   logoCaptionText: {
     color: '#ECE0C4',
