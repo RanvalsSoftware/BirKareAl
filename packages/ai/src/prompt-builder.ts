@@ -1,8 +1,9 @@
 import type { CatalogSnapshot, GenerationRecord, ProjectRecord } from '@birkare/database';
-export const GENERATION_PROMPT_VERSION = '2026-09-filter-fidelity-v6';
+export const GENERATION_PROMPT_VERSION = '2026-09-human-photorealism-v7';
 import { buildBeautyPrompt, buildGenderTransformationPrompt } from './beauty-prompt.js';
 import { buildTrendPrompt } from './trend-prompt.js';
 import { buildStudioPrompt } from './studio-prompt.js';
+import { HUMAN_PHOTOREALISM_CORE, HUMAN_SOURCE_FIDELITY_CORE } from './human-photorealism.js';
 import {
   characterPrompt,
   compositionPrompt,
@@ -110,6 +111,8 @@ export function buildGenerationPrompt(input: {
       ? 'This is specifically a filter transformation. The finished image must visibly and unambiguously show the selected treatment at the requested strength while retaining the source setting, subject count, pose and composition. Do not substitute a generic portrait, unrelated scene or merely unchanged copy of the input.'
       : 'Apply this selected treatment coherently to the completed scene. It must remain subordinate to identity, anatomy and the explicitly selected environment, but it may not be silently omitted or replaced by a generic look.',
     'PRIORITY: safety, identity and anatomy are immutable constraints; within those constraints, faithfully execute the selected edit, scene and composition. Catalogue descriptions never replace the source identity.',
+    HUMAN_SOURCE_FIDELITY_CORE,
+    ...(!illustrativeStyle ? [HUMAN_PHOTOREALISM_CORE] : []),
     'PRIMARY USER',
     identityRule,
     'Do not excessively beautify, reshape, slim, enlarge or age the primary user.',
