@@ -74,7 +74,7 @@ export function buildBeautyPrompt(
       ? `MAKEUP (one preset only): ${beautyStrength(beauty.makeup.intensity, { nude: 85, 'soft-glam': 90, 'evening-glam': 100 }[beauty.makeup.preset])}\n${MAKEUP[beauty.makeup.preset]}`
       : 'No makeup change requested: preserve the original makeup exactly.';
   return [
-    'Perform a localized premium beauty retouch of the ORIGINAL photo. Apply all selected layers together in one edit, not successive edits of generated images.',
+    'Perform one localized photorealistic beauty retouch of the ORIGINAL photo. CHANGE ONLY the explicitly selected beauty layers; KEEP EVERYTHING ELSE THE SAME. Apply all selected layers together in one edit, not successive edits of generated images.',
     ...photoRules(aspectRatio),
     'PRIORITY: identity, anatomy and edit scope always override cosmetic strength or user preferences. Preserve facial geometry and adult age appearance; no skin whitening, new face, eye enlargement, lip inflation, nose reshaping or body slimming.',
     beauty.preserveSkinTexture
@@ -83,7 +83,7 @@ export function buildBeautyPrompt(
     beauty.preserveFrecklesAndMoles
       ? 'MARKS LOCK: preserve every existing freckle, mole, birthmark and identifying mark in its original position.'
       : 'Freckle preservation is relaxed only for subtle tonal blending; retain moles, birthmarks, scars and identifying marks. Never interpret this as permission to diagnose or remove a medical lesion.',
-    'SELECTED ADJUSTMENTS ONLY. Omitted or zero-strength layers must not be applied.',
+    'SELECTED ADJUSTMENTS ONLY. Omitted or zero-strength layers must not be applied. Unselected facial regions, hair, clothing, accessories, background, pose, framing and camera perspective remain unchanged.',
     ...effects,
     makeup,
     instruction
@@ -101,7 +101,7 @@ export function buildGenderTransformationPrompt(
   instruction = '',
 ): string {
   return [
-    "Create a clearly creative, consented gender-presentation variation of the supplied adult portrait. This is an artistic appearance edit, not an inference or claim about the person's actual gender identity.",
+    "Create one photorealistic, consented gender-presentation variation of the supplied adult portrait. CHANGE ONLY presentation cues explicitly allowed below; KEEP identity, body shape, pose, framing and environment the same. This is an artistic appearance edit, not an inference or claim about the person's actual gender identity.",
     ...photoRules(aspectRatio, true),
     `The user explicitly selected a ${value.presentation} presentation. Apply that appearance subtly but visibly through grooming, facial-hair styling and tasteful presentation cues; retain recognizable facial structure, natural skin tone, adult age, body shape and identity. Do not turn the person into a different catalog model.`,
     'Preserve the original outfit, background, pose and expression. No sexualization, nudity, changed breast or body size, stereotype costume, younger/child appearance or extra people. The provided catalog thumbnail is not an image input and must not replace the source face.',
