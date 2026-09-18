@@ -145,7 +145,10 @@ describe('transactional email handoff', () => {
     await act(async () => {
       vi.advanceTimersByTime(1600);
     });
-    expect(mocks.replace).toHaveBeenCalledWith('/(auth)/login');
+    expect(mocks.replace).toHaveBeenCalledWith({
+      pathname: '/(auth)/login',
+      params: { verified: '1', email: 'member@example.test' },
+    });
   });
 
   it('keeps verification recovery available and labels resend as unconfirmed', async () => {
