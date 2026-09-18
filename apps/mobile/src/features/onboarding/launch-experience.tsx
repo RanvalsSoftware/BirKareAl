@@ -139,6 +139,9 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
   const arcProgress = useSharedValue(0.56);
   const bloomScale = useSharedValue(0.76);
   const bloomOpacity = useSharedValue(0.13);
+  // The brand mark starts visually centered, then lifts into its final hero
+  // position before the wordmark appears underneath.
+  const heroLift = useSharedValue(0);
 
   useEffect(() => {
     onFinishedRef.current = onFinished;
@@ -154,14 +157,18 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
       wordReveal.set(1);
       wordOpacity.set(1);
       bloomScale.set(1);
-      bloomOpacity.set(0.35);
+      bloomOpacity.set(0.17);
+      heroLift.set(1);
     } else {
       arcProgress.set(withTiming(1, { duration: 660, easing: Easing.out(Easing.cubic) }));
       markOpacity.set(withTiming(1, { duration: 220 }));
       markScale.set(withSpring(1, motion.spring));
-      wordOpacity.set(withDelay(610, withTiming(1, { duration: 170 })));
+      heroLift.set(
+        withDelay(420, withTiming(1, { duration: 820, easing: Easing.out(Easing.cubic) })),
+      );
+      wordOpacity.set(withDelay(1_060, withTiming(1, { duration: 180 })));
       wordReveal.set(
-        withDelay(630, withTiming(1, { duration: 620, easing: Easing.out(Easing.cubic) })),
+        withDelay(1_080, withTiming(1, { duration: 620, easing: Easing.out(Easing.cubic) })),
       );
       bloomOpacity.set(withDelay(1_180, withTiming(0.17, { duration: 360 })));
       bloomScale.set(
@@ -184,11 +191,13 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
       cancelAnimation(arcProgress);
       cancelAnimation(bloomScale);
       cancelAnimation(bloomOpacity);
+      cancelAnimation(heroLift);
     };
   }, [
     arcProgress,
     bloomOpacity,
     bloomScale,
+    heroLift,
     markOpacity,
     markScale,
     reducedMotion,
@@ -202,6 +211,9 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
       { rotate: String(interpolate(arcProgress.get(), [0, 1], [-120, 10])) + 'deg' },
       { scale: 0.78 + arcProgress.get() * 0.22 },
     ],
+  }));
+  const heroStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: interpolate(heroLift.get(), [0, 1], [96, 0]) }],
   }));
   const markStyle = useAnimatedStyle(() => ({
     opacity: markOpacity.get(),
@@ -230,11 +242,19 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
           start={{ x: 0.15, y: 0.05 }}
           style={styles.logoWarmVeil}
         />
-        <Animated.View pointerEvents="none" style={[styles.logoBloom, bloomStyle]} />
-        <Animated.View pointerEvents="none" style={[styles.logoHorizonFlare, bloomStyle]} />
-        <Animated.View pointerEvents="none" style={[styles.logoArc, arcStyle]} />
-        <Animated.View style={[styles.logoMarkSlot, markStyle]}>
-          <Image source={onboardingImages.brandMark} style={styles.logoMarkImage} />
+        <LinearGradient
+          colors={['rgba(0,0,0,0.98)', 'rgba(0,0,0,0.72)', 'rgba(0,0,0,0)']}
+          locations={[0, 0.48, 1]}
+          pointerEvents="none"
+          style={styles.logoTopShade}
+        />
+        <Animated.View pointerEvents="none" style={[styles.logoHeroLayer, heroStyle]}>
+          <Animated.View pointerEvents="none" style={[styles.logoBloom, bloomStyle]} />
+          <Animated.View pointerEvents="none" style={[styles.logoHorizonFlare, bloomStyle]} />
+          <Animated.View pointerEvents="none" style={[styles.logoArc, arcStyle]} />
+          <Animated.View style={[styles.logoMarkSlot, markStyle]}>
+            <Image source={onboardingImages.brandMark} style={styles.logoMarkImage} />
+          </Animated.View>
         </Animated.View>
         <View pointerEvents="none" style={styles.logoCopyBlock}>
           <Animated.View style={[styles.logoWordMask, wordMaskStyle]}>
@@ -244,7 +264,7 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
             </View>
           </Animated.View>
           <Animated.View
-            entering={reducedMotion ? undefined : FadeInDown.delay(1_100).duration(520)}
+            entering={reducedMotion ? undefined : FadeInDown.delay(1_520).duration(520)}
             style={styles.logoCaption}
           >
             <Text style={styles.logoCaptionText}>Hayalindeki kareye gir.</Text>
@@ -1543,6 +1563,20 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     opacity: 0.48,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  logoTopShade: {
+    height: '54%',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  logoHeroLayer: {
+    bottom: 0,
+    left: 0,
     position: 'absolute',
     right: 0,
     top: 0,
