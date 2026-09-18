@@ -52,7 +52,7 @@ const initialFlow: CreateFlow = {
   styleId: null,
   composition: 'Orta',
   aspectRatio: '4:5',
-  quality: 'Önizleme',
+  quality: 'Standart',
   numberOfImages: 1,
   filterIntensity: 60,
   preserveFace: true,
