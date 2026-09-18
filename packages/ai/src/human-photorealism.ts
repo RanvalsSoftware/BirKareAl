@@ -1,14 +1,14 @@
 /**
- * Shared preservation rules for human-photo transformations.
+ * Shared preservation rules for photographic transformations.
  *
- * Keep these separate from scene/style directions so every photographic human
+ * Keep these separate from scene/style directions so every photographic
  * workflow starts from the same source-fidelity contract.
  */
 export const HUMAN_SOURCE_FIDELITY_CORE = `SOURCE PHOTOGRAPH AUTHORITY
 
-INPUT IMAGE 1 is the authoritative photographic reference for the primary subject.
+INPUT IMAGE 1 is the authoritative photographic reference for the actual source subject.
 
-Preserve the source-supported:
+If one or more people are visible, preserve the source-supported:
 - recognizable identity and facial geometry
 - natural skin tone and individual facial details
 - body proportions and visible anatomy
@@ -16,7 +16,9 @@ Preserve the source-supported:
 - camera perspective and facial perspective
 - believable clothing fit and fabric behavior
 
-Do not invent, extend or reconstruct unseen body regions merely to satisfy a target pose, shot type or composition.
+If no person is visible, preserve the actual object's or environment's identity, geometry, proportions, materials, texture, perspective and physically plausible structure. Do not invent a human subject.
+
+For visible people, do not invent, extend or reconstruct unseen body regions merely to satisfy a target pose, shot type or composition.
 If the requested scene or art direction asks for a wider, seated, walking, over-the-shoulder or full-body pose that the source does not reliably support, adapt the target to the closest natural framing supported by the source instead.
 
 Never force a new arm position, hand pose, leg pose, seated posture, walking step or body turn when doing so would require guessing major unseen anatomy.
@@ -28,13 +30,15 @@ export const HUMAN_PHOTOREALISM_CORE = `PHOTOGRAPHIC REALISM TARGET
 
 The final result must read as a genuine photograph captured with a real camera and physically plausible lighting, not as AI artwork, CGI, 3D rendering, a game cinematic or a synthetic digital composite.
 
-Retain natural photographic imperfections and fine detail where visible:
+When people are visible, retain natural photographic imperfections and fine detail where present:
 - skin pores and subtle tonal variation
 - individual and flyaway hair strands
 - realistic fabric wrinkles, seams and material response
 - natural facial asymmetry
 - plausible lens perspective and depth falloff
-- physically consistent contact shadows, reflected light and surface reflections
+- physically consistent contact shadows and reflected light
+
+For objects and environments, preserve believable material texture, small real-world irregularities, surface response, perspective, contact shadows and reflections instead of making surfaces unnaturally perfect.
 
 Avoid:
 - plastic or waxy skin
@@ -45,6 +49,6 @@ Avoid:
 - impossible mirror-like reflections
 - overly clean cutout edges
 - synthetic background bokeh that does not correspond to real light sources
-- over-smoothed architecture, water, pavement or fabric
+- over-smoothed architecture, water, pavement, fabric or object surfaces
 
 Prefer restrained, imperfect real-world lighting over glossy advertising-render lighting unless the selected workflow explicitly requests a stylized illustration.`;
