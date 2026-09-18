@@ -275,11 +275,11 @@ export function compositionPrompt(composition: LegacyGenerationRecipe['compositi
     CLOSE_SELFIE:
       'Prefer a close handheld smartphone selfie composition when the source framing supports it. Preserve natural, undistorted facial perspective and do not invent a new extended arm or phone when neither is supported by the source.',
     PORTRAIT:
-      'Prefer a chest-up portrait with comfortable headroom when supported by the source. If the source is tighter, preserve the closest natural source-supported portrait framing rather than inventing unseen torso anatomy.',
+      'Prefer a chest-up portrait with comfortable headroom within the requested aspect ratio when supported by the source. If the source is tighter, preserve the closest natural source-supported portrait framing rather than inventing unseen torso anatomy.',
     HALF_BODY:
-      'Use a waist-up composition only when the source provides enough visible body information to preserve anatomy faithfully. Otherwise use the closest natural source-supported framing and adapt the scene around it.',
+      'Use a waist-up composition within the requested aspect ratio only when the source provides enough visible body information to preserve anatomy faithfully. Otherwise use the closest natural source-supported framing and adapt the scene around it.',
     FULL_BODY:
-      'Use a full-body composition only when the source contains enough visible body information to reconstruct it faithfully. Otherwise use the closest natural source-supported framing; never invent major unseen body regions merely to satisfy full-body framing.',
+      'Use a full-body composition within the requested aspect ratio only when the source contains enough visible body information to reconstruct it faithfully. Otherwise use the closest natural source-supported framing; never invent major unseen body regions merely to satisfy full-body framing.',
   }[composition.shotType];
   const angle = {
     EYE_LEVEL: 'Use an eye-level camera angle.',
