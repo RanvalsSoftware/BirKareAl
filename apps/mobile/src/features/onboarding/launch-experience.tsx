@@ -139,6 +139,8 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
   const arcProgress = useSharedValue(0.56);
   const bloomScale = useSharedValue(0.76);
   const bloomOpacity = useSharedValue(0.13);
+  // Gold light opens horizontally from the center before the brand mark lifts.
+  const flareProgress = useSharedValue(0);
   // The brand mark starts visually centered, then lifts into its final hero
   // position before the wordmark appears underneath.
   const heroLift = useSharedValue(0);
@@ -158,17 +160,21 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
       wordOpacity.set(1);
       bloomScale.set(1);
       bloomOpacity.set(0.17);
+      flareProgress.set(1);
       heroLift.set(1);
     } else {
-      arcProgress.set(withTiming(1, { duration: 660, easing: Easing.out(Easing.cubic) }));
+      flareProgress.set(
+        withDelay(120, withTiming(1, { duration: 980, easing: Easing.out(Easing.cubic) })),
+      );
+      arcProgress.set(withDelay(300, withTiming(1, { duration: 760, easing: Easing.out(Easing.cubic) })));
       markOpacity.set(withTiming(1, { duration: 220 }));
       markScale.set(withSpring(1, motion.spring));
       heroLift.set(
-        withDelay(420, withTiming(1, { duration: 820, easing: Easing.out(Easing.cubic) })),
+        withDelay(760, withTiming(1, { duration: 760, easing: Easing.out(Easing.cubic) })),
       );
-      wordOpacity.set(withDelay(1_060, withTiming(1, { duration: 180 })));
+      wordOpacity.set(withDelay(1_360, withTiming(1, { duration: 190 })));
       wordReveal.set(
-        withDelay(1_080, withTiming(1, { duration: 620, easing: Easing.out(Easing.cubic) })),
+        withDelay(1_380, withTiming(1, { duration: 620, easing: Easing.out(Easing.cubic) })),
       );
       bloomOpacity.set(withDelay(1_180, withTiming(0.17, { duration: 360 })));
       bloomScale.set(
@@ -191,12 +197,14 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
       cancelAnimation(arcProgress);
       cancelAnimation(bloomScale);
       cancelAnimation(bloomOpacity);
+      cancelAnimation(flareProgress);
       cancelAnimation(heroLift);
     };
   }, [
     arcProgress,
     bloomOpacity,
     bloomScale,
+    flareProgress,
     heroLift,
     markOpacity,
     markScale,
@@ -210,6 +218,17 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
     transform: [
       { rotate: String(interpolate(arcProgress.get(), [0, 1], [-120, 10])) + 'deg' },
       { scale: 0.78 + arcProgress.get() * 0.22 },
+    ],
+  }));
+  const flareStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(flareProgress.get(), [0, 0.12, 0.72, 1], [0, 1, 0.82, 0.18]),
+    transform: [{ scaleX: interpolate(flareProgress.get(), [0, 1], [0.02, 1]) }],
+  }));
+  const flareGlowStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(flareProgress.get(), [0, 0.18, 0.72, 1], [0, 0.46, 0.22, 0]),
+    transform: [
+      { scaleX: interpolate(flareProgress.get(), [0, 1], [0.02, 1]) },
+      { scaleY: interpolate(flareProgress.get(), [0, 0.55, 1], [0.4, 1.25, 0.8]) },
     ],
   }));
   const heroStyle = useAnimatedStyle(() => ({
@@ -248,9 +267,10 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
           pointerEvents="none"
           style={styles.logoTopShade}
         />
+        <Animated.View pointerEvents="none" style={[styles.logoCenterFlareGlow, flareGlowStyle]} />
+        <Animated.View pointerEvents="none" style={[styles.logoCenterFlare, flareStyle]} />
         <Animated.View pointerEvents="none" style={[styles.logoHeroLayer, heroStyle]}>
           <Animated.View pointerEvents="none" style={[styles.logoBloom, bloomStyle]} />
-          <Animated.View pointerEvents="none" style={[styles.logoHorizonFlare, bloomStyle]} />
           <Animated.View pointerEvents="none" style={[styles.logoArc, arcStyle]} />
           <Animated.View style={[styles.logoMarkSlot, markStyle]}>
             <Image source={onboardingImages.brandMark} style={styles.logoMarkImage} />
@@ -264,7 +284,7 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
             </View>
           </Animated.View>
           <Animated.View
-            entering={reducedMotion ? undefined : FadeInDown.delay(1_520).duration(520)}
+            entering={reducedMotion ? undefined : FadeInDown.delay(1_760).duration(520)}
             style={styles.logoCaption}
           >
             <Text style={styles.logoCaptionText}>Hayalindeki kareye gir.</Text>
@@ -1591,15 +1611,32 @@ const styles = StyleSheet.create({
     top: '25%',
     width: 360,
   },
-  logoHorizonFlare: {
-    backgroundColor: 'rgba(255,207,65,0.38)',
+  logoCenterFlare: {
+    backgroundColor: '#FFD54A',
     borderRadius: 999,
-    height: 1,
+    height: 1.5,
     left: '50%',
-    marginLeft: -104,
+    marginLeft: -180,
     position: 'absolute',
-    top: '57%',
-    width: 208,
+    top: '50%',
+    width: 360,
+    zIndex: 3,
+  },
+  logoCenterFlareGlow: {
+    backgroundColor: 'rgba(255,196,0,0.22)',
+    borderRadius: 999,
+    height: 14,
+    left: '50%',
+    marginLeft: -190,
+    marginTop: -6,
+    position: 'absolute',
+    shadowColor: '#FFC400',
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 0.58,
+    shadowRadius: 18,
+    top: '50%',
+    width: 380,
+    zIndex: 2,
   },
   logoArc: {
     borderColor: 'rgba(255,196,0,0.88)',
