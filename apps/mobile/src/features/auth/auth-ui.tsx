@@ -481,6 +481,7 @@ export function SocialButton({
   tone = 'dark',
   disabled = false,
   loading = false,
+  loadingLabel,
 }: {
   icon: ReactNode;
   children: string;
@@ -488,6 +489,7 @@ export function SocialButton({
   tone?: 'dark' | 'light';
   disabled?: boolean;
   loading?: boolean;
+  loadingLabel?: string;
 }) {
   const copy = useCopy();
   return (
@@ -506,11 +508,11 @@ export function SocialButton({
     >
       <View style={styles.socialIcon}>{icon}</View>
       <Text style={[styles.socialText, tone === 'light' && styles.socialTextLight]}>
-        {loading ? copy('Google açılıyor…', 'Opening Google…') : children}
+        {loading ? loadingLabel ?? copy('Açılıyor…', 'Opening…') : children}
       </Text>
       {!loading ? (
         <Ionicons
-          color={tone === 'light' ? '#595959' : authColors.muted}
+          color={tone === 'light' ? '#5B5B5B' : authColors.muted}
           name="chevron-forward"
           size={16}
           style={styles.socialChevron}
@@ -844,19 +846,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.045)',
     borderColor: authColors.border,
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 10,
-    minHeight: 52,
-    paddingHorizontal: 16,
+    marginTop: 12,
+    minHeight: 56,
+    paddingHorizontal: 52,
   },
-  socialButtonLight: { backgroundColor: '#F7F7F7', borderColor: '#F7F7F7' },
-  socialIcon: { left: 16, position: 'absolute' },
-  socialText: { color: authColors.text, fontSize: 14, fontWeight: '800' },
-  socialTextLight: { color: '#101010' },
-  socialChevron: { position: 'absolute', right: 14 },
+  socialButtonLight: {
+    backgroundColor: '#FFFFFF',
+    borderColor: 'rgba(255,255,255,0.92)',
+    shadowColor: '#000000',
+    shadowOffset: { height: 4, width: 0 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+  },
+  socialIcon: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    left: 18,
+    position: 'absolute',
+    width: 24,
+  },
+  socialText: {
+    color: authColors.text,
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: -0.18,
+    lineHeight: 21,
+    textAlign: 'center',
+  },
+  socialTextLight: { color: '#111111' },
+  socialChevron: { position: 'absolute', right: 16 },
   divider: { alignItems: 'center', flexDirection: 'row', gap: 10, marginTop: 19 },
   line: { backgroundColor: authColors.border, flex: 1, height: 1 },
   dividerText: { color: authColors.muted, fontSize: 11, fontWeight: '600' },
