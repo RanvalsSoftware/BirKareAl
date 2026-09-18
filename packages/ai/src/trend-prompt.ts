@@ -67,13 +67,13 @@ const DIRECTIONS: Record<TrendPreset, TrendDirection> = {
   },
   red_carpet_glam: {
     scene:
-      'A fictional red-carpet entrance at night, with receding velvet barriers, distant photographers on both sides and warm architectural lights. Keep the venue original and free of sponsor walls, event logos and branded trophies.',
+      'A believable fictional red-carpet arrival outside a practical event venue at night, photographed like an ordinary real press arrival rather than a luxury render. Use simple velvet barriers, a small number of distant indistinct photographers, naturally uneven warm venue lights and modest background activity. Keep architecture and carpet slightly imperfect and physically plausible. No sponsor walls, event logos, branded trophies, fantasy architecture or overly polished premiere-set symmetry.',
     styling:
       'Original elegant black evening tailoring with clean ivory accents, refined fabric and minimal jewelry. Adapt the fit to the source person without changing body proportions or copying the outfit of a real performer. Preserve the source hair color and length with restrained formal grooming.',
     camera:
       'Preserve the closest natural framing supported by the source. When the source clearly contains enough body information, a medium three-quarter view with a subtle natural step may be used; otherwise keep the original portrait or upper-body framing and build the red-carpet environment around it. Do not force a rear three-quarter angle, walking step, invented hands, legs or torso reconstruction. Keep shoulders proportional and carpet leading lines behind the subject rather than intersecting the body.',
     light:
-      'Balance brief photographic flash highlights with warm venue lighting and soft neutral facial exposure. Preserve black fabric detail and clean eye catchlights. Use moderate background separation, not blown-out skin, floating flashes or a claim of attendance at an actual ceremony.',
+      'Use believable event photography: restrained direct-camera flash mixed with warm practical venue light, slight natural exposure falloff and imperfect but controlled background separation. Preserve black fabric detail, pores, flyaway hair and clean eye catchlights. Avoid glamour-studio key lighting, excessive bloom, floating flash artifacts, perfectly round synthetic bokeh, crushed blacks, waxy skin or a claim of attendance at an actual ceremony.',
   },
   editorial_cover: {
     scene:
