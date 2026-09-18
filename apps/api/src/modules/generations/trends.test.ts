@@ -159,7 +159,7 @@ test('every trend prompt inherits source framing and anti-CGI realism locks', ()
     assert.match(prompt, /SOURCE PHOTOGRAPH AUTHORITY/);
     assert.match(prompt, /PHOTOGRAPHIC REALISM TARGET/);
     assert.match(prompt, /not as AI artwork, CGI, 3D rendering/);
-    assert.match(prompt, /Do not invent, extend or reconstruct unseen body regions/);
+    assert.match(prompt, /do not invent, extend or reconstruct unseen body regions/i);
   }
 
   assert.match(
