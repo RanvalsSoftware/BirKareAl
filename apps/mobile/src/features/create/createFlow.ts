@@ -11,7 +11,7 @@ export type CreateFlow = {
   beauty?: BeautySettings | null;
   transformation?: GenderTransformation | null;
   trendPreset?: TrendPresetId | null;
-  /** Local navigation hint; production mode and bounded instruction go to the API. */
+  /** Local route hint; allowlisted AI tool IDs are serialized as server-owned toolPreset values. */
   toolId?: string | null;
   sourceKind?: 'photo' | 'fictional';
   sourceCharacterId?: string | null;
