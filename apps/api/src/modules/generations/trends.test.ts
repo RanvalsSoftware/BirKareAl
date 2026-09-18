@@ -158,6 +158,8 @@ test('every trend prompt inherits source framing and anti-CGI realism locks', ()
     const prompt = buildTrendPrompt(preset, 100, '4:5');
     assert.match(prompt, /SOURCE PHOTOGRAPH AUTHORITY/);
     assert.match(prompt, /PHOTOGRAPHIC REALISM TARGET/);
+    assert.match(prompt, /real moment a photographer or phone camera/);
+    assert.match(prompt, /REAL-MOMENT RULE/);
     assert.match(prompt, /not as AI artwork, CGI, 3D rendering/);
     assert.match(prompt, /do not invent, extend or reconstruct unseen body regions/i);
   }
