@@ -46,10 +46,10 @@ const plugins: NonNullable<ExpoConfig['plugins']> = [
       image: './assets/onboarding/images/brand/logo-gold-icon.png',
       imageWidth: 196,
       resizeMode: 'contain',
-      backgroundColor: '#050505',
+      backgroundColor: '#000000',
       dark: {
         image: './assets/onboarding/images/brand/logo-gold-icon.png',
-        backgroundColor: '#050505',
+        backgroundColor: '#000000',
       },
     },
   ],
