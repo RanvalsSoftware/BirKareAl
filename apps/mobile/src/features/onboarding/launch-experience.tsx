@@ -136,19 +136,16 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
   const markOpacity = useSharedValue(0.98);
   const wordReveal = useSharedValue(0);
   const wordOpacity = useSharedValue(0);
-  const arcProgress = useSharedValue(0);
+  const arcProgress = useSharedValue(0.56);
   const bloomScale = useSharedValue(0.76);
   const bloomOpacity = useSharedValue(0.13);
-  // A restrained gold finish fades in only after the circular reveal
-  // has completed, matching the warmer final frame without losing the black start.
-  const goldFinish = useSharedValue(0);
 
   useEffect(() => {
     onFinishedRef.current = onFinished;
   }, [onFinished]);
 
   useEffect(() => {
-    const duration = reducedMotion ? 900 : 3_000;
+    const duration = reducedMotion ? 900 : 2_700;
 
     if (reducedMotion) {
       arcProgress.set(1);
@@ -157,27 +154,18 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
       wordReveal.set(1);
       wordOpacity.set(1);
       bloomScale.set(1);
-      bloomOpacity.set(0.17);
-      goldFinish.set(1);
+      bloomOpacity.set(0.35);
     } else {
-      // The circular trace grows cleanly from the exact center.
-      arcProgress.set(
-        withDelay(140, withTiming(1, { duration: 900, easing: Easing.out(Easing.cubic) })),
-      );
+      arcProgress.set(withTiming(1, { duration: 660, easing: Easing.out(Easing.cubic) }));
       markOpacity.set(withTiming(1, { duration: 220 }));
       markScale.set(withSpring(1, motion.spring));
-      // The mark stays fixed at the center; only the line, ring, copy and background animate.
-      wordOpacity.set(withDelay(1_300, withTiming(1, { duration: 190 })));
+      wordOpacity.set(withDelay(610, withTiming(1, { duration: 170 })));
       wordReveal.set(
-        withDelay(1_320, withTiming(1, { duration: 620, easing: Easing.out(Easing.cubic) })),
+        withDelay(630, withTiming(1, { duration: 620, easing: Easing.out(Easing.cubic) })),
       );
-      // Final frame warms to the original premium gold atmosphere.
-      goldFinish.set(
-        withDelay(1_720, withTiming(1, { duration: 720, easing: Easing.out(Easing.cubic) })),
-      );
-      bloomOpacity.set(withDelay(1_180, withTiming(0.17, { duration: 360 })));
+      bloomOpacity.set(withDelay(1_240, withTiming(0.42, { duration: 340 })));
       bloomScale.set(
-        withDelay(1_180, withTiming(1.28, { duration: 980, easing: Easing.out(Easing.cubic) })),
+        withDelay(1_240, withTiming(1.85, { duration: 940, easing: Easing.out(Easing.cubic) })),
       );
     }
 
@@ -196,13 +184,11 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
       cancelAnimation(arcProgress);
       cancelAnimation(bloomScale);
       cancelAnimation(bloomOpacity);
-      cancelAnimation(goldFinish);
     };
   }, [
     arcProgress,
     bloomOpacity,
     bloomScale,
-    goldFinish,
     markOpacity,
     markScale,
     reducedMotion,
@@ -211,11 +197,11 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
   ]);
 
   const arcStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(arcProgress.get(), [0, 0.12, 1], [0, 0.5, 1]),
-    transform: [{ scale: interpolate(arcProgress.get(), [0, 1], [0.18, 1]) }],
-  }));
-  const goldFinishStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(goldFinish.get(), [0, 1], [0, 1]),
+    opacity: 0.34 + arcProgress.get() * 0.66,
+    transform: [
+      { rotate: String(interpolate(arcProgress.get(), [0, 1], [-120, 10])) + 'deg' },
+      { scale: 0.78 + arcProgress.get() * 0.22 },
+    ],
   }));
   const markStyle = useAnimatedStyle(() => ({
     opacity: markOpacity.get(),
@@ -224,7 +210,6 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
   const wordMaskStyle = useAnimatedStyle(() => ({
     opacity: wordOpacity.get(),
     width: 332 * wordReveal.get(),
-    transform: [{ translateY: interpolate(wordReveal.get(), [0, 1], [14, 0]) }],
   }));
   const bloomStyle = useAnimatedStyle(() => ({
     opacity: bloomOpacity.get(),
@@ -233,55 +218,35 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
 
   return (
     <SafeAreaView edges={['top', 'bottom']} style={styles.logoSafe}>
-      <LinearGradient colors={['#000000', '#030201', '#000000']} style={StyleSheet.absoluteFill} />
-      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, goldFinishStyle]}>
-        <LinearGradient
-          colors={['#090600', '#211600', '#0A0701']}
-          end={{ x: 0.82, y: 1 }}
-          locations={[0, 0.5, 1]}
-          start={{ x: 0.18, y: 0 }}
-          style={StyleSheet.absoluteFill}
-        />
-      </Animated.View>
+      <LinearGradient colors={['#000000', '#090704', '#000000']} style={StyleSheet.absoluteFill} />
       <View accessibilityLabel="BirKare AI açılıyor" style={styles.logoCanvas}>
-        <View pointerEvents="none" style={styles.logoFrameTopRight} />
-        <View pointerEvents="none" style={styles.logoFrameBottomLeft} />
+        <View pointerEvents="none" style={styles.logoOrbitTop} />
+        <View pointerEvents="none" style={styles.logoOrbitBottom} />
         <LinearGradient
-          colors={['rgba(255,196,0,0)', 'rgba(255,196,0,0.065)', 'rgba(255,196,0,0)']}
+          colors={['rgba(255,196,0,0)', 'rgba(255,196,0,0.14)', 'rgba(255,196,0,0)']}
           end={{ x: 0.9, y: 0.9 }}
           pointerEvents="none"
           start={{ x: 0.15, y: 0.05 }}
           style={styles.logoWarmVeil}
         />
-        <LinearGradient
-          colors={['rgba(0,0,0,0.98)', 'rgba(0,0,0,0.72)', 'rgba(0,0,0,0)']}
-          locations={[0, 0.48, 1]}
-          pointerEvents="none"
-          style={styles.logoTopShade}
-        />
-        <View pointerEvents="none" style={styles.logoHeroLayer}>
-          <Animated.View pointerEvents="none" style={[styles.logoBloom, bloomStyle]} />
-          <Animated.View pointerEvents="none" style={[styles.logoArcGlow, bloomStyle]} />
-          <Animated.View pointerEvents="none" style={[styles.logoArc, arcStyle]} />
-          <View pointerEvents="none" style={styles.logoArcBottomGlow} />
-          <Animated.View style={[styles.logoMarkSlot, markStyle]}>
-            <Image source={onboardingImages.brandMark} style={styles.logoMarkImage} />
-          </Animated.View>
-        </View>
-        <View pointerEvents="none" style={styles.logoCopyBlock}>
-          <Animated.View style={[styles.logoWordMask, wordMaskStyle]}>
-            <View style={styles.logoWordLine}>
-              <Text style={styles.logoWordText}>BirKare</Text>
-              <Text style={styles.logoWordAi}>ΛI</Text>
-            </View>
-          </Animated.View>
-          <Animated.View
-            entering={reducedMotion ? undefined : FadeInDown.delay(1_660).duration(520)}
-            style={styles.logoCaption}
-          >
-            <Text style={styles.logoCaptionText}>Hayalindeki kareye gir.</Text>
-          </Animated.View>
-        </View>
+        <Animated.View pointerEvents="none" style={[styles.logoBloom, bloomStyle]} />
+        <Animated.View pointerEvents="none" style={[styles.logoHorizonFlare, bloomStyle]} />
+        <Animated.View pointerEvents="none" style={[styles.logoArc, arcStyle]} />
+        <Animated.View style={[styles.logoMarkSlot, markStyle]}>
+          <Image source={onboardingImages.brandMark} style={styles.logoMarkImage} />
+        </Animated.View>
+        <Animated.View style={[styles.logoWordMask, wordMaskStyle]}>
+          <View style={styles.logoWordLine}>
+            <Text style={styles.logoWordText}>BirKare</Text>
+            <Text style={styles.logoWordAi}>ΛI</Text>
+          </View>
+        </Animated.View>
+        <Animated.View
+          entering={reducedMotion ? undefined : FadeIn.delay(1_050).duration(420)}
+          style={styles.logoCaption}
+        >
+          <Text style={styles.logoCaptionText}>Hayalindeki kareye gir.</Text>
+        </Animated.View>
       </View>
     </SafeAreaView>
   );
@@ -1549,44 +1514,30 @@ const styles = StyleSheet.create({
   logoCanvas: {
     alignItems: 'center',
     flex: 1,
+    justifyContent: 'center',
     overflow: 'hidden',
   },
-  logoFrameTopRight: {
-    borderColor: 'rgba(255,196,0,0.30)',
-    borderRadius: 500,
+  logoOrbitTop: {
+    borderColor: 'rgba(255,196,0,0.48)',
+    borderRadius: 430,
     borderWidth: 1,
-    height: 1000,
+    height: 860,
     position: 'absolute',
-    right: -635,
-    top: -535,
-    width: 1000,
+    right: -500,
+    top: -450,
+    width: 860,
   },
-  logoFrameBottomLeft: {
-    borderColor: 'rgba(255,196,0,0.17)',
-    borderRadius: 570,
+  logoOrbitBottom: {
+    borderColor: 'rgba(255,196,0,0.30)',
+    borderRadius: 390,
     borderWidth: 1,
-    bottom: -715,
-    height: 1140,
-    left: -735,
+    bottom: -530,
+    height: 780,
+    left: -410,
     position: 'absolute',
-    width: 1140,
+    width: 780,
   },
   logoWarmVeil: {
-    bottom: 0,
-    left: 0,
-    opacity: 0.48,
-    position: 'absolute',
-    right: 0,
-    top: 0,
-  },
-  logoTopShade: {
-    height: '54%',
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0,
-  },
-  logoHeroLayer: {
     bottom: 0,
     left: 0,
     position: 'absolute',
@@ -1594,117 +1545,82 @@ const styles = StyleSheet.create({
     top: 0,
   },
   logoBloom: {
-    backgroundColor: 'rgba(255,196,0,0.075)',
-    borderRadius: 210,
-    height: 420,
-    left: '50%',
-    marginLeft: -210,
-    marginTop: -210,
+    backgroundColor: 'rgba(255,196,0,0.15)',
+    borderRadius: 230,
+    height: 460,
     position: 'absolute',
-    top: '50%',
-    width: 420,
+    width: 460,
   },
-  logoArcGlow: {
-    borderColor: 'rgba(255,210,90,0.13)',
-    borderRadius: 210,
-    borderWidth: 10,
-    height: 420,
-    left: '50%',
-    marginLeft: -210,
-    marginTop: -210,
+  logoHorizonFlare: {
+    backgroundColor: 'rgba(255,207,65,0.75)',
+    borderRadius: 999,
+    height: 1,
     position: 'absolute',
-    top: '50%',
-    width: 420,
+    top: '55%',
+    width: 224,
   },
   logoArc: {
-    borderColor: 'rgba(255,196,0,0.86)',
-    borderRadius: 210,
-    borderWidth: 1.3,
-    height: 420,
-    left: '50%',
-    marginLeft: -210,
-    marginTop: -210,
+    borderColor: colors.accentYellow,
+    borderRadius: 150,
+    borderRightColor: 'rgba(255,196,0,0.06)',
+    borderTopColor: 'rgba(255,196,0,0.20)',
+    borderWidth: 1.5,
+    height: 300,
     position: 'absolute',
-    top: '50%',
-    width: 420,
-  },
-  logoArcBottomGlow: {
-    backgroundColor: 'rgba(255,196,0,0.34)',
-    borderRadius: 999,
-    height: 5,
-    left: '50%',
-    marginLeft: -72,
-    marginTop: 205,
-    opacity: 0.88,
-    position: 'absolute',
-    shadowColor: '#FFC400',
-    shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 18,
-    top: '50%',
-    width: 144,
+    width: 300,
   },
   logoMarkSlot: {
-    height: 188,
-    left: '50%',
-    marginLeft: -94,
-    marginTop: -94,
-    position: 'absolute',
-    top: '50%',
-    width: 188,
+    height: 175,
+    marginBottom: 17,
+    width: 175,
   },
   logoMarkImage: {
     height: '100%',
     resizeMode: 'contain',
     width: '100%',
   },
-  logoCopyBlock: {
-    alignItems: 'center',
-    bottom: '16%',
-    left: 18,
-    position: 'absolute',
-    right: 18,
-  },
   logoWordMask: {
-    height: 64,
+    height: 70,
     overflow: 'hidden',
+    transform: [{ translateY: 44 }],
   },
   logoWordLine: {
     alignItems: 'baseline',
     flexDirection: 'row',
-    height: 68,
+    height: 76,
     justifyContent: 'center',
     width: 332,
   },
   logoWordText: {
     color: '#FFD34F',
-    fontSize: 49,
-    fontWeight: '500',
-    letterSpacing: -2.25,
-    lineHeight: 62,
-    textShadowColor: 'rgba(255,196,0,0.24)',
+    fontSize: 56,
+    fontWeight: '700',
+    letterSpacing: -2.8,
+    lineHeight: 70,
+    textShadowColor: 'rgba(255,196,0,0.38)',
     textShadowOffset: { height: 0, width: 0 },
-    textShadowRadius: 9,
+    textShadowRadius: 13,
   },
   logoWordAi: {
-    color: '#FFE899',
-    fontSize: 47,
-    fontWeight: '400',
-    letterSpacing: -1.6,
-    lineHeight: 62,
-    marginLeft: 9,
-    textShadowColor: 'rgba(255,196,0,0.22)',
+    color: '#FFE784',
+    fontSize: 54,
+    fontWeight: '500',
+    letterSpacing: -2,
+    lineHeight: 70,
+    marginLeft: 10,
+    textShadowColor: 'rgba(255,196,0,0.36)',
     textShadowOffset: { height: 0, width: 0 },
-    textShadowRadius: 9,
+    textShadowRadius: 13,
   },
   logoCaption: {
-    marginTop: 6,
+    marginTop: 11,
+    transform: [{ translateY: 44 }],
   },
   logoCaptionText: {
-    color: '#E8DEC8',
-    fontSize: 16,
-    fontWeight: '400',
-    letterSpacing: 0.45,
+    color: '#ECE0C4',
+    fontSize: 17,
+    fontWeight: '500',
+    letterSpacing: 0.35,
   },
   bridgeCanvas: {
     alignItems: 'center',
