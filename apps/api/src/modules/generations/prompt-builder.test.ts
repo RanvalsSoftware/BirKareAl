@@ -462,7 +462,7 @@ test('composition respects selected angle without forcing a vertical output', ()
 test('studio styling does not override the chosen environment', () => {
   const studio = catalogFixtures.styles.find((entry) => entry.slug === 'studio');
   assert.ok(studio);
-  assert.match(stylePrompt(studio), /must not replace it/);
+  assert.match(stylePrompt(studio), /must not replace the background/);
   assert.match(stylePrompt(studio), /professional portrait-lighting/);
 });
 
