@@ -144,9 +144,6 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
   // A restrained gold finish fades in only after the center-line/ring motion
   // has completed, matching the warmer final frame without losing the black start.
   const goldFinish = useSharedValue(0);
-  // The brand mark starts visually centered, then lifts into its final hero
-  // position before the wordmark appears underneath.
-  const heroLift = useSharedValue(0);
 
   useEffect(() => {
     onFinishedRef.current = onFinished;
@@ -165,7 +162,6 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
       bloomOpacity.set(0.17);
       flareProgress.set(1);
       goldFinish.set(1);
-      heroLift.set(1);
     } else {
       // First: a perfectly straight gold line opens from the exact center.
       flareProgress.set(
@@ -177,10 +173,7 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
       );
       markOpacity.set(withTiming(1, { duration: 220 }));
       markScale.set(withSpring(1, motion.spring));
-      // Keep the previous center-to-upper hero movement.
-      heroLift.set(
-        withDelay(720, withTiming(1, { duration: 760, easing: Easing.out(Easing.cubic) })),
-      );
+      // The mark stays fixed at the center; only the line, ring, copy and background animate.
       wordOpacity.set(withDelay(1_300, withTiming(1, { duration: 190 })));
       wordReveal.set(
         withDelay(1_320, withTiming(1, { duration: 620, easing: Easing.out(Easing.cubic) })),
@@ -212,7 +205,6 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
       cancelAnimation(bloomOpacity);
       cancelAnimation(flareProgress);
       cancelAnimation(goldFinish);
-      cancelAnimation(heroLift);
     };
   }, [
     arcProgress,
@@ -220,7 +212,6 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
     bloomScale,
     flareProgress,
     goldFinish,
-    heroLift,
     markOpacity,
     markScale,
     reducedMotion,
@@ -245,9 +236,6 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
   }));
   const goldFinishStyle = useAnimatedStyle(() => ({
     opacity: interpolate(goldFinish.get(), [0, 1], [0, 1]),
-  }));
-  const heroStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: interpolate(heroLift.get(), [0, 1], [96, 0]) }],
   }));
   const markStyle = useAnimatedStyle(() => ({
     opacity: markOpacity.get(),
@@ -293,13 +281,13 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
         />
         <Animated.View pointerEvents="none" style={[styles.logoCenterFlareGlow, flareGlowStyle]} />
         <Animated.View pointerEvents="none" style={[styles.logoCenterFlare, flareStyle]} />
-        <Animated.View pointerEvents="none" style={[styles.logoHeroLayer, heroStyle]}>
+        <View pointerEvents="none" style={styles.logoHeroLayer}>
           <Animated.View pointerEvents="none" style={[styles.logoBloom, bloomStyle]} />
           <Animated.View pointerEvents="none" style={[styles.logoArc, arcStyle]} />
           <Animated.View style={[styles.logoMarkSlot, markStyle]}>
             <Image source={onboardingImages.brandMark} style={styles.logoMarkImage} />
           </Animated.View>
-        </Animated.View>
+        </View>
         <View pointerEvents="none" style={styles.logoCopyBlock}>
           <Animated.View style={[styles.logoWordMask, wordMaskStyle]}>
             <View style={styles.logoWordLine}>
@@ -1631,8 +1619,9 @@ const styles = StyleSheet.create({
     height: 360,
     left: '50%',
     marginLeft: -180,
+    marginTop: -180,
     position: 'absolute',
-    top: '25%',
+    top: '50%',
     width: 360,
   },
   logoCenterFlare: {
@@ -1669,16 +1658,18 @@ const styles = StyleSheet.create({
     height: 360,
     left: '50%',
     marginLeft: -180,
+    marginTop: -180,
     position: 'absolute',
-    top: '25%',
+    top: '50%',
     width: 360,
   },
   logoMarkSlot: {
     height: 188,
     left: '50%',
     marginLeft: -94,
+    marginTop: -94,
     position: 'absolute',
-    top: '31%',
+    top: '50%',
     width: 188,
   },
   logoMarkImage: {
