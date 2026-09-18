@@ -1,0 +1,46 @@
+name: Human photorealism validation
+
+on:
+  push:
+    branches:
+      - feat/human-photorealism-source-fidelity
+  pull_request:
+    branches:
+      - feat/revenuecat-custom-paywall-complete
+
+permissions:
+  contents: read
+
+concurrency:
+  group: human-photorealism-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Activate pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.18.0 --activate
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Generate Prisma client
+        run: pnpm --filter @birkare/database exec prisma generate
+      - name: Typecheck changed workspaces
+        run: |
+          pnpm --filter @birkare/shared typecheck
+          pnpm --filter @birkare/contracts typecheck
+          pnpm --filter @birkare/database typecheck
+          pnpm --filter @birkare/ai typecheck
+          pnpm --filter @birkare/api typecheck
+          pnpm --filter @birkare/mobile typecheck
+      - name: Run generation tests
+        run: pnpm --filter @birkare/api exec tsx --test src/modules/generations/prompt-builder.test.ts src/modules/generations/trends.test.ts src/modules/generations/trends.routes.test.ts
+      - name: Run mobile create-flow tests
+        run: pnpm --filter @birkare/mobile exec vitest run src/features/create/server-selection.test.ts src/features/create/tool-presets.test.ts src/features/create/workflow.test.ts
