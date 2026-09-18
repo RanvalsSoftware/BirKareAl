@@ -167,6 +167,10 @@ test('every trend prompt inherits source framing and anti-CGI realism locks', ()
     /Do not force a rear three-quarter angle, walking step, invented hands, legs or torso reconstruction/,
   );
   assert.match(
+    buildTrendPrompt('red_carpet_glam', 100, '4:5'),
+    /ordinary real press arrival.*Avoid glamour-studio key lighting/s,
+  );
+  assert.match(
     buildTrendPrompt('analog_90s', 100, '4:5'),
     /Never invent legs, shoes, hands or a seated posture/,
   );
