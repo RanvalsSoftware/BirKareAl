@@ -106,13 +106,13 @@ export function buildGenerationPrompt(input: {
   return [
     illustrativeStyle
       ? 'Create one polished, source-faithful artistic transformation using the provided input image.'
-      : 'Create one source-faithful photographic transformation using the provided input image. The finished result must read as a real photograph rather than a newly invented synthetic render.',
+      : 'Create one source-faithful photorealistic transformation using the provided input image. The finished result must read as a real photograph captured with a real camera rather than a newly invented synthetic render.',
     'INPUT IMAGE 1 is the source photograph, not a style reference. Preserve its primary subject. If it contains no person, apply the edit to the actual landscape or object; do not invent a human.',
     'MANDATORY SELECTED VISUAL TREATMENT',
     selectedStylePrompt,
     selectedIntensityPrompt,
     input.project.mode === 'AI_FILTER'
-      ? 'This is specifically a filter transformation. The finished image must visibly and unambiguously show the selected treatment at the requested strength while retaining the source setting, subject count, pose and composition. Do not substitute a generic portrait, unrelated scene or merely unchanged copy of the input.'
+      ? 'This is specifically a filter transformation. CHANGE ONLY the selected visual treatment at the requested strength. KEEP THE SOURCE CONTENT THE SAME: setting, subject count, identity, pose, camera angle and internal composition. Do not substitute a generic portrait, unrelated scene, new props or a merely unchanged copy of the input.'
       : 'Apply this selected treatment coherently to the completed scene. It must remain subordinate to identity, anatomy and the explicitly selected environment, but it may not be silently omitted or replaced by a generic look.',
     'PRIORITY: safety, identity and anatomy are immutable constraints; within those constraints, faithfully execute the selected edit, scene and composition. Catalogue descriptions never replace the source identity.',
     HUMAN_SOURCE_FIDELITY_CORE,
