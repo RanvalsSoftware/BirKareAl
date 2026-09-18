@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -26,12 +26,17 @@ import { useCopy } from '@/features/settings/language-store';
 
 export default function LoginScreen() {
   const copy = useCopy();
+  const params = useLocalSearchParams<{ email?: string; verified?: string }>();
+  const verified = params.verified === '1';
+  const verifiedEmail = typeof params.email === 'string' ? params.email.trim().toLowerCase() : '';
   const signIn = useAuthStore((store) => store.signIn);
   const signInWithGoogle = useAuthStore((store) => store.signInWithGoogle);
   const signInWithApple = useAuthStore((store) => store.signInWithApple);
   const passwordInputRef = useRef<TextInput>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [socialError, setSocialError] = useState<string | null>(null);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
   const {
     control,
     handleSubmit,
@@ -40,7 +45,7 @@ export default function LoginScreen() {
     setError,
   } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { email: verifiedEmail, password: '' },
   });
 
   useEffect(() => {
@@ -134,9 +139,27 @@ export default function LoginScreen() {
         subtitle={copy('Hayalindeki kareler seni bekliyor.', 'Your next creation is waiting.')}
       />
       <AuthFormCard>
+        {verified ? (
+          <View accessibilityLiveRegion="polite" style={styles.verifiedBanner}>
+            <View style={styles.verifiedIcon}>
+              <Ionicons color="#0A1C11" name="checkmark" size={17} />
+            </View>
+            <View style={styles.verifiedCopy}>
+              <Text style={styles.verifiedTitle}>
+                {copy('E-posta doğrulandı', 'Email verified')}
+              </Text>
+              <Text style={styles.verifiedText}>
+                {copy(
+                  'Hesabın hazır. Şimdi güvenle giriş yapabilirsin.',
+                  'Your account is ready. You can sign in now.',
+                )}
+              </Text>
+            </View>
+          </View>
+        ) : null}
         <View style={styles.socials}>
           <GoogleSignInButton
-            label={copy('Google ile devam et', 'Continue with Google')}
+            label={copy('Google ile giriş yap', 'Sign in with Google')}
             disabled={isSubmitting}
             onError={showGoogleError}
             onSuccess={completeGoogleSignIn}
@@ -160,7 +183,7 @@ export default function LoginScreen() {
           render={({ field: { onBlur, onChange, value } }) => (
             <View style={styles.field}>
               <Text style={styles.label}>{copy('E-posta', 'Email')}</Text>
-              <View style={styles.inputRow}>
+              <View style={[styles.inputRow, emailFocused && styles.inputRowFocused]}>
                 <Ionicons color={authColors.yellow} name="mail-outline" size={18} />
                 <TextInput
                   accessibilityLabel={copy('E-posta', 'Email')}
@@ -170,8 +193,12 @@ export default function LoginScreen() {
                   blurOnSubmit={false}
                   cursorColor={authColors.yellow}
                   keyboardType="email-address"
-                  onBlur={onBlur}
+                  onBlur={() => {
+                    setEmailFocused(false);
+                    onBlur();
+                  }}
                   onChangeText={onChange}
+                  onFocus={() => setEmailFocused(true)}
                   onSubmitEditing={() => passwordInputRef.current?.focus()}
                   placeholder="ornek@eposta.com"
                   placeholderTextColor={authColors.muted}
@@ -195,7 +222,7 @@ export default function LoginScreen() {
           render={({ field: { onBlur, onChange, value } }) => (
             <View style={styles.field}>
               <Text style={styles.label}>{copy('Şifre', 'Password')}</Text>
-              <View style={styles.inputRow}>
+              <View style={[styles.inputRow, passwordFocused && styles.inputRowFocused]}>
                 <Ionicons color={authColors.yellow} name="lock-closed-outline" size={17} />
                 <TextInput
                   ref={passwordInputRef}
@@ -203,8 +230,12 @@ export default function LoginScreen() {
                   autoComplete="current-password"
                   blurOnSubmit={false}
                   cursorColor={authColors.yellow}
-                  onBlur={onBlur}
+                  onBlur={() => {
+                    setPasswordFocused(false);
+                    onBlur();
+                  }}
                   onChangeText={onChange}
+                  onFocus={() => setPasswordFocused(true)}
                   placeholder={copy('Şifreni gir', 'Enter your password')}
                   placeholderTextColor={authColors.muted}
                   rejectResponderTermination={false}
@@ -276,11 +307,38 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  socials: { marginTop: -10 },
+  verifiedBanner: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(52,199,89,0.09)',
+    borderColor: 'rgba(72,220,112,0.28)',
+    borderRadius: 16,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 11,
+    marginBottom: 4,
+    paddingHorizontal: 13,
+    paddingVertical: 12,
+  },
+  verifiedIcon: {
+    alignItems: 'center',
+    backgroundColor: '#57E58C',
+    borderRadius: 16,
+    height: 32,
+    justifyContent: 'center',
+    shadowColor: '#57E58C',
+    shadowOpacity: 0.24,
+    shadowRadius: 8,
+    width: 32,
+  },
+  verifiedCopy: { flex: 1 },
+  verifiedTitle: { color: '#8FF0B0', fontSize: 13, fontWeight: '900' },
+  verifiedText: { color: '#B8C8BE', fontSize: 11, lineHeight: 16, marginTop: 2 },
+  socials: { marginTop: 0 },
   field: { marginTop: 16 },
   label: { color: '#EFEFEF', fontSize: 13, fontWeight: '800', letterSpacing: 0.1, marginBottom: 8 },
   inputRow: {
     alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.025)',
     borderColor: 'rgba(255,255,255,0.15)',
     borderRadius: 16,
     borderWidth: 1,
@@ -288,6 +346,13 @@ const styles = StyleSheet.create({
     gap: 13,
     minHeight: 56,
     paddingLeft: 15,
+  },
+  inputRowFocused: {
+    borderColor: 'rgba(255,196,0,0.72)',
+    shadowColor: '#FFC400',
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 0.14,
+    shadowRadius: 7,
   },
   input: { color: authColors.text, flex: 1, fontSize: 16, minHeight: 55, paddingVertical: 0 },
   eyeButton: { alignItems: 'center', height: 48, justifyContent: 'center', width: 46 },
