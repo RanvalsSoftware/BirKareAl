@@ -53,6 +53,7 @@ function photoRules(aspectRatio: string, allowFacialHairGrooming = false): strin
   return [
     'INPUT IMAGE 1 is the consented original source photograph, never a catalog face or a prior generated result. Edit the actual visible person. If there is no visible face, retain the source rather than inventing a person.',
     'Keep the same identity, natural skin tone and undertone, ethnicity, eyes and eye color, expression, pose, camera angle, framing, number of people and realistic anatomy. Preserve clothing, accessories and background. No celebrity likeness or replacement face.',
+    'MICRO-IDENTITY LOCK: preserve hairline, eyebrow placement, ear shape, nostril shape, teeth shape, lip outline and the person\'s natural facial asymmetry unless an explicitly selected local adjustment directly targets that region. Do not silently beautify these identity cues.',
     allowFacialHairGrooming
       ? 'Preserve scalp hair color, length, hairline and hairstyle, eyebrows and eyelashes. Facial hair is the explicit grooming exception: beard and moustache styling may change to express the selected presentation, without changing underlying facial geometry or identity.'
       : 'Preserve scalp hair, eyebrows, eyelashes, beard and moustache unchanged; beauty retouching does not restyle facial hair.',
