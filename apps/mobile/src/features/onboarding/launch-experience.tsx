@@ -130,15 +130,16 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
   const reducedMotion = useReducedMotion();
   const onFinishedRef = useRef(onFinished);
   const finishedRef = useRef(false);
-  // These first-frame values intentionally mirror the native splash plugin's
-  // centered gold mark. That keeps the hand-off visually continuous.
+  // Keep the native splash hand-off and the existing mark/wordmark intact.
+  // Only the surrounding visual language changes: the large circular overlays
+  // are replaced by two moving, layered gold light ribbons inspired by the
+  // supplied opening-screen reference.
   const markScale = useSharedValue(0.92);
   const markOpacity = useSharedValue(0.98);
   const wordReveal = useSharedValue(0);
   const wordOpacity = useSharedValue(0);
-  const arcProgress = useSharedValue(0.56);
-  const bloomScale = useSharedValue(0.76);
-  const bloomOpacity = useSharedValue(0.13);
+  const beamTravel = useSharedValue(0);
+  const beamPulse = useSharedValue(0);
 
   useEffect(() => {
     onFinishedRef.current = onFinished;
@@ -148,24 +149,32 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
     const duration = reducedMotion ? 900 : 2_700;
 
     if (reducedMotion) {
-      arcProgress.set(1);
       markScale.set(1);
       markOpacity.set(1);
       wordReveal.set(1);
       wordOpacity.set(1);
-      bloomScale.set(1);
-      bloomOpacity.set(0.35);
+      beamTravel.set(0.45);
+      beamPulse.set(0.7);
     } else {
-      arcProgress.set(withTiming(1, { duration: 660, easing: Easing.out(Easing.cubic) }));
       markOpacity.set(withTiming(1, { duration: 220 }));
       markScale.set(withSpring(1, motion.spring));
       wordOpacity.set(withDelay(610, withTiming(1, { duration: 170 })));
       wordReveal.set(
         withDelay(630, withTiming(1, { duration: 620, easing: Easing.out(Easing.cubic) })),
       );
-      bloomOpacity.set(withDelay(1_240, withTiming(0.42, { duration: 340 })));
-      bloomScale.set(
-        withDelay(1_240, withTiming(1.85, { duration: 940, easing: Easing.out(Easing.cubic) })),
+      beamTravel.set(
+        withRepeat(
+          withTiming(1, { duration: 3_200, easing: Easing.inOut(Easing.cubic) }),
+          -1,
+          true,
+        ),
+      );
+      beamPulse.set(
+        withRepeat(
+          withTiming(1, { duration: 1_250, easing: Easing.inOut(Easing.quad) }),
+          -1,
+          true,
+        ),
       );
     }
 
@@ -181,14 +190,12 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
       cancelAnimation(markOpacity);
       cancelAnimation(wordReveal);
       cancelAnimation(wordOpacity);
-      cancelAnimation(arcProgress);
-      cancelAnimation(bloomScale);
-      cancelAnimation(bloomOpacity);
+      cancelAnimation(beamTravel);
+      cancelAnimation(beamPulse);
     };
   }, [
-    arcProgress,
-    bloomOpacity,
-    bloomScale,
+    beamPulse,
+    beamTravel,
     markOpacity,
     markScale,
     reducedMotion,
@@ -196,13 +203,6 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
     wordReveal,
   ]);
 
-  const arcStyle = useAnimatedStyle(() => ({
-    opacity: 0.34 + arcProgress.get() * 0.66,
-    transform: [
-      { rotate: String(interpolate(arcProgress.get(), [0, 1], [-120, 10])) + 'deg' },
-      { scale: 0.78 + arcProgress.get() * 0.22 },
-    ],
-  }));
   const markStyle = useAnimatedStyle(() => ({
     opacity: markOpacity.get(),
     transform: [{ scale: markScale.get() }],
@@ -211,27 +211,95 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
     opacity: wordOpacity.get(),
     width: 332 * wordReveal.get(),
   }));
-  const bloomStyle = useAnimatedStyle(() => ({
-    opacity: bloomOpacity.get(),
-    transform: [{ scale: bloomScale.get() }],
+  const topBeamStyle = useAnimatedStyle(() => ({
+    opacity: 0.78 + beamPulse.get() * 0.2,
+    transform: [
+      { translateX: interpolate(beamTravel.get(), [0, 1], [-18, 16]) },
+      { translateY: interpolate(beamTravel.get(), [0, 1], [-8, 14]) },
+      { rotate: `${interpolate(beamTravel.get(), [0, 1], [-2.2, 2.4])}deg` },
+    ],
+  }));
+  const bottomBeamStyle = useAnimatedStyle(() => ({
+    opacity: 0.72 + beamPulse.get() * 0.24,
+    transform: [
+      { translateX: interpolate(beamTravel.get(), [0, 1], [16, -18]) },
+      { translateY: interpolate(beamTravel.get(), [0, 1], [10, -12]) },
+      { rotate: `${interpolate(beamTravel.get(), [0, 1], [2.1, -2.5])}deg` },
+    ],
+  }));
+  const shimmerStyle = useAnimatedStyle(() => ({
+    opacity: 0.16 + beamPulse.get() * 0.34,
+    transform: [
+      { translateX: interpolate(beamTravel.get(), [0, 1], [-36, 42]) },
+      { translateY: interpolate(beamTravel.get(), [0, 1], [-10, 16]) },
+    ],
   }));
 
   return (
     <SafeAreaView edges={['top', 'bottom']} style={styles.logoSafe}>
-      <LinearGradient colors={['#000000', '#090704', '#000000']} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={['#000000', '#030200', '#000000']} style={StyleSheet.absoluteFill} />
       <View accessibilityLabel="BirKare AI açılıyor" style={styles.logoCanvas}>
-        <View pointerEvents="none" style={styles.logoOrbitTop} />
-        <View pointerEvents="none" style={styles.logoOrbitBottom} />
-        <LinearGradient
-          colors={['rgba(255,196,0,0)', 'rgba(255,196,0,0.14)', 'rgba(255,196,0,0)']}
-          end={{ x: 0.9, y: 0.9 }}
-          pointerEvents="none"
-          start={{ x: 0.15, y: 0.05 }}
-          style={styles.logoWarmVeil}
-        />
-        <Animated.View pointerEvents="none" style={[styles.logoBloom, bloomStyle]} />
-        <Animated.View pointerEvents="none" style={[styles.logoHorizonFlare, bloomStyle]} />
-        <Animated.View pointerEvents="none" style={[styles.logoArc, arcStyle]} />
+        <Animated.View pointerEvents="none" style={[styles.logoBeamTopGroup, topBeamStyle]}>
+          <View style={[styles.logoBeamArc, styles.logoBeamTopArc, styles.logoBeamArcHalo]} />
+          <View style={[styles.logoBeamArc, styles.logoBeamTopArc, styles.logoBeamArcWide]} />
+          <View style={[styles.logoBeamArc, styles.logoBeamTopArc, styles.logoBeamArcCore]} />
+          <View
+            style={[
+              styles.logoBeamArc,
+              styles.logoBeamTopArc,
+              styles.logoBeamArcParallel,
+              styles.logoBeamArcSecondary,
+            ]}
+          />
+          <View
+            style={[
+              styles.logoBeamArc,
+              styles.logoBeamTopArc,
+              styles.logoBeamArcParallelFar,
+              styles.logoBeamArcTertiary,
+            ]}
+          />
+        </Animated.View>
+
+        <Animated.View pointerEvents="none" style={[styles.logoBeamBottomGroup, bottomBeamStyle]}>
+          <View style={[styles.logoBeamArc, styles.logoBeamBottomArc, styles.logoBeamArcHalo]} />
+          <View style={[styles.logoBeamArc, styles.logoBeamBottomArc, styles.logoBeamArcWide]} />
+          <View style={[styles.logoBeamArc, styles.logoBeamBottomArc, styles.logoBeamArcCore]} />
+          <View
+            style={[
+              styles.logoBeamArc,
+              styles.logoBeamBottomArc,
+              styles.logoBeamArcParallel,
+              styles.logoBeamArcSecondary,
+            ]}
+          />
+          <View
+            style={[
+              styles.logoBeamArc,
+              styles.logoBeamBottomArc,
+              styles.logoBeamArcParallelFar,
+              styles.logoBeamArcTertiary,
+            ]}
+          />
+        </Animated.View>
+
+        <Animated.View pointerEvents="none" style={[styles.logoBeamShimmerTop, shimmerStyle]}>
+          <LinearGradient
+            colors={['rgba(255,196,0,0)', 'rgba(255,235,156,0.9)', 'rgba(255,196,0,0)']}
+            end={{ x: 1, y: 0.55 }}
+            start={{ x: 0, y: 0.45 }}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
+        <Animated.View pointerEvents="none" style={[styles.logoBeamShimmerBottom, shimmerStyle]}>
+          <LinearGradient
+            colors={['rgba(255,196,0,0)', 'rgba(255,235,156,0.72)', 'rgba(255,196,0,0)']}
+            end={{ x: 1, y: 0.55 }}
+            start={{ x: 0, y: 0.45 }}
+            style={StyleSheet.absoluteFill}
+          />
+        </Animated.View>
+
         <Animated.View style={[styles.logoMarkSlot, markStyle]}>
           <Image source={onboardingImages.brandMark} style={styles.logoMarkImage} />
         </Animated.View>
@@ -1517,57 +1585,114 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  logoOrbitTop: {
-    borderColor: 'rgba(255,196,0,0.48)',
-    borderRadius: 430,
-    borderWidth: 1,
-    height: 860,
+  logoBeamTopGroup: {
+    height: 520,
     position: 'absolute',
-    right: -500,
-    top: -450,
-    width: 860,
+    right: -278,
+    top: -300,
+    width: 760,
   },
-  logoOrbitBottom: {
-    borderColor: 'rgba(255,196,0,0.30)',
-    borderRadius: 390,
-    borderWidth: 1,
-    bottom: -530,
-    height: 780,
-    left: -410,
+  logoBeamBottomGroup: {
+    bottom: -312,
+    height: 520,
+    left: -292,
     position: 'absolute',
-    width: 780,
+    width: 760,
   },
-  logoWarmVeil: {
+  logoBeamArc: {
+    borderColor: 'transparent',
+    borderRadius: 420,
     bottom: 0,
     left: 0,
     position: 'absolute',
     right: 0,
     top: 0,
   },
-  logoBloom: {
-    backgroundColor: 'rgba(255,196,0,0.15)',
-    borderRadius: 230,
-    height: 460,
-    position: 'absolute',
-    width: 460,
+  logoBeamTopArc: {
+    borderBottomColor: '#FFC400',
+    borderLeftColor: '#FFC400',
   },
-  logoHorizonFlare: {
-    backgroundColor: 'rgba(255,207,65,0.75)',
+  logoBeamBottomArc: {
+    borderRightColor: '#FFC400',
+    borderTopColor: '#FFC400',
+  },
+  logoBeamArcHalo: {
+    borderWidth: 11,
+    opacity: 0.075,
+    shadowColor: '#FFC400',
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 24,
+  },
+  logoBeamArcWide: {
+    borderWidth: 5,
+    opacity: 0.2,
+    shadowColor: '#FFB800',
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 0.75,
+    shadowRadius: 14,
+  },
+  logoBeamArcCore: {
+    borderWidth: 1.8,
+    opacity: 0.98,
+    shadowColor: '#FFE7A0',
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 0.95,
+    shadowRadius: 8,
+  },
+  logoBeamArcParallel: {
+    bottom: -18,
+    left: 24,
+    right: -24,
+    top: 18,
+  },
+  logoBeamArcParallelFar: {
+    bottom: -38,
+    left: 49,
+    right: -49,
+    top: 38,
+  },
+  logoBeamArcSecondary: {
+    borderWidth: 1.35,
+    opacity: 0.56,
+    shadowColor: '#FFC400',
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 0.65,
+    shadowRadius: 7,
+  },
+  logoBeamArcTertiary: {
+    borderWidth: 1,
+    opacity: 0.28,
+    shadowColor: '#FFC400',
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 0.42,
+    shadowRadius: 5,
+  },
+  logoBeamShimmerTop: {
     borderRadius: 999,
-    height: 1,
+    height: 4,
     position: 'absolute',
-    top: '55%',
-    width: 224,
+    right: -18,
+    shadowColor: '#FFD75C',
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 0.65,
+    shadowRadius: 12,
+    top: 138,
+    transform: [{ rotate: '-29deg' }],
+    width: 190,
   },
-  logoArc: {
-    borderColor: colors.accentYellow,
-    borderRadius: 150,
-    borderRightColor: 'rgba(255,196,0,0.06)',
-    borderTopColor: 'rgba(255,196,0,0.20)',
-    borderWidth: 1.5,
-    height: 300,
+  logoBeamShimmerBottom: {
+    borderRadius: 999,
+    bottom: 112,
+    height: 4,
+    left: -16,
     position: 'absolute',
-    width: 300,
+    shadowColor: '#FFD75C',
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 0.58,
+    shadowRadius: 12,
+    transform: [{ rotate: '-28deg' }],
+    width: 190,
   },
   logoMarkSlot: {
     height: 175,
