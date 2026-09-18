@@ -118,16 +118,21 @@ test('HTTP trends validate quote, snapshot choice, replay safely, preview and re
           creditCost: number;
           availableCredits: number;
           canGenerate: boolean;
+          modelLane: 'FAST' | 'PREMIUM';
         };
         error: { code: string };
       },
     };
   };
   try {
-    assert.equal((await post('/quote', payload)).status, 200);
+    const previewQuote = await post('/quote', payload);
+    assert.equal(previewQuote.status, 200);
+    assert.equal(previewQuote.body.data.creditCost, 3);
+    assert.equal(previewQuote.body.data.modelLane, 'FAST');
     const hdQuote = await post('/quote', { ...payload, quality: 'HD' });
     assert.equal(hdQuote.status, 200);
-    assert.equal(hdQuote.body.data.creditCost, 9);
+    assert.equal(hdQuote.body.data.creditCost, 12);
+    assert.equal(hdQuote.body.data.modelLane, 'PREMIUM');
     assert.equal(hdQuote.body.data.canGenerate, true);
     const fourHdQuote = await post('/quote', {
       ...payload,
@@ -135,7 +140,7 @@ test('HTTP trends validate quote, snapshot choice, replay safely, preview and re
       numberOfImages: 4,
     });
     assert.equal(fourHdQuote.status, 200);
-    assert.equal(fourHdQuote.body.data.creditCost, 36);
+    assert.equal(fourHdQuote.body.data.creditCost, 48);
     assert.equal(fourHdQuote.body.data.canGenerate, false);
     const before = await repository.getWallet(user.id);
     for (const change of [
