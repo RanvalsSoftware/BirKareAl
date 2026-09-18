@@ -194,6 +194,82 @@ function sourceEditFixture(mode: ProjectRecord['mode'], featuredPersonId: string
   };
 }
 
+test('server-owned AI tool presets compile distinct bounded edit intents', () => {
+  const natural = catalogFixtures.styles.find((entry) => entry.slug === 'natural-light')!.id;
+  const studio = catalogFixtures.styles.find((entry) => entry.slug === 'studio')!.id;
+  const alpine = scene('alpine-lake').id;
+
+  const cases = [
+    {
+      toolPreset: 'background' as const,
+      mode: 'BACKGROUND_REPLACE' as const,
+      sceneTemplateId: alpine,
+      stylePresetId: natural,
+      expected: /EDIT INTENT: BACKGROUND REPLACEMENT/,
+    },
+    {
+      toolPreset: 'light' as const,
+      mode: 'AI_FILTER' as const,
+      sceneTemplateId: null,
+      stylePresetId: natural,
+      expected: /EDIT INTENT: NATURAL RELIGHTING/,
+    },
+    {
+      toolPreset: 'portrait' as const,
+      mode: 'PRO_PORTRAIT' as const,
+      sceneTemplateId: null,
+      stylePresetId: studio,
+      expected: /EDIT INTENT: PROFESSIONAL PORTRAIT/,
+    },
+    {
+      toolPreset: 'extend' as const,
+      mode: 'AI_FILTER' as const,
+      sceneTemplateId: null,
+      stylePresetId: natural,
+      expected: /EDIT INTENT: CANVAS EXPANSION \/ OUTPAINTING/,
+    },
+  ];
+
+  for (const entry of cases) {
+    const prompt = buildGenerationPrompt({
+      generation: {
+        preserveFace: true,
+        preserveClothes: true,
+        aspectRatio: entry.toolPreset === 'extend' ? '16:9' : '4:5',
+        userInstruction: null,
+        recipe: {
+          version: 1,
+          filterIntensity: entry.toolPreset === 'extend' ? 10 : 35,
+          toolPreset: entry.toolPreset,
+          character: null,
+          composition: {
+            shotType: 'PORTRAIT',
+            cameraAngle: 'EYE_LEVEL',
+            subjectPosition: 'CENTER',
+            backgroundDepth: 'BALANCED',
+          },
+          selection: {
+            sceneTemplateId: entry.sceneTemplateId,
+            stylePresetId: entry.stylePresetId,
+            featuredPersonId: null,
+          },
+        },
+      } as GenerationRecord,
+      project: {
+        mode: entry.mode,
+        composition: 'CLOSE',
+        sceneTemplateId: entry.sceneTemplateId,
+        stylePresetId: entry.stylePresetId,
+        featuredPersonId: null,
+      } as ProjectRecord,
+      catalog: catalogFixtures,
+    });
+    assert.match(prompt, /SERVER EDIT INTENT/);
+    assert.match(prompt, entry.expected);
+    assert.match(prompt, /SOURCE PHOTOGRAPH AUTHORITY/);
+  }
+});
+
 test('localized edits preserve the source person count without requesting a secondary character', () => {
   for (const mode of ['AI_FILTER', 'BACKGROUND_REPLACE'] as const) {
     for (const personId of [null, catalogFixtures.featuredPeople[0]!.id]) {
