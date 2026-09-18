@@ -279,6 +279,7 @@ function createGenerationRecipe(
     beauty?: LegacyGenerationRecipe['beauty'];
     transformation?: LegacyGenerationRecipe['transformation'];
     trendPreset?: LegacyGenerationRecipe['trendPreset'];
+    toolPreset?: LegacyGenerationRecipe['toolPreset'];
   },
   character: CharacterAuthorization | null,
   selection: GenerationSelectionInput,
@@ -296,6 +297,7 @@ function createGenerationRecipe(
     ...(input.beauty ? { beauty: input.beauty } : {}),
     ...(input.transformation ? { transformation: input.transformation } : {}),
     ...(input.trendPreset ? { trendPreset: input.trendPreset } : {}),
+    ...(input.toolPreset ? { toolPreset: input.toolPreset } : {}),
     composition: input.compositionDetails ?? legacyComposition(input.composition),
     character: character
       ? character.mode === 'LICENSED_REFERENCE'
