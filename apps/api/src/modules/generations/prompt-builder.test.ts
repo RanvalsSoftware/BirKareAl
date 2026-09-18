@@ -335,7 +335,7 @@ test('every new scene resolves to its own environment, not an unrelated legacy f
     'red-carpet': /fictional red-carpet entrance/,
     'luxury-car': /parked, unbranded premium vehicle/,
     'istanbul-sunset': /waterfront city terrace/,
-    'cosmic-camp': /rocky night campsite/,
+    'cosmic-camp': /rocky campsite at night/,
     'waterfront-night': /suspension bridge/,
     'coastal-terrace': /Mediterranean/,
     'window-portrait': /window light/,
@@ -389,6 +389,35 @@ test('human photographic scenes inherit source-fidelity and anti-CGI rules', () 
   assert.match(prompt, /Do not invent, extend or reconstruct unseen body regions/);
   assert.match(prompt, /real-looking public waterfront promenade/);
   assert.match(prompt, /Avoid exaggerated neon, excessive bloom, artificial HDR/);
+
+  const redCarpet = buildGenerationPrompt({
+    ...sourceEditFixture('FULL_SCENE'),
+    generation: {
+      ...sourceEditFixture('FULL_SCENE').generation,
+      recipe: {
+        version: 1,
+        filterIntensity: 60,
+        character: null,
+        composition: {
+          shotType: 'HALF_BODY',
+          cameraAngle: 'EYE_LEVEL',
+          subjectPosition: 'CENTER',
+          backgroundDepth: 'BALANCED',
+        },
+        selection: {
+          sceneTemplateId: scene('red-carpet').id,
+          stylePresetId: catalogFixtures.styles.find((entry) => entry.slug === 'natural-light')!.id,
+          featuredPersonId: null,
+        },
+      },
+    } as GenerationRecord,
+    project: {
+      ...sourceEditFixture('FULL_SCENE').project,
+      sceneTemplateId: scene('red-carpet').id,
+    },
+  });
+  assert.match(redCarpet, /photographed like a real event arrival/);
+  assert.match(redCarpet, /Avoid excessive bloom, perfect luxury-ad lighting, synthetic bokeh/);
 });
 
 test('composition never requires invented body regions just to satisfy framing', () => {
