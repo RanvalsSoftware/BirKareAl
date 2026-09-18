@@ -22,7 +22,7 @@ BirKare iki kontrollü model hattı kullanır:
 | Pro portre                 | temel bedele ek        | —      |    +2 |
 | Yüz ve kimlik koruma       | her üretime dahil      | —      |     0 |
 
-Sunburst hattı yalnız backend tarafından seçilir. `STANDARD` veya `HD` isteğinde güzellik düzenlemesi, cinsiyet görünümü dönüşümü, Pro portre ya da seçilmiş karakter varsa hassas hat kullanılır. `PREVIEW` her durumda Flare ile kalır. Mobil uygulama model adı veya `premiumModel` bayrağı gönderemez.
+Sunburst hattı yalnız backend tarafından seçilir. `STANDARD` veya `HD` isteğinde tam sahne (`FULL_SCENE`), akım/trend, güzellik düzenlemesi, cinsiyet görünümü dönüşümü, Pro portre ya da seçilmiş karakter varsa hassas hat kullanılır. `PREVIEW` her durumda Flare ile kalır. Mobil uygulama model adı veya `premiumModel` bayrağı gönderemez.
 
 Ekler seçildikleri her çıktı için bir kez hesaplanır; dört görsel üretiminde hem temel hem de ek bedel dörtle çarpılır. Birbirinin yerine geçen akım, beauty ve normal filtre katmanları aynı seçim için üst üste yazılmaz. Örneğin Premium HD sahne + filtre + karakter `10 + 1 + 1 + 2 = 14 kredi`; Premium HD Pro portre `10 + 2 = 12 kredi` olur. Yüz ve kimlik koruması hiçbir zaman gizli ek bedel üretmez.
 
@@ -30,8 +30,8 @@ Ekler seçildikleri her çıktı için bir kez hesaplanır; dört görsel üreti
 
 | Model                    | Durum                    | Güçlü olduğu yer                                  | BirKare kararı                                |
 | ------------------------ | ------------------------ | ------------------------------------------------- | --------------------------------------------- |
-| `gpt-image-2.5-flare`    | Güncel                   | Hızlı, yüksek kaliteli günlük üretim ve düzenleme | Önizleme, normal filtre, akım ve sahne hattı  |
-| `gpt-image-2.5-sunburst` | Güncel                   | En yüksek düzenleme hassasiyeti ve talimata uyum  | Kimlik/yüz hassas işlemler                    |
+| `gpt-image-2.5-flare`    | Güncel                   | Hızlı, yüksek kaliteli günlük üretim ve düzenleme | Önizleme ve normal filtre hattı                |
+| `gpt-image-2.5-sunburst` | Güncel                   | En yüksek düzenleme hassasiyeti ve talimata uyum  | Standart/HD sahne, akım ve kimlik hassas işler |
 | `gpt-image-2`            | Güncel ama önceki nesil  | Esnek boyut ve daha düşük token birim fiyatı      | Geri dönüş seçeneği; varsayılan değil         |
 | `gpt-image-1.5`          | Kullanımdan kaldırılıyor | Önceki nesil üretim/düzenleme                     | Yeni üretimde kullanılmaz                     |
 | `gpt-image-1-mini`       | Kullanımdan kaldırılıyor | Eski düşük maliyetli görsel modeli                | Kalite ve yaşam döngüsü nedeniyle kullanılmaz |
@@ -80,11 +80,11 @@ Aynı birim fiyat, iki modelin aynı istekte mutlaka aynı toplam tokenı kullan
 
 ### Paketlerin üretim karşılığı
 
-|                  Kredi | Flare standart (4) | Standart filtre (5) | Sunburst beauty (7) | Flare HD akım (9) | Premium HD sahne + filtre + karakter (14) |
-| ---------------------: | -----------------: | ------------------: | ------------------: | ----------------: | ----------------------------------------: |
-|               80 aylık |                 20 |                  16 |                  11 |                 8 |                                         5 |
-|             960 yıllık |                240 |                 192 |                 137 |               106 |                                        68 |
-| 200 lifetime başlangıç |                 50 |                  40 |                  28 |                22 |                                        14 |
+|                  Kredi | Flare standart (4) | Standart filtre (5) | Sunburst beauty (7) | Sunburst HD akım (12) | Premium HD sahne + filtre + karakter (14) |
+| ---------------------: | -----------------: | ------------------: | ------------------: | -------------------: | ----------------------------------------: |
+|               80 aylık |                 20 |                  16 |                  11 |                    6 |                                         5 |
+|             960 yıllık |                240 |                 192 |                 137 |                   80 |                                        68 |
+| 200 lifetime başlangıç |                 50 |                  40 |                  28 |                   16 |                                        14 |
 
 ## Katkı payı rezerv tablosu
 
@@ -107,12 +107,14 @@ Kod tabanında şu kapsam ayrı ve sunucu tarafında derlenir:
 
 - 11 sahnenin her biri kendine ait ortam, ışık ve kompozisyon talimatına sahiptir.
 - 13 filtre/stil için düşük, orta ve yüksek yoğunluk birbirinden farklıdır; toplam 39 yoğunluk yönü test edilir.
-- 9 akımın her birinde sahne, kıyafet, kamera ve ışık ayrı tarif edilir.
+- 11 akımın her birinde sahne, kıyafet, kamera ve ışık ayrı tarif edilir; kamera/poz yönleri kaynak fotoğraftaki görünür anatomi ve kadrajla sınırlandırılır.
 - 7 güzellik ayarı ve 3 makyaj seçeneği toplam 10 farklı prompt üretir.
 - Kullanıcı metni en fazla 1000 karakterdir ve kimlik, anatomi, güvenlik, model ya da çıktı kurallarını geçersiz kılamaz.
 - Kaynak kişi, kişi sayısı, yüz geometrisi, ten tonu, belirgin işaretler ve gerçekçi anatomi korunur.
 - Sıfır yoğunlukta seçili trend uygulanmaz; düşük/orta/yüksek yoğunluk gerçekten farklı talimat üretir.
 - Worker ücretli görsel isteğini otomatik tekrar etmez. Başarısız/engellenmiş işte ayrılan kredi idempotent olarak iade edilir.
+
+Standart/HD tam sahne ve akım üretimleri hassas Sunburst hattına geçtiği için temel üretim bedeli premium tablodan hesaplanır: örneğin Standart tam sahne (ek filtresiz) `6 + 1 = 7`, HD tam sahne `10 + 1 = 11`, Standart akım `6 + 2 = 8`, HD akım `10 + 2 = 12` kredidir. Preview aynı seçimlerde Flare/low kalır.
 
 Filtrenin adı fiyatı değiştirmez; uygulanan her normal filtre çıktı başına `+1` kredidir. Akım (`+2`) veya beauty (`+1`/`+2`) seçimi aynı doğal-ışık adaptörünü kullandığında ayrıca filtre bedeli eklenmez. Sahne ve karakter gibi gerçekten birlikte uygulanabilen seçimler ayrı kalemler olarak eklenir. Kullanıcı yalnızca kart veya slider seçerken kredi harcamaz; backend teklifi onaylanıp üretim kaydı oluşturulurken toplam tutar atomik olarak ayrılır.
 
