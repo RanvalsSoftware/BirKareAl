@@ -9,3 +9,5 @@ export * from './policy.js';
 export * from './quote.js';
 export * from './studio.js';
 export * from './billing.js';
+
+export * from './edit-tools.js';
