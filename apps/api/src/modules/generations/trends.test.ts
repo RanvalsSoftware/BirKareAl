@@ -42,6 +42,41 @@ test('all eleven server trend presets survive quote/create/preview validation an
   }
 });
 
+test('AI tool presets are allowlisted and must match their server mode', () => {
+  const toolPayload = {
+    ...payload,
+    trendPreset: undefined,
+    toolPreset: 'light' as const,
+    preserveClothes: true,
+  };
+  assert.equal(CreateGenerationSchema.parse(toolPayload).toolPreset, 'light');
+  assert.equal(QuoteGenerationSchema.parse({
+    mode: 'AI_FILTER',
+    quality: 'STANDARD',
+    numberOfImages: 1,
+    stylePresetId: natural.id,
+    toolPreset: 'light',
+  }).toolPreset, 'light');
+
+  assert.equal(
+    CreateGenerationSchema.safeParse({ ...toolPayload, toolPreset: 'background' }).success,
+    false,
+  );
+  assert.equal(
+    CreateGenerationSchema.safeParse({ ...toolPayload, toolPreset: 'unknown-tool' }).success,
+    false,
+  );
+  assert.equal(
+    CreateGenerationSchema.safeParse({
+      ...toolPayload,
+      trendPreset: 'kpop_star',
+      toolPreset: 'light',
+      preserveClothes: false,
+    }).success,
+    false,
+  );
+});
+
 test('trend requests reject mismatched modes, other characters, identity changes and clothing lock', () => {
   for (const changes of [
     { mode: 'FULL_SCENE', sceneTemplateId: catalogFixtures.scenes[0]!.id },
