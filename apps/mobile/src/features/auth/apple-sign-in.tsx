@@ -9,6 +9,10 @@ type AppleSignInButtonProps = {
   onSuccess: (input: { idToken: string; firstName?: string; lastName?: string }) => Promise<void>;
 };
 
+type AppleAuthenticationError = {
+  code?: unknown;
+};
+
 export function AppleSignInButton({
   disabled = false,
   onError,
@@ -56,16 +60,47 @@ export function AppleSignInButton({
         });
       })
       .catch((error: unknown) => {
-        if ((error as { code?: unknown } | null)?.code === 'ERR_REQUEST_CANCELED') return;
-        onError(
-          error instanceof Error
-            ? error
-            : new Error(
-                copy(
-                  'Apple ile giriş tamamlanamadı. Lütfen tekrar deneyin.',
-                  'Could not complete Sign in with Apple. Please try again.',
-                ),
+        const code = (error as AppleAuthenticationError | null)?.code;
+        if (code === 'ERR_REQUEST_CANCELED') return;
+
+        if (code === 'ERR_REQUEST_UNKNOWN') {
+          onError(
+            new Error(
+              copy(
+                'Apple ile giriş bu iOS oturumunda başlatılamadı. iOS Simulator kullanıyorsan gerçek bir iPhone’da dene. Gerçek cihazda da sürerse Sign in with Apple yetkisini içeren yeni bir iOS build kur.',
+                'Sign in with Apple could not start in this iOS session. If you are using the iOS Simulator, try a real iPhone. If it also happens on a real device, install a new iOS build with the Sign in with Apple capability enabled.',
               ),
+            ),
+          );
+          return;
+        }
+
+        if (
+          code === 'ERR_REQUEST_FAILED' ||
+          code === 'ERR_REQUEST_NOT_HANDLED' ||
+          code === 'ERR_REQUEST_NOT_INTERACTIVE' ||
+          code === 'ERR_INVALID_RESPONSE' ||
+          code === 'ERR_INVALID_OPERATION' ||
+          code === 'ERR_INVALID_SCOPE'
+        ) {
+          onError(
+            new Error(
+              copy(
+                'Apple ile giriş şu anda tamamlanamadı. Lütfen tekrar dene veya uygulamanın güncel iOS build’ini kullan.',
+                'Sign in with Apple could not be completed right now. Please try again or use the latest iOS build of the app.',
+              ),
+            ),
+          );
+          return;
+        }
+
+        onError(
+          new Error(
+            copy(
+              'Apple ile giriş tamamlanamadı. Lütfen tekrar deneyin.',
+              'Could not complete Sign in with Apple. Please try again.',
+            ),
+          ),
         );
       })
       .finally(() => setWorking(false));
@@ -74,7 +109,7 @@ export function AppleSignInButton({
   return (
     <View
       pointerEvents={disabled || working ? 'none' : 'auto'}
-      style={disabled ? styles.disabled : null}
+      style={[styles.container, disabled ? styles.disabled : null]}
     >
       <AppleAuthentication.AppleAuthenticationButton
         accessibilityLabel={copy('Apple ile devam et', 'Continue with Apple')}
@@ -89,6 +124,7 @@ export function AppleSignInButton({
 }
 
 const styles = StyleSheet.create({
+  container: { marginTop: 10 },
   button: { height: 54, width: '100%' },
   disabled: { opacity: 0.55 },
 });
