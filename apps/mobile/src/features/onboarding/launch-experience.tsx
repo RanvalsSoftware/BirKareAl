@@ -163,9 +163,9 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
       wordReveal.set(
         withDelay(630, withTiming(1, { duration: 620, easing: Easing.out(Easing.cubic) })),
       );
-      bloomOpacity.set(withDelay(1_240, withTiming(0.42, { duration: 340 })));
+      bloomOpacity.set(withDelay(1_180, withTiming(0.17, { duration: 360 })));
       bloomScale.set(
-        withDelay(1_240, withTiming(1.85, { duration: 940, easing: Easing.out(Easing.cubic) })),
+        withDelay(1_180, withTiming(1.28, { duration: 980, easing: Easing.out(Easing.cubic) })),
       );
     }
 
@@ -210,6 +210,7 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
   const wordMaskStyle = useAnimatedStyle(() => ({
     opacity: wordOpacity.get(),
     width: 332 * wordReveal.get(),
+    transform: [{ translateY: interpolate(wordReveal.get(), [0, 1], [14, 0]) }],
   }));
   const bloomStyle = useAnimatedStyle(() => ({
     opacity: bloomOpacity.get(),
@@ -218,12 +219,12 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
 
   return (
     <SafeAreaView edges={['top', 'bottom']} style={styles.logoSafe}>
-      <LinearGradient colors={['#000000', '#090704', '#000000']} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={['#000000', '#030201', '#000000']} style={StyleSheet.absoluteFill} />
       <View accessibilityLabel="BirKare AI açılıyor" style={styles.logoCanvas}>
         <View pointerEvents="none" style={styles.logoOrbitTop} />
         <View pointerEvents="none" style={styles.logoOrbitBottom} />
         <LinearGradient
-          colors={['rgba(255,196,0,0)', 'rgba(255,196,0,0.14)', 'rgba(255,196,0,0)']}
+          colors={['rgba(255,196,0,0)', 'rgba(255,196,0,0.065)', 'rgba(255,196,0,0)']}
           end={{ x: 0.9, y: 0.9 }}
           pointerEvents="none"
           start={{ x: 0.15, y: 0.05 }}
@@ -235,18 +236,20 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
         <Animated.View style={[styles.logoMarkSlot, markStyle]}>
           <Image source={onboardingImages.brandMark} style={styles.logoMarkImage} />
         </Animated.View>
-        <Animated.View style={[styles.logoWordMask, wordMaskStyle]}>
-          <View style={styles.logoWordLine}>
-            <Text style={styles.logoWordText}>BirKare</Text>
-            <Text style={styles.logoWordAi}>ΛI</Text>
-          </View>
-        </Animated.View>
-        <Animated.View
-          entering={reducedMotion ? undefined : FadeIn.delay(1_050).duration(420)}
-          style={styles.logoCaption}
-        >
-          <Text style={styles.logoCaptionText}>Hayalindeki kareye gir.</Text>
-        </Animated.View>
+        <View pointerEvents="none" style={styles.logoCopyBlock}>
+          <Animated.View style={[styles.logoWordMask, wordMaskStyle]}>
+            <View style={styles.logoWordLine}>
+              <Text style={styles.logoWordText}>BirKare</Text>
+              <Text style={styles.logoWordAi}>ΛI</Text>
+            </View>
+          </Animated.View>
+          <Animated.View
+            entering={reducedMotion ? undefined : FadeInDown.delay(1_100).duration(520)}
+            style={styles.logoCaption}
+          >
+            <Text style={styles.logoCaptionText}>Hayalindeki kareye gir.</Text>
+          </Animated.View>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -1514,111 +1517,129 @@ const styles = StyleSheet.create({
   logoCanvas: {
     alignItems: 'center',
     flex: 1,
-    justifyContent: 'center',
     overflow: 'hidden',
   },
   logoOrbitTop: {
-    borderColor: 'rgba(255,196,0,0.48)',
+    borderColor: 'rgba(255,196,0,0.22)',
     borderRadius: 430,
     borderWidth: 1,
     height: 860,
     position: 'absolute',
-    right: -500,
-    top: -450,
+    right: -515,
+    top: -475,
     width: 860,
   },
   logoOrbitBottom: {
-    borderColor: 'rgba(255,196,0,0.30)',
+    borderColor: 'rgba(255,196,0,0.17)',
     borderRadius: 390,
     borderWidth: 1,
-    bottom: -530,
+    bottom: -545,
     height: 780,
-    left: -410,
+    left: -420,
     position: 'absolute',
     width: 780,
   },
   logoWarmVeil: {
     bottom: 0,
     left: 0,
+    opacity: 0.48,
     position: 'absolute',
     right: 0,
     top: 0,
   },
   logoBloom: {
-    backgroundColor: 'rgba(255,196,0,0.15)',
-    borderRadius: 230,
-    height: 460,
+    backgroundColor: 'rgba(255,196,0,0.08)',
+    borderRadius: 180,
+    height: 360,
+    left: '50%',
+    marginLeft: -180,
     position: 'absolute',
-    width: 460,
+    top: '25%',
+    width: 360,
   },
   logoHorizonFlare: {
-    backgroundColor: 'rgba(255,207,65,0.75)',
+    backgroundColor: 'rgba(255,207,65,0.38)',
     borderRadius: 999,
     height: 1,
+    left: '50%',
+    marginLeft: -104,
     position: 'absolute',
-    top: '55%',
-    width: 224,
+    top: '57%',
+    width: 208,
   },
   logoArc: {
-    borderColor: colors.accentYellow,
-    borderRadius: 170,
-    borderRightColor: 'rgba(255,196,0,0.06)',
-    borderTopColor: 'rgba(255,196,0,0.20)',
-    borderWidth: 1.5,
-    height: 340,
+    borderColor: 'rgba(255,196,0,0.88)',
+    borderRadius: 180,
+    borderRightColor: 'rgba(255,196,0,0.04)',
+    borderTopColor: 'rgba(255,196,0,0.13)',
+    borderWidth: 1.15,
+    height: 360,
+    left: '50%',
+    marginLeft: -180,
     position: 'absolute',
-    width: 340,
+    top: '25%',
+    width: 360,
   },
   logoMarkSlot: {
-    height: 175,
-    marginBottom: 17,
-    width: 175,
+    height: 188,
+    left: '50%',
+    marginLeft: -94,
+    position: 'absolute',
+    top: '31%',
+    width: 188,
   },
   logoMarkImage: {
     height: '100%',
     resizeMode: 'contain',
     width: '100%',
   },
+  logoCopyBlock: {
+    alignItems: 'center',
+    bottom: '16%',
+    left: 18,
+    position: 'absolute',
+    right: 18,
+  },
   logoWordMask: {
-    height: 70,
+    height: 64,
     overflow: 'hidden',
   },
   logoWordLine: {
     alignItems: 'baseline',
     flexDirection: 'row',
-    height: 76,
+    height: 68,
     justifyContent: 'center',
     width: 332,
   },
   logoWordText: {
     color: '#FFD34F',
-    fontSize: 56,
-    fontWeight: '700',
-    letterSpacing: -2.8,
-    lineHeight: 70,
-    textShadowColor: 'rgba(255,196,0,0.38)',
+    fontSize: 49,
+    fontWeight: '500',
+    letterSpacing: -2.25,
+    lineHeight: 62,
+    textShadowColor: 'rgba(255,196,0,0.24)',
     textShadowOffset: { height: 0, width: 0 },
-    textShadowRadius: 13,
+    textShadowRadius: 9,
   },
   logoWordAi: {
-    color: '#FFE784',
-    fontSize: 54,
-    fontWeight: '500',
-    letterSpacing: -2,
-    lineHeight: 70,
-    marginLeft: 10,
-    textShadowColor: 'rgba(255,196,0,0.36)',
+    color: '#FFE899',
+    fontSize: 47,
+    fontWeight: '400',
+    letterSpacing: -1.6,
+    lineHeight: 62,
+    marginLeft: 9,
+    textShadowColor: 'rgba(255,196,0,0.22)',
     textShadowOffset: { height: 0, width: 0 },
-    textShadowRadius: 13,
+    textShadowRadius: 9,
   },
   logoCaption: {
-    marginTop: 11,
+    marginTop: 6,
   },
   logoCaptionText: {
-    color: '#ECE0C4',
-    fontSize: 17,
-    fontWeight: '500',
-    letterSpacing: 0.35,
+    color: '#E8DEC8',
+    fontSize: 16,
+    fontWeight: '400',
+    letterSpacing: 0.45,
   },
   bridgeCanvas: {
     alignItems: 'center',
