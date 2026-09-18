@@ -1,13 +1,13 @@
+import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { useState } from 'react';
-import { Image, Platform, StyleSheet } from 'react-native';
+import { Platform } from 'react-native';
 import { useCopy } from '@/features/settings/language-store';
 import { SocialButton } from './auth-ui';
 import { GoogleAuthError, googleConfigurationError, googleSignInError } from './google-errors';
 
 type NativeGoogleSignIn = typeof import('@react-native-google-signin/google-signin');
 
-const GOOGLE_BRAND_ICON = require('../../../assets/auth/google-g.png');
 
 type GoogleConfigExtra = {
   googleIosClientId?: string;
@@ -199,14 +199,7 @@ export function GoogleSignInButton({
   return (
     <SocialButton
       disabled={disabled || isWorking}
-      icon={
-        <Image
-          accessibilityIgnoresInvertColors
-          resizeMode="contain"
-          source={{ uri: GOOGLE_BRAND_ICON }}
-          style={styles.googleIcon}
-        />
-      }
+      icon={<Ionicons name="logo-google" color="#111111" size={20} />}
       loading={isWorking}
       loadingLabel={copy('Google açılıyor…', 'Opening Google…')}
       onPress={startGoogleSignIn}
@@ -216,7 +209,3 @@ export function GoogleSignInButton({
     </SocialButton>
   );
 }
-
-const styles = StyleSheet.create({
-  googleIcon: { height: 20, width: 20 },
-});
