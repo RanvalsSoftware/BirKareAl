@@ -34,6 +34,14 @@ async function fixture() {
   const repository = new MemoryRepository('isolated-test-identity-secret');
   const user = await repository.createUser(userInput());
   await repository.updateUser(user.id, { status: 'ACTIVE', emailVerifiedAt: new Date() });
+  await repository.grantCredits({
+    userId: user.id,
+    amount: WELCOME_CREDIT_AMOUNT,
+    type: 'BONUS',
+    referenceType: 'TEST_FIXTURE',
+    referenceId: user.id,
+    idempotencyKey: `test-fixture:${user.id}`,
+  });
   const deletedKeys: string[] = [];
   let failStorage = false;
   const storage = {
@@ -258,6 +266,14 @@ test('accepted deletion revokes sessions, delays storage cleanup and rejects new
 test('cleanup is retryable and removes only the requested account and its related data', async () => {
   const f = await fixture();
   const other = await f.repository.createUser(userInput('keep-me@example.test'));
+  await f.repository.grantCredits({
+    userId: other.id,
+    amount: WELCOME_CREDIT_AMOUNT,
+    type: 'BONUS',
+    referenceType: 'TEST_FIXTURE',
+    referenceId: other.id,
+    idempotencyKey: `test-fixture:${other.id}`,
+  });
   const { ticket } = await f.repository.claimSupportTicket({
     userId: f.user.id,
     idempotencyKey: 'support-deletion-test',
@@ -405,8 +421,8 @@ test('reserved work blocks deletion without changing user status or creating a m
   );
 });
 
-test('appearance contract accepts dark and light themes with persisted glass and motion values', async () => {
-  assert.equal(UpdatePreferencesSchema.safeParse({ theme: 'light' }).success, true);
+test('appearance contract keeps the dark-only theme with persisted glass and motion values', async () => {
+  assert.equal(UpdatePreferencesSchema.safeParse({ theme: 'light' }).success, false);
   assert.equal(UpdatePreferencesSchema.safeParse({ theme: 'system' }).success, false);
   assert.equal(UpdatePreferencesSchema.safeParse({ glassEffects: 'false' }).success, false);
   const preferences = UpdatePreferencesSchema.parse({

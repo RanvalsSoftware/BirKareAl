@@ -13,6 +13,7 @@ test('HTTP photo upload accepts exact ArrayBuffer bytes; MIME, ownership and rev
   // Completely isolated account/storage. No real DB, uploads, queues or AI provider.
   const repository = new MemoryRepository();
   const objects = new Map<string, Buffer>();
+  let getObjectCalls = 0;
   const storage: StorageProvider = {
     createDownloadUrl: async ({ key }) => `/test/${key}`,
     deleteObject: async (key) => {
@@ -25,7 +26,11 @@ test('HTTP photo upload accepts exact ArrayBuffer bytes; MIME, ownership and rev
     putObject: async ({ key, body }) => {
       objects.set(key, Buffer.from(body));
     },
-    getObject: async (key) => objects.get(key)!,
+    getObject: async (key) => {
+      getObjectCalls += 1;
+      return objects.get(key)!;
+    },
+    statObject: async (key) => ({ sizeBytes: objects.get(key)?.length ?? 0 }),
     exists: async (key) => objects.has(key),
   };
   const tokenService = new TokenService({
@@ -106,16 +111,84 @@ test('HTTP photo upload accepts exact ArrayBuffer bytes; MIME, ownership and rev
       body: bytes.buffer,
     });
     assert.equal(upload.status, 200);
+    const pendingAsset = await repository.getAssetById(data.assetId);
+    assert.ok(pendingAsset);
+    const pendingStorageKey = pendingAsset.storageKey;
+    assert.match(pendingStorageKey, /\/pending\.png$/u);
     const completed = await fetch(`${base}/v1/uploads/${data.assetId}/complete`, {
       method: 'POST',
       headers: authorized,
     });
     assert.equal(completed.status, 200);
+    const readyAsset = await repository.getAssetById(data.assetId);
+    assert.ok(readyAsset);
+    assert.match(readyAsset.storageKey, /\/original\.png$/u);
+    assert.equal(readyAsset.sha256?.length, 64);
+    assert.equal(objects.has(pendingStorageKey), false);
+
+    // A real presigned PUT can be replayed until expiry. Replacing that old
+    // staging key must not alter the immutable object exposed by the API.
+    objects.set(pendingStorageKey, Buffer.alloc(bytes.byteLength + 1));
     const download = await fetch(`${base}/v1/assets/${data.assetId}/content`, {
       headers: authorized,
     });
     assert.equal(download.status, 200);
     assert.deepEqual(new Uint8Array(await download.arrayBuffer()), bytes);
+
+    const oversizedInitiate = await fetch(`${base}/v1/uploads/initiate`, {
+      method: 'POST',
+      headers: { ...authorized, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        purpose: 'USER_SOURCE',
+        fileName: 'oversized.png',
+        mimeType: 'image/png',
+        sizeBytes: bytes.byteLength,
+      }),
+    });
+    const oversizedData = (await oversizedInitiate.json()) as { data: { assetId: string } };
+    const oversizedAsset = await repository.getAssetById(oversizedData.data.assetId);
+    assert.ok(oversizedAsset);
+    objects.set(oversizedAsset.storageKey, Buffer.alloc(bytes.byteLength + 1));
+    const readsBeforeOversizedComplete = getObjectCalls;
+    const oversizedComplete = await fetch(
+      `${base}/v1/uploads/${oversizedData.data.assetId}/complete`,
+      { method: 'POST', headers: authorized },
+    );
+    assert.equal(oversizedComplete.status, 403);
+    assert.equal(
+      ((await oversizedComplete.json()) as { error: { code: string } }).error.code,
+      'UPLOAD_VALIDATION_FAILED',
+    );
+    assert.equal(getObjectCalls, readsBeforeOversizedComplete);
+    assert.equal((await repository.getAssetById(oversizedAsset.id))?.status, 'REJECTED');
+    assert.equal(objects.has(oversizedAsset.storageKey), false);
+
+    const retryInitiate = await fetch(`${base}/v1/uploads/initiate`, {
+      method: 'POST',
+      headers: { ...authorized, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        purpose: 'USER_SOURCE',
+        fileName: 'invalid.png',
+        mimeType: 'image/png',
+        sizeBytes: bytes.byteLength,
+      }),
+    });
+    const retryData = (await retryInitiate.json()) as { data: { assetId: string } };
+    const retryAsset = await repository.getAssetById(retryData.data.assetId);
+    assert.ok(retryAsset);
+    objects.set(retryAsset.storageKey, Buffer.alloc(bytes.byteLength));
+    const retry = await fetch(`${base}/v1/assets/${retryAsset.id}/retry-validation`, {
+      method: 'POST',
+      headers: authorized,
+    });
+    assert.equal(retry.status, 403);
+    assert.equal(
+      ((await retry.json()) as { error: { code: string } }).error.code,
+      'UPLOAD_VALIDATION_FAILED',
+    );
+    assert.equal((await repository.getAssetById(retryAsset.id))?.status, 'REJECTED');
+    assert.equal(objects.has(retryAsset.storageKey), false);
+
     const denied = await fetch(`${base}/v1/assets/${data.assetId}/content`, {
       headers: { Authorization: `Bearer ${stranger.accessToken}` },
     });

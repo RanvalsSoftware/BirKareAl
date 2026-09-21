@@ -169,6 +169,27 @@ describe('RevenueCat server verification and credit grants', () => {
     assert.match([...f.grants.keys()][0]!, /2026-09/);
   });
 
+  it('maps current Google Play base-plan identifiers to the configured plans', async () => {
+    const monthly = fixture(
+      subscriber('com.birkareai.pro.monthly:monthly-autorenewing'),
+    );
+    const annual = fixture(
+      subscriber('com.birkareai.pro.yearly:yearly-autorenewing'),
+    );
+
+    const monthlyStatus = await monthly.service.readStatus(USER_ID, true);
+    const annualStatus = await annual.service.readStatus(USER_ID, true);
+
+    assert.deepEqual(
+      { plan: monthlyStatus.plan, creditsGranted: monthlyStatus.creditsGranted },
+      { plan: 'monthly', creditsGranted: 80 },
+    );
+    assert.deepEqual(
+      { plan: annualStatus.plan, creditsGranted: annualStatus.creditsGranted },
+      { plan: 'annual', creditsGranted: 80 },
+    );
+  });
+
   it('grants lifetime starting credits once and reports no expiration', async () => {
     const f = fixture(subscriber('com.birkareai.pro.lifetime', { expires: null }));
     const first = await f.service.readStatus(USER_ID, true);

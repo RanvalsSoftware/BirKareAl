@@ -7,7 +7,12 @@ import type {
   ProjectMode,
 } from '@birkare/shared';
 import type { CatalogFeaturedPerson, CatalogItem, ResolvedStudioSelection } from '@birkare/shared';
-import type { AiToolPreset, BeautySettings, GenderTransformation, TrendPreset } from '@birkare/shared';
+import type {
+  AiToolPreset,
+  BeautySettings,
+  GenderTransformation,
+  TrendPreset,
+} from '@birkare/shared';
 
 export type UserRole = 'USER' | 'SUPPORT' | 'MODERATOR' | 'ADMIN' | 'SUPER_ADMIN';
 export type UserStatus =
@@ -129,9 +134,17 @@ export type EmailTokenRecord = {
   userId: string;
   type: EmailTokenType;
   tokenHash: string;
+  failedAttempts: number;
   expiresAt: Date;
   usedAt: Date | null;
   createdAt: Date;
+};
+
+export type PasswordResetCompletionResult =
+  'COMPLETED' | 'INVALID_TOKEN' | 'ACCOUNT_SUSPENDED' | 'ACCOUNT_UNAVAILABLE';
+export type EmailVerificationCompletionResult = {
+  status: 'VERIFIED' | 'INVALID_TOKEN' | 'ACCOUNT_SUSPENDED' | 'ACCOUNT_UNAVAILABLE';
+  welcomeCreditsGranted: boolean;
 };
 
 export type AssetRecord = {
@@ -188,7 +201,7 @@ export type GenerationOutputRecord = {
  * infer multi-image meaning from mutable project state or client ordering.
  */
 export type GenerationInputRole =
-  'PRIMARY_USER' | 'PRODUCT' | 'PRIMARY_PERSON' | 'GARMENT' | 'HAND';
+  'PRIMARY_USER' | 'PRODUCT' | 'PRIMARY_PERSON' | 'GARMENT' | 'HAND' | 'REFERENCE';
 
 export type GenerationInputRecord = {
   id: string;
@@ -302,6 +315,7 @@ export type GenerationRecord = {
 export type CreditWalletRecord = {
   id: string;
   userId: string;
+  unlimited?: boolean;
   available: number;
   reserved: number;
   lifetimeEarned: number;
@@ -309,6 +323,39 @@ export type CreditWalletRecord = {
   version: number;
   createdAt: Date;
   updatedAt: Date;
+};
+
+export type GenerationCreditFinalization = {
+  status: Extract<GenerationStatus, 'BLOCKED' | 'COMPLETED' | 'FAILED' | 'CANCELLED'>;
+  stage: string;
+  progress: number;
+  providerRequestId?: string | null;
+  providerUsage?: GenerationRecord['providerUsage'];
+  chargedCredits?: number;
+  refundedCredits?: number;
+  failureCode?: string | null;
+  failureMessage?: string | null;
+  completedAt?: Date | null;
+  failedAt?: Date | null;
+};
+
+export type CreditSettlementInput = {
+  userId: string;
+  generationId: string;
+  amount: number;
+  /**
+   * When supplied, the terminal generation write and reservation settlement
+   * commit together. Only the transaction that claims the active reservation
+   * may apply this update.
+   */
+  finalization?: GenerationCreditFinalization;
+};
+
+export type CreditSettlementResult = {
+  wallet: CreditWalletRecord;
+  applied: boolean;
+  outcome: 'PENDING' | 'CAPTURED' | 'RELEASED' | 'NOT_FOUND';
+  generation: GenerationRecord | null;
 };
 
 export type CreditTransactionRecord = {
@@ -411,6 +458,8 @@ export type CreateVerifiedSocialUserInput = {
   providerAccountId: string;
   providerEmail: string;
   consents: CreateUserConsentInput[];
+  /** HMAC of the provider-normalized e-mail identity; never a login key. */
+  welcomeCreditAbuseHash?: string;
 };
 export type LinkAuthAccountInput = {
   userId: string;
@@ -473,6 +522,8 @@ export interface BirKareRepository {
   readonly kind: 'memory' | 'prisma';
   readiness(): Promise<{ ready: boolean; detail?: string }>;
   disconnect(): Promise<void>;
+  /** Seeds persistent anti-abuse claims for welcome grants made before this registry existed. */
+  backfillWelcomeCreditClaims(): Promise<number>;
 
   createUser(input: CreateUserInput): Promise<UserRecord>;
   getUserById(id: string): Promise<UserRecord | null>;
@@ -515,7 +566,11 @@ export interface BirKareRepository {
     >,
   ): Promise<UserRecord>;
 
-  createSession(input: CreateSessionInput): Promise<SessionRecord>;
+  createSession(
+    input: CreateSessionInput,
+    guard?: { expectedPasswordHash: string },
+  ): Promise<SessionRecord>;
+  getSessionById(id: string): Promise<SessionRecord | null>;
   getSessionByRefreshHash(refreshTokenHash: string): Promise<SessionRecord | null>;
   rotateSession(sessionId: string, next: CreateSessionInput): Promise<SessionRecord>;
   revokeSession(sessionId: string, reason: string): Promise<void>;
@@ -526,13 +581,34 @@ export interface BirKareRepository {
   createEmailToken(
     input: Omit<EmailTokenRecord, 'id' | 'usedAt' | 'createdAt'>,
   ): Promise<EmailTokenRecord>;
+  /** Atomically invalidates older tokens of the same purpose before issuing a replacement. */
+  replaceEmailToken(
+    input: Omit<EmailTokenRecord, 'id' | 'usedAt' | 'createdAt'>,
+  ): Promise<EmailTokenRecord>;
   consumeEmailToken(tokenHash: string, type: EmailTokenType): Promise<EmailTokenRecord | null>;
+  /**
+   * Atomically consumes a reset token, replaces the password, invalidates any
+   * remaining reset tokens, and revokes every active session for the account.
+   */
+  completePasswordReset(
+    tokenHash: string,
+    passwordHash: string,
+  ): Promise<PasswordResetCompletionResult>;
+  completeEmailVerification(
+    userId: string,
+    tokenHash: string,
+    maxFailedAttempts: number,
+    welcomeCreditAbuseHash: string,
+  ): Promise<EmailVerificationCompletionResult>;
+  invalidateEmailTokens(userId: string, type: EmailTokenType): Promise<void>;
 
   createAsset(input: CreateAssetInput): Promise<AssetRecord>;
   getAssetById(id: string): Promise<AssetRecord | null>;
   updateAsset(
     id: string,
-    input: Partial<Pick<AssetRecord, 'status' | 'sha256' | 'width' | 'height' | 'deletedAt'>>,
+    input: Partial<
+      Pick<AssetRecord, 'status' | 'storageKey' | 'sha256' | 'width' | 'height' | 'deletedAt'>
+    >,
   ): Promise<AssetRecord>;
 
   getCatalog(): Promise<CatalogSnapshot>;
@@ -589,17 +665,12 @@ export interface BirKareRepository {
     amount: number;
     idempotencyKey?: string;
   }): Promise<{ wallet: CreditWalletRecord; reservationId: string }>;
-  captureCredits(input: {
-    userId: string;
-    generationId: string;
-    amount: number;
-  }): Promise<CreditWalletRecord>;
-  releaseCredits(input: {
-    userId: string;
-    generationId: string;
-    amount: number;
-    reason?: string;
-  }): Promise<CreditWalletRecord>;
+  captureCredits(input: CreditSettlementInput): Promise<CreditSettlementResult>;
+  releaseCredits(
+    input: CreditSettlementInput & {
+      reason?: string;
+    },
+  ): Promise<CreditSettlementResult>;
   grantCredits(input: GrantCreditsInput): Promise<{
     wallet: CreditWalletRecord;
     transaction: CreditTransactionRecord;

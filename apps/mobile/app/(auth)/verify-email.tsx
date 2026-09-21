@@ -1,18 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import {
-  Animated,
-  Easing,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Animated, Easing, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { apiRequest } from '@/api/client';
-import { authMailToken, EMAIL_REQUEST_NOTICE } from '@/features/auth/email-delivery';
+import { emailVerificationCode, EMAIL_REQUEST_NOTICE } from '@/features/auth/email-delivery';
 
 import {
   AuthBrandBar,
@@ -33,10 +25,12 @@ export default function VerifyEmailScreen() {
   const reducedMotion = useReducedMotion();
   const {
     email: emailParam,
+    code: codeParam,
     token: tokenParam,
     delivery,
   } = useLocalSearchParams<{
     email?: string;
+    code?: string;
     token?: string;
     delivery?: string;
   }>();
@@ -46,28 +40,48 @@ export default function VerifyEmailScreen() {
   const inputRef = useRef<TextInput>(null);
   const operation = useRef(false);
   const successTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const successOpacity = useRef(new Animated.Value(0)).current;
-  const successScale = useRef(new Animated.Value(0.72)).current;
-  const successTranslateY = useRef(new Animated.Value(16)).current;
+  const [successOpacity] = useState(() => new Animated.Value(0));
+  const [successScale] = useState(() => new Animated.Value(0.72));
+  const [successTranslateY] = useState(() => new Animated.Value(16));
+  const [otpFocusScale] = useState(() => new Animated.Value(0.96));
 
-  const [token, setToken] = useState(authMailToken(tokenParam));
+  const [code, setCode] = useState(emailVerificationCode(codeParam ?? tokenParam));
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [resending, setResending] = useState(false);
   const [verified, setVerified] = useState(false);
+  const [inputFocused, setInputFocused] = useState(false);
+
+  const activeOtpIndex = Math.min(code.length, 5);
 
   useEffect(() => {
-    const incoming = authMailToken(tokenParam);
+    if (reducedMotion) {
+      otpFocusScale.setValue(1);
+      return;
+    }
+
+    otpFocusScale.setValue(0.96);
+    Animated.spring(otpFocusScale, {
+      toValue: 1,
+      damping: 12,
+      stiffness: 240,
+      mass: 0.55,
+      useNativeDriver: true,
+    }).start();
+  }, [activeOtpIndex, inputFocused, otpFocusScale, reducedMotion]);
+
+  useEffect(() => {
+    const incoming = emailVerificationCode(codeParam ?? tokenParam);
     if (!incoming) return;
     let active = true;
     void Promise.resolve().then(() => {
-      if (active) setToken(incoming);
+      if (active) setCode(incoming);
     });
     return () => {
       active = false;
     };
-  }, [tokenParam]);
+  }, [codeParam, tokenParam]);
 
   useEffect(() => {
     if (!error) return;
@@ -151,10 +165,15 @@ export default function VerifyEmailScreen() {
   const verify = async () => {
     if (operation.current || verified) return;
 
-    const normalized = authMailToken(token);
+    const normalized = emailVerificationCode(code);
 
-    if (normalized.length < 40) {
-      setError('E-postadaki doğrulama kodunun tamamını gir.');
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('Kodu doğrulamak için kayıt ekranındaki e-posta adresin gerekli.');
+      return;
+    }
+
+    if (!/^\d{6}$/.test(normalized)) {
+      setError('E-postandaki 6 haneli doğrulama kodunu gir.');
       inputRef.current?.focus();
       return;
     }
@@ -170,7 +189,8 @@ export default function VerifyEmailScreen() {
         {
           method: 'POST',
           body: JSON.stringify({
-            token: normalized,
+            email,
+            code: normalized,
           }),
         },
         {
@@ -217,7 +237,7 @@ export default function VerifyEmailScreen() {
       );
 
       if (result.developmentVerificationToken) {
-        setToken(authMailToken(result.developmentVerificationToken));
+        setCode(emailVerificationCode(result.developmentVerificationToken));
       }
 
       setNotice(EMAIL_REQUEST_NOTICE);
@@ -229,8 +249,8 @@ export default function VerifyEmailScreen() {
     }
   };
 
-  const clearToken = () => {
-    setToken('');
+  const clearCode = () => {
+    setCode('');
     setError(null);
 
     requestAnimationFrame(() => {
@@ -253,8 +273,8 @@ export default function VerifyEmailScreen() {
           eyebrow={copy('GÜVENLİ BAŞLANGIÇ', 'SECURE START')}
           title={copy('E-postanı doğrula.', 'Verify your email.')}
           subtitle={copy(
-            `Hesabını etkinleştirmek için ${email || 'e-posta adresine'} gelen doğrulama bağlantısını aç veya e-postadaki kodu buraya yapıştır.`,
-            `Open the verification link sent to ${email || 'your email address'} or paste the code here to activate your account.`,
+            `Hesabını etkinleştirmek için ${email || 'e-posta adresine'} gelen bağlantıyı aç veya 6 haneli kodu gir.`,
+            `Open the verification link sent to ${email || 'your email address'} or enter the six-digit code to activate your account.`,
           )}
         />
 
@@ -269,59 +289,113 @@ export default function VerifyEmailScreen() {
           <View style={styles.field}>
             <Text style={styles.label}>{copy('Doğrulama kodu', 'Verification code')}</Text>
 
-            <View style={[styles.inputRow, error && styles.inputRowError]}>
-              <Ionicons color={authColors.yellow} name="key-outline" size={18} />
-
+            <View style={styles.otpInputShell}>
               <TextInput
                 ref={inputRef}
                 accessibilityLabel={copy('Doğrulama kodu', 'Verification code')}
                 autoCapitalize="none"
                 autoCorrect={false}
-                autoComplete="off"
+                autoComplete="one-time-code"
+                autoFocus
                 blurOnSubmit={false}
+                caretHidden
                 cursorColor={authColors.yellow}
                 editable={!busy && !verified}
-                keyboardType="default"
-                maxLength={512}
+                keyboardType="number-pad"
+                maxLength={6}
                 onChangeText={(value) => {
-                  setToken(value);
+                  setCode(emailVerificationCode(value));
                   if (error) setError(null);
                 }}
+                onBlur={() => setInputFocused(false)}
+                onFocus={() => setInputFocused(true)}
                 onSubmitEditing={() => {
                   void verify();
                 }}
-                placeholder={copy(
-                  'Doğrulama kodunu gir veya yapıştır',
-                  'Enter or paste the verification code',
-                )}
-                placeholderTextColor={authColors.muted}
                 rejectResponderTermination={false}
                 returnKeyType="done"
                 selectionColor={authColors.yellow}
                 selectTextOnFocus={false}
                 spellCheck={false}
-                style={styles.input}
+                style={styles.otpNativeInput}
+                textContentType="oneTimeCode"
                 underlineColorAndroid="transparent"
-                value={token}
+                value={code}
               />
 
-              {token.length > 0 && !busy && !verified ? (
-                <Pressable
-                  accessibilityLabel="Kodu temizle"
-                  accessibilityRole="button"
-                  hitSlop={10}
-                  onPress={clearToken}
-                  style={styles.clearButton}
-                >
-                  <Ionicons color={authColors.secondary} name="close-circle" size={20} />
-                </Pressable>
-              ) : null}
+              <Pressable
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                onPress={() => inputRef.current?.focus()}
+                style={styles.otpRow}
+              >
+                {Array.from({ length: 6 }, (_, index) => {
+                  const digit = code[index] ?? '';
+                  const active = inputFocused && !verified && index === activeOtpIndex;
+                  return (
+                    <Animated.View
+                      key={index}
+                      testID={`verification-code-cell-${index + 1}`}
+                      style={[
+                        styles.otpCell,
+                        digit ? styles.otpCellFilled : null,
+                        active ? styles.otpCellActive : null,
+                        error ? styles.otpCellError : null,
+                        active ? { transform: [{ scale: otpFocusScale }] } : null,
+                      ]}
+                    >
+                      {digit ? (
+                        <Text style={styles.otpDigit}>{digit}</Text>
+                      ) : active ? (
+                        <View style={styles.otpCursorDot} />
+                      ) : null}
+                    </Animated.View>
+                  );
+                })}
+              </Pressable>
+            </View>
+
+            <View style={styles.otpActions}>
+              <Pressable
+                accessibilityLabel={copy('Kodu temizle', 'Clear code')}
+                accessibilityRole="button"
+                disabled={!code.length || busy || verified}
+                hitSlop={8}
+                onPress={clearCode}
+                style={({ pressed }) => [
+                  styles.otpAction,
+                  !code.length || busy || verified ? styles.otpActionDisabled : null,
+                  pressed ? styles.otpActionPressed : null,
+                ]}
+              >
+                <Ionicons color={authColors.secondary} name="close-circle-outline" size={16} />
+                <Text style={styles.otpActionText}>{copy('Temizle', 'Clear')}</Text>
+              </Pressable>
+
+              <Pressable
+                accessibilityLabel={copy('Kodu tekrar gönder', 'Resend code')}
+                accessibilityRole="button"
+                disabled={resending || busy || verified}
+                onPress={() => void resend()}
+                style={({ pressed }) => [
+                  styles.otpAction,
+                  resending || busy || verified ? styles.otpActionDisabled : null,
+                  pressed ? styles.otpActionPressed : null,
+                ]}
+              >
+                <Ionicons color={authColors.secondary} name="refresh-outline" size={16} />
+                <Text style={styles.otpActionText}>
+                  {resending
+                    ? copy('Gönderiliyor…', 'Sending…')
+                    : copy('Kodu tekrar gönder', 'Resend code')}
+                </Text>
+              </Pressable>
             </View>
 
             <Text style={styles.helperText}>
               {copy(
-                'E-postadaki doğrulama kodunu eksiksiz olarak buraya yapıştır.',
-                'Paste the complete verification code from your email here.',
+                'E-postandaki 6 haneli kod 10 dakika geçerlidir ve yalnızca bir kez kullanılabilir.',
+                'The six-digit code is valid for 10 minutes and can be used only once.',
               )}
             </Text>
           </View>
@@ -352,16 +426,6 @@ export default function VerifyEmailScreen() {
         </AuthFormCard>
 
         <View style={styles.links}>
-          <AuthLink
-            onPress={() => {
-              void resend();
-            }}
-          >
-            {resending
-              ? copy('Talep işleniyor…', 'Processing…')
-              : copy('E-postayı tekrar gönder', 'Resend email')}
-          </AuthLink>
-
           <AuthLink onPress={() => router.push('/(auth)/register')}>
             {copy('E-posta adresini değiştir', 'Change email address')}
           </AuthLink>
@@ -388,9 +452,7 @@ export default function VerifyEmailScreen() {
                 <Ionicons name="checkmark" size={52} color="#FFFFFF" />
               </View>
             </View>
-            <Text style={styles.successTitle}>
-              {copy('E-posta doğrulandı', 'Email verified')}
-            </Text>
+            <Text style={styles.successTitle}>{copy('E-posta doğrulandı', 'Email verified')}</Text>
             <Text style={styles.successText}>
               {copy(
                 'Hesabın hazır. Giriş ekranına yönlendiriliyorsun…',
@@ -443,33 +505,105 @@ const styles = StyleSheet.create({
     letterSpacing: 0.1,
     marginBottom: 8,
   },
-  inputRow: {
+  otpInputShell: {
+    position: 'relative',
+    width: '100%',
+  },
+  otpNativeInput: {
+    position: 'absolute',
+    top: 30,
+    left: '50%',
+    zIndex: 2,
+    color: 'transparent',
+    height: 1,
+    opacity: 0.01,
+    padding: 0,
+    width: 1,
+  },
+  otpRow: {
+    flexDirection: 'row',
+    gap: 7,
+    justifyContent: 'center',
+    width: '100%',
+  },
+  otpCell: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.025)',
-    borderColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.035)',
+    borderColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 15,
+    borderWidth: 1,
+    flex: 1,
+    height: 64,
+    justifyContent: 'center',
+    maxWidth: 48,
+    minWidth: 0,
+  },
+  otpCellFilled: {
+    backgroundColor: 'rgba(255,196,0,0.075)',
+    borderColor: 'rgba(255,196,0,0.34)',
+    shadowColor: '#FFC400',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.13,
+    shadowRadius: 12,
+  },
+  otpCellActive: {
+    backgroundColor: 'rgba(255,196,0,0.11)',
+    borderColor: '#FFD55A',
+    borderWidth: 1.5,
+    shadowColor: '#FFC400',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.28,
+    shadowRadius: 15,
+  },
+  otpCellError: {
+    borderColor: 'rgba(255,135,125,.7)',
+  },
+  otpDigit: {
+    color: '#FFFFFF',
+    fontSize: 25,
+    fontVariant: ['tabular-nums'],
+    fontWeight: '800',
+    lineHeight: 31,
+  },
+  otpCursorDot: {
+    backgroundColor: '#FFD55A',
+    borderRadius: 4,
+    height: 7,
+    shadowColor: '#FFC400',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 8,
+    width: 7,
+  },
+  otpActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 9,
+    justifyContent: 'center',
+    marginTop: 12,
+  },
+  otpAction: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.055)',
+    borderColor: 'rgba(255,255,255,0.13)',
+    borderRadius: 999,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 13,
-    minHeight: 56,
-    paddingLeft: 15,
+    gap: 6,
+    minHeight: 36,
+    paddingHorizontal: 13,
   },
-  inputRowError: {
-    borderColor: 'rgba(255,135,125,.65)',
+  otpActionDisabled: {
+    opacity: 0.42,
   },
-  input: {
-    color: authColors.text,
-    flex: 1,
-    fontSize: 15,
-    minHeight: 55,
-    paddingHorizontal: 0,
-    paddingVertical: 0,
+  otpActionPressed: {
+    opacity: 0.72,
+    transform: [{ scale: 0.98 }],
   },
-  clearButton: {
-    alignItems: 'center',
-    height: 48,
-    justifyContent: 'center',
-    width: 46,
+  otpActionText: {
+    color: authColors.secondary,
+    fontSize: 12,
+    fontWeight: '700',
   },
   helperText: {
     color: authColors.muted,

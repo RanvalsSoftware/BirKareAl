@@ -170,6 +170,8 @@ test('password re-registration and repeated login cannot repeat the welcome gran
   const registration = await service.register(registrationInput, {});
   const user = await repository.getUserByEmail('password-registration@example.test');
   assert.ok(user);
+  assert.equal((await repository.getWallet(user.id)).available, 0);
+  assert.deepEqual(await repository.listCreditTransactions(user.id), []);
   const consents = await repository.listUserConsents(user.id);
   assert.equal(consents.length, 5);
   assert.ok(
@@ -183,7 +185,7 @@ test('password re-registration and repeated login cannot repeat the welcome gran
     (error: unknown) => error instanceof ApiError && error.code === 'AUTH_EMAIL_ALREADY_EXISTS',
   );
   assert.ok(registration.developmentVerificationToken);
-  await service.verifyEmail(registration.developmentVerificationToken);
+  await service.verifyEmail(registrationInput.email, registration.developmentVerificationToken);
   await service.login(
     { email: registrationInput.email, password: registrationInput.password },
     { deviceId: 'first-install' },
@@ -280,7 +282,7 @@ test('requires the authenticated account e-mail to match before linking Google',
     (await repository.listCreditTransactions(user.id)).filter(
       (item) => item.referenceType === 'WELCOME_CREDIT',
     ).length,
-    1,
+    0,
   );
 });
 
@@ -294,6 +296,14 @@ test('Google linking rejects a different email and unavailable accounts', async 
     locale: 'tr-TR',
     dateOfBirth: new Date('1990-01-01'),
     consents: [],
+  });
+  await repository.grantCredits({
+    userId: user.id,
+    amount: WELCOME_CREDIT_AMOUNT,
+    type: 'BONUS',
+    referenceType: 'TEST_FIXTURE',
+    referenceId: user.id,
+    idempotencyKey: `test-fixture:${user.id}`,
   });
   await repository.updateUser(user.id, { status: 'ACTIVE', emailVerifiedAt: new Date() });
   const wrongEmail = createAuthService(repository, {
@@ -335,7 +345,7 @@ test('old email verification and reset links cannot reactivate a deleted account
   assert.ok(reset.developmentResetToken);
   await repository.updateUser(user.id, { status: 'DELETION_PENDING', deletedAt: new Date() });
   await assert.rejects(
-    () => service.verifyEmail(registration.developmentVerificationToken!),
+    () => service.verifyEmail(input.email, registration.developmentVerificationToken!),
     (error: unknown) => error instanceof ApiError && error.code === 'AUTH_ACCOUNT_UNAVAILABLE',
   );
   await assert.rejects(
@@ -398,6 +408,14 @@ test('a retried generation reservation with the same key spends credits only onc
     locale: 'tr-TR',
     dateOfBirth: new Date('1990-01-01T00:00:00.000Z'),
     consents: [],
+  });
+  await repository.grantCredits({
+    userId: user.id,
+    amount: WELCOME_CREDIT_AMOUNT,
+    type: 'BONUS',
+    referenceType: 'TEST_FIXTURE',
+    referenceId: user.id,
+    idempotencyKey: `test-fixture:${user.id}`,
   });
   const request = {
     userId: user.id,

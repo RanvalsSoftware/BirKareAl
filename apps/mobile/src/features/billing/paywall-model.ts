@@ -28,6 +28,15 @@ const PLAN_COPY: Record<ProPlanId, Omit<ProPlan, 'id' | 'package'>> = {
   },
 };
 
+function matchesStoreProduct(productId: string, knownIds: readonly string[]): boolean {
+  // New Google Play subscriptions are exposed by RevenueCat as
+  // `<subscription-id>:<base-plan-id>`. The subscription id remains the
+  // server-owned BirKare identifier; Apple and legacy Google products have no
+  // suffix. Never infer a plan from the base-plan text alone.
+  const subscriptionId = productId.split(':', 1)[0] ?? productId;
+  return knownIds.includes(productId) || knownIds.includes(subscriptionId);
+}
+
 export function plansFromOffering(offering: PurchasesOffering | null): ProPlan[] {
   if (!offering) return [];
 
@@ -48,7 +57,7 @@ export function plansFromOffering(offering: PurchasesOffering | null): ProPlan[]
     const pkg =
       packages[id] ??
       offering.availablePackages?.find((candidate) =>
-        productIds[id].includes(candidate.product.identifier),
+        matchesStoreProduct(candidate.product.identifier, productIds[id]),
       );
     return pkg ? [{ id, package: pkg, ...PLAN_COPY[id] }] : [];
   });

@@ -1,11 +1,22 @@
 import { Client } from 'minio';
 import type { BirKareConfig } from '@birkare/config';
-import type { StorageProvider, StorageUploadUrl } from './types.js';
+import type { StorageObjectStat, StorageProvider, StorageUploadUrl } from './types.js';
 
-async function streamToBuffer(stream: NodeJS.ReadableStream): Promise<Buffer> {
+async function streamToBuffer(
+  stream: NodeJS.ReadableStream,
+  maxBytes = Number.MAX_SAFE_INTEGER,
+): Promise<Buffer> {
   const chunks: Buffer[] = [];
-  for await (const chunk of stream)
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  let totalBytes = 0;
+  for await (const chunk of stream) {
+    const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    totalBytes += bytes.length;
+    if (totalBytes > maxBytes) {
+      if ('destroy' in stream && typeof stream.destroy === 'function') stream.destroy();
+      throw new Error('Storage nesnesi izin verilen boyutu aşıyor.');
+    }
+    chunks.push(bytes);
+  }
   return Buffer.concat(chunks);
 }
 
@@ -72,9 +83,18 @@ export class R2StorageProvider implements StorageProvider {
     });
   }
 
-  async getObject(key: string): Promise<Buffer> {
+  async getObject(key: string, options?: { maxBytes?: number }): Promise<Buffer> {
     const stream = await this.client.getObject(this.bucket, key);
-    return streamToBuffer(stream);
+    return streamToBuffer(stream, options?.maxBytes);
+  }
+
+  async statObject(key: string): Promise<StorageObjectStat> {
+    const details = await this.client.statObject(this.bucket, key);
+    const rawContentType = details.metaData?.['content-type'] ?? details.metaData?.['Content-Type'];
+    return {
+      sizeBytes: details.size,
+      ...(typeof rawContentType === 'string' ? { contentType: rawContentType } : {}),
+    };
   }
 
   async deleteObject(key: string): Promise<void> {

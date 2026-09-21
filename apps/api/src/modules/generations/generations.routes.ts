@@ -603,7 +603,8 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
           ...quote,
           modelLane: req.body.quality === 'PREVIEW' ? 'FAST' : plan.modelLane,
           availableCredits: wallet.available,
-          canGenerate: wallet.available >= quote.creditCost,
+          unlimitedCredits: Boolean(wallet.unlimited),
+          canGenerate: Boolean(wallet.unlimited) || wallet.available >= quote.creditCost,
         });
         return;
       }
@@ -643,7 +644,8 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
         ...quote,
         modelLane: premiumModel ? 'PREMIUM' : 'FAST',
         availableCredits: wallet.available,
-        canGenerate: wallet.available >= quote.creditCost,
+        unlimitedCredits: Boolean(wallet.unlimited),
+        canGenerate: Boolean(wallet.unlimited) || wallet.available >= quote.creditCost,
       });
     }),
   );
@@ -989,19 +991,22 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
       );
       if (['COMPLETED', 'FAILED', 'BLOCKED', 'CANCELLED'].includes(generation.status))
         throw conflict('GENERATION_NOT_CANCELLABLE', 'Bu üretim artık iptal edilemez.');
-      await deps.repository.releaseCredits({
+      const settlement = await deps.repository.releaseCredits({
         userId: generation.userId,
         generationId: generation.id,
         amount: generation.reservedCredits,
         reason: req.body.reason ?? 'Kullanıcı iptal etti.',
+        finalization: {
+          status: 'CANCELLED',
+          stage: 'CANCELLED',
+          progress: 100,
+          refundedCredits: generation.reservedCredits,
+          completedAt: new Date(),
+        },
       });
-      const updated = await deps.repository.updateGeneration(generation.id, {
-        status: 'CANCELLED',
-        stage: 'CANCELLED',
-        progress: 100,
-        refundedCredits: generation.reservedCredits,
-        completedAt: new Date(),
-      });
+      if (!settlement.applied || !settlement.generation)
+        throw conflict('GENERATION_NOT_CANCELLABLE', 'Bu üretim artık iptal edilemez.');
+      const updated = settlement.generation;
       sendSuccess(res, req.requestId, await presentation(deps, updated));
     }),
   );
@@ -1050,6 +1055,29 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
       const output = parent.outputs.find((item) => item.id === req.body.sourceOutputId);
       if (!output) throw notFound('GENERATION_OUTPUT_NOT_FOUND', 'Revizyon kaynağı bulunamadı.');
       const project = await ownedProject(deps, req.auth!.userId, parent.projectId);
+      const referenceAsset = req.body.referenceAssetId
+        ? await deps.repository.getAssetById(req.body.referenceAssetId)
+        : null;
+      if (req.body.referenceAssetId) {
+        assertReadyStudioSource(referenceAsset, req.auth!.userId);
+      }
+      const revisionInstruction = referenceAsset
+        ? `${req.body.instruction}\n\nINPUT IMAGE MARKED REFERENCE is an optional visual reference. Apply only the details explicitly requested above. Do not copy identity, face, body, logos, text or unrelated background from the reference image.`
+        : req.body.instruction;
+      const recordRevisionMessages = async (generationId: string) => {
+        await deps.repository.addGenerationMessage({
+          generationId,
+          role: 'USER',
+          content: req.body.instruction,
+        });
+        await deps.repository.addGenerationMessage({
+          generationId,
+          role: 'ASSISTANT',
+          content: referenceAsset
+            ? 'İsteğin ve eklediğin referans yeni bir sürüm olarak hazırlanıyor.'
+            : 'İsteğin yeni bir sürüm olarak hazırlanıyor.',
+        });
+      };
       if (parent.recipe?.version === 2) {
         if (project.mode !== parent.recipe.studio.kind) {
           throw conflict(
@@ -1089,10 +1117,20 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
           preserveFace: true,
           preserveClothes: true,
           recipe: parent.recipe,
-          inputs: studioSources.inputs,
-          instruction: req.body.instruction,
+          inputs: referenceAsset
+            ? [
+                ...studioSources.inputs,
+                {
+                  assetId: referenceAsset.id,
+                  role: 'REFERENCE',
+                  sortOrder: studioSources.inputs.length,
+                },
+              ]
+            : studioSources.inputs,
+          instruction: revisionInstruction,
           parentGenerationId: parent.id,
         });
+        await recordRevisionMessages(result.generation.id);
         sendSuccess(
           res,
           req.requestId,
@@ -1165,9 +1203,16 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
         preserveFace: parent.preserveFace,
         preserveClothes: parent.preserveClothes,
         recipe,
-        instruction: req.body.instruction,
+        inputs: [
+          { assetId: revisionSourceId, role: 'PRIMARY_USER', sortOrder: 0 },
+          ...(referenceAsset
+            ? [{ assetId: referenceAsset.id, role: 'REFERENCE' as const, sortOrder: 1 }]
+            : []),
+        ],
+        instruction: revisionInstruction,
         parentGenerationId: parent.id,
       });
+      await recordRevisionMessages(result.generation.id);
       sendSuccess(
         res,
         req.requestId,

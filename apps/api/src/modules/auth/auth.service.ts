@@ -35,6 +35,8 @@ import {
 import type { GoogleIdentityVerifier } from './google-id-token.service.js';
 import type { AppleIdentityVerifier } from './apple-id-token.service.js';
 import type { SocialAuthProvider } from '@birkare/database';
+import { randomInt } from 'node:crypto';
+import { EmailSecurityService } from './email-security.service.js';
 
 export type AuthRequestContext = {
   deviceId?: string;
@@ -100,6 +102,11 @@ const toPublicUser = (user: UserRecord): PublicUser => ({
 });
 
 const addDays = (days: number): Date => new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+const EMAIL_VERIFICATION_TTL_MS = 10 * 60 * 1000;
+const EMAIL_VERIFICATION_MAX_FAILED_ATTEMPTS = 5;
+const normalizeEmail = (email: string): string => email.trim().toLowerCase();
+const createEmailVerificationCode = (): string =>
+  randomInt(0, 1_000_000).toString().padStart(6, '0');
 const LEGAL_CONSENT_VERSION = '2026-09-04';
 
 type RequiredConsentInput = {
@@ -167,10 +174,15 @@ export class AuthService {
     private readonly googleIdentityVerifier: GoogleIdentityVerifier,
     private readonly mailService: MailService = new DisabledMailService(),
     private readonly appleIdentityVerifier?: AppleIdentityVerifier,
+    private readonly emailSecurityService?: EmailSecurityService,
   ) {}
 
   async register(input: RegisterInput, context: AuthRequestContext): Promise<RegistrationResponse> {
     this.requireMailAvailability();
+    await this.emailSecurityService?.assertRegistrationAllowed(input.email, {
+      ip: context.ip,
+      deviceId: input.deviceId,
+    });
     const dateOfBirth = ensureAdult(input.dateOfBirth);
     const consents = createRequiredConsentRecords(input.consent, 'PASSWORD_REGISTRATION');
     const user = await this.repository.createUser({
@@ -182,15 +194,16 @@ export class AuthService {
       dateOfBirth,
       consents,
     });
-    const verificationToken = createOpaqueToken();
-    await this.repository.createEmailToken({
+    const verificationCode = createEmailVerificationCode();
+    await this.repository.replaceEmailToken({
       userId: user.id,
       type: 'VERIFY_EMAIL',
-      tokenHash: hashToken(verificationToken),
-      expiresAt: addDays(2),
+      tokenHash: this.passwordService.hashEmailVerificationCode(user.email, verificationCode),
+      failedAttempts: 0,
+      expiresAt: new Date(Date.now() + EMAIL_VERIFICATION_TTL_MS),
     });
     try {
-      await this.sendAuthEmail('verification', user.email, verificationToken);
+      await this.sendAuthEmail('verification', user.email, verificationCode);
     } catch {
       // The pending account exists; never pretend SMTP delivered its code.
       // A resend can recover without creating another account or credit grant.
@@ -204,11 +217,12 @@ export class AuthService {
     }
     return {
       verificationRequired: true,
-      ...(this.allowDevelopmentTokens() ? { developmentVerificationToken: verificationToken } : {}),
+      ...(this.allowDevelopmentTokens() ? { developmentVerificationToken: verificationCode } : {}),
     };
   }
 
   async login(input: LoginInput, context: AuthRequestContext): Promise<AuthSessionResponse> {
+    await this.emailSecurityService?.assertLoginAllowed(input.email, context);
     const user = await this.repository.getUserByEmail(input.email);
     if (
       !user ||
@@ -224,7 +238,7 @@ export class AuthService {
         'Devam etmek için e-posta adresinizi doğrulamanız gerekiyor.',
       );
     await this.repository.updateUser(user.id, { lastLoginAt: new Date() });
-    const session = await this.createSession(user, input, context);
+    const session = await this.createSession(user, input, context, user.passwordHash);
     return this.toAuthResponse(user, session.session, session.refreshToken);
   }
 
@@ -288,10 +302,14 @@ export class AuthService {
     await this.repository.revokeAllUserSessions(userId, 'LOGOUT_ALL');
   }
 
-  async forgotPassword(email: string): Promise<{ developmentResetToken?: string }> {
+  async forgotPassword(
+    email: string,
+    context: AuthRequestContext = {},
+  ): Promise<{ developmentResetToken?: string }> {
     // Disabled delivery fails equally for known/unknown addresses. SMTP failures
     // below have an identical public response to avoid account enumeration.
     this.requireMailAvailability();
+    await this.emailSecurityService?.assertRecoveryAllowed(email, context);
     const user = await this.repository.getUserByEmail(email);
     if (
       !user ||
@@ -302,10 +320,11 @@ export class AuthService {
     )
       return {};
     const resetToken = createOpaqueToken();
-    await this.repository.createEmailToken({
+    await this.repository.replaceEmailToken({
       userId: user.id,
       type: 'RESET_PASSWORD',
       tokenHash: hashToken(resetToken),
+      failedAttempts: 0,
       expiresAt: new Date(Date.now() + 60 * 60 * 1000),
     });
     try {
@@ -317,56 +336,78 @@ export class AuthService {
     return this.allowDevelopmentTokens() ? { developmentResetToken: resetToken } : {};
   }
 
-  async resendVerification(email: string): Promise<{ developmentVerificationToken?: string }> {
+  async resendVerification(
+    email: string,
+    context: AuthRequestContext = {},
+  ): Promise<{ developmentVerificationToken?: string }> {
     this.requireMailAvailability();
+    await this.emailSecurityService?.assertResendAllowed(email, context);
     const user = await this.repository.getUserByEmail(email);
     if (!user || user.emailVerifiedAt || user.deletedAt || user.status !== 'PENDING_VERIFICATION')
       return {};
-    const verificationToken = createOpaqueToken();
-    await this.repository.createEmailToken({
+    const verificationCode = createEmailVerificationCode();
+    await this.repository.replaceEmailToken({
       userId: user.id,
       type: 'VERIFY_EMAIL',
-      tokenHash: hashToken(verificationToken),
-      expiresAt: addDays(2),
+      tokenHash: this.passwordService.hashEmailVerificationCode(user.email, verificationCode),
+      failedAttempts: 0,
+      expiresAt: new Date(Date.now() + EMAIL_VERIFICATION_TTL_MS),
     });
     try {
-      await this.sendAuthEmail('verification', user.email, verificationToken);
+      await this.sendAuthEmail('verification', user.email, verificationCode);
     } catch {
       // Same outward response for absent, ineligible and undeliverable accounts.
     }
-    return this.allowDevelopmentTokens() ? { developmentVerificationToken: verificationToken } : {};
+    return this.allowDevelopmentTokens() ? { developmentVerificationToken: verificationCode } : {};
   }
 
   async resetPassword(token: string, password: string): Promise<void> {
-    const record = await this.repository.consumeEmailToken(hashToken(token), 'RESET_PASSWORD');
-    if (!record)
+    const result = await this.repository.completePasswordReset(
+      hashToken(token),
+      await this.passwordService.hash(password),
+    );
+    if (result === 'INVALID_TOKEN')
       throw unauthorized(
         'AUTH_INVALID_RESET_TOKEN',
         'Şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş.',
       );
-    const user = await this.repository.getUserById(record.userId);
-    if (!user) throw unauthorized('AUTH_INVALID_RESET_TOKEN');
-    requireEligibleUser(user);
-    await this.repository.updateUser(record.userId, {
-      passwordHash: await this.passwordService.hash(password),
-    });
-    await this.repository.revokeAllUserSessions(record.userId, 'PASSWORD_RESET');
+    if (result === 'ACCOUNT_SUSPENDED')
+      throw forbidden('AUTH_ACCOUNT_SUSPENDED', 'Hesabınız geçici olarak askıya alınmış.');
+    if (result === 'ACCOUNT_UNAVAILABLE')
+      throw forbidden('AUTH_ACCOUNT_UNAVAILABLE', 'Bu hesap kullanılamıyor.');
   }
 
-  async verifyEmail(token: string): Promise<void> {
-    const record = await this.repository.consumeEmailToken(hashToken(token), 'VERIFY_EMAIL');
-    if (!record)
+  async verifyEmail(email: string, code: string, context: AuthRequestContext = {}): Promise<void> {
+    const normalizedEmail = normalizeEmail(email);
+    await this.emailSecurityService?.assertVerificationAllowed(normalizedEmail, context);
+    if (!/^\d{6}$/.test(code))
       throw unauthorized(
         'AUTH_INVALID_VERIFICATION_TOKEN',
-        'Doğrulama bağlantısı geçersiz veya süresi dolmuş.',
+        'Doğrulama kodu geçersiz veya süresi dolmuş.',
       );
-    const user = await this.repository.getUserById(record.userId);
-    if (!user) throw unauthorized('AUTH_INVALID_VERIFICATION_TOKEN');
-    requireEligibleUser(user);
-    await this.repository.updateUser(record.userId, {
-      emailVerifiedAt: new Date(),
-      status: 'ACTIVE',
-    });
+    const tokenHash = this.passwordService.hashEmailVerificationCode(normalizedEmail, code);
+    const expectedUser = await this.repository.getUserByEmail(normalizedEmail);
+    if (!expectedUser)
+      throw unauthorized(
+        'AUTH_INVALID_VERIFICATION_TOKEN',
+        'Doğrulama kodu geçersiz veya süresi dolmuş.',
+      );
+    requireEligibleUser(expectedUser);
+    const result = await this.repository.completeEmailVerification(
+      expectedUser.id,
+      tokenHash,
+      EMAIL_VERIFICATION_MAX_FAILED_ATTEMPTS,
+      this.emailSecurityService?.abuseKeyHash(normalizedEmail) ?? hashStable(normalizedEmail),
+    );
+    if (result.status === 'ACCOUNT_SUSPENDED')
+      throw forbidden('AUTH_ACCOUNT_SUSPENDED', 'Hesabınız geçici olarak askıya alınmış.');
+    if (result.status === 'ACCOUNT_UNAVAILABLE')
+      throw forbidden('AUTH_ACCOUNT_UNAVAILABLE', 'Bu hesap kullanılamıyor.');
+    if (result.status !== 'VERIFIED')
+      throw unauthorized(
+        'AUTH_INVALID_VERIFICATION_TOKEN',
+        'Doğrulama kodu geçersiz veya süresi dolmuş.',
+      );
   }
 
   /**
@@ -535,19 +576,23 @@ export class AuthService {
     user: UserRecord,
     input: Partial<AuthRequestContext>,
     context: AuthRequestContext,
+    expectedPasswordHash?: string,
   ): Promise<{ session: SessionRecord; refreshToken: string }> {
     const refreshToken = createOpaqueToken();
-    const session = await this.repository.createSession({
-      userId: user.id,
-      refreshTokenHash: hashToken(refreshToken),
-      expiresAt: addDays(this.config.REFRESH_TOKEN_TTL_DAYS),
-      deviceId: input.deviceId,
-      deviceName: input.deviceName,
-      platform: input.platform,
-      appVersion: input.appVersion,
-      ipHash: context.ip ? hashStable(context.ip) : undefined,
-      userAgent: context.userAgent,
-    });
+    const session = await this.repository.createSession(
+      {
+        userId: user.id,
+        refreshTokenHash: hashToken(refreshToken),
+        expiresAt: addDays(this.config.REFRESH_TOKEN_TTL_DAYS),
+        deviceId: input.deviceId,
+        deviceName: input.deviceName,
+        platform: input.platform,
+        appVersion: input.appVersion,
+        ipHash: context.ip ? hashStable(context.ip) : undefined,
+        userAgent: context.userAgent,
+      },
+      expectedPasswordHash ? { expectedPasswordHash } : undefined,
+    );
     return { session, refreshToken };
   }
 
@@ -572,6 +617,7 @@ export class AuthService {
         providerAccountId: identity.subject,
         providerEmail: identity.email,
         consents: createRequiredConsentRecords(registration.consent, 'SOCIAL_REGISTRATION'),
+        welcomeCreditAbuseHash: this.emailSecurityService?.abuseKeyHash(identity.email),
       });
     } catch (error) {
       // A concurrent request can create the same provider mapping between our

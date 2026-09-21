@@ -139,7 +139,7 @@ export default function RegisterScreen() {
         params: {
           email: values.email.trim().toLowerCase(),
           ...(result.developmentVerificationToken
-            ? { token: result.developmentVerificationToken }
+            ? { code: result.developmentVerificationToken }
             : {}),
         },
       });

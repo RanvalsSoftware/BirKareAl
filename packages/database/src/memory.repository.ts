@@ -1,9 +1,17 @@
-import { catalogFixtures, conflict, createId, notFound, unauthorized } from '@birkare/shared';
+import {
+  TERMINAL_GENERATION_STATUSES,
+  catalogFixtures,
+  conflict,
+  createId,
+  notFound,
+  unauthorized,
+} from '@birkare/shared';
 import { deletionIdentityHash, DELETION_GRACE_MS, DELETION_IDLE_STATUSES } from './deletion.js';
 import type { AccountDeletionRecord } from './types.js';
 import {
   WELCOME_CREDIT_AMOUNT,
   WELCOME_CREDIT_REFERENCE_TYPE,
+  welcomeCreditAbuseHash,
   welcomeCreditIdempotencyKey,
 } from './credits.js';
 import type {
@@ -21,16 +29,20 @@ import type {
   CreateVerifiedSocialUserInput,
   CreatePendingSocialLoginInput,
   CreditTransactionRecord,
+  CreditSettlementInput,
+  CreditSettlementResult,
   CreditWalletRecord,
   GrantCreditsInput,
   EmailTokenRecord,
   EmailTokenType,
+  EmailVerificationCompletionResult,
   GenerationMessageRecord,
   GenerationOutputRecord,
   GenerationRecord,
   IdempotencyRecord,
   LinkAuthAccountInput,
   PendingSocialLoginRecord,
+  PasswordResetCompletionResult,
   ProjectRecord,
   SessionRecord,
   SocialAuthProvider,
@@ -65,6 +77,7 @@ export class MemoryRepository implements BirKareRepository {
   readonly kind = 'memory' as const;
   constructor(private readonly identitySecret = 'development-only-deletion-identity-key') {}
   private readonly accountDeletions = new Map<string, AccountDeletionRecord>();
+  private readonly welcomeCreditClaims = new Set<string>();
   private readonly users = new Map<string, UserRecord>();
   private readonly userIdsByEmail = new Map<string, string>();
   private readonly authAccounts = new Map<string, AuthAccountRecord>();
@@ -94,13 +107,22 @@ export class MemoryRepository implements BirKareRepository {
 
   async disconnect(): Promise<void> {}
 
+  async backfillWelcomeCreditClaims(): Promise<number> {
+    let created = 0;
+    for (const transaction of this.transactions.values()) {
+      if (transaction.referenceType !== WELCOME_CREDIT_REFERENCE_TYPE) continue;
+      const user = this.users.get(transaction.userId);
+      if (!user) continue;
+      const abuseKeyHash = welcomeCreditAbuseHash(this.identitySecret, user.email);
+      if (this.welcomeCreditClaims.has(abuseKeyHash)) continue;
+      this.welcomeCreditClaims.add(abuseKeyHash);
+      created += 1;
+    }
+    return created;
+  }
+
   async createUser(input: CreateUserInput): Promise<UserRecord> {
     const email = input.email.toLowerCase();
-    const welcomeAmount = this.wasDeleted([
-      deletionIdentityHash(this.identitySecret, 'email', email),
-    ])
-      ? 0
-      : WELCOME_CREDIT_AMOUNT;
     if (this.userIdsByEmail.has(email))
       throw conflict('AUTH_EMAIL_ALREADY_EXISTS', 'Bu e-posta adresiyle zaten bir hesap var.');
     const now = new Date();
@@ -129,27 +151,16 @@ export class MemoryRepository implements BirKareRepository {
     const wallet: CreditWalletRecord = {
       id: createId(),
       userId: user.id,
-      available: welcomeAmount,
+      unlimited: false,
+      available: 0,
       reserved: 0,
-      lifetimeEarned: welcomeAmount,
+      lifetimeEarned: 0,
       lifetimeSpent: 0,
-      version: 1,
+      version: 0,
       createdAt: now,
       updatedAt: now,
     };
     this.wallets.set(user.id, wallet);
-    if (welcomeAmount > 0)
-      this.recordTransaction({
-        userId: user.id,
-        type: 'BONUS',
-        amount: welcomeAmount,
-        availableAfter: wallet.available,
-        reservedAfter: wallet.reserved,
-        referenceType: WELCOME_CREDIT_REFERENCE_TYPE,
-        referenceId: null,
-        idempotencyKey: welcomeCreditIdempotencyKey(user.id),
-        description: 'BirKare AI hoş geldin kredisi',
-      });
     return clone(user);
   }
 
@@ -176,12 +187,15 @@ export class MemoryRepository implements BirKareRepository {
 
   async createVerifiedSocialUser(input: CreateVerifiedSocialUserInput): Promise<UserRecord> {
     const email = input.email.toLowerCase();
-    const welcomeAmount = this.wasDeleted([
+    const wasDeleted = this.wasDeleted([
       deletionIdentityHash(this.identitySecret, 'email', email),
       deletionIdentityHash(this.identitySecret, input.provider, input.providerAccountId),
-    ])
-      ? 0
-      : WELCOME_CREDIT_AMOUNT;
+    ]);
+    const abuseKeyHash =
+      input.welcomeCreditAbuseHash ??
+      welcomeCreditAbuseHash(this.identitySecret, email);
+    const welcomeAmount =
+      !wasDeleted && !this.welcomeCreditClaims.has(abuseKeyHash) ? WELCOME_CREDIT_AMOUNT : 0;
     const accountKey = providerAccountKey(input.provider, input.providerAccountId);
     if (this.userIdsByEmail.has(email))
       throw conflict('AUTH_EMAIL_ALREADY_EXISTS', 'Bu e-posta adresiyle zaten bir hesap var.');
@@ -220,11 +234,13 @@ export class MemoryRepository implements BirKareRepository {
     this.userIdsByEmail.set(email, user.id);
     this.authAccounts.set(account.id, account);
     this.authAccountIdsByProviderAccount.set(accountKey, account.id);
+    if (welcomeAmount > 0) this.welcomeCreditClaims.add(abuseKeyHash);
     this.recordUserConsents(user.id, input.consents);
 
     const wallet: CreditWalletRecord = {
       id: createId(),
       userId: user.id,
+      unlimited: false,
       available: welcomeAmount,
       reserved: 0,
       lifetimeEarned: welcomeAmount,
@@ -494,7 +510,13 @@ export class MemoryRepository implements BirKareRepository {
     record.completedAt = new Date();
   }
 
-  async createSession(input: CreateSessionInput): Promise<SessionRecord> {
+  async createSession(
+    input: CreateSessionInput,
+    guard?: { expectedPasswordHash: string },
+  ): Promise<SessionRecord> {
+    this.assertAccountWritable(input.userId);
+    if (guard && this.users.get(input.userId)?.passwordHash !== guard.expectedPasswordHash)
+      throw unauthorized('AUTH_INVALID_CREDENTIALS', 'E-posta veya şifre hatalı.');
     const now = new Date();
     const session: SessionRecord = {
       id: createId(),
@@ -525,6 +547,11 @@ export class MemoryRepository implements BirKareRepository {
     return session ? clone(session) : null;
   }
 
+  async getSessionById(id: string): Promise<SessionRecord | null> {
+    const session = this.sessions.get(id);
+    return session ? clone(session) : null;
+  }
+
   async rotateSession(sessionId: string, next: CreateSessionInput): Promise<SessionRecord> {
     const current = this.sessions.get(sessionId);
     if (!current) throw notFound('SESSION_NOT_FOUND', 'Oturum bulunamadı.');
@@ -539,11 +566,26 @@ export class MemoryRepository implements BirKareRepository {
     current.revokedAt = now;
     current.revokedReason = 'ROTATED';
     current.lastUsedAt = now;
-    return this.createSession({
+    const session: SessionRecord = {
+      id: createId(),
       ...next,
       userId: current.userId,
       tokenFamilyId: current.tokenFamilyId,
-    });
+      deviceId: next.deviceId ?? null,
+      deviceName: next.deviceName ?? null,
+      platform: next.platform ?? null,
+      appVersion: next.appVersion ?? null,
+      ipHash: next.ipHash ?? null,
+      userAgent: next.userAgent ?? null,
+      lastUsedAt: now,
+      rotatedAt: null,
+      revokedAt: null,
+      revokedReason: null,
+      createdAt: now,
+    };
+    this.sessions.set(session.id, session);
+    this.sessionIdsByRefreshHash.set(session.refreshTokenHash, session.id);
+    return clone(session);
   }
 
   async revokeSession(sessionId: string, reason: string): Promise<void> {
@@ -592,6 +634,17 @@ export class MemoryRepository implements BirKareRepository {
     return clone(token);
   }
 
+  async replaceEmailToken(
+    input: Omit<EmailTokenRecord, 'id' | 'usedAt' | 'createdAt'>,
+  ): Promise<EmailTokenRecord> {
+    for (const [id, token] of this.emailTokens) {
+      if (token.userId !== input.userId || token.type !== input.type) continue;
+      this.emailTokens.delete(id);
+      this.tokenIdsByHash.delete(token.tokenHash);
+    }
+    return this.createEmailToken(input);
+  }
+
   async consumeEmailToken(
     tokenHash: string,
     type: EmailTokenType,
@@ -601,6 +654,115 @@ export class MemoryRepository implements BirKareRepository {
     if (!token || token.type !== type || token.usedAt || token.expiresAt <= new Date()) return null;
     token.usedAt = new Date();
     return clone(token);
+  }
+
+  async completePasswordReset(
+    tokenHash: string,
+    passwordHash: string,
+  ): Promise<PasswordResetCompletionResult> {
+    const now = new Date();
+    const tokenId = this.tokenIdsByHash.get(tokenHash);
+    const token = tokenId ? this.emailTokens.get(tokenId) : undefined;
+    if (!token || token.type !== 'RESET_PASSWORD' || token.usedAt || token.expiresAt <= now)
+      return 'INVALID_TOKEN';
+
+    const user = this.users.get(token.userId);
+    if (!user || user.deletedAt || ['DELETION_PENDING', 'DELETED'].includes(user.status))
+      return 'ACCOUNT_UNAVAILABLE';
+    if (user.status === 'SUSPENDED') return 'ACCOUNT_SUSPENDED';
+
+    // There are no awaits below this point. These in-memory mutations therefore
+    // form one event-loop critical section, matching the Prisma transaction.
+    user.passwordHash = passwordHash;
+    user.updatedAt = now;
+    for (const candidate of this.emailTokens.values()) {
+      if (candidate.userId === user.id && candidate.type === 'RESET_PASSWORD' && !candidate.usedAt)
+        candidate.usedAt = now;
+    }
+    for (const session of this.sessions.values()) {
+      if (session.userId === user.id && !session.revokedAt) {
+        session.revokedAt = now;
+        session.revokedReason = 'PASSWORD_RESET';
+      }
+    }
+    return 'COMPLETED';
+  }
+
+  async completeEmailVerification(
+    userId: string,
+    tokenHash: string,
+    maxFailedAttempts: number,
+    welcomeCreditAbuseHash: string,
+  ): Promise<EmailVerificationCompletionResult> {
+    const now = new Date();
+    const user = this.users.get(userId);
+    if (!user || user.deletedAt || ['DELETION_PENDING', 'DELETED'].includes(user.status))
+      return { status: 'ACCOUNT_UNAVAILABLE', welcomeCreditsGranted: false };
+    if (user.status === 'SUSPENDED')
+      return { status: 'ACCOUNT_SUSPENDED', welcomeCreditsGranted: false };
+    if (user.emailVerifiedAt || user.status !== 'PENDING_VERIFICATION')
+      return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false };
+    const token = [...this.emailTokens.values()]
+      .filter(
+        (candidate) =>
+          candidate.userId === userId &&
+          candidate.type === 'VERIFY_EMAIL' &&
+          !candidate.usedAt &&
+          candidate.expiresAt > now,
+      )
+      .sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime())[0];
+    if (!token || token.failedAttempts >= maxFailedAttempts)
+      return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false };
+    if (token.tokenHash !== tokenHash) {
+      token.failedAttempts += 1;
+      if (token.failedAttempts >= maxFailedAttempts) token.usedAt = now;
+      return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false };
+    }
+    token.usedAt = now;
+    user.emailVerifiedAt = now;
+    user.status = 'ACTIVE';
+    user.updatedAt = now;
+
+    const wasDeleted = this.wasDeleted([
+      deletionIdentityHash(this.identitySecret, 'email', user.email),
+    ]);
+    const existingWelcome = [...this.transactions.values()].some(
+      (transaction) =>
+        transaction.userId === userId &&
+        transaction.referenceType === WELCOME_CREDIT_REFERENCE_TYPE,
+    );
+    const wallet = this.wallets.get(userId);
+    const shouldGrant =
+      Boolean(wallet) &&
+      !wasDeleted &&
+      !existingWelcome &&
+      !this.welcomeCreditClaims.has(welcomeCreditAbuseHash);
+    if (shouldGrant && wallet) {
+      this.welcomeCreditClaims.add(welcomeCreditAbuseHash);
+      wallet.available += WELCOME_CREDIT_AMOUNT;
+      wallet.lifetimeEarned += WELCOME_CREDIT_AMOUNT;
+      wallet.version += 1;
+      wallet.updatedAt = now;
+      this.recordTransaction({
+        userId,
+        type: 'BONUS',
+        amount: WELCOME_CREDIT_AMOUNT,
+        availableAfter: wallet.available,
+        reservedAfter: wallet.reserved,
+        referenceType: WELCOME_CREDIT_REFERENCE_TYPE,
+        referenceId: null,
+        idempotencyKey: welcomeCreditIdempotencyKey(userId),
+        description: 'BirKare AI hoş geldin kredisi',
+      });
+    }
+    return { status: 'VERIFIED', welcomeCreditsGranted: shouldGrant };
+  }
+
+  async invalidateEmailTokens(userId: string, type: EmailTokenType): Promise<void> {
+    const usedAt = new Date();
+    for (const token of this.emailTokens.values()) {
+      if (token.userId === userId && token.type === type && !token.usedAt) token.usedAt = usedAt;
+    }
   }
 
   async createAsset(input: CreateAssetInput): Promise<AssetRecord> {
@@ -636,7 +798,9 @@ export class MemoryRepository implements BirKareRepository {
 
   async updateAsset(
     id: string,
-    input: Partial<Pick<AssetRecord, 'status' | 'sha256' | 'width' | 'height' | 'deletedAt'>>,
+    input: Partial<
+      Pick<AssetRecord, 'status' | 'storageKey' | 'sha256' | 'width' | 'height' | 'deletedAt'>
+    >,
   ): Promise<AssetRecord> {
     const asset = this.assets.get(id);
     if (!asset) throw notFound('ASSET_NOT_FOUND', 'Görsel bulunamadı.');
@@ -807,6 +971,13 @@ export class MemoryRepository implements BirKareRepository {
   ): Promise<GenerationRecord> {
     const generation = this.generations.get(id);
     if (!generation) throw notFound('GENERATION_NOT_FOUND', 'Üretim bulunamadı.');
+    if (
+      input.status &&
+      TERMINAL_GENERATION_STATUSES.has(generation.status) &&
+      input.status !== generation.status
+    ) {
+      return (await this.getGenerationById(id))!;
+    }
     Object.assign(generation, input, { updatedAt: new Date() });
     return (await this.getGenerationById(id))!;
   }
@@ -885,6 +1056,20 @@ export class MemoryRepository implements BirKareRepository {
         return { wallet: clone(wallet), reservationId: existing.id };
       }
     }
+    if (wallet.unlimited) {
+      const reservation = this.recordTransaction({
+        userId: input.userId,
+        type: 'GENERATION_RESERVATION',
+        amount: 0,
+        availableAfter: wallet.available,
+        reservedAfter: wallet.reserved,
+        referenceType: 'GENERATION',
+        referenceId: input.generationId,
+        idempotencyKey: input.idempotencyKey ?? null,
+        description: 'Sınırsız hesap üretim rezervasyonu',
+      });
+      return { wallet: clone(wallet), reservationId: reservation.id };
+    }
     if (wallet.available < input.amount) {
       throw conflict(
         'GENERATION_INSUFFICIENT_CREDITS',
@@ -910,65 +1095,81 @@ export class MemoryRepository implements BirKareRepository {
     return { wallet: clone(wallet), reservationId: reservation.id };
   }
 
-  async captureCredits(input: {
-    userId: string;
-    generationId: string;
-    amount: number;
-  }): Promise<CreditWalletRecord> {
-    const wallet = this.wallets.get(input.userId);
-    if (!wallet) throw notFound('WALLET_NOT_FOUND', 'Kredi cüzdanı bulunamadı.');
-    const reservation = this.findActiveReservation(input.userId, input.generationId);
-    if (!reservation) return clone(wallet);
-    const amount = Math.abs(reservation.amount);
-    if (wallet.reserved < amount)
-      throw conflict('CREDIT_RESERVATION_NOT_FOUND', 'Kredi rezervasyonu bulunamadı.');
-    wallet.reserved -= amount;
-    wallet.lifetimeSpent += amount;
-    wallet.version += 1;
-    wallet.updatedAt = new Date();
-    this.recordTransaction({
-      userId: input.userId,
-      type: 'GENERATION_CAPTURE',
-      amount: -amount,
-      availableAfter: wallet.available,
-      reservedAfter: wallet.reserved,
-      referenceType: 'GENERATION',
-      referenceId: input.generationId,
-      description: 'Üretim kredisi kesinleştirildi',
-    });
-    reservation.status = 'REVERSED';
-    return clone(wallet);
+  async captureCredits(input: CreditSettlementInput): Promise<CreditSettlementResult> {
+    return this.adjustReservedCredits(input, 'capture');
   }
 
-  async releaseCredits(input: {
-    userId: string;
-    generationId: string;
-    amount: number;
-    reason?: string;
-  }): Promise<CreditWalletRecord> {
+  async releaseCredits(
+    input: CreditSettlementInput & {
+      reason?: string;
+    },
+  ): Promise<CreditSettlementResult> {
+    return this.adjustReservedCredits(input, 'release');
+  }
+
+  private adjustReservedCredits(
+    input: CreditSettlementInput & { reason?: string },
+    action: 'capture' | 'release',
+  ): CreditSettlementResult {
     const wallet = this.wallets.get(input.userId);
     if (!wallet) throw notFound('WALLET_NOT_FOUND', 'Kredi cüzdanı bulunamadı.');
+    const generation = this.generations.get(input.generationId) ?? null;
     const reservation = this.findActiveReservation(input.userId, input.generationId);
-    if (!reservation) return clone(wallet);
+    if (!reservation) {
+      return {
+        wallet: clone(wallet),
+        applied: false,
+        outcome: this.findReservationSettlement(input.userId, input.generationId),
+        generation: generation ? clone(generation) : null,
+      };
+    }
+    if (
+      input.finalization &&
+      (!generation ||
+        (TERMINAL_GENERATION_STATUSES.has(generation.status) &&
+          generation.status !== input.finalization.status))
+    ) {
+      return {
+        wallet: clone(wallet),
+        applied: false,
+        outcome: 'PENDING',
+        generation: generation ? clone(generation) : null,
+      };
+    }
     const amount = Math.abs(reservation.amount);
     if (wallet.reserved < amount)
       throw conflict('CREDIT_RESERVATION_NOT_FOUND', 'Kredi rezervasyonu bulunamadı.');
-    wallet.reserved -= amount;
-    wallet.available += amount;
-    wallet.version += 1;
-    wallet.updatedAt = new Date();
+    if (amount > 0) {
+      wallet.reserved -= amount;
+      if (action === 'capture') wallet.lifetimeSpent += amount;
+      else wallet.available += amount;
+      wallet.version += 1;
+      wallet.updatedAt = new Date();
+    }
+    reservation.status = 'REVERSED';
     this.recordTransaction({
       userId: input.userId,
-      type: 'GENERATION_RELEASE',
-      amount,
+      type: action === 'capture' ? 'GENERATION_CAPTURE' : 'GENERATION_RELEASE',
+      amount: action === 'capture' ? -amount : amount,
       availableAfter: wallet.available,
       reservedAfter: wallet.reserved,
       referenceType: 'GENERATION',
       referenceId: input.generationId,
-      description: input.reason ?? 'Başarısız veya iptal edilen üretimin kredisi iade edildi',
+      description:
+        input.reason ??
+        (action === 'capture'
+          ? 'Üretim kredisi kesinleştirildi'
+          : 'Başarısız veya iptal edilen üretimin kredisi iade edildi'),
     });
-    reservation.status = 'REVERSED';
-    return clone(wallet);
+    if (input.finalization && generation) {
+      Object.assign(generation, input.finalization, { updatedAt: new Date() });
+    }
+    return {
+      wallet: clone(wallet),
+      applied: true,
+      outcome: action === 'capture' ? 'CAPTURED' : 'RELEASED',
+      generation: generation ? clone(generation) : null,
+    };
   }
 
   async grantCredits(input: GrantCreditsInput): Promise<{
@@ -1134,5 +1335,24 @@ export class MemoryRepository implements BirKareRepository {
         transaction.referenceId === generationId &&
         transaction.status === 'COMPLETED',
     );
+  }
+
+  private findReservationSettlement(
+    userId: string,
+    generationId: string,
+  ): CreditSettlementResult['outcome'] {
+    const settlement = [...this.transactions.values()]
+      .filter(
+        (transaction) =>
+          transaction.userId === userId &&
+          (transaction.type === 'GENERATION_CAPTURE' ||
+            transaction.type === 'GENERATION_RELEASE') &&
+          transaction.referenceType === 'GENERATION' &&
+          transaction.referenceId === generationId &&
+          transaction.status === 'COMPLETED',
+      )
+      .sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime())[0];
+    if (!settlement) return 'NOT_FOUND';
+    return settlement.type === 'GENERATION_CAPTURE' ? 'CAPTURED' : 'RELEASED';
   }
 }

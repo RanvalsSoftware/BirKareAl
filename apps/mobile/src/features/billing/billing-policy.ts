@@ -24,7 +24,7 @@ export const MOBILE_CREDIT_PRODUCTS = [
     label: 'Stüdyo',
     credits: 150,
     productId: 'com.birkareai.credits.150',
-    expectedTryPrice: 599.99,
+    expectedTryPrice: 499.99,
   },
 ] as const;
 

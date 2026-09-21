@@ -45,10 +45,19 @@ describe('RevenueCat public build configuration', () => {
     expect(config.androidApiKey).toBe('goog_example');
   });
 
-  it.each(['production', 'staging'])('rejects test keys in %s builds', (environment) => {
+  it('allows the RevenueCat Test Store in a signed Android staging build', () => {
+    const config = resolveRevenueCatConfig({
+      EXPO_PUBLIC_APP_ENV: 'staging',
+      EAS_BUILD_PROFILE: 'staging',
+      EAS_BUILD_PLATFORM: 'android',
+    });
+    expect(config.androidApiKey.startsWith('test_')).toBe(true);
+  });
+
+  it('rejects test keys in production builds', () => {
     expect(() =>
       resolveRevenueCatConfig({
-        EXPO_PUBLIC_APP_ENV: environment,
+        EXPO_PUBLIC_APP_ENV: 'production',
         EAS_BUILD_PLATFORM: 'ios',
         EXPO_PUBLIC_REVENUECAT_IOS_API_KEY: 'test_example',
       }),

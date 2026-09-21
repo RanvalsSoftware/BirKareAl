@@ -12,6 +12,7 @@ export const INITIAL_CREDIT_PLACEHOLDER = 21;
 export type CreditWallet = {
   available: number;
   reserved: number;
+  unlimited: boolean;
 };
 
 export type CreditTransaction = {

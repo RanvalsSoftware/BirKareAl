@@ -8,6 +8,11 @@
     "node": ">=22.13.0",
     "pnpm": ">=10.0.0"
   },
+  "pnpm": {
+    "overrides": {
+      "body-parser>qs": "6.16.0"
+    }
+  },
   "scripts": {
     "dev": "pnpm --parallel --filter @birkare/mobile --filter @birkare/api --filter @birkare/worker dev",
     "dev:mobile": "pnpm --filter @birkare/mobile start",

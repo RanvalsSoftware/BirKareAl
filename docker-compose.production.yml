@@ -17,6 +17,8 @@ x-backend-environment: &backend-environment
   QUEUE_DRIVER: bullmq
   # REDIS_PASSWORD must be URL-safe (for example openssl rand -hex 32).
   REDIS_URL: redis://:${REDIS_PASSWORD:?Set a unique URL-safe Redis password}@redis:6379/0
+  EMAIL_DOMAIN_ALLOWLIST: ${EMAIL_DOMAIN_ALLOWLIST:-privaterelay.appleid.com}
+  EMAIL_DOMAIN_BLOCKLIST: ${EMAIL_DOMAIN_BLOCKLIST:-}
   ENABLE_INLINE_WORKER: 'false'
   GENERATION_WORKER_CONCURRENCY: ${GENERATION_WORKER_CONCURRENCY:-2}
   OPENAI_MAX_JOBS_PER_WINDOW: ${OPENAI_MAX_JOBS_PER_WINDOW:-10}

@@ -1,6 +1,6 @@
 import { mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, resolve, sep } from 'node:path';
-import type { StorageProvider, StorageUploadUrl } from './types.js';
+import type { StorageObjectStat, StorageProvider, StorageUploadUrl } from './types.js';
 
 function assertSafeStorageKey(key: string): string {
   if (!key || key.startsWith('/') || key.includes('\0')) {
@@ -65,8 +65,24 @@ export class LocalStorageProvider implements StorageProvider {
     await rename(temporary, target);
   }
 
-  async getObject(key: string): Promise<Buffer> {
-    return readFile(this.pathFor(key));
+  async getObject(key: string, options?: { maxBytes?: number }): Promise<Buffer> {
+    const path = this.pathFor(key);
+    if (options?.maxBytes !== undefined) {
+      const details = await stat(path);
+      if (details.size > options.maxBytes) {
+        throw new Error('Storage nesnesi izin verilen boyutu aşıyor.');
+      }
+    }
+    const bytes = await readFile(path);
+    if (options?.maxBytes !== undefined && bytes.length > options.maxBytes) {
+      throw new Error('Storage nesnesi izin verilen boyutu aşıyor.');
+    }
+    return bytes;
+  }
+
+  async statObject(key: string): Promise<StorageObjectStat> {
+    const details = await stat(this.pathFor(key));
+    return { sizeBytes: details.size };
   }
 
   async deleteObject(key: string): Promise<void> {

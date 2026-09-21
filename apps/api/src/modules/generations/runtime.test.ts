@@ -333,7 +333,7 @@ test('non-success moderation responses never masquerade as a valid content verdi
   }
 });
 
-async function fixture() {
+async function fixture(options: { unlimited?: boolean } = {}) {
   const repository = new MemoryRepository();
   // MemoryRepository accepts arbitrary stage strings, but production PostgreSQL
   // uses this enum. Exercise the real schema contract in every runner test.
@@ -359,6 +359,22 @@ async function fixture() {
     consents: [],
   });
   await repository.updateUser(user.id, { status: 'ACTIVE', emailVerifiedAt: new Date() });
+  await repository.grantCredits({
+    userId: user.id,
+    amount: 21,
+    type: 'BONUS',
+    referenceType: 'TEST_FIXTURE',
+    referenceId: user.id,
+    idempotencyKey: `test-fixture:${user.id}`,
+  });
+  if (options.unlimited) {
+    const wallets = (
+      repository as unknown as {
+        wallets: Map<string, { unlimited?: boolean }>;
+      }
+    ).wallets;
+    wallets.get(user.id)!.unlimited = true;
+  }
   const walletBefore = await repository.getWallet(user.id);
   const asset = await repository.createAsset({
     ownerId: user.id,
@@ -412,6 +428,7 @@ async function fixture() {
       objects.set(key, body);
     },
     getObject: async (key) => objects.get(key)!,
+    statObject: async (key) => ({ sizeBytes: objects.get(key)?.length ?? 0 }),
     exists: async (key) => objects.has(key),
     deleteObject: async (key) => {
       objects.delete(key);
@@ -606,6 +623,42 @@ test('studio worker rejects malformed input role order before moderation or paid
   assert.equal(result?.refundedCredits, 10);
   assert.equal(moderationCalls, 0);
   assert.equal(renderCalls, 0);
+});
+
+test('worker rejects an overwritten oversized source before reading it into memory', async () => {
+  const context = await fixture();
+  let reads = 0;
+  let renders = 0;
+  const storage: StorageProvider = {
+    ...context.storage,
+    statObject: async () => ({ sizeBytes: 15 * 1024 * 1024 + 1 }),
+    getObject: async (key) => {
+      reads += 1;
+      return context.storage.getObject(key);
+    },
+  };
+  await runGeneration(
+    { generationId: context.generation.id, requestId: 'oversized-overwrite' },
+    {
+      ...context,
+      storage,
+      moderationProvider: new FakeModerationProvider(),
+      imageProvider: {
+        name: 'fake',
+        async generate() {
+          renders += 1;
+          throw new Error('must-not-render');
+        },
+      },
+      config: { OPENAI_IMAGE_MODEL: 'test' },
+    },
+  );
+  const result = await context.repository.getGenerationById(context.generation.id);
+  assert.equal(reads, 0);
+  assert.equal(renders, 0);
+  assert.equal(result?.status, 'FAILED');
+  assert.equal(result?.failureCode, 'ASSET_INVALID_IMAGE');
+  assert.equal(result?.refundedCredits, 2);
 });
 
 test('full runner saves a result and captures credits once, including queue redelivery', async () => {
@@ -864,10 +917,19 @@ test('refund failure rejects the queue job and redelivery settles without anothe
 test('lost terminal write cannot cause a paid render again on queue redelivery', async () => {
   const context = await fixture();
   const updateGeneration = context.repository.updateGeneration.bind(context.repository);
-  let failsOnce = true;
+  const releaseCredits = context.repository.releaseCredits.bind(context.repository);
+  let settlementFailsOnce = true;
+  let fallbackWriteFailsOnce = true;
+  context.repository.releaseCredits = async (input) => {
+    if (input.finalization?.status === 'BLOCKED' && settlementFailsOnce) {
+      settlementFailsOnce = false;
+      throw new Error('simulated settlement outage');
+    }
+    return releaseCredits(input);
+  };
   context.repository.updateGeneration = async (id, patch) => {
-    if (patch.status === 'BLOCKED' && failsOnce) {
-      failsOnce = false;
+    if (patch.status === 'BLOCKED' && fallbackWriteFailsOnce) {
+      fallbackWriteFailsOnce = false;
       throw new Error('simulated database outage');
     }
     return updateGeneration(id, patch);
@@ -915,10 +977,13 @@ test('a cancellation during input moderation cannot restart the paid render', as
         generationId: context.generation.id,
         amount: 2,
         reason: 'test cancellation',
-      });
-      await context.repository.updateGeneration(context.generation.id, {
-        status: 'CANCELLED',
-        refundedCredits: 2,
+        finalization: {
+          status: 'CANCELLED',
+          stage: 'CANCELLED',
+          progress: 100,
+          refundedCredits: 2,
+          completedAt: new Date(),
+        },
       });
       return { flagged: false, categories: [] };
     },
@@ -932,6 +997,134 @@ test('a cancellation during input moderation cannot restart the paid render', as
     'CANCELLED',
   );
   assert.equal(calls, 0);
+});
+
+test('concurrent capture and release claim one reservation and only the winner finalizes', async () => {
+  for (const first of ['capture', 'release'] as const) {
+    const context = await fixture();
+    const capture = () =>
+      context.repository.captureCredits({
+        userId: context.user.id,
+        generationId: context.generation.id,
+        amount: 2,
+        finalization: {
+          status: 'COMPLETED',
+          stage: 'COMPLETED',
+          progress: 100,
+          chargedCredits: 2,
+          completedAt: new Date(),
+        },
+      });
+    const release = () =>
+      context.repository.releaseCredits({
+        userId: context.user.id,
+        generationId: context.generation.id,
+        amount: 2,
+        reason: 'concurrent cancellation',
+        finalization: {
+          status: 'CANCELLED',
+          stage: 'CANCELLED',
+          progress: 100,
+          refundedCredits: 2,
+          completedAt: new Date(),
+        },
+      });
+    const results = await Promise.all(
+      first === 'capture' ? [capture(), release()] : [release(), capture()],
+    );
+    const winner = results.find((result) => result.applied);
+    assert.ok(winner);
+    assert.equal(results.filter((result) => result.applied).length, 1);
+    assert.ok(results.every((result) => result.outcome === winner.outcome));
+
+    const generation = await context.repository.getGenerationById(context.generation.id);
+    const wallet = await context.repository.getWallet(context.user.id);
+    assert.equal(wallet.reserved, 0);
+    assert.equal(generation?.status, winner.outcome === 'CAPTURED' ? 'COMPLETED' : 'CANCELLED');
+    assert.equal(
+      wallet.available,
+      winner.outcome === 'CAPTURED'
+        ? context.walletBefore.available - 2
+        : context.walletBefore.available,
+    );
+    assert.equal(
+      wallet.lifetimeSpent,
+      context.walletBefore.lifetimeSpent + (winner.outcome === 'CAPTURED' ? 2 : 0),
+    );
+    if (winner.outcome === 'RELEASED') {
+      await context.repository.updateGeneration(context.generation.id, {
+        status: 'MODERATING_OUTPUT',
+        stage: 'OUTPUT_MODERATION',
+      });
+      assert.equal(
+        (await context.repository.getGenerationById(context.generation.id))?.status,
+        'CANCELLED',
+        'a stale worker stage write must not resurrect a terminal cancellation',
+      );
+    }
+    const settlements = (await context.repository.listCreditTransactions(context.user.id)).filter(
+      (transaction) =>
+        transaction.referenceId === context.generation.id &&
+        (transaction.type === 'GENERATION_CAPTURE' || transaction.type === 'GENERATION_RELEASE'),
+    );
+    assert.equal(settlements.length, 1);
+  }
+});
+
+test('unlimited reservations still settle exactly once without changing wallet counters', async () => {
+  const context = await fixture({ unlimited: true });
+  const before = await context.repository.getWallet(context.user.id);
+  const results = await Promise.all([
+    context.repository.releaseCredits({
+      userId: context.user.id,
+      generationId: context.generation.id,
+      amount: 2,
+      finalization: {
+        status: 'CANCELLED',
+        stage: 'CANCELLED',
+        progress: 100,
+        refundedCredits: 2,
+        completedAt: new Date(),
+      },
+    }),
+    context.repository.captureCredits({
+      userId: context.user.id,
+      generationId: context.generation.id,
+      amount: 2,
+      finalization: {
+        status: 'COMPLETED',
+        stage: 'COMPLETED',
+        progress: 100,
+        chargedCredits: 2,
+        completedAt: new Date(),
+      },
+    }),
+  ]);
+  const after = await context.repository.getWallet(context.user.id);
+  assert.equal(results.filter((result) => result.applied).length, 1);
+  assert.deepEqual(
+    {
+      available: after.available,
+      reserved: after.reserved,
+      lifetimeEarned: after.lifetimeEarned,
+      lifetimeSpent: after.lifetimeSpent,
+      version: after.version,
+    },
+    {
+      available: before.available,
+      reserved: before.reserved,
+      lifetimeEarned: before.lifetimeEarned,
+      lifetimeSpent: before.lifetimeSpent,
+      version: before.version,
+    },
+  );
+  const settlements = (await context.repository.listCreditTransactions(context.user.id)).filter(
+    (transaction) =>
+      transaction.referenceId === context.generation.id &&
+      (transaction.type === 'GENERATION_CAPTURE' || transaction.type === 'GENERATION_RELEASE'),
+  );
+  assert.equal(settlements.length, 1);
+  assert.equal(settlements[0]?.amount, 0);
 });
 
 test('disabled safety service and rejected server credentials fail before rendering, with one release', async () => {

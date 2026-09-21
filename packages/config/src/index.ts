@@ -57,6 +57,8 @@ const RawEnvSchema = z.object({
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().min(1).max(365).default(30),
   PASSWORD_PEPPER: OptionalEnvString(z.string().min(16)),
   AUTH_DEV_MODE: BooleanFromEnv.default('true'),
+  EMAIL_DOMAIN_ALLOWLIST: z.string().default('privaterelay.appleid.com'),
+  EMAIL_DOMAIN_BLOCKLIST: z.string().default(''),
 
   // Transactional e-mail stays entirely server-side. Disabled is safe locally;
   // password registration/reset fail closed without SMTP or explicit dev tokens.
@@ -148,12 +150,19 @@ const RawEnvSchema = z.object({
 
 export type BirKareConfig = Omit<
   z.infer<typeof RawEnvSchema>,
-  'CORS_ORIGINS' | 'LOCAL_STORAGE_PATH' | 'JWT_ACCESS_SECRET' | 'PASSWORD_PEPPER'
+  | 'CORS_ORIGINS'
+  | 'LOCAL_STORAGE_PATH'
+  | 'JWT_ACCESS_SECRET'
+  | 'PASSWORD_PEPPER'
+  | 'EMAIL_DOMAIN_ALLOWLIST'
+  | 'EMAIL_DOMAIN_BLOCKLIST'
 > & {
   CORS_ORIGINS: string[];
   LOCAL_STORAGE_PATH: string;
   JWT_ACCESS_SECRET: string;
   PASSWORD_PEPPER: string;
+  EMAIL_DOMAIN_ALLOWLIST: string[];
+  EMAIL_DOMAIN_BLOCKLIST: string[];
 };
 
 export function loadConfig(source: NodeJS.ProcessEnv = process.env): BirKareConfig {
@@ -213,6 +222,14 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): BirKareConf
   ) {
     throw new Error('STORAGE_DRIVER=r2 iken R2 bağlantı değişkenleri zorunludur.');
   }
+  if (
+    isProductionLike &&
+    config.STORAGE_DRIVER === 'r2' &&
+    config.R2_ENDPOINT &&
+    new URL(config.R2_ENDPOINT).protocol !== 'https:'
+  ) {
+    throw new Error('Production ve staging ortamında R2_ENDPOINT HTTPS kullanmalıdır.');
+  }
   if (config.AI_PROVIDER === 'openai' && !config.OPENAI_API_KEY) {
     throw new Error('AI_PROVIDER=openai iken OPENAI_API_KEY zorunludur.');
   }
@@ -241,8 +258,39 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): BirKareConf
   if (isProductionLike && !config.JWT_ACCESS_SECRET) {
     throw new Error('Production ortamında JWT_ACCESS_SECRET zorunludur.');
   }
-  if (isProductionLike && (!config.PASSWORD_PEPPER || config.PASSWORD_PEPPER.length < 16)) {
-    throw new Error('Production ortamında PASSWORD_PEPPER (en az 16 karakter) zorunludur.');
+  if (isProductionLike && (!config.PASSWORD_PEPPER || config.PASSWORD_PEPPER.length < 32)) {
+    throw new Error('Production ortamında PASSWORD_PEPPER (en az 32 karakter) zorunludur.');
+  }
+  if (
+    isProductionLike &&
+    config.JWT_ACCESS_SECRET &&
+    config.PASSWORD_PEPPER &&
+    config.JWT_ACCESS_SECRET === config.PASSWORD_PEPPER
+  ) {
+    throw new Error('JWT_ACCESS_SECRET ve PASSWORD_PEPPER birbirinden farklı olmalıdır.');
+  }
+  if (isProductionLike && new URL(config.JWT_ISSUER).protocol !== 'https:') {
+    throw new Error('Production ve staging ortamında JWT_ISSUER HTTPS kullanmalıdır.');
+  }
+  if (isProductionLike) {
+    const origins = config.CORS_ORIGINS.split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+    if (
+      origins.length === 0 ||
+      origins.some((origin) => {
+        if (origin === '*') return true;
+        try {
+          return new URL(origin).protocol !== 'https:';
+        } catch {
+          return true;
+        }
+      })
+    ) {
+      throw new Error(
+        'Production ve staging ortamında CORS_ORIGINS yalnızca açık HTTPS origin değerleri içermelidir.',
+      );
+    }
   }
   if (isProductionLike && config.DATABASE_PROVIDER !== 'prisma') {
     throw new Error('Production ortamında in-memory repository kullanılamaz.');
@@ -266,6 +314,12 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): BirKareConf
     PASSWORD_PEPPER: config.PASSWORD_PEPPER ?? 'development-only-pepper-change-before-production',
     CORS_ORIGINS: config.CORS_ORIGINS.split(',')
       .map((value) => value.trim())
+      .filter(Boolean),
+    EMAIL_DOMAIN_ALLOWLIST: config.EMAIL_DOMAIN_ALLOWLIST.split(',')
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean),
+    EMAIL_DOMAIN_BLOCKLIST: config.EMAIL_DOMAIN_BLOCKLIST.split(',')
+      .map((value) => value.trim().toLowerCase())
       .filter(Boolean),
     LOCAL_STORAGE_PATH: resolve(config.LOCAL_STORAGE_PATH),
   };

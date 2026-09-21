@@ -180,9 +180,14 @@ export function createRevenueCatService(dependencies: Dependencies) {
 
   function planFor(productId: string | null): RevenueCatPlan {
     if (!productId) return 'unknown';
-    if (monthlyProducts.has(productId)) return 'monthly';
-    if (annualProducts.has(productId)) return 'annual';
-    if (lifetimeProducts.has(productId)) return 'lifetime';
+    // RevenueCat represents current Google Play subscription base plans as
+    // `<subscription-id>:<base-plan-id>`. Match the exact value first, then the
+    // configured subscription id. Apple and legacy Google identifiers remain
+    // unchanged and continue through the same path.
+    const subscriptionId = productId.split(':', 1)[0] ?? productId;
+    if (monthlyProducts.has(productId) || monthlyProducts.has(subscriptionId)) return 'monthly';
+    if (annualProducts.has(productId) || annualProducts.has(subscriptionId)) return 'annual';
+    if (lifetimeProducts.has(productId) || lifetimeProducts.has(subscriptionId)) return 'lifetime';
     return 'unknown';
   }
 

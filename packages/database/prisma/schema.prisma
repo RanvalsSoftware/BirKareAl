@@ -242,6 +242,17 @@ model AccountDeletion {
   @@index([identityHashes], type: Gin)
 }
 
+// Deliberately has no User relation: a claimed welcome-credit identity must
+// survive account deletion so delete/re-register cannot mint another bonus.
+model WelcomeCreditClaim {
+  id           String   @id @default(uuid())
+  abuseKeyHash String   @unique
+  userId       String
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+}
+
 model AuthAccount {
   id                String       @id @default(uuid())
   userId            String
@@ -324,13 +335,14 @@ model Session {
 }
 
 model EmailToken {
-  id        String   @id @default(uuid())
-  userId    String
-  type      String
-  tokenHash String   @unique
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime @default(now())
+  id             String   @id @default(uuid())
+  userId         String
+  type           String
+  tokenHash      String   @unique
+  failedAttempts Int      @default(0)
+  expiresAt      DateTime
+  usedAt         DateTime?
+  createdAt      DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -581,6 +593,7 @@ model ModerationEvent {
 model CreditWallet {
   id              String   @id @default(uuid())
   userId          String   @unique
+  unlimited       Boolean  @default(false)
   available       Int      @default(0)
   reserved        Int      @default(0)
   lifetimeEarned  Int      @default(0)

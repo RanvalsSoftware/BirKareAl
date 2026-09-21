@@ -353,6 +353,7 @@ export const CancelGenerationSchema = z.object({ reason: z.string().trim().max(2
 export const GenerationRevisionSchema = z.object({
   instruction: z.string().trim().min(3).max(1000),
   sourceOutputId: UuidSchema,
+  referenceAssetId: UuidSchema.optional(),
   quality: GenerationQualitySchema.default('STANDARD'),
 });
 export const SelectOutputSchema = z.object({ outputId: UuidSchema });

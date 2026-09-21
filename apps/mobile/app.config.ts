@@ -37,6 +37,7 @@ const publicConfig = resolvePublicMobileConfig(process.env);
 
 const plugins: NonNullable<ExpoConfig['plugins']> = [
   'expo-router',
+  'expo-font',
   './plugins/with-development-url-scheme',
   './plugins/with-android-release-signing',
   './plugins/with-revenuecat',
@@ -68,6 +69,7 @@ const plugins: NonNullable<ExpoConfig['plugins']> = [
     },
   ],
   'expo-secure-store',
+  'expo-sharing',
   'expo-apple-authentication',
   'expo-notifications',
 ];

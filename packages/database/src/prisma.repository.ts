@@ -1,4 +1,10 @@
-import { catalogFixtures, conflict, notFound, unauthorized } from '@birkare/shared';
+import {
+  TERMINAL_GENERATION_STATUSES,
+  catalogFixtures,
+  conflict,
+  notFound,
+  unauthorized,
+} from '@birkare/shared';
 import type { CatalogFeaturedPerson, CatalogItem } from '@birkare/shared';
 import { randomUUID } from 'node:crypto';
 import { deletionIdentityHash, DELETION_GRACE_MS, DELETION_IDLE_STATUSES } from './deletion.js';
@@ -6,6 +12,7 @@ import type { AccountDeletionRecord } from './types.js';
 import {
   WELCOME_CREDIT_AMOUNT,
   WELCOME_CREDIT_REFERENCE_TYPE,
+  welcomeCreditAbuseHash,
   welcomeCreditIdempotencyKey,
 } from './credits.js';
 import type {
@@ -20,11 +27,14 @@ import type {
   CreateUserInput,
   CreateVerifiedSocialUserInput,
   CreatePendingSocialLoginInput,
+  CreditSettlementInput,
+  CreditSettlementResult,
   CreditTransactionRecord,
   CreditWalletRecord,
   GrantCreditsInput,
   EmailTokenRecord,
   EmailTokenType,
+  EmailVerificationCompletionResult,
   GenerationMessageRecord,
   GenerationInputRecord,
   GenerationOutputRecord,
@@ -32,6 +42,7 @@ import type {
   IdempotencyRecord,
   LinkAuthAccountInput,
   PendingSocialLoginRecord,
+  PasswordResetCompletionResult,
   ProjectRecord,
   SessionRecord,
   SocialAuthProvider,
@@ -43,6 +54,8 @@ import type {
 // Keeping the Prisma client structurally typed lets `DATABASE_PROVIDER=memory`
 // work before `prisma generate`, while the production path still uses Prisma.
 type PrismaClientLike = any;
+
+class GenerationFinalizationConflict extends Error {}
 
 const asDate = (value: unknown): Date | null =>
   value instanceof Date ? value : value ? new Date(value as string) : null;
@@ -238,6 +251,7 @@ function toWallet(row: any): CreditWalletRecord {
   return {
     id: row.id,
     userId: row.userId,
+    unlimited: Boolean(row.unlimited),
     available: row.available,
     reserved: row.reserved,
     lifetimeEarned: row.lifetimeEarned,
@@ -339,19 +353,28 @@ export class PrismaRepository implements BirKareRepository {
     await this.prisma.$disconnect();
   }
 
+  async backfillWelcomeCreditClaims(): Promise<number> {
+    const rows = await this.prisma.creditTransaction.findMany({
+      where: { referenceType: WELCOME_CREDIT_REFERENCE_TYPE },
+      select: { userId: true, user: { select: { email: true } } },
+    });
+    const claims = new Map<string, string>();
+    for (const row of rows) {
+      const abuseKeyHash = welcomeCreditAbuseHash(this.identitySecret, row.user.email);
+      if (!claims.has(abuseKeyHash)) claims.set(abuseKeyHash, row.userId);
+    }
+    if (claims.size === 0) return 0;
+    const created = await this.prisma.welcomeCreditClaim.createMany({
+      data: [...claims].map(([abuseKeyHash, userId]) => ({ abuseKeyHash, userId })),
+      skipDuplicates: true,
+    });
+    return created.count;
+  }
+
   async createUser(input: CreateUserInput): Promise<UserRecord> {
     try {
       return await this.prisma.$transaction(async (tx: PrismaClientLike) => {
         const { consents, ...userInput } = input;
-        const priorDeletion = await tx.accountDeletion.findFirst({
-          where: {
-            identityHashes: {
-              has: deletionIdentityHash(this.identitySecret, 'email', input.email),
-            },
-          },
-          select: { userId: true },
-        });
-        const welcomeAmount = priorDeletion ? 0 : WELCOME_CREDIT_AMOUNT;
         const user = await tx.user.create({
           data: {
             email: userInput.email.toLowerCase(),
@@ -364,9 +387,9 @@ export class PrismaRepository implements BirKareRepository {
             profile: { create: {} },
             wallet: {
               create: {
-                available: welcomeAmount,
-                lifetimeEarned: welcomeAmount,
-                version: 1,
+                available: 0,
+                lifetimeEarned: 0,
+                version: 0,
               },
             },
           },
@@ -375,21 +398,6 @@ export class PrismaRepository implements BirKareRepository {
         await tx.userConsent.createMany({
           data: consents.map((consent) => ({ ...consent, userId: user.id })),
         });
-        if (welcomeAmount > 0)
-          await tx.creditTransaction.create({
-            data: {
-              userId: user.id,
-              type: 'BONUS',
-              status: 'COMPLETED',
-              amount: welcomeAmount,
-              availableAfter: welcomeAmount,
-              reservedAfter: 0,
-              referenceType: WELCOME_CREDIT_REFERENCE_TYPE,
-              idempotencyKey: welcomeCreditIdempotencyKey(user.id),
-              description: 'BirKare AI hoş geldin kredisi',
-              completedAt: new Date(),
-            },
-          });
         return toUser(user);
       });
     } catch (error: any) {
@@ -438,7 +446,9 @@ export class PrismaRepository implements BirKareRepository {
           },
           select: { userId: true },
         });
-        const welcomeAmount = priorDeletion ? 0 : WELCOME_CREDIT_AMOUNT;
+        const abuseKeyHash =
+          input.welcomeCreditAbuseHash ??
+          welcomeCreditAbuseHash(this.identitySecret, input.email);
         const user = await tx.user.create({
           data: {
             email: input.email.toLowerCase(),
@@ -452,9 +462,9 @@ export class PrismaRepository implements BirKareRepository {
             profile: { create: {} },
             wallet: {
               create: {
-                available: welcomeAmount,
-                lifetimeEarned: welcomeAmount,
-                version: 1,
+                available: 0,
+                lifetimeEarned: 0,
+                version: 0,
               },
             },
           },
@@ -468,10 +478,25 @@ export class PrismaRepository implements BirKareRepository {
             providerEmail: input.providerEmail,
           },
         });
+        const claim = priorDeletion
+          ? { count: 0 }
+          : await tx.welcomeCreditClaim.createMany({
+              data: [{ abuseKeyHash, userId: user.id }],
+              skipDuplicates: true,
+            });
+        const welcomeAmount = claim.count === 1 ? WELCOME_CREDIT_AMOUNT : 0;
         await tx.userConsent.createMany({
           data: input.consents.map((consent) => ({ ...consent, userId: user.id })),
         });
-        if (welcomeAmount > 0)
+        if (welcomeAmount > 0) {
+          await tx.creditWallet.update({
+            where: { userId: user.id },
+            data: {
+              available: welcomeAmount,
+              lifetimeEarned: welcomeAmount,
+              version: 1,
+            },
+          });
           await tx.creditTransaction.create({
             data: {
               userId: user.id,
@@ -486,6 +511,7 @@ export class PrismaRepository implements BirKareRepository {
               completedAt: now,
             },
           });
+        }
         return toUser(user);
       });
     } catch (error: any) {
@@ -744,24 +770,49 @@ export class PrismaRepository implements BirKareRepository {
     });
   }
 
-  async createSession(input: CreateSessionInput): Promise<SessionRecord> {
-    const row = await this.prisma.session.create({
-      data: {
-        ...input,
-        tokenFamilyId: input.tokenFamilyId ?? randomUUID(),
-        deviceId: input.deviceId ?? null,
-        deviceName: input.deviceName ?? null,
-        platform: input.platform ?? null,
-        appVersion: input.appVersion ?? null,
-        ipHash: input.ipHash ?? null,
-        userAgent: input.userAgent ?? null,
-      },
+  async createSession(
+    input: CreateSessionInput,
+    guard?: { expectedPasswordHash: string },
+  ): Promise<SessionRecord> {
+    return this.prisma.$transaction(async (tx: PrismaClientLike) => {
+      if (guard) {
+        const locked = await tx.user.updateMany({
+          where: {
+            id: input.userId,
+            passwordHash: guard.expectedPasswordHash,
+            deletedAt: null,
+            status: { notIn: ['DELETION_PENDING', 'DELETED', 'SUSPENDED'] },
+          },
+          data: { updatedAt: new Date() },
+        });
+        if (locked.count !== 1)
+          throw unauthorized('AUTH_INVALID_CREDENTIALS', 'E-posta veya şifre hatalı.');
+      } else {
+        await this.lockWritableAccount(tx, input.userId);
+      }
+      const row = await tx.session.create({
+        data: {
+          ...input,
+          tokenFamilyId: input.tokenFamilyId ?? randomUUID(),
+          deviceId: input.deviceId ?? null,
+          deviceName: input.deviceName ?? null,
+          platform: input.platform ?? null,
+          appVersion: input.appVersion ?? null,
+          ipHash: input.ipHash ?? null,
+          userAgent: input.userAgent ?? null,
+        },
+      });
+      return toSession(row);
     });
-    return toSession(row);
   }
 
   async getSessionByRefreshHash(refreshTokenHash: string): Promise<SessionRecord | null> {
     const row = await this.prisma.session.findUnique({ where: { refreshTokenHash } });
+    return row ? toSession(row) : null;
+  }
+
+  async getSessionById(id: string): Promise<SessionRecord | null> {
+    const row = await this.prisma.session.findUnique({ where: { id } });
     return row ? toSession(row) : null;
   }
 
@@ -840,6 +891,18 @@ export class PrismaRepository implements BirKareRepository {
     return { ...row, type: row.type as EmailTokenType, usedAt: null };
   }
 
+  async replaceEmailToken(
+    input: Omit<EmailTokenRecord, 'id' | 'usedAt' | 'createdAt'>,
+  ): Promise<EmailTokenRecord> {
+    return this.prisma.$transaction(async (tx: PrismaClientLike) => {
+      // Serialize concurrent resend requests so exactly the newest code stays valid.
+      await this.lockWritableAccount(tx, input.userId);
+      await tx.emailToken.deleteMany({ where: { userId: input.userId, type: input.type } });
+      const row = await tx.emailToken.create({ data: input });
+      return { ...row, type: row.type as EmailTokenType, usedAt: null };
+    });
+  }
+
   async consumeEmailToken(
     tokenHash: string,
     type: EmailTokenType,
@@ -853,6 +916,190 @@ export class PrismaRepository implements BirKareRepository {
     });
     if (claimed.count !== 1) return null;
     return { ...token, usedAt, type: token.type as EmailTokenType };
+  }
+
+  async completePasswordReset(
+    tokenHash: string,
+    passwordHash: string,
+  ): Promise<PasswordResetCompletionResult> {
+    return this.prisma.$transaction(async (tx: PrismaClientLike) => {
+      const now = new Date();
+      const token = await tx.emailToken.findUnique({ where: { tokenHash } });
+      if (!token || token.type !== 'RESET_PASSWORD' || token.usedAt || token.expiresAt <= now)
+        return 'INVALID_TOKEN';
+
+      // Updating the account row serializes password reset with deletion,
+      // token replacement, and a concurrent reset using the same token.
+      const locked = await tx.user.updateMany({
+        where: {
+          id: token.userId,
+          deletedAt: null,
+          status: { notIn: ['DELETION_PENDING', 'DELETED', 'SUSPENDED'] },
+        },
+        data: { updatedAt: now },
+      });
+      if (locked.count !== 1) {
+        const user = await tx.user.findUnique({
+          where: { id: token.userId },
+          select: { status: true },
+        });
+        return user?.status === 'SUSPENDED' ? 'ACCOUNT_SUSPENDED' : 'ACCOUNT_UNAVAILABLE';
+      }
+
+      const claimed = await tx.emailToken.updateMany({
+        where: {
+          id: token.id,
+          type: 'RESET_PASSWORD',
+          usedAt: null,
+          expiresAt: { gt: now },
+        },
+        data: { usedAt: now },
+      });
+      if (claimed.count !== 1) return 'INVALID_TOKEN';
+
+      await tx.user.update({
+        where: { id: token.userId },
+        data: { passwordHash },
+      });
+      await tx.emailToken.updateMany({
+        where: { userId: token.userId, type: 'RESET_PASSWORD', usedAt: null },
+        data: { usedAt: now },
+      });
+      await tx.session.updateMany({
+        where: { userId: token.userId, revokedAt: null },
+        data: { revokedAt: now, revokedReason: 'PASSWORD_RESET' },
+      });
+      return 'COMPLETED';
+    });
+  }
+
+  async completeEmailVerification(
+    userId: string,
+    tokenHash: string,
+    maxFailedAttempts: number,
+    welcomeCreditAbuseHash: string,
+  ): Promise<EmailVerificationCompletionResult> {
+    return this.prisma.$transaction(async (tx: PrismaClientLike) => {
+      // The account row serializes guesses across concurrent requests so the
+      // persistent attempt ceiling cannot be raced.
+      const now = new Date();
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+        select: { id: true, email: true, status: true, emailVerifiedAt: true, deletedAt: true },
+      });
+      if (!user || user.deletedAt || ['DELETION_PENDING', 'DELETED'].includes(user.status))
+        return { status: 'ACCOUNT_UNAVAILABLE', welcomeCreditsGranted: false };
+      if (user.status === 'SUSPENDED')
+        return { status: 'ACCOUNT_SUSPENDED', welcomeCreditsGranted: false };
+      if (user.emailVerifiedAt || user.status !== 'PENDING_VERIFICATION')
+        return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false };
+
+      const locked = await tx.user.updateMany({
+        where: {
+          id: userId,
+          emailVerifiedAt: null,
+          deletedAt: null,
+          status: 'PENDING_VERIFICATION',
+        },
+        data: { updatedAt: now },
+      });
+      if (locked.count !== 1)
+        return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false };
+      const token = await tx.emailToken.findFirst({
+        where: {
+          userId,
+          type: 'VERIFY_EMAIL',
+          usedAt: null,
+          expiresAt: { gt: now },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (!token || token.failedAttempts >= maxFailedAttempts)
+        return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false };
+      if (token.tokenHash !== tokenHash) {
+        const failedAttempts = token.failedAttempts + 1;
+        await tx.emailToken.update({
+          where: { id: token.id },
+          data: {
+            failedAttempts,
+            ...(failedAttempts >= maxFailedAttempts ? { usedAt: now } : {}),
+          },
+        });
+        return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false };
+      }
+      const claimed = await tx.emailToken.updateMany({
+        where: {
+          id: token.id,
+          tokenHash,
+          usedAt: null,
+          expiresAt: { gt: now },
+          failedAttempts: { lt: maxFailedAttempts },
+        },
+        data: { usedAt: now },
+      });
+      if (claimed.count !== 1)
+        return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false };
+
+      await tx.user.update({
+        where: { id: userId },
+        data: { emailVerifiedAt: now, status: 'ACTIVE' },
+      });
+
+      const priorDeletion = await tx.accountDeletion.findFirst({
+        where: {
+          identityHashes: {
+            has: deletionIdentityHash(this.identitySecret, 'email', user.email),
+          },
+        },
+        select: { userId: true },
+      });
+      const existingWelcome = await tx.creditTransaction.findFirst({
+        where: { userId, referenceType: WELCOME_CREDIT_REFERENCE_TYPE },
+        select: { id: true },
+      });
+      const claimResult = priorDeletion
+        ? { count: 0 }
+        : await tx.welcomeCreditClaim.createMany({
+            data: [{ abuseKeyHash: welcomeCreditAbuseHash, userId }],
+            skipDuplicates: true,
+          });
+      const shouldGrant = claimResult.count === 1 && !existingWelcome;
+      if (shouldGrant) {
+        const wallet = await tx.creditWallet.update({
+          where: { userId },
+          data: {
+            available: { increment: WELCOME_CREDIT_AMOUNT },
+            lifetimeEarned: { increment: WELCOME_CREDIT_AMOUNT },
+            version: { increment: 1 },
+          },
+        });
+        await tx.creditTransaction.create({
+          data: {
+            userId,
+            type: 'BONUS',
+            status: 'COMPLETED',
+            amount: WELCOME_CREDIT_AMOUNT,
+            availableAfter: wallet.available,
+            reservedAfter: wallet.reserved,
+            referenceType: WELCOME_CREDIT_REFERENCE_TYPE,
+            idempotencyKey: welcomeCreditIdempotencyKey(userId),
+            description: 'BirKare AI hoş geldin kredisi',
+            completedAt: now,
+          },
+        });
+      }
+      return { status: 'VERIFIED', welcomeCreditsGranted: shouldGrant };
+    });
+  }
+
+  async invalidateEmailTokens(userId: string, type: EmailTokenType): Promise<void> {
+    await this.prisma.$transaction(async (tx: PrismaClientLike) => {
+      await this.lockWritableAccount(tx, userId);
+      await tx.emailToken.updateMany({
+        where: { userId, type, usedAt: null },
+        data: { usedAt: new Date() },
+      });
+    });
   }
 
   async createAsset(input: CreateAssetInput): Promise<AssetRecord> {
@@ -993,11 +1240,25 @@ export class PrismaRepository implements BirKareRepository {
     input: Parameters<BirKareRepository['updateGeneration']>[1],
   ): Promise<GenerationRecord> {
     const { outputs: _outputs, sourceAssetId: _source, ...data } = input as any;
-    const row = await this.prisma.generation.update({
+    if (data.status) {
+      const terminalStatuses = [...TERMINAL_GENERATION_STATUSES];
+      await this.prisma.generation.updateMany({
+        where: {
+          id,
+          ...(TERMINAL_GENERATION_STATUSES.has(data.status)
+            ? { OR: [{ status: { notIn: terminalStatuses } }, { status: data.status }] }
+            : { status: { notIn: terminalStatuses } }),
+        },
+        data,
+      });
+    } else {
+      await this.prisma.generation.update({ where: { id }, data });
+    }
+    const row = await this.prisma.generation.findUnique({
       where: { id },
-      data,
       include: { outputs: true, inputs: { orderBy: { sortOrder: 'asc' } } },
     });
+    if (!row) throw notFound('GENERATION_NOT_FOUND', 'Üretim bulunamadı.');
     return toGeneration(row);
   }
 
@@ -1053,6 +1314,27 @@ export class PrismaRepository implements BirKareRepository {
   }): Promise<{ wallet: CreditWalletRecord; reservationId: string }> {
     return this.prisma.$transaction(async (tx: PrismaClientLike) => {
       await this.lockWritableAccount(tx, input.userId);
+      const currentWallet = await tx.creditWallet.findUniqueOrThrow({
+        where: { userId: input.userId },
+      });
+      if (currentWallet.unlimited) {
+        const transaction = await tx.creditTransaction.create({
+          data: {
+            userId: input.userId,
+            type: 'GENERATION_RESERVATION',
+            status: 'COMPLETED',
+            amount: 0,
+            availableAfter: currentWallet.available,
+            reservedAfter: currentWallet.reserved,
+            referenceType: 'GENERATION',
+            referenceId: input.generationId,
+            idempotencyKey: input.idempotencyKey,
+            description: 'Sınırsız hesap üretim rezervasyonu',
+            completedAt: new Date(),
+          },
+        });
+        return { wallet: toWallet(currentWallet), reservationId: transaction.id };
+      }
       const updated = await tx.creditWallet.updateMany({
         where: { userId: input.userId, available: { gte: input.amount } },
         data: {
@@ -1089,20 +1371,15 @@ export class PrismaRepository implements BirKareRepository {
     });
   }
 
-  async captureCredits(input: {
-    userId: string;
-    generationId: string;
-    amount: number;
-  }): Promise<CreditWalletRecord> {
+  async captureCredits(input: CreditSettlementInput): Promise<CreditSettlementResult> {
     return this.adjustReservedCredits(input, 'capture');
   }
 
-  async releaseCredits(input: {
-    userId: string;
-    generationId: string;
-    amount: number;
-    reason?: string;
-  }): Promise<CreditWalletRecord> {
+  async releaseCredits(
+    input: CreditSettlementInput & {
+      reason?: string;
+    },
+  ): Promise<CreditSettlementResult> {
     return this.adjustReservedCredits(input, 'release');
   }
 
@@ -1161,68 +1438,155 @@ export class PrismaRepository implements BirKareRepository {
   }
 
   private async adjustReservedCredits(
-    input: { userId: string; generationId: string; amount: number; reason?: string },
+    input: CreditSettlementInput & { reason?: string },
     action: 'capture' | 'release',
-  ): Promise<CreditWalletRecord> {
-    return this.prisma.$transaction(async (tx: PrismaClientLike) => {
-      const reservation = await tx.creditTransaction.findFirst({
-        where: {
-          userId: input.userId,
-          type: 'GENERATION_RESERVATION',
-          status: 'COMPLETED',
-          referenceType: 'GENERATION',
-          referenceId: input.generationId,
-        },
-        orderBy: { createdAt: 'desc' },
+  ): Promise<CreditSettlementResult> {
+    try {
+      return await this.prisma.$transaction(async (tx: PrismaClientLike) => {
+        const reservation = await tx.creditTransaction.findFirst({
+          where: {
+            userId: input.userId,
+            type: 'GENERATION_RESERVATION',
+            status: 'COMPLETED',
+            referenceType: 'GENERATION',
+            referenceId: input.generationId,
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+        if (!reservation) return this.creditSettlementSnapshot(tx, input);
+
+        // Claim the reservation before touching the wallet. PostgreSQL
+        // re-checks this predicate after a concurrent row lock is released, so
+        // exactly one capture/release transaction can win.
+        const claimed = await tx.creditTransaction.updateMany({
+          where: { id: reservation.id, status: 'COMPLETED' },
+          data: { status: 'REVERSED' },
+        });
+        if (claimed.count !== 1) return this.creditSettlementSnapshot(tx, input);
+
+        const amount = Math.abs(reservation.amount);
+        if (amount > 0) {
+          const data =
+            action === 'capture'
+              ? {
+                  reserved: { decrement: amount },
+                  lifetimeSpent: { increment: amount },
+                  version: { increment: 1 },
+                }
+              : {
+                  reserved: { decrement: amount },
+                  available: { increment: amount },
+                  version: { increment: 1 },
+                };
+          const updated = await tx.creditWallet.updateMany({
+            where: { userId: input.userId, reserved: { gte: amount } },
+            data,
+          });
+          if (updated.count !== 1)
+            throw conflict('CREDIT_RESERVATION_NOT_FOUND', 'Kredi rezervasyonu bulunamadı.');
+        }
+        const wallet = await tx.creditWallet.findUniqueOrThrow({
+          where: { userId: input.userId },
+        });
+        await tx.creditTransaction.create({
+          data: {
+            userId: input.userId,
+            type: action === 'capture' ? 'GENERATION_CAPTURE' : 'GENERATION_RELEASE',
+            status: 'COMPLETED',
+            amount: action === 'capture' ? -amount : amount,
+            availableAfter: wallet.available,
+            reservedAfter: wallet.reserved,
+            referenceType: 'GENERATION',
+            referenceId: input.generationId,
+            description:
+              input.reason ??
+              (action === 'capture'
+                ? 'Üretim kredisi kesinleştirildi'
+                : 'Üretim kredisi iade edildi'),
+            completedAt: new Date(),
+          },
+        });
+
+        if (input.finalization) {
+          const terminalStatuses = [...TERMINAL_GENERATION_STATUSES];
+          const finalized = await tx.generation.updateMany({
+            where: {
+              id: input.generationId,
+              userId: input.userId,
+              OR: [{ status: { notIn: terminalStatuses } }, { status: input.finalization.status }],
+            },
+            data: input.finalization,
+          });
+          // Rolling the transaction back leaves the reservation available for
+          // whichever terminal transition actually owns the generation.
+          if (finalized.count !== 1) throw new GenerationFinalizationConflict();
+        }
+
+        const generation = await tx.generation.findUnique({
+          where: { id: input.generationId },
+          include: {
+            outputs: { orderBy: { variantIndex: 'asc' } },
+            inputs: { orderBy: { sortOrder: 'asc' } },
+          },
+        });
+        return {
+          wallet: toWallet(wallet),
+          applied: true,
+          outcome: action === 'capture' ? 'CAPTURED' : 'RELEASED',
+          generation: generation ? toGeneration(generation) : null,
+        };
       });
-      if (!reservation) {
-        const wallet = await tx.creditWallet.findUniqueOrThrow({ where: { userId: input.userId } });
-        return toWallet(wallet);
-      }
-      const amount = Math.abs(reservation.amount);
-      const data =
-        action === 'capture'
-          ? {
-              reserved: { decrement: amount },
-              lifetimeSpent: { increment: amount },
-              version: { increment: 1 },
-            }
-          : {
-              reserved: { decrement: amount },
-              available: { increment: amount },
-              version: { increment: 1 },
-            };
-      const updated = await tx.creditWallet.updateMany({
-        where: { userId: input.userId, reserved: { gte: amount } },
-        data,
-      });
-      if (updated.count !== 1)
-        throw conflict('CREDIT_RESERVATION_NOT_FOUND', 'Kredi rezervasyonu bulunamadı.');
-      await tx.creditTransaction.update({
-        where: { id: reservation.id },
-        data: { status: 'REVERSED' },
-      });
-      const wallet = await tx.creditWallet.findUniqueOrThrow({ where: { userId: input.userId } });
-      await tx.creditTransaction.create({
-        data: {
-          userId: input.userId,
-          type: action === 'capture' ? 'GENERATION_CAPTURE' : 'GENERATION_RELEASE',
-          status: 'COMPLETED',
-          amount: action === 'capture' ? -amount : amount,
-          availableAfter: wallet.available,
-          reservedAfter: wallet.reserved,
-          referenceType: 'GENERATION',
-          referenceId: input.generationId,
-          description:
-            input.reason ??
-            (action === 'capture'
-              ? 'Üretim kredisi kesinleştirildi'
-              : 'Üretim kredisi iade edildi'),
-          completedAt: new Date(),
-        },
-      });
-      return toWallet(wallet);
+    } catch (error) {
+      if (!(error instanceof GenerationFinalizationConflict)) throw error;
+      return this.creditSettlementSnapshot(this.prisma, input);
+    }
+  }
+
+  private async creditSettlementSnapshot(
+    client: PrismaClientLike,
+    input: Pick<CreditSettlementInput, 'userId' | 'generationId'>,
+  ): Promise<CreditSettlementResult> {
+    const wallet = await client.creditWallet.findUniqueOrThrow({ where: { userId: input.userId } });
+    const generation = await client.generation.findUnique({
+      where: { id: input.generationId },
+      include: {
+        outputs: { orderBy: { variantIndex: 'asc' } },
+        inputs: { orderBy: { sortOrder: 'asc' } },
+      },
     });
+    const settlement = await client.creditTransaction.findFirst({
+      where: {
+        userId: input.userId,
+        type: { in: ['GENERATION_CAPTURE', 'GENERATION_RELEASE'] },
+        status: 'COMPLETED',
+        referenceType: 'GENERATION',
+        referenceId: input.generationId,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    const reservation = settlement
+      ? null
+      : await client.creditTransaction.findFirst({
+          where: {
+            userId: input.userId,
+            type: 'GENERATION_RESERVATION',
+            status: 'COMPLETED',
+            referenceType: 'GENERATION',
+            referenceId: input.generationId,
+          },
+        });
+    return {
+      wallet: toWallet(wallet),
+      applied: false,
+      outcome: settlement
+        ? settlement.type === 'GENERATION_CAPTURE'
+          ? 'CAPTURED'
+          : 'RELEASED'
+        : reservation
+          ? 'PENDING'
+          : 'NOT_FOUND',
+      generation: generation ? toGeneration(generation) : null,
+    };
   }
 
   async listCreditTransactions(userId: string): Promise<CreditTransactionRecord[]> {

@@ -85,13 +85,21 @@ export function createApp(deps: ApiDependencies): Express {
       );
   });
   app.get('/ready', async (_req, res) => {
-    const readiness = await deps.repository.readiness();
-    const status = readiness.ready ? 200 : 503;
-    if (readiness.ready)
+    const [repository, authSecurityStore, generationQueue] = await Promise.all([
+      deps.repository.readiness(),
+      deps.emailSecurityService.ready(),
+      deps.generationQueue.ready(),
+    ]);
+    const ready = repository.ready && authSecurityStore && generationQueue;
+    const status = ready ? 200 : 503;
+    if (ready)
       res
         .status(status)
         .json(
-          successEnvelope({ status: 'ready', repository: deps.repository.kind }, _req.requestId),
+          successEnvelope(
+            { status: 'ready', repository: deps.repository.kind },
+            _req.requestId,
+          ),
         );
     else
       res

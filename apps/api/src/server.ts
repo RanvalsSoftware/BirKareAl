@@ -68,6 +68,7 @@ async function main(): Promise<void> {
     clearInterval(deletionCleanupTimer);
     await new Promise<void>((resolve) => server.close(() => resolve()));
     await deps.generationQueue.close();
+    await deps.emailSecurityService.close();
     await deps.repository.disconnect();
     process.exit(0);
   };

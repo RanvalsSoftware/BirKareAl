@@ -19,8 +19,6 @@ import { SubmissionProgress } from '@/features/create/SubmissionProgress';
 import { modeName } from '@/features/create/workflow';
 import { colors, radii, spacing, typography } from '@/theme';
 import { CREDIT_WALLET_QUERY_KEY } from '@/features/billing/use-wallet';
-import { FilterPreview } from '@/features/filters/FilterPreview';
-import { getSelectedScene } from '@/features/create/scene-presentation';
 import { beautyOptions } from '@/features/beauty/catalog';
 import { beautyIntensity } from '@/features/beauty/settings';
 import { getTrendPreset } from '@/features/trends/presets';
@@ -46,7 +44,7 @@ export default function ReviewScreen() {
   const { autoStart: rawAutoStart } = useLocalSearchParams<{ autoStart?: string }>();
   const autoStart = Array.isArray(rawAutoStart) ? rawAutoStart[0] : rawAutoStart;
   const autoStartAttempted = useRef(false);
-  const { flow } = useCreateFlow();
+  const { flow, reset } = useCreateFlow();
   const [quoteRefresh, setQuoteRefresh] = useState(0);
   const [quoteState, setQuoteState] = useState<QuoteState>({
     requestKey: '',
@@ -169,13 +167,6 @@ export default function ReviewScreen() {
     router,
   ]);
 
-  const scene =
-    (flow.trendPreset ? 'Akıma uygun ortam' : getSelectedScene(flow.sceneId)?.name) ??
-    (flow.mode === 'filter'
-      ? 'Sahne değişmeden'
-      : flow.mode === 'portrait'
-        ? 'Portre stüdyosu'
-        : 'Seçilmedi');
   const person = getName(fictionalPeople, flow.personId, 'Yok');
   const style = getName(
     filters,
@@ -184,7 +175,8 @@ export default function ReviewScreen() {
   );
   const cost = quote?.creditCost ?? 0;
   const availableCredits = quote?.availableCredits ?? 0;
-  const remainingCredits = Math.max(0, availableCredits - cost);
+  const unlimitedCredits = Boolean(quote?.unlimitedCredits);
+  const remainingCredits = unlimitedCredits ? '∞' : Math.max(0, availableCredits - cost);
   const readyToStart = Boolean(
     flow.sourceUri &&
     flow.sourceRightsConfirmed &&
@@ -212,53 +204,80 @@ export default function ReviewScreen() {
   if (!flow.sourceUri || !flow.sourceRightsConfirmed) return <Redirect href="/create/upload" />;
   return (
     <Screen contentContainerStyle={styles.content}>
-      <CreateHeader title="Üretim özeti" subtitle="Her şey kontrolünde" step={3} />
-      <View style={styles.preview}>
-        {flow.beauty || flow.transformation || flow.trendPreset ? (
-          <Image
-            source={{ uri: flow.sourceUri }}
-            resizeMode="contain"
-            style={{ width: '100%', height: 300 }}
-          />
-        ) : (
-          <FilterPreview
-            sourceUri={flow.sourceUri}
-            filterId={
-              flow.styleId ?? (flow.mode === 'portrait' ? 'filter-studio' : 'filter-natural')
+      <CreateHeader
+        title="Üretim özeti"
+        subtitle="Oluşturmadan önce son kontrol"
+        step={3}
+        right={
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Yeni oluştur"
+            onPress={() => {
+              reset();
+              router.dismissTo('/create' as never);
+            }}
+            style={styles.newCreate}
+          >
+            <Text style={styles.newCreateText}>Yeni oluştur</Text>
+            <Icon name="add" size={18} color={colors.textPrimary} />
+          </Pressable>
+        }
+      />
+      <View style={styles.summaryCard}>
+        <View style={styles.summaryPreview}>
+          <Image source={{ uri: flow.sourceUri }} resizeMode="cover" style={styles.summaryImage} />
+          <View style={styles.sourceBadge}>
+            <Icon name="sparkles" size={12} color={colors.accentYellow} />
+            <Text style={styles.sourceBadgeText}>Kaynak</Text>
+          </View>
+        </View>
+        <View style={styles.summaryDetails}>
+          <Detail
+            label="Mod"
+            value={
+              flow.beauty
+                ? 'Güzellik Stüdyosu'
+                : flow.transformation
+                  ? 'Cinsiyet değiştirme'
+                  : flow.trendPreset
+                    ? 'Akımlar'
+                    : modeName(flow.mode)
             }
-            intensity={flow.filterIntensity}
+            icon="sparkles-outline"
           />
-        )}
+          {flow.trendPreset ? (
+            <Detail
+              label="Akım"
+              value={`${getTrendPreset(flow.trendPreset)?.name ?? 'Akım'} · %${flow.filterIntensity}`}
+              icon="sparkles-outline"
+            />
+          ) : (
+            <Detail
+              label="Tarz"
+              value={`${style} · %${flow.filterIntensity}`}
+              icon="color-filter-outline"
+            />
+          )}
+          <Detail
+            label="Kompozisyon"
+            value={`${flow.trendPreset ? 'Akıma uygun kadraj' : flow.mode === 'filter' || flow.mode === 'background' ? 'Kaynak kadrajı' : flow.composition} · ${flow.aspectRatio}`}
+            icon="scan-outline"
+          />
+          <Detail
+            label="Çıktı"
+            value={`${flow.numberOfImages} görsel · ${flow.quality}`}
+            icon="image-outline"
+          />
+        </View>
       </View>
-      <View style={styles.details}>
-        <Detail
-          label="Mod"
-          value={
-            flow.beauty
-              ? 'Güzellik Stüdyosu'
-              : flow.transformation
-                ? 'Cinsiyet değiştirme'
-                : flow.trendPreset
-                  ? 'Akımlar'
-                  : modeName(flow.mode)
-          }
-          icon="sparkles-outline"
-        />
-        <Detail label="Sahne" value={scene} icon="images-outline" />
-        {flow.mode === 'character' ? (
+      {flow.mode === 'character' ? (
+        <View style={styles.details}>
           <Detail label="Karakter" value={person} icon="person-outline" />
-        ) : null}
-        <Detail
-          label="Kaynak"
-          value={
-            flow.sourceKind === 'fictional'
-              ? getName(fictionalPeople, flow.sourceCharacterId ?? null, 'Kurgusal karakter')
-              : 'Fotoğrafım'
-          }
-          icon="person-outline"
-        />
-        {flow.beauty ? (
-          beautyOptions
+        </View>
+      ) : null}
+      {flow.beauty ? (
+        <View style={styles.details}>
+          {beautyOptions
             .filter((option) => beautyIntensity(flow.beauty!, option.id) > 0)
             .map((option) => (
               <Detail
@@ -267,41 +286,9 @@ export default function ReviewScreen() {
                 value={`%${beautyIntensity(flow.beauty!, option.id)}`}
                 icon="sparkles-outline"
               />
-            ))
-        ) : flow.transformation ? (
-          <Detail
-            label="Görünüm"
-            value={
-              flow.transformation.presentation === 'feminine'
-                ? 'Kadınsı görünüm'
-                : 'Erkeksi görünüm'
-            }
-            icon="color-filter-outline"
-          />
-        ) : flow.trendPreset ? (
-          <Detail
-            label="Akım"
-            value={`${getTrendPreset(flow.trendPreset)?.name ?? 'Akım'} · %${flow.filterIntensity}`}
-            icon="sparkles-outline"
-          />
-        ) : (
-          <Detail
-            label="Tarz"
-            value={`${style} · %${flow.filterIntensity}`}
-            icon="color-filter-outline"
-          />
-        )}
-        <Detail
-          label="Kompozisyon"
-          value={`${flow.trendPreset ? 'Akıma uygun kadraj' : flow.mode === 'filter' || flow.mode === 'background' ? 'Kaynak kadrajı' : flow.composition} · ${flow.aspectRatio}`}
-          icon="scan-outline"
-        />
-        <Detail
-          label="Çıktı"
-          value={`${flow.numberOfImages} görsel · ${flow.quality}`}
-          icon="image-outline"
-        />
-      </View>
+            ))}
+        </View>
+      ) : null}
       {flow.trendPreset ? (
         <Notice tone="neutral" title="Akım dönüşümü">
           Yukarıdaki görsel kaynak fotoğrafındır, oluşturulmuş sonuç değildir. Yüz kimliğin
@@ -314,64 +301,66 @@ export default function ReviewScreen() {
           <Text style={styles.instructionText}>{flow.customInstruction}</Text>
         </View>
       ) : null}
-      <View style={styles.costCard}>
-        <Text style={styles.costLabel}>SUNUCU TARAFINDAN HESAPLANAN MALİYET</Text>
-        <View style={styles.costRow}>
-          <Text style={styles.cost}>
-            <Text style={styles.costNumber}>{isQuoting ? '…' : quote ? cost : '—'}</Text> kredi
+      <View style={styles.reviewStack}>
+        <View style={styles.costCard}>
+          <Text style={styles.costLabel}>SUNUCU TARAFINDAN HESAPLANAN MALİYET</Text>
+          <View style={styles.costRow}>
+            <Text style={styles.cost}>
+              <Text style={styles.costNumber}>{isQuoting ? '…' : quote ? cost : '—'}</Text> kredi
+            </Text>
+            {quote ? <CreditBadge credits={unlimitedCredits ? '∞' : availableCredits} /> : null}
+          </View>
+          <Text style={styles.remaining}>
+            {quote ? (
+              <>
+                Üretimden sonra tahmini{' '}
+                <Text style={styles.remainingStrong}>{remainingCredits} kredi</Text> kalır.
+              </>
+            ) : quoteError ? (
+              'Kredi tutarı alınamadı; bakiye değişmedi.'
+            ) : (
+              'Kredi özeti güvenle doğrulanıyor.'
+            )}
           </Text>
-          {quote ? <CreditBadge credits={availableCredits} /> : null}
         </View>
-        <Text style={styles.remaining}>
-          {quote ? (
-            <>
-              Üretimden sonra tahmini{' '}
-              <Text style={styles.remainingStrong}>{remainingCredits} kredi</Text> kalır.
-            </>
-          ) : quoteError ? (
-            'Kredi tutarı alınamadı; bakiye değişmedi.'
-          ) : (
-            'Kredi özeti güvenle doğrulanıyor.'
-          )}
-        </Text>
-      </View>
-      {quoteError && quoteErrorVisible ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Kredi özetini yeniden dene"
-          onPress={() => setQuoteRefresh((value) => value + 1)}
-        >
-          <Notice tone="warning" title="Kredi özeti alınamadı">
-            {quoteError} Yeniden denemek için dokun.
+        {quoteError && quoteErrorVisible ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Kredi özetini yeniden dene"
+            onPress={() => setQuoteRefresh((value) => value + 1)}
+          >
+            <Notice tone="warning" title="Kredi özeti alınamadı">
+              {quoteError} Yeniden denemek için dokun.
+            </Notice>
+          </Pressable>
+        ) : null}
+        {quoteError && !quoteErrorVisible ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Kredi özetini yeniden dene"
+            onPress={() => setQuoteRefresh((value) => value + 1)}
+            style={styles.retryQuote}
+          >
+            <Icon name="refresh" size={18} color={colors.accentYellow} />
+            <Text style={styles.retryQuoteText}>Kredi özetini yeniden dene</Text>
+          </Pressable>
+        ) : null}
+        {quote && !quote.canGenerate ? (
+          <Notice tone="warning" title="Yetersiz kredi">
+            Bu üretim için {cost} kredi gerekir; kullanılabilir bakiyen {availableCredits} kredi.
           </Notice>
-        </Pressable>
-      ) : null}
-      {quoteError && !quoteErrorVisible ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Kredi özetini yeniden dene"
-          onPress={() => setQuoteRefresh((value) => value + 1)}
-          style={styles.retryQuote}
-        >
-          <Icon name="refresh" size={18} color={colors.accentYellow} />
-          <Text style={styles.retryQuoteText}>Kredi özetini yeniden dene</Text>
-        </Pressable>
-      ) : null}
-      {quote && !quote.canGenerate ? (
-        <Notice tone="warning" title="Yetersiz kredi">
-          Bu üretim için {cost} kredi gerekir; kullanılabilir bakiyen {availableCredits} kredi.
+        ) : null}
+        {startError ? (
+          <Notice tone="warning" title="Üretim başlatılamadı">
+            {startError}
+          </Notice>
+        ) : null}
+        <Notice tone="neutral" title="Başlatmadan önce">
+          Üretim, gönderdiğin kaynak fotoğrafı ve seçimlerini kullanır. Sonuçlar AI içeriği olarak
+          işaretlenir.
         </Notice>
-      ) : null}
-      {startError ? (
-        <Notice tone="warning" title="Üretim başlatılamadı">
-          {startError}
-        </Notice>
-      ) : null}
-      <Notice tone="neutral" title="Başlatmadan önce">
-        Üretim, gönderdiğin kaynak fotoğrafı ve seçimlerini kullanır. Sonuçlar AI içeriği olarak
-        işaretlenir.
-      </Notice>
-      {isStarting ? <SubmissionProgress stage={submissionStage} /> : null}
+        {isStarting ? <SubmissionProgress stage={submissionStage} /> : null}
+      </View>
       <WizardFooter
         label={
           isStarting
@@ -421,7 +410,50 @@ function Detail({
 
 const styles = StyleSheet.create({
   content: { paddingBottom: 42 },
-  preview: { marginTop: spacing.lg, position: 'relative' },
+  newCreate: {
+    alignItems: 'center',
+    borderColor: 'rgba(255,196,0,0.44)',
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 5,
+    minHeight: 40,
+    paddingHorizontal: 12,
+  },
+  newCreateText: { ...typography.caption, color: colors.textPrimary, fontWeight: '800' },
+  summaryCard: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: spacing.lg,
+    overflow: 'hidden',
+    padding: 12,
+  },
+  summaryPreview: {
+    aspectRatio: 4 / 5,
+    borderRadius: radii.md,
+    overflow: 'hidden',
+    position: 'relative',
+    width: 116,
+  },
+  summaryImage: { ...StyleSheet.absoluteFill },
+  sourceBadge: {
+    alignItems: 'center',
+    backgroundColor: colors.overlay,
+    borderRadius: radii.pill,
+    bottom: 8,
+    flexDirection: 'row',
+    gap: 4,
+    left: 8,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    position: 'absolute',
+  },
+  sourceBadgeText: { ...typography.caption, color: colors.textPrimary, fontSize: 10 },
+  summaryDetails: { flex: 1, justifyContent: 'center' },
   details: {
     backgroundColor: colors.surface,
     borderRadius: radii.lg,
@@ -465,7 +497,6 @@ const styles = StyleSheet.create({
   },
   costCard: {
     minHeight: 124,
-    marginTop: spacing.md,
     borderRadius: radii.lg,
     padding: 14,
     backgroundColor: colors.surfaceElevated,
@@ -473,6 +504,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,196,0,0.30)',
     position: 'relative',
   },
+  reviewStack: { gap: spacing.md, marginTop: spacing.md },
   costLabel: { ...typography.overline, color: colors.accentYellow, fontSize: 10 },
   costRow: {
     flexDirection: 'row',

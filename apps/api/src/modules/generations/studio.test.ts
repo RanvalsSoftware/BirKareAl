@@ -395,6 +395,14 @@ test('HTTP studio routes quote exact prices and persist immutable v2 recipes wit
     status: 'ACTIVE',
     emailVerifiedAt: new Date(),
   });
+  await repository.grantCredits({
+    userId: user.id,
+    amount: 21,
+    type: 'BONUS',
+    referenceType: 'TEST_FIXTURE',
+    referenceId: user.id,
+    idempotencyKey: `test-fixture:${user.id}`,
+  });
   const session = await repository.createSession({
     userId: user.id,
     refreshTokenHash: 'test-only-studio-routes',
@@ -572,6 +580,47 @@ test('HTTP studio routes quote exact prices and persist immutable v2 recipes wit
         sortOrder,
       })),
       [{ assetId: productSource.id, role: 'PRODUCT', sortOrder: 0 }],
+    );
+
+    const releaseCredits = repository.releaseCredits.bind(repository);
+    let captureWinsCancellationRace = true;
+    repository.releaseCredits = async (input) => {
+      if (captureWinsCancellationRace && input.generationId === created.body.data.generationId) {
+        captureWinsCancellationRace = false;
+        await repository.captureCredits({
+          userId: user.id,
+          generationId: created.body.data.generationId,
+          amount: 7,
+          finalization: {
+            status: 'COMPLETED',
+            stage: 'COMPLETED',
+            progress: 100,
+            chargedCredits: 7,
+            completedAt: new Date(),
+          },
+        });
+      }
+      return releaseCredits(input);
+    };
+    const racedCancellation = await post(
+      `/${created.body.data.generationId}/cancel`,
+      { reason: 'race regression' },
+      'studio-product-cancel-race',
+    );
+    repository.releaseCredits = releaseCredits;
+    assert.equal(racedCancellation.status, 409);
+    assert.equal(racedCancellation.body.error.code, 'GENERATION_NOT_CANCELLABLE');
+    assert.equal(
+      (await repository.getGenerationById(created.body.data.generationId))?.status,
+      'COMPLETED',
+    );
+    assert.equal(
+      (await repository.listCreditTransactions(user.id)).filter(
+        (transaction) =>
+          transaction.referenceId === created.body.data.generationId &&
+          transaction.type === 'GENERATION_RELEASE',
+      ).length,
+      0,
     );
 
     const preview = await post(

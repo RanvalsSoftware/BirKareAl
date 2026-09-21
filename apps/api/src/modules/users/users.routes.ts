@@ -33,7 +33,11 @@ export function createUsersRouter(deps: ApiDependencies): Router {
         user: toPublicUser(user),
         authProviders,
         preferences: user.preferences,
-        wallet: { available: wallet.available, reserved: wallet.reserved },
+        wallet: {
+          available: wallet.available,
+          reserved: wallet.reserved,
+          unlimited: Boolean(wallet.unlimited),
+        },
       });
     }),
   );

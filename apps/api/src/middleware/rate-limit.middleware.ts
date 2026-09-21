@@ -1,6 +1,6 @@
 import rateLimit from 'express-rate-limit';
 import type { RequestHandler } from 'express';
-import { errorEnvelope } from '@birkare/shared';
+import { errorEnvelope, hashStable } from '@birkare/shared';
 
 export const authRateLimit: RequestHandler = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -14,6 +14,34 @@ export const authRateLimit: RequestHandler = rateLimit({
         {
           code: 'RATE_LIMITED',
           message: 'Çok fazla deneme yapıldı. Lütfen kısa süre sonra tekrar deneyin.',
+        },
+        req.requestId ?? 'unknown',
+      ),
+    );
+  },
+});
+
+/**
+ * Six-digit verification codes are convenient but intentionally small.
+ * In addition to the broad per-IP auth limiter, cap failed guesses per target
+ * address. The address is hashed before it becomes a limiter-store key.
+ */
+export const emailVerificationRateLimit: RequestHandler = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  limit: 8,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  keyGenerator: (req) => {
+    const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+    return `verify-email:${hashStable(email || 'invalid')}`;
+  },
+  handler: (req, res) => {
+    res.status(429).json(
+      errorEnvelope(
+        {
+          code: 'AUTH_VERIFICATION_RATE_LIMITED',
+          message: 'Çok fazla doğrulama denemesi yapıldı. Yeni bir kod isteyip tekrar deneyin.',
         },
         req.requestId ?? 'unknown',
       ),

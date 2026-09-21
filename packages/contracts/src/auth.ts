@@ -54,7 +54,11 @@ export const ResetPasswordSchema = z.object({
   token: z.string().min(40).max(512),
   password: PasswordSchema,
 });
-export const VerifyEmailSchema = z.object({ token: z.string().min(40).max(512) });
+export const VerifyEmailSchema = z.object({
+  email: EmailSchema,
+  code: z.string().regex(/^\d{6}$/, 'Doğrulama kodu 6 rakamdan oluşmalıdır.'),
+}).merge(DeviceSchema);
+export const ResendVerificationSchema = z.object({ email: EmailSchema }).merge(DeviceSchema);
 
 /**
  * Profile and legal fields required only when a verified social identity

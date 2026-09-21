@@ -53,6 +53,7 @@ export type GenerationQuote = {
   creditCost: number;
   breakdown: { label: string; credits: number }[];
   availableCredits: number;
+  unlimitedCredits?: boolean;
   canGenerate: boolean;
 };
 

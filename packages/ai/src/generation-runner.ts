@@ -2,6 +2,8 @@ import type { BirKareConfig } from '@birkare/config';
 import type {
   BirKareRepository,
   CatalogSnapshot,
+  CreditSettlementResult,
+  GenerationCreditFinalization,
   GenerationInputRole,
   GenerationRecord,
   ProjectRecord,
@@ -49,6 +51,8 @@ export type GenerationRunnerDependencies = {
 
 export type RunGenerationInput = { generationId: string; requestId: string };
 
+const MAX_SOURCE_IMAGE_BYTES = 15 * 1024 * 1024;
+
 const qualityForProvider = (quality: GenerationRecord['quality']): 'low' | 'medium' | 'high' =>
   quality === 'PREVIEW' ? 'low' : quality === 'HD' ? 'high' : 'medium';
 
@@ -76,6 +80,28 @@ function isSupportedSourceMimeType(mimeType: string): mimeType is ImageReference
   return mimeType === 'image/jpeg' || mimeType === 'image/png' || mimeType === 'image/webp';
 }
 
+async function readValidatedSource(
+  storage: StorageProvider,
+  asset: { storageKey: string; sizeBytes: number; mimeType: string },
+  code: 'ASSET_INVALID_IMAGE' | 'LICENSED_REFERENCE_INVALID',
+  message: string,
+): Promise<Buffer> {
+  const stat = await storage.statObject(asset.storageKey);
+  if (
+    !Number.isSafeInteger(stat.sizeBytes) ||
+    stat.sizeBytes <= 0 ||
+    stat.sizeBytes > MAX_SOURCE_IMAGE_BYTES ||
+    stat.sizeBytes !== asset.sizeBytes
+  ) {
+    throw new ApiError({ statusCode: 422, code, message });
+  }
+  const bytes = await storage.getObject(asset.storageKey, { maxBytes: MAX_SOURCE_IMAGE_BYTES });
+  if (bytes.length !== stat.sizeBytes) {
+    throw new ApiError({ statusCode: 422, code, message });
+  }
+  return bytes;
+}
+
 type ApprovedCharacterReference = {
   referenceAssetId: string;
 };
@@ -85,14 +111,19 @@ type ActiveCatalogSelection = {
 };
 
 const requiredInputRoles = (generation: GenerationRecord): GenerationInputRole[] => {
-  if (generation.recipe?.version !== 2) return ['PRIMARY_USER'];
+  const referenceRoles: GenerationInputRole[] = generation.inputs.some(
+    (input) => input.role === 'REFERENCE',
+  )
+    ? ['REFERENCE']
+    : [];
+  if (generation.recipe?.version !== 2) return ['PRIMARY_USER', ...referenceRoles];
   switch (generation.recipe.studio.kind) {
     case 'PRODUCT_STUDIO':
-      return ['PRODUCT'];
+      return ['PRODUCT', ...referenceRoles];
     case 'VIRTUAL_TRY_ON':
-      return ['PRIMARY_PERSON', 'GARMENT'];
+      return ['PRIMARY_PERSON', 'GARMENT', ...referenceRoles];
     case 'NAIL_PREVIEW':
-      return ['HAND'];
+      return ['HAND', ...referenceRoles];
   }
 };
 
@@ -108,6 +139,8 @@ const providerRole = (role: GenerationInputRole): ImageReference['role'] => {
       return 'GARMENT';
     case 'HAND':
       return 'HAND';
+    case 'REFERENCE':
+      return 'REFERENCE';
   }
 };
 
@@ -371,18 +404,20 @@ async function safeRelease(
   repository: BirKareRepository,
   generation: GenerationRecord,
   reason: string,
-): Promise<void> {
+  finalization?: GenerationCreditFinalization,
+): Promise<CreditSettlementResult | null> {
   if (
     generation.reservedCredits <= 0 ||
     generation.chargedCredits > 0 ||
     generation.refundedCredits > 0
   )
-    return;
-  await repository.releaseCredits({
+    return null;
+  return repository.releaseCredits({
     userId: generation.userId,
     generationId: generation.id,
     amount: generation.reservedCredits,
     reason,
+    finalization,
   });
 }
 
@@ -399,7 +434,12 @@ async function settleFailedGeneration(
     generation.refundedCredits > 0
   )
     return;
-  await safeRelease(repository, generation, generation.failureCode ?? generation.status);
+  const settlement = await safeRelease(
+    repository,
+    generation,
+    generation.failureCode ?? generation.status,
+  );
+  if (!settlement || settlement.outcome !== 'RELEASED') return;
   await repository.updateGeneration(generation.id, {
     refundedCredits: generation.reservedCredits,
     failureMessage: generation.failureMessage?.replace(
@@ -494,7 +534,12 @@ export async function runGeneration(
             message: 'Kaynak fotoğraf üretim için hazır değil.',
           });
         }
-        const bytes = await storage.getObject(asset.storageKey);
+        const bytes = await readValidatedSource(
+          storage,
+          asset,
+          'ASSET_INVALID_IMAGE',
+          'Yüklenen dosya geçerli bir görsel değil.',
+        );
         if (!hasExpectedMagicBytes(bytes, asset.mimeType)) {
           await repository.updateAsset(asset.id, { status: 'REJECTED' });
           throw new ApiError({
@@ -518,17 +563,17 @@ export async function runGeneration(
         repository,
         generation,
         localPolicy.reason ?? 'Güvenlik politikası nedeniyle işlem durduruldu.',
+        {
+          status: 'BLOCKED',
+          stage: 'POLICY_CHECK',
+          progress: 100,
+          failureCode:
+            localPolicy.decision === 'DENY' ? 'MODERATION_BLOCKED' : 'MODERATION_REVIEW_REQUIRED',
+          failureMessage: 'Bu talep BirKare AI güvenlik kurallarına uygun değil.',
+          refundedCredits: generation.reservedCredits,
+          completedAt: new Date(),
+        },
       );
-      await repository.updateGeneration(generation.id, {
-        status: 'BLOCKED',
-        stage: 'POLICY_CHECK',
-        progress: 100,
-        failureCode:
-          localPolicy.decision === 'DENY' ? 'MODERATION_BLOCKED' : 'MODERATION_REVIEW_REQUIRED',
-        failureMessage: 'Bu talep BirKare AI güvenlik kurallarına uygun değil.',
-        refundedCredits: generation.reservedCredits,
-        completedAt: new Date(),
-      });
       return;
     }
     generation = (await repository.getGenerationById(generation.id))!;
@@ -544,8 +589,7 @@ export async function runGeneration(
     generation = (await repository.getGenerationById(generation.id))!;
     if (!generation || TERMINAL_GENERATION_STATUSES.has(generation.status)) return;
     if (moderation.flagged) {
-      await safeRelease(repository, generation, moderation.reason ?? 'Moderasyon engeli');
-      await repository.updateGeneration(generation.id, {
+      await safeRelease(repository, generation, moderation.reason ?? 'Moderasyon engeli', {
         status: 'BLOCKED',
         stage: 'INPUT_MODERATION',
         progress: 100,
@@ -596,7 +640,12 @@ export async function runGeneration(
           message: 'Lisanslı karakter referansı artık kullanılamıyor.',
         });
       }
-      const referenceBytes = await storage.getObject(referenceAsset.storageKey);
+      const referenceBytes = await readValidatedSource(
+        storage,
+        referenceAsset,
+        'LICENSED_REFERENCE_INVALID',
+        'Lisanslı karakter referansı doğrulanamadı.',
+      );
       if (!hasExpectedMagicBytes(referenceBytes, referenceAsset.mimeType)) {
         throw new ApiError({
           statusCode: 422,
@@ -689,20 +738,21 @@ export async function runGeneration(
     }
 
     await setStage(repository, generation.id, 'MODERATING_OUTPUT');
-    await repository.captureCredits({
+    const captured = await repository.captureCredits({
       userId: generation.userId,
       generationId: generation.id,
       amount: generation.reservedCredits,
+      finalization: {
+        status: 'COMPLETED',
+        stage: 'COMPLETED',
+        progress: 100,
+        providerRequestId: response.providerRequestId ?? null,
+        providerUsage: response.usage ?? null,
+        chargedCredits: generation.reservedCredits,
+        completedAt: new Date(),
+      },
     });
-    await repository.updateGeneration(generation.id, {
-      status: 'COMPLETED',
-      stage: 'COMPLETED',
-      progress: 100,
-      providerRequestId: response.providerRequestId ?? null,
-      providerUsage: response.usage ?? null,
-      chargedCredits: generation.reservedCredits,
-      completedAt: new Date(),
-    });
+    if (!captured.applied) return;
     logger.info(
       {
         generationId: generation.id,
@@ -724,30 +774,59 @@ export async function runGeneration(
       typeof providerReference === 'string' && /^[a-zA-Z0-9_.:-]{1,160}$/.test(providerReference)
         ? providerReference
         : null;
+    const status = code === 'MODERATION_BLOCKED' ? 'BLOCKED' : 'FAILED';
+    const stage =
+      code === 'MODERATION_BLOCKED'
+        ? error instanceof ApiError && error.details?.moderationStage === 'output'
+          ? 'OUTPUT_MODERATION'
+          : error instanceof ApiError && error.details?.moderationStage === 'input'
+            ? 'INPUT_MODERATION'
+            : 'MODERATION_PROVIDER'
+        : 'FAILED';
+    const pendingFailureMessage = userMessage.replace(
+      /(?:ayrılan )?krediniz iade edildi\./gi,
+      'Ayrılan kredinin iadesi tamamlanıyor.',
+    );
     try {
-      const failedGeneration = await repository.updateGeneration(latest.id, {
-        status: code === 'MODERATION_BLOCKED' ? 'BLOCKED' : 'FAILED',
-        stage:
-          code === 'MODERATION_BLOCKED'
-            ? error instanceof ApiError && error.details?.moderationStage === 'output'
-              ? 'OUTPUT_MODERATION'
-              : error instanceof ApiError && error.details?.moderationStage === 'input'
-                ? 'INPUT_MODERATION'
-                : 'MODERATION_PROVIDER'
-            : 'FAILED',
-        progress: 100,
-        failureCode: code,
-        // Keep the diagnostic reference on failed jobs as well as successful jobs.
-        // Support can investigate without relying on ephemeral logs or attaching the photo.
-        providerRequestId: safeProviderReference ?? latest.providerRequestId,
-        failureMessage: userMessage.replace(
-          /(?:ayrılan )?krediniz iade edildi\./gi,
-          'Ayrılan kredinin iadesi tamamlanıyor.',
-        ),
-        failedAt: new Date(),
+      const failureMessage = userMessage.replace(
+        /(?:ayrılan )?krediniz iade edildi\./gi,
+        'Ayrılan krediniz iade edildi.',
+      );
+      const failedSettlement = await repository.releaseCredits({
+        userId: latest.userId,
+        generationId: latest.id,
+        amount: latest.reservedCredits,
+        reason: code,
+        finalization: {
+          status,
+          stage,
+          progress: 100,
+          failureCode: code,
+          // Keep the diagnostic reference on failed jobs as well as successful jobs.
+          // Support can investigate without relying on ephemeral logs or attaching the photo.
+          providerRequestId: safeProviderReference ?? latest.providerRequestId,
+          failureMessage,
+          refundedCredits: latest.reservedCredits,
+          failedAt: new Date(),
+        },
       });
-      await settleFailedGeneration(repository, failedGeneration);
+      if (!failedSettlement.applied) return;
     } catch {
+      try {
+        // If only settlement failed, persist the terminal decision so a queue
+        // retry performs refund repair without another paid provider request.
+        await repository.updateGeneration(latest.id, {
+          status,
+          stage,
+          progress: 100,
+          failureCode: code,
+          providerRequestId: safeProviderReference ?? latest.providerRequestId,
+          failureMessage: pendingFailureMessage,
+          failedAt: new Date(),
+        });
+      } catch {
+        // The queue retry below is also the recovery path for a wider outage.
+      }
       logger.error(
         { generationId: input.generationId, requestId: input.requestId, code },
         'Generation başarısızlığı finalize edilemedi.',
