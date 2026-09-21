@@ -28,6 +28,14 @@ describe('Google sign-in diagnosis', () => {
     expect(error.message).toContain('Ayarlar > Güvenlik');
     expect(error.message).toContain('E-posta ve şifrenle giriş');
   });
+  it('preserves BirKare backend network diagnosis after Google provider success', () => {
+    const backendError = Object.assign(new Error('Sunucu zamanında yanıt vermedi.'), {
+      code: 'NETWORK_REQUEST_TIMEOUT',
+      status: 0,
+    });
+    expect(googleSignInError(backendError)).toBe(backendError);
+  });
+
   it('keeps raw native details out of error messages', () => {
     const error = googleSignInError({
       code: 'DEVELOPER_ERROR',

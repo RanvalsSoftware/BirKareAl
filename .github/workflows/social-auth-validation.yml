@@ -1,0 +1,43 @@
+name: Social auth validation
+
+on:
+  push:
+    branches:
+      - feat/human-photorealism-source-fidelity
+  pull_request:
+    branches:
+      - feat/revenuecat-custom-paywall-complete
+
+permissions:
+  contents: read
+
+concurrency:
+  group: social-auth-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Activate pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.18.0 --activate
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Generate Prisma client
+        run: pnpm --filter @birkare/database exec prisma generate
+      - name: Typecheck auth workspaces
+        run: |
+          pnpm --filter @birkare/database typecheck
+          pnpm --filter @birkare/api typecheck
+          pnpm --filter @birkare/mobile typecheck
+      - name: Run backend social auth tests
+        run: pnpm --filter @birkare/api exec tsx --test src/modules/auth/auth.service.test.ts src/modules/auth/google-id-token.service.test.ts src/modules/auth/apple-id-token.service.test.ts src/modules/auth/account-security.test.ts src/middleware/auth.middleware.test.ts
+      - name: Run mobile social auth tests
+        run: pnpm --filter @birkare/mobile exec vitest run src/api/base-url.test.ts src/features/auth/google-errors.test.ts src/features/auth/auth-store.test.ts src/config/public-env.test.ts

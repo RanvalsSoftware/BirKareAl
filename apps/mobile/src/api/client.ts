@@ -1,6 +1,7 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { getRefreshToken, saveRefreshToken, clearRefreshToken } from '../features/auth/token-store';
+import { resolveApiBaseUrl } from './base-url';
 
 export type ApiError = Error & {
   code?: string;
@@ -90,34 +91,15 @@ export function captureSessionRequestScope() {
 
 const extra = Constants.expoConfig?.extra as { apiBaseUrl?: string } | undefined;
 const configuredApiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL ?? extra?.apiBaseUrl;
-const platformDefaultApiBaseUrl =
-  Platform.OS === 'android' ? 'http://10.0.2.2:4000' : 'http://localhost:4000';
 
-function getExpoDevelopmentApiBaseUrl(): string | null {
-  if (Platform.OS === 'web') return null;
-
-  const hostUri = Constants.expoConfig?.hostUri;
-  if (!hostUri) return null;
-
-  try {
-    const host = new URL(hostUri.includes('://') ? hostUri : `http://${hostUri}`).hostname;
-    if (!host || host === 'localhost' || host === '127.0.0.1') return null;
-    return `http://${host}:4000`;
-  } catch {
-    return null;
-  }
-}
-
-const expoDevelopmentApiBaseUrl = getExpoDevelopmentApiBaseUrl();
-
-// `localhost` inside an Android emulator or a physical device is not the
-// development machine. Expo exposes Metro's LAN host while developing, so use
-// that address on real devices and retain 10.0.2.2 as the Android emulator fallback.
-export const apiBaseUrl = (
-  !configuredApiBaseUrl || configuredApiBaseUrl === 'http://localhost:4000'
-    ? (expoDevelopmentApiBaseUrl ?? platformDefaultApiBaseUrl)
-    : configuredApiBaseUrl
-).replace(/\/$/, '');
+// Never let an Android-emulator-only address leak into an iOS development build.
+// On native development builds, loopback addresses resolve through Expo's Metro
+// LAN host when available; explicit public HTTPS release endpoints remain untouched.
+export const apiBaseUrl = resolveApiBaseUrl({
+  configuredApiBaseUrl,
+  expoHostUri: Constants.expoConfig?.hostUri,
+  platform: Platform.OS,
+});
 
 export function configureSessionBridge(input: {
   getAccessToken: TokenReader;

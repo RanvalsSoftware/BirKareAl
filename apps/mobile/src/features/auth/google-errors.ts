@@ -63,7 +63,9 @@ export function googleSignInError(error: unknown): Error {
       'Bu e-posta ile hesabın var. E-posta ve şifrenle giriş yap; Ayarlar > Güvenlik bölümünde Google hesabını bağla. Sonraki girişte Google kullanabilirsin.',
     );
   // Backend errors are already deliberately display-safe, with an independently useful code.
-  if (/^AUTH_[A-Z_]+$/.test(code) && message) return error as Error;
+  // Keep network diagnoses too so a provider success followed by an API failure is not misreported
+  // as a Google SDK/configuration problem.
+  if (/^(AUTH|NETWORK)_[A-Z0-9_]+$/.test(code) && message) return error as Error;
   if (
     code === '10' ||
     code === 'DEVELOPER_ERROR' ||

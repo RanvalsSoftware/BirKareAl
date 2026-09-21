@@ -62,7 +62,17 @@ export function AppleSignInButton({
         });
       })
       .catch((error: unknown) => {
-        const code = (error as AppleAuthenticationError | null)?.code;
+        const object = error as (AppleAuthenticationError & { message?: unknown }) | null;
+        const code = typeof object?.code === 'string' ? object.code : '';
+
+        // onSuccess performs the BirKare API exchange. Preserve its deliberately
+        // display-safe AUTH_/NETWORK_ diagnosis instead of hiding every backend
+        // failure behind a generic Apple SDK message.
+        if (/^(AUTH|NETWORK)_[A-Z0-9_]+$/.test(code) && error instanceof Error) {
+          onError(error);
+          return;
+        }
+
         if (code === 'ERR_REQUEST_CANCELED') return;
 
         if (code === 'ERR_REQUEST_UNKNOWN') {
