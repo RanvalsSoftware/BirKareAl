@@ -33,11 +33,8 @@ export function useOnboardingPhotoPicker({ onSelected }: Options) {
     if (busy) return;
     setBusy(true);
     try {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert('Galeri izni gerekli', 'Fotoğraf seçebilmek için BirKare AI’ye galeri erişimi ver.');
-        return;
-      }
+      // Use the OS photo picker. Do not request broad gallery/library access:
+      // BirKare only receives the specific image the user selects.
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         // Keep the source untouched. The guided preview fits it into its
