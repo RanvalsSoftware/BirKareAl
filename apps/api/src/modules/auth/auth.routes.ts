@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import {
+  ConfirmAccountDeletionLinkSchema,
   ForgotPasswordSchema,
   LoginSchema,
   LogoutSchema,
   RefreshSchema,
   RegisterSchema,
+  RequestAccountDeletionLinkSchema,
   ResendVerificationSchema,
   ResetPasswordSchema,
   SessionParamsSchema,
@@ -85,6 +87,28 @@ export function createAuthRouter(deps: ApiDependencies): Router {
     }),
   );
 
+  router.post(
+    '/account-deletion/request',
+    authRateLimit,
+    validate(RequestAccountDeletionLinkSchema),
+    asyncHandler(async (req, res) => {
+      const result = await deps.authService.requestAccountDeletionLink(
+        req.body.email,
+        getRequestContext(req),
+      );
+      sendSuccess(res, req.requestId, { accepted: true, delivery: 'unconfirmed', ...result }, 202);
+    }),
+  );
+
+  router.post(
+    '/account-deletion/confirm',
+    authRateLimit,
+    validate(ConfirmAccountDeletionLinkSchema),
+    asyncHandler(async (req, res) => {
+      const result = await deps.authService.confirmAccountDeletionLink(req.body);
+      sendSuccess(res, req.requestId, result, 202);
+    }),
+  );
   router.post(
     '/reset-password',
     authRateLimit,
