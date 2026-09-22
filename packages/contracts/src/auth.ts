@@ -50,6 +50,26 @@ export const RefreshSchema = z
   .merge(DeviceSchema);
 export const LogoutSchema = z.object({ refreshToken: z.string().min(40).max(512) });
 export const ForgotPasswordSchema = z.object({ email: EmailSchema });
+
+export const AccountDeletionReasonSchema = z.enum([
+  'NO_LONGER_USE',
+  'PRIVACY',
+  'NOT_USEFUL',
+  'TECHNICAL_ISSUES',
+  'TOO_EXPENSIVE',
+  'OTHER',
+]);
+
+export const RequestAccountDeletionLinkSchema = z.object({ email: EmailSchema }).strict();
+
+export const ConfirmAccountDeletionLinkSchema = z
+  .object({
+    token: z.string().min(40).max(512),
+    reason: AccountDeletionReasonSchema,
+    details: z.string().trim().max(500).optional(),
+  })
+  .strict();
+
 export const ResetPasswordSchema = z.object({
   token: z.string().min(40).max(512),
   password: PasswordSchema,
@@ -108,3 +128,4 @@ export type RefreshInput = z.infer<typeof RefreshSchema>;
 export type SocialLoginInput = z.infer<typeof SocialLoginSchema>;
 export type SocialRegistrationInput = z.infer<typeof SocialRegistrationSchema>;
 export type SocialProfileCompletionInput = z.infer<typeof SocialProfileCompletionSchema>;
+export type ConfirmAccountDeletionLinkInput = z.infer<typeof ConfirmAccountDeletionLinkSchema>;
