@@ -1,6 +1,7 @@
 import {
   ACCOUNT_DELETION_RECOVERY_DAYS,
   DELETION_AUDIT_RETENTION_MS,
+  accountDeletionRecoveryDeadline,
   type BirKareRepository,
 } from '@birkare/database';
 import type { StorageProvider } from '@birkare/storage';
@@ -95,10 +96,11 @@ export class AccountDeletionService {
       userId,
       input.password ? { expectedPasswordHash: user.passwordHash! } : undefined,
     );
+    const recoveryUntil = accountDeletionRecoveryDeadline(record).toISOString();
     return {
       deletionRequested: true,
-      cleanupNotBefore: record.notBefore.toISOString(),
-      recoveryUntil: record.notBefore.toISOString(),
+      cleanupNotBefore: recoveryUntil,
+      recoveryUntil,
       recoveryDays: ACCOUNT_DELETION_RECOVERY_DAYS,
       reversible: true,
     };
