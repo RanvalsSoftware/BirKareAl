@@ -106,6 +106,15 @@ export class AccountDeletionService {
 
   /** Persisted jobs survive API restarts. Keep the manifest until every object and DB row is removed. */
   async cleanup(now = new Date()) {
+    // Purge only audit rows that were already completed before this sweep.
+    // Doing this first guarantees a deletion completed below is never removed
+    // from the audit table in the same cleanup cycle, even under clock jumps
+    // or deterministic future-time tests.
+    await this.repository.purgeCompletedAccountDeletions(
+      new Date(now.getTime() - DELETION_AUDIT_RETENTION_MS),
+      100,
+    );
+
     const requests = await this.repository.listPendingAccountDeletions(now, 20);
     let completed = 0;
     let failed = 0;
@@ -118,10 +127,6 @@ export class AccountDeletionService {
         failed++; /* Retry next sweep; never falsely mark a partial deletion complete. */
       }
     }
-    await this.repository.purgeCompletedAccountDeletions(
-      new Date(now.getTime() - DELETION_AUDIT_RETENTION_MS),
-      100,
-    );
     return { completed, failed };
   }
 }
