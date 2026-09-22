@@ -190,9 +190,18 @@ export function createRevenueCatClient(options: ClientOptions) {
       if (!current(version, userId)) return;
       try {
         if (!userId) {
-          if (configured && sdkModule && !(await sdkModule.default.isAnonymous())) {
-            await sdkModule.default.logOut();
-          }
+          /**
+           * BirKare purchases are authenticated-only. RevenueCat's logOut()
+           * intentionally creates a fresh $RCAnonymousID, which can race with
+           * iOS automatic subscriber-attribute sync and produce harmless 404
+           * "subscriber was not found" errors during app logout/account deletion.
+           *
+           * Keep the native SDK on the last identified customer while the app
+           * is signed out, but clear every BirKare-side snapshot above and block
+           * all purchase actions through getUserId()/status. On the next app
+           * login we call RevenueCat logIn(userId) directly; RevenueCat supports
+           * switching from one custom App User ID to another this way.
+           */
           sdkUserId = null;
           return;
         }
