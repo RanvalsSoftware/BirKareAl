@@ -367,8 +367,11 @@ export class MemoryRepository implements BirKareRepository {
   }
 
   private wasDeleted(hashes: string[]) {
-    return [...this.accountDeletions.values()].some((record) =>
-      record.identityHashes.some((hash) => hashes.includes(hash)),
+    return (
+      hashes.some((hash) => this.welcomeCreditClaims.has(hash)) ||
+      [...this.accountDeletions.values()].some((record) =>
+        record.identityHashes.some((hash) => hashes.includes(hash)),
+      )
     );
   }
 
@@ -415,21 +418,25 @@ export class MemoryRepository implements BirKareRepository {
       );
     const now = new Date();
     const accounts = [...this.authAccounts.values()].filter((item) => item.userId === userId);
+    const identityHashes = [
+      deletionIdentityHash(this.identitySecret, 'email', user.email),
+      ...accounts.map((account) =>
+        deletionIdentityHash(this.identitySecret, account.provider, account.providerAccountId),
+      ),
+    ];
     const record: AccountDeletionRecord = {
       userId,
       createdAt: now,
       completedAt: null,
       notBefore: new Date(now.getTime() + DELETION_GRACE_MS),
-      identityHashes: [
-        deletionIdentityHash(this.identitySecret, 'email', user.email),
-        ...accounts.map((account) =>
-          deletionIdentityHash(this.identitySecret, account.provider, account.providerAccountId),
-        ),
-      ],
+      identityHashes,
       storageKeys: [...this.assets.values()]
         .filter((asset) => asset.ownerId === userId)
         .map((asset) => asset.storageKey),
     };
+    // These keyed hashes are the durable fraud-prevention registry. They contain
+    // no raw e-mail/provider identifiers and survive the 30-day deletion audit row.
+    for (const hash of identityHashes) this.welcomeCreditClaims.add(hash);
     this.accountDeletions.set(userId, record);
     Object.assign(user, { status: 'DELETION_PENDING', deletedAt: now, updatedAt: now });
     await this.revokeAllUserSessions(userId, 'ACCOUNT_DELETION');
@@ -508,6 +515,15 @@ export class MemoryRepository implements BirKareRepository {
     this.wallets.delete(userId);
     record.storageKeys = [];
     record.completedAt = new Date();
+  }
+
+  async purgeCompletedAccountDeletions(before: Date, limit: number): Promise<number> {
+    const rows = [...this.accountDeletions.values()]
+      .filter((record) => Boolean(record.completedAt && record.completedAt <= before))
+      .sort((a, b) => (a.completedAt?.getTime() ?? 0) - (b.completedAt?.getTime() ?? 0))
+      .slice(0, Math.max(0, limit));
+    for (const row of rows) this.accountDeletions.delete(row.userId);
+    return rows.length;
   }
 
   async createSession(
