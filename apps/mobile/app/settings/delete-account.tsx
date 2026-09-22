@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import { Alert, Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Icon, TextField } from '@/components';
@@ -11,6 +12,7 @@ import {
   GoogleSignInButton,
   signOutOfNativeGoogleIfAvailable,
 } from '@/features/auth/google-sign-in';
+import { useRevenueCat } from '@/features/billing/revenuecat';
 import { resetCreateFlow } from '@/features/create/createFlow';
 import {
   GlassSettingsPanel,
@@ -24,6 +26,7 @@ import { colors } from '@/theme';
 type DeletionPreview = {
   canVerifyPassword: boolean;
   canVerifyGoogle: boolean;
+  canVerifyApple: boolean;
   cleanupDelayMinutes: number;
 };
 const CONFIRMATION = 'HESABIMI SIL';
@@ -31,6 +34,7 @@ const CONFIRMATION = 'HESABIMI SIL';
 export default function DeleteAccountScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const billing = useRevenueCat();
   const userId = useAuthStore((state) => state.user?.id);
   const preview = useQuery({
     queryKey: ['account-deletion', userId],
@@ -46,7 +50,9 @@ export default function DeleteAccountScreen() {
   const submitting = useRef(false);
   const canConfirm = acknowledged && confirmation === CONFIRMATION && !busy;
 
-  async function submit(credentials: { password: string } | { googleIdToken: string }) {
+  async function submit(
+    credentials: { password: string } | { googleIdToken: string } | { appleIdToken: string },
+  ) {
     if (!canConfirm || busy || submitting.current) return;
     submitting.current = true;
     const confirmed = await new Promise<boolean>((resolve) =>
@@ -90,6 +96,33 @@ export default function DeleteAccountScreen() {
     }
   }
 
+  async function manageSubscription() {
+    setError(null);
+    const result = await billing.presentCustomerCenter();
+    if (result.kind === 'error' || result.kind === 'pending') {
+      setError(result.message);
+      return;
+    }
+    await billing.refreshFresh();
+  }
+
+  async function verifyWithAppleAndDelete() {
+    if (!canConfirm || busy || Platform.OS !== 'ios') return;
+    setError(null);
+    try {
+      const credential = await AppleAuthentication.signInAsync({ requestedScopes: [] });
+      if (!credential.identityToken) {
+        setError('Apple kimlik belirteci alınamadı. Lütfen yeniden dene.');
+        return;
+      }
+      await submit({ appleIdToken: credential.identityToken });
+    } catch (cause) {
+      const code = (cause as { code?: unknown } | null)?.code;
+      if (code === 'ERR_REQUEST_CANCELED') return;
+      setError(cause instanceof Error ? cause.message : 'Apple doğrulaması tamamlanamadı.');
+    }
+  }
+
   return (
     <SettingsPage
       title="Hesabı sil"
@@ -130,9 +163,28 @@ export default function DeleteAccountScreen() {
         <GlassSettingsRow
           icon="diamond-outline"
           title="Mağaza abonelikleri"
-          detail="Varsa aboneliğini App Store veya Google Play üzerinden ayrıca yönet."
+          detail={
+            billing.subscriptionCancelled
+              ? 'Yenileme kapalı. Mevcut Pro erişimin dönem sonuna kadar devam eder.'
+              : 'Hesabı silmek mağaza aboneliğini otomatik iptal etmez.'
+          }
           accent="purple"
         />
+        {billing.isPro && billing.entitlement?.expirationDate ? (
+          <Pressable
+            accessibilityRole="button"
+            disabled={!billing.ready || billing.busy}
+            onPress={() => void manageSubscription()}
+            style={[styles.subscriptionAction, (!billing.ready || billing.busy) && styles.disabled]}
+          >
+            <GlassSurface radius={18} tone="neutral" contentStyle={styles.subscriptionActionContent}>
+              <Icon name="card-outline" size={19} color={colors.accentYellow} />
+              <Text style={styles.goldText}>
+                {billing.subscriptionCancelled ? 'Abonelik durumunu aç' : 'Aboneliği yönet / iptal et'}
+              </Text>
+            </GlassSurface>
+          </Pressable>
+        ) : null}
         <GlassSettingsRow
           icon="person-outline"
           title="Hesap bilgileri"
@@ -145,7 +197,7 @@ export default function DeleteAccountScreen() {
         <GlassSettingsRow
           icon="lock-closed-outline"
           title="Hesabını yeniden doğrula"
-          detail="Bu işlem için şifren veya bağlı Google hesabın gerekir."
+          detail="Bu işlem için şifren veya bağlı Google/Apple hesabın gerekir."
           last
         />
         {preview.isPending ? (
@@ -212,10 +264,25 @@ export default function DeleteAccountScreen() {
         dakika beklenir; ardından dosya temizliği otomatik yürütülür. Hoş geldin hakkının tekrar
         verilmesini önlemek için geri döndürülemeyen, anahtarlı kimlik özetleri saklanır.
       </SettingsNote>
-      {preview.data && !preview.data.canVerifyGoogle && !preview.data.canVerifyPassword ? (
+      {preview.data &&
+      !preview.data.canVerifyGoogle &&
+      !preview.data.canVerifyApple &&
+      !preview.data.canVerifyPassword ? (
         <SettingsNote warning>
           Bu hesap için desteklenen bir yeniden doğrulama yöntemi bulunamadı. Yardım ve destek
           üzerinden bize ulaş.
+        </SettingsNote>
+      ) : null}
+      {preview.data?.canVerifyApple && Platform.OS !== 'ios' ? (
+        <SettingsNote warning>
+          Apple ile yeniden doğrulama iOS üzerinde yapılır. Bu cihazda hesabını silmek için web
+          silme sayfasını kullanabilirsin.
+          <Text
+            style={styles.goldText}
+            onPress={() => void Linking.openURL('https://ai.ranvals.com/birkare/hesap-silme/')}
+          >
+            {' '}Web hesabı silme sayfasını aç
+          </Text>
         </SettingsNote>
       ) : null}
       {error ? (
@@ -231,6 +298,18 @@ export default function DeleteAccountScreen() {
           onError={(cause) => setError(cause.message)}
           onSuccess={(googleIdToken) => submit({ googleIdToken })}
         />
+      ) : null}
+      {preview.data?.canVerifyApple && Platform.OS === 'ios' ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ disabled: !canConfirm || busy }}
+          disabled={!canConfirm || busy}
+          onPress={() => void verifyWithAppleAndDelete()}
+          style={[styles.appleAction, (!canConfirm || busy) && styles.disabled]}
+        >
+          <Icon name="logo-apple" size={21} color="#111111" />
+          <Text style={styles.appleActionText}>Apple ile doğrula ve sil</Text>
+        </Pressable>
       ) : null}
       <View style={styles.actions}>
         <Pressable
@@ -333,5 +412,25 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.38 },
   error: { color: '#FF8C83', fontSize: 13, lineHeight: 20, marginVertical: 12 },
   retry: { paddingVertical: 14 },
+  subscriptionAction: { marginTop: 12 },
+  subscriptionActionContent: {
+    minHeight: 50,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    gap: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  appleAction: {
+    minHeight: 54,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
+    gap: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+  },
+  appleActionText: { color: '#111111', fontSize: 15, fontWeight: '700' },
   goldText: { color: colors.accentYellow },
 });
