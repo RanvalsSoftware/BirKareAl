@@ -37,7 +37,25 @@ jobs:
           pnpm --filter @birkare/database typecheck
           pnpm --filter @birkare/api typecheck
           pnpm --filter @birkare/mobile typecheck
-      - name: Run backend social auth tests
-        run: pnpm --filter @birkare/api exec tsx --test src/modules/auth/auth.service.test.ts src/modules/auth/google-id-token.service.test.ts src/modules/auth/apple-id-token.service.test.ts src/modules/auth/account-security.test.ts src/middleware/auth.middleware.test.ts
-      - name: Run mobile social auth tests
-        run: pnpm --filter @birkare/mobile exec vitest run src/api/base-url.test.ts src/features/auth/google-errors.test.ts src/features/auth/auth-store.test.ts src/config/public-env.test.ts
+      - name: Run backend auth, deletion and billing tests
+        run: >-
+          pnpm --filter @birkare/api exec tsx --test
+          src/modules/auth/auth.service.test.ts
+          src/modules/auth/google-id-token.service.test.ts
+          src/modules/auth/apple-id-token.service.test.ts
+          src/modules/auth/account-security.test.ts
+          src/modules/users/account-deletion.service.test.ts
+          src/modules/billing/revenuecat.service.test.ts
+          src/modules/billing/revenuecat.credit-packs.test.ts
+          src/middleware/auth.middleware.test.ts
+      - name: Run mobile auth and billing tests
+        run: >-
+          pnpm --filter @birkare/mobile exec vitest run
+          src/api/base-url.test.ts
+          src/features/auth/google-errors.test.ts
+          src/features/auth/auth-store.test.ts
+          src/features/billing/revenuecat-client.test.ts
+          src/features/billing/paywall-model.test.ts
+          src/features/billing/paywall-reference.test.ts
+          config/revenuecat.test.ts
+          src/config/public-env.test.ts
