@@ -1,4 +1,8 @@
-import { DELETION_AUDIT_RETENTION_MS, type BirKareRepository } from '@birkare/database';
+import {
+  ACCOUNT_DELETION_RECOVERY_DAYS,
+  DELETION_AUDIT_RETENTION_MS,
+  type BirKareRepository,
+} from '@birkare/database';
 import type { StorageProvider } from '@birkare/storage';
 import { badRequest, forbidden, notFound } from '@birkare/shared';
 import type { GoogleIdentityVerifier } from '../auth/google-id-token.service.js';
@@ -22,7 +26,7 @@ export class AccountDeletionService {
       canVerifyPassword: Boolean(user.passwordHash),
       canVerifyGoogle: providers.includes('GOOGLE'),
       canVerifyApple: providers.includes('APPLE'),
-      cleanupDelayMinutes: 10,
+      recoveryDays: ACCOUNT_DELETION_RECOVERY_DAYS,
     };
   }
 
@@ -94,7 +98,9 @@ export class AccountDeletionService {
     return {
       deletionRequested: true,
       cleanupNotBefore: record.notBefore.toISOString(),
-      reversible: false,
+      recoveryUntil: record.notBefore.toISOString(),
+      recoveryDays: ACCOUNT_DELETION_RECOVERY_DAYS,
+      reversible: true,
     };
   }
 
