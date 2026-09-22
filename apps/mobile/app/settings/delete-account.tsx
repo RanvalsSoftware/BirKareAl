@@ -27,7 +27,7 @@ type DeletionPreview = {
   canVerifyPassword: boolean;
   canVerifyGoogle: boolean;
   canVerifyApple: boolean;
-  cleanupDelayMinutes: number;
+  recoveryDays: number;
 };
 const CONFIRMATION = 'HESABIMI SIL';
 
@@ -58,7 +58,7 @@ export default function DeleteAccountScreen() {
     const confirmed = await new Promise<boolean>((resolve) =>
       Alert.alert(
         'Hesabın kalıcı olarak silinsin mi?',
-        'Bu işlem geri alınamaz. Projelerine, görsellerine ve kullanılmamış kredilerine erişimin kapanacak.',
+        'Hesabına erişim hemen kapanır. 30 gün içinde yeniden giriş yaparak silme isteğinden vazgeçebilirsin.',
         [
           { text: 'Vazgeç', style: 'cancel', onPress: () => resolve(false) },
           { text: 'Hesabımı sil', style: 'destructive', onPress: () => resolve(true) },
@@ -85,8 +85,8 @@ export default function DeleteAccountScreen() {
       resetCreateFlow();
       router.replace('/(auth)/login' as never);
       Alert.alert(
-        'Silme işlemi başlatıldı',
-        'Hesabına erişim kapatıldı. Kısa süreli dosya bağlantıları geçersiz olduktan sonra veri temizliği otomatik tamamlanır; işlem geri alınamaz.',
+        'Silme işlemi planlandı',
+        'Hesabına erişim kapatıldı. 30 gün içinde yeniden giriş yaparsan hesabını geri getirebilirsin. Süre dolunca veriler kalıcı olarak silinir.',
       );
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Silme başlatılamadı. Hesabın değişmedi.');
@@ -153,7 +153,7 @@ export default function DeleteAccountScreen() {
           <Text style={styles.body}>
             Projelerin, kaynak fotoğrafların, oluşturulan görsellerin ve hesap bilgilerin silinir.
           </Text>
-          <Text style={styles.dangerText}>Geri alınamaz.</Text>
+          <Text style={styles.dangerText}>30 gün içinde geri alınabilir.</Text>
         </View>
       </GlassSurface>
       <GlassSettingsPanel>
@@ -264,14 +264,15 @@ export default function DeleteAccountScreen() {
             {acknowledged ? <Icon name="checkmark" color="#050505" size={17} /> : null}
           </View>
           <Text style={styles.checkLabel}>
-            Veri kaybını ve işlemin geri alınamayacağını anladım.
+            30 günlük geri alma süresi sonunda verilerin kalıcı olarak silineceğini anladım.
           </Text>
         </Pressable>
       </GlassSettingsPanel>
       <SettingsNote warning>
-        Hesabına erişim hemen kapanır. Mevcut dosya bağlantılarının süresi dolması için en az 10
-        dakika beklenir; ardından dosya temizliği otomatik yürütülür. Hoş geldin hakkının tekrar
-        verilmesini önlemek için geri döndürülemeyen, anahtarlı kimlik özetleri saklanır.
+        Hesabına erişim hemen kapanır. Silme isteğinden sonraki 30 gün boyunca hesabın geri
+        getirilebilir durumda tutulur. Bu sürede yeniden giriş yapıp silme isteğinden vazgeçebilirsin.
+        Süre dolunca dosyalar ve hesap verileri kalıcı olarak temizlenir. Hoş geldin hakkının tekrar
+        verilmesini önlemek için geri döndürülemeyen, anahtarlı kimlik özetleri saklanabilir.
       </SettingsNote>
       {preview.data &&
       !preview.data.canVerifyGoogle &&
