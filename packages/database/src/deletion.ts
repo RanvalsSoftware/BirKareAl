@@ -7,6 +7,7 @@ export function deletionIdentityHash(secret: string, kind: string, value: string
     .digest('hex');
 }
 export const DELETION_GRACE_MS = 10 * 60 * 1000; // Existing signed asset URLs expire after five minutes.
+export const DELETION_AUDIT_RETENTION_MS = 30 * 24 * 60 * 60 * 1000; // Minimal deletion manifest/audit row.
 export const DELETION_IDLE_STATUSES = [
   'DRAFT',
   'BLOCKED',
