@@ -164,3 +164,43 @@ export function authMail(input: {
   ].join('\n');
   return { to: input.email, subject: `BirKare AI — ${title}`, text };
 }
+
+export function accountDeletionMail(input: {
+  email: string;
+  token: string;
+  webUrl: string;
+}): MailMessage {
+  let link: URL;
+  try {
+    link = new URL(input.webUrl);
+  } catch {
+    throw mailUnavailable();
+  }
+  const localHttp =
+    link.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(link.hostname);
+  if (
+    (link.protocol !== 'https:' && !localHttp) ||
+    link.username ||
+    link.password ||
+    link.hash ||
+    input.token.length < 40
+  ) {
+    throw mailUnavailable();
+  }
+  link.searchParams.set('token', input.token);
+  const text = [
+    'BirKare AI — Hesap silme talebi',
+    '',
+    'Hesabını kalıcı olarak silme işlemine devam etmek için aşağıdaki tek kullanımlık bağlantıyı aç:',
+    link.toString(),
+    '',
+    'Bu bağlantı 30 dakika geçerlidir ve yalnızca bir kez kullanılabilir.',
+    'Bağlantıyı sen istemediysen bu e-postayı yok say; hesabında hiçbir değişiklik yapılmaz.',
+    'BirKare AI hiçbir zaman bu işlem için e-postayla şifreni istemez.',
+  ].join('\n');
+  return {
+    to: input.email,
+    subject: 'BirKare AI — Hesap silme bağlantın',
+    text,
+  };
+}
