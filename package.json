@@ -16,6 +16,9 @@
   "scripts": {
     "dev": "pnpm --parallel --filter @birkare/mobile --filter @birkare/api --filter @birkare/worker dev",
     "dev:mobile": "pnpm --filter @birkare/mobile start",
+    "dev:mobile:local": "node apps/mobile/scripts/mobile-env.mjs --env-file .env -- pnpm start --clear",
+    "dev:ios:local": "node apps/mobile/scripts/mobile-env.mjs --env-file .env -- pnpm exec expo run:ios",
+    "dev:android:local": "node apps/mobile/scripts/mobile-env.mjs --env-file .env -- pnpm exec expo run:android",
     "dev:api": "pnpm --filter @birkare/api dev",
     "dev:worker": "pnpm --filter @birkare/worker dev",
     "build": "pnpm -r --if-present build",
