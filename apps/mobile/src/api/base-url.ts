@@ -19,29 +19,45 @@ function expoLanApiBaseUrl(hostUri: string | null | undefined, platform: ApiPlat
   }
 }
 
-function needsNativeDevelopmentHost(value: string | undefined, platform: ApiPlatform): boolean {
-  if (!value) return true;
-  if (platform === 'web') return false;
-  const host = hostname(value);
-  if (!host) return false;
-  if (['localhost', '127.0.0.1', '::1', '0.0.0.0'].includes(host)) return true;
-  // 10.0.2.2 is an Android Emulator alias. It is unreachable from iOS.
-  if (host === '10.0.2.2' && platform !== 'android') return true;
-  return false;
-}
-
 export function resolveApiBaseUrl(input: {
   configuredApiBaseUrl?: string;
   expoHostUri?: string | null;
   platform: ApiPlatform;
 }): string {
   const configured = input.configuredApiBaseUrl?.trim();
+  const host = configured ? hostname(configured) : null;
   const fallback =
     input.platform === 'android' ? 'http://10.0.2.2:4000' : 'http://localhost:4000';
 
-  const resolved = needsNativeDevelopmentHost(configured, input.platform)
-    ? (expoLanApiBaseUrl(input.expoHostUri, input.platform) ?? fallback)
-    : (configured ?? fallback);
+  // Explicit iOS loopback is intentional for the iOS Simulator. Do not rewrite
+  // it to Metro's LAN host: Docker exposes the local API on 127.0.0.1:4000.
+  // Physical iPhones must use an explicit Mac LAN address in EXPO_PUBLIC_API_BASE_URL.
+  if (
+    input.platform === 'ios' &&
+    configured &&
+    ['localhost', '127.0.0.1', '::1'].includes(host ?? '')
+  ) {
+    return configured.replace(/\/$/, '');
+  }
 
-  return resolved.replace(/\/$/, '');
+  // 10.0.2.2 is Android-emulator-only. If it leaks into iOS, recover via the
+  // Expo LAN host instead of sending requests to an unreachable address.
+  if (input.platform === 'ios' && host === '10.0.2.2') {
+    return (expoLanApiBaseUrl(input.expoHostUri, input.platform) ?? fallback).replace(/\/$/, '');
+  }
+
+  if (!configured) {
+    return (expoLanApiBaseUrl(input.expoHostUri, input.platform) ?? fallback).replace(/\/$/, '');
+  }
+
+  // Android localhost points at the emulator/device itself. Prefer Metro's LAN
+  // host when known; otherwise use the standard emulator alias.
+  if (
+    input.platform === 'android' &&
+    ['localhost', '127.0.0.1', '::1', '0.0.0.0'].includes(host ?? '')
+  ) {
+    return (expoLanApiBaseUrl(input.expoHostUri, input.platform) ?? fallback).replace(/\/$/, '');
+  }
+
+  return configured.replace(/\/$/, '');
 }
