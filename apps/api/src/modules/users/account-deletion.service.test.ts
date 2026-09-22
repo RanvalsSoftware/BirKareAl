@@ -51,12 +51,15 @@ async function fixture() {
     },
   } as StorageProvider;
   let googleSubject = 'own-subject';
-  let issuedAt = Math.floor(Date.now() / 1000);
+  let googleIssuedAt = Math.floor(Date.now() / 1000);
+  let appleSubject = 'own-apple-subject';
+  let appleIssuedAt = Math.floor(Date.now() / 1000);
   const service = new AccountDeletionService(
     repository,
     storage,
     { verify: async (hash, password) => hash === 'test-hash' && password === 'correct-password' },
-    { verify: async () => ({ subject: googleSubject, email, issuedAt }) },
+    { verify: async () => ({ subject: googleSubject, email, issuedAt: googleIssuedAt }) },
+    { verify: async () => ({ subject: appleSubject, email, issuedAt: appleIssuedAt }) },
   );
   return {
     repository,
@@ -68,7 +71,11 @@ async function fixture() {
     },
     google: (subject: string, iat = Math.floor(Date.now() / 1000)) => {
       googleSubject = subject;
-      issuedAt = iat;
+      googleIssuedAt = iat;
+    },
+    apple: (subject: string, iat = Math.floor(Date.now() / 1000)) => {
+      appleSubject = subject;
+      appleIssuedAt = iat;
     },
   };
 }
@@ -79,6 +86,14 @@ test('deletion requires exact confirmation and exactly one real reauthentication
   assert.equal(
     DeleteAccountSchema.safeParse({ confirmation, password: 'p', googleIdToken: 'x'.repeat(30) })
       .success,
+    false,
+  );
+  assert.equal(
+    DeleteAccountSchema.safeParse({
+      confirmation,
+      googleIdToken: 'x'.repeat(30),
+      appleIdToken: 'y'.repeat(30),
+    }).success,
     false,
   );
   assert.equal(
@@ -119,6 +134,11 @@ test('a password changed during asynchronous reauthentication cannot authorize a
     {
       verify: async () => {
         throw new Error('Google must not be used for password reauthentication');
+      },
+    },
+    {
+      verify: async () => {
+        throw new Error('Apple must not be used for password reauthentication');
       },
     },
   );
@@ -173,6 +193,7 @@ test('Google deletion accepts only a fresh token for the already-linked immutabl
   assert.deepEqual(await f.service.preview(f.user.id), {
     canVerifyPassword: true,
     canVerifyGoogle: true,
+    canVerifyApple: false,
     cleanupDelayMinutes: 10,
   });
   f.google('other-subject');
@@ -201,6 +222,38 @@ test('Google deletion accepts only a fresh token for the already-linked immutabl
   );
 });
 
+test('Apple deletion accepts only a fresh token for the already-linked immutable subject', async () => {
+  const f = await fixture();
+  await f.repository.linkAuthAccount({
+    userId: f.user.id,
+    provider: 'APPLE',
+    providerAccountId: 'own-apple-subject',
+    providerEmail: email,
+  });
+  assert.deepEqual(await f.service.preview(f.user.id), {
+    canVerifyPassword: true,
+    canVerifyGoogle: false,
+    canVerifyApple: true,
+    cleanupDelayMinutes: 10,
+  });
+  f.apple('other-apple-subject');
+  await assert.rejects(
+    () => f.service.request(f.user.id, { confirmation, appleIdToken: 'token' }),
+    matchesCode('DELETION_REAUTH_FAILED'),
+  );
+  f.apple('own-apple-subject', Math.floor(Date.now() / 1000) - 600);
+  await assert.rejects(
+    () => f.service.request(f.user.id, { confirmation, appleIdToken: 'token' }),
+    matchesCode('DELETION_REAUTH_STALE'),
+  );
+  f.apple('own-apple-subject');
+  assert.equal(
+    (await f.service.request(f.user.id, { confirmation, appleIdToken: 'token' }))
+      .deletionRequested,
+    true,
+  );
+});
+
 test('a partially deleted storage manifest is retained and safely retried before database removal', async () => {
   const f = await fixture();
   const first = await f.repository.createAsset(assetInput(f.user.id, 'first'));
@@ -219,6 +272,11 @@ test('a partially deleted storage manifest is retained and safely retried before
     {
       verify: async () => {
         throw new Error('Google is not used');
+      },
+    },
+    {
+      verify: async () => {
+        throw new Error('Apple is not used');
       },
     },
   );
