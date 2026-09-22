@@ -45,7 +45,7 @@ export const BIRKARE_CREDIT_PRODUCTS = [
     label: 'Stüdyo',
     credits: 150,
     productId: 'com.birkareai.credits.150',
-    expectedTryPrice: 499.99,
+    expectedTryPrice: 599.99,
   },
 ] as const;
 
