@@ -443,6 +443,34 @@ export class MemoryRepository implements BirKareRepository {
     return clone(record);
   }
 
+  async getAccountDeletion(userId: string): Promise<AccountDeletionRecord | null> {
+    const record = this.accountDeletions.get(userId);
+    return record ? clone(record) : null;
+  }
+
+  async restoreAccountDeletion(
+    userId: string,
+    now: Date,
+  ): Promise<AccountDeletionRecord | null> {
+    const record = this.accountDeletions.get(userId);
+    const user = this.users.get(userId);
+    if (
+      !record ||
+      record.completedAt ||
+      record.notBefore <= now ||
+      !user ||
+      user.status !== 'DELETION_PENDING'
+    )
+      return null;
+    Object.assign(user, {
+      status: 'ACTIVE',
+      deletedAt: null,
+      updatedAt: now,
+    });
+    this.accountDeletions.delete(userId);
+    return clone(record);
+  }
+
   async listPendingAccountDeletions(now: Date, limit: number): Promise<AccountDeletionRecord[]> {
     return clone(
       [...this.accountDeletions.values()]
