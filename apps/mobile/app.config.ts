@@ -107,10 +107,17 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     package: 'com.birkareai.mobile',
+    // BirKare only needs user-selected media. Prevent Expo/native dependencies
+    // from merging broad Android 13+ photo/video/audio read permissions into
+    // the release manifest; ImagePicker uses the system picker instead.
+    blockedPermissions: [
+      'android.permission.READ_MEDIA_IMAGES',
+      'android.permission.READ_MEDIA_VIDEO',
+      'android.permission.READ_MEDIA_AUDIO',
+    ],
     permissions: ['com.android.vending.BILLING'],
-    // First Play upload. Increment manually and sync native Gradle before each
-    // new upload; eas.json intentionally does not rewrite this dynamic config.
-    versionCode: 1,
+    // New Play upload after removing broad media permissions.
+    versionCode: 2,
     adaptiveIcon: {
       foregroundImage: './assets/onboarding/images/brand/logo-gold-icon.png',
       backgroundColor: '#050505',
