@@ -269,11 +269,14 @@ test('linked Google login can explicitly recover a deletion-pending account', as
   });
   await repository.requestAccountDeletion(user.id);
 
-  await assert.rejects(
-    () => service.googleLogin(socialInput(), {}),
-    (error: unknown) =>
-      error instanceof ApiError && error.code === 'AUTH_ACCOUNT_DELETION_PENDING',
-  );
+  const pending = await service.googleLogin(socialInput(), {});
+  assert.ok('deletionRecoveryRequired' in pending);
+  if (!('deletionRecoveryRequired' in pending))
+    assert.fail('Expected a deletion recovery response.');
+  assert.equal(pending.deletionRecoveryRequired, true);
+  assert.equal(pending.recoveryDays, 30);
+  assert.ok(Number.isFinite(Date.parse(pending.recoveryUntil)));
+  assert.equal((await repository.getUserById(user.id))?.status, 'DELETION_PENDING');
 
   const recovered = await service.googleLogin(
     { ...socialInput(), recoverDeletion: true },
