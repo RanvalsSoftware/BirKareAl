@@ -54,6 +54,7 @@ x-backend-environment: &backend-environment
   GOOGLE_WEB_CLIENT_ID: ${GOOGLE_WEB_CLIENT_ID:-}
   GOOGLE_ANDROID_CLIENT_ID: ${GOOGLE_ANDROID_CLIENT_ID:-}
   APPLE_BUNDLE_ID: com.birkareai.mobile
+  ACCOUNT_DELETION_WEB_URL: ${ACCOUNT_DELETION_WEB_URL:-https://ai.ranvals.com/birkare/hesap-silme/}
 
 x-backend-runtime: &backend-runtime
   platform: linux/amd64
