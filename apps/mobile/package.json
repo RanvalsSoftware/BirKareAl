@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "expo start",
     "start": "expo start",
+    "start:dev-client": "expo start --dev-client",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "android:go": "expo start --android",
