@@ -2,6 +2,7 @@ import { DELETION_AUDIT_RETENTION_MS, type BirKareRepository } from '@birkare/da
 import type { StorageProvider } from '@birkare/storage';
 import { badRequest, forbidden, notFound } from '@birkare/shared';
 import type { GoogleIdentityVerifier } from '../auth/google-id-token.service.js';
+import type { AppleIdentityVerifier } from '../auth/apple-id-token.service.js';
 import type { PasswordService } from '../../services/password.service.js';
 
 export class AccountDeletionService {
@@ -10,6 +11,7 @@ export class AccountDeletionService {
     private readonly storage: StorageProvider,
     private readonly passwordService: Pick<PasswordService, 'verify'>,
     private readonly google: GoogleIdentityVerifier,
+    private readonly apple: AppleIdentityVerifier,
   ) {}
 
   async preview(userId: string) {
@@ -19,17 +21,23 @@ export class AccountDeletionService {
     return {
       canVerifyPassword: Boolean(user.passwordHash),
       canVerifyGoogle: providers.includes('GOOGLE'),
+      canVerifyApple: providers.includes('APPLE'),
       cleanupDelayMinutes: 10,
     };
   }
 
   async request(
     userId: string,
-    input: { confirmation: string; password?: string; googleIdToken?: string },
+    input: {
+      confirmation: string;
+      password?: string;
+      googleIdToken?: string;
+      appleIdToken?: string;
+    },
   ) {
     if (
       input.confirmation !== 'HESABIMI SIL' ||
-      Boolean(input.password) === Boolean(input.googleIdToken)
+      [input.password, input.googleIdToken, input.appleIdToken].filter(Boolean).length !== 1
     )
       throw badRequest(
         'DELETION_CONFIRMATION_REQUIRED',
@@ -44,8 +52,8 @@ export class AccountDeletionService {
         !(await this.passwordService.verify(user.passwordHash, input.password))
       )
         throw forbidden('DELETION_REAUTH_FAILED', 'Şifren doğrulanamadı.');
-    } else {
-      const identity = await this.google.verify(input.googleIdToken!);
+    } else if (input.googleIdToken) {
+      const identity = await this.google.verify(input.googleIdToken);
       const linked = await this.repository.getUserByAuthAccount('GOOGLE', identity.subject);
       if (linked?.id !== userId)
         throw forbidden(
@@ -60,6 +68,23 @@ export class AccountDeletionService {
         throw forbidden(
           'DELETION_REAUTH_STALE',
           'Güncel bir Google doğrulaması gerekli. Google oturumunu yeniden açıp tekrar dene.',
+        );
+    } else {
+      const identity = await this.apple.verify(input.appleIdToken!);
+      const linked = await this.repository.getUserByAuthAccount('APPLE', identity.subject);
+      if (linked?.id !== userId)
+        throw forbidden(
+          'DELETION_REAUTH_FAILED',
+          'Hesabına bağlı Apple kimliğiyle yeniden doğrula.',
+        );
+      if (
+        !identity.issuedAt ||
+        identity.issuedAt < Math.floor(Date.now() / 1000) - 300 ||
+        identity.issuedAt > Math.floor(Date.now() / 1000) + 5
+      )
+        throw forbidden(
+          'DELETION_REAUTH_STALE',
+          'Güncel bir Apple doğrulaması gerekli. Apple ile yeniden giriş yapıp tekrar dene.',
         );
     }
     const record = await this.repository.requestAccountDeletion(
