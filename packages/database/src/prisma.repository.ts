@@ -741,7 +741,8 @@ export class PrismaRepository implements BirKareRepository {
   ): Promise<AccountDeletionRecord | null> {
     return this.prisma.$transaction(async (tx: PrismaClientLike) => {
       const record = await tx.accountDeletion.findUnique({ where: { userId } });
-      if (!record || record.completedAt || record.notBefore <= now) return null;
+      if (!record || record.completedAt || accountDeletionRecoveryDeadline(record) <= now)
+        return null;
       const restored = await tx.user.updateMany({
         where: {
           id: userId,
@@ -758,7 +759,13 @@ export class PrismaRepository implements BirKareRepository {
 
   async listPendingAccountDeletions(now: Date, limit: number): Promise<AccountDeletionRecord[]> {
     return this.prisma.accountDeletion.findMany({
-      where: { completedAt: null, notBefore: { lte: now } },
+      where: {
+        completedAt: null,
+        notBefore: { lte: now },
+        // A legacy row may have a 10-minute notBefore. Never physically delete
+        // it until at least 30 days have elapsed from the original request.
+        createdAt: { lte: new Date(now.getTime() - ACCOUNT_DELETION_RECOVERY_MS) },
+      },
       take: Math.max(1, Math.min(100, limit)),
       orderBy: { createdAt: 'asc' },
     });
