@@ -1,4 +1,4 @@
-import type { BirKareRepository } from '@birkare/database';
+import { DELETION_AUDIT_RETENTION_MS, type BirKareRepository } from '@birkare/database';
 import type { StorageProvider } from '@birkare/storage';
 import { badRequest, forbidden, notFound } from '@birkare/shared';
 import type { GoogleIdentityVerifier } from '../auth/google-id-token.service.js';
@@ -87,6 +87,10 @@ export class AccountDeletionService {
         failed++; /* Retry next sweep; never falsely mark a partial deletion complete. */
       }
     }
+    await this.repository.purgeCompletedAccountDeletions(
+      new Date(now.getTime() - DELETION_AUDIT_RETENTION_MS),
+      100,
+    );
     return { completed, failed };
   }
 }
