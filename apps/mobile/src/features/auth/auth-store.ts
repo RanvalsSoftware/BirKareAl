@@ -61,12 +61,16 @@ type AuthState = {
   accessToken: string | null;
   user: AuthUser | null;
   bootstrap: () => Promise<void>;
-  signIn: (input: { email: string; password: string }) => Promise<void>;
-  signInWithGoogle: (idToken: string) => Promise<SocialSignInResult>;
+  signIn: (input: { email: string; password: string; recoverDeletion?: boolean }) => Promise<void>;
+  signInWithGoogle: (
+    idToken: string,
+    options?: { recoverDeletion?: boolean },
+  ) => Promise<SocialSignInResult>;
   signInWithApple: (input: {
     idToken: string;
     firstName?: string;
     lastName?: string;
+    recoverDeletion?: boolean;
   }) => Promise<SocialSignInResult>;
   linkGoogleAccount: (idToken: string) => Promise<void>;
   completeSocialRegistration: (input: CompleteSocialRegistrationInput) => Promise<void>;
@@ -131,10 +135,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     await saveRefreshToken(session.refreshToken);
     set({ state: 'authenticated', accessToken: session.accessToken, user: session.user });
   },
-  async signInWithGoogle(idToken) {
+  async signInWithGoogle(idToken, options) {
     const result = await apiRequest<AuthSessionResponse | PendingSocialRegistrationResponse>(
       '/v1/auth/google',
-      { method: 'POST', body: JSON.stringify({ idToken }) },
+      {
+        method: 'POST',
+        body: JSON.stringify({ idToken, recoverDeletion: Boolean(options?.recoverDeletion) }),
+      },
       { authenticated: false },
     );
     if (requiresSocialProfileCompletion(result)) {
