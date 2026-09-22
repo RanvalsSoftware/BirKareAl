@@ -86,6 +86,24 @@ describe('auth launch lifecycle', () => {
     expect(mocks.clear).toHaveBeenCalledOnce();
   });
 
+  it('returns deletion recovery state from Google sign-in without authenticating the account', async () => {
+    const { useAuthStore } = await import('./auth-store');
+    mocks.request.mockResolvedValueOnce({
+      deletionRecoveryRequired: true,
+      recoveryUntil: '2026-10-22T12:00:00.000Z',
+      recoveryDays: 30,
+    });
+
+    const result = await useAuthStore.getState().signInWithGoogle('google-id-token');
+    expect(result).toEqual({
+      kind: 'deletion_recovery_required',
+      recoveryUntil: '2026-10-22T12:00:00.000Z',
+      recoveryDays: 30,
+    });
+    expect(useAuthStore.getState().state).toBe('booting');
+    expect(mocks.save).not.toHaveBeenCalled();
+  });
+
   it('preserves the saved refresh token when a cold deep link opens during an outage', async () => {
     const { useAuthStore } = await import('./auth-store');
     mocks.read.mockResolvedValue('refresh');
