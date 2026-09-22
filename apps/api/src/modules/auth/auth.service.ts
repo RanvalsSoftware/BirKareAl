@@ -83,8 +83,20 @@ export type SocialProfileCompletionRequiredResponse = {
   profile: { email: string; firstName: string | null; lastName: string | null };
 };
 
-export type GoogleLoginResponse = AuthSessionResponse | SocialProfileCompletionRequiredResponse;
-export type SocialLoginResponse = AuthSessionResponse | SocialProfileCompletionRequiredResponse;
+export type DeletionRecoveryRequiredResponse = {
+  deletionRecoveryRequired: true;
+  recoveryUntil: string;
+  recoveryDays: number;
+};
+
+export type GoogleLoginResponse =
+  | AuthSessionResponse
+  | SocialProfileCompletionRequiredResponse
+  | DeletionRecoveryRequiredResponse;
+export type SocialLoginResponse =
+  | AuthSessionResponse
+  | SocialProfileCompletionRequiredResponse
+  | DeletionRecoveryRequiredResponse;
 
 type VerifiedSocialIdentity = {
   subject: string;
@@ -527,7 +539,13 @@ export class AuthService {
     context: AuthRequestContext,
   ): Promise<SocialLoginResponse> {
     const linkedUser = await this.repository.getUserByAuthAccount(provider, identity.subject);
-    if (linkedUser) return this.createSocialSession(linkedUser, input, context);
+    if (linkedUser) {
+      if (!input.recoverDeletion) {
+        const recovery = await this.deletionRecoveryResponse(linkedUser);
+        if (recovery) return recovery;
+      }
+      return this.createSocialSession(linkedUser, input, context);
+    }
 
     // Deliberately do not auto-link a social identity to a pre-existing
     // password account merely because the email strings match.
@@ -644,6 +662,21 @@ export class AuthService {
       });
     }
     return { linked: true };
+  }
+
+  private async deletionRecoveryResponse(
+    user: UserRecord,
+  ): Promise<DeletionRecoveryRequiredResponse | null> {
+    if (user.status !== 'DELETION_PENDING' && !user.deletedAt) return null;
+    const deletion = await this.repository.getAccountDeletion(user.id);
+    const recoveryUntil = deletion ? accountDeletionRecoveryDeadline(deletion) : null;
+    if (!deletion || deletion.completedAt || !recoveryUntil || recoveryUntil <= new Date())
+      return null;
+    return {
+      deletionRecoveryRequired: true,
+      recoveryUntil: recoveryUntil.toISOString(),
+      recoveryDays: ACCOUNT_DELETION_RECOVERY_DAYS,
+    };
   }
 
   private async resolveLoginUser(
