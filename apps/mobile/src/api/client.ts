@@ -101,6 +101,15 @@ export const apiBaseUrl = resolveApiBaseUrl({
   platform: Platform.OS,
 });
 
+if (__DEV__) {
+  console.info('[BirKare API] runtime config', {
+    apiBaseUrl,
+    configuredApiBaseUrl: configuredApiBaseUrl ?? null,
+    expoHostUri: Constants.expoConfig?.hostUri ?? null,
+    platform: Platform.OS,
+  });
+}
+
 export function configureSessionBridge(input: {
   getAccessToken: TokenReader;
   setSession: SessionWriter;
@@ -181,8 +190,10 @@ export async function apiRequest<T>(
 ): Promise<T> {
   return withRequestTimeout(async (signal) => {
     const revision = sessionRevision;
-    const perform = (accessToken: string | null) =>
-      fetch(`${apiBaseUrl}${path}`, {
+    const perform = async (accessToken: string | null) => {
+      const url = `${apiBaseUrl}${path}`;
+      if (__DEV__) console.info('[BirKare API] request', init.method ?? 'GET', url);
+      const response = await fetch(url, {
         ...init,
         signal,
         headers: {
@@ -193,6 +204,9 @@ export async function apiRequest<T>(
           ...(accessToken ? { authorization: `Bearer ${accessToken}` } : {}),
         },
       });
+      if (__DEV__) console.info('[BirKare API] response', response.status, url);
+      return response;
+    };
 
     let accessToken = options.authenticated === false ? null : readAccessToken();
     let response = await perform(accessToken);
