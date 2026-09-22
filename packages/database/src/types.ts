@@ -546,6 +546,13 @@ export interface BirKareRepository {
     userId: string,
     guard?: { expectedPasswordHash: string },
   ): Promise<AccountDeletionRecord>;
+  getAccountDeletion(userId: string): Promise<AccountDeletionRecord | null>;
+  /**
+   * Restores a DELETION_PENDING account only while its recovery deadline is
+   * still in the future. Revoked sessions stay revoked; callers create a fresh
+   * authenticated session after successful recovery.
+   */
+  restoreAccountDeletion(userId: string, now: Date): Promise<AccountDeletionRecord | null>;
   listPendingAccountDeletions(now: Date, limit: number): Promise<AccountDeletionRecord[]>;
   completeAccountDeletion(userId: string): Promise<void>;
   purgeCompletedAccountDeletions(before: Date, limit: number): Promise<number>;
