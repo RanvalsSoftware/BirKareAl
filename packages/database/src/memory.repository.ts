@@ -457,7 +457,7 @@ export class MemoryRepository implements BirKareRepository {
     if (
       !record ||
       record.completedAt ||
-      record.notBefore <= now ||
+      accountDeletionRecoveryDeadline(record) <= now ||
       !user ||
       user.status !== 'DELETION_PENDING'
     )
@@ -474,7 +474,10 @@ export class MemoryRepository implements BirKareRepository {
   async listPendingAccountDeletions(now: Date, limit: number): Promise<AccountDeletionRecord[]> {
     return clone(
       [...this.accountDeletions.values()]
-        .filter((item) => !item.completedAt && item.notBefore <= now)
+        .filter(
+          (item) =>
+            !item.completedAt && accountDeletionRecoveryDeadline(item) <= now,
+        )
         .slice(0, limit),
     );
   }
