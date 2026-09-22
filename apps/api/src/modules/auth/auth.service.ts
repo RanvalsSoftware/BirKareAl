@@ -12,6 +12,7 @@ import type {
   SocialLoginInput,
   SocialProfileCompletionInput,
   SocialRegistrationInput,
+  ConfirmAccountDeletionLinkInput,
 } from '@birkare/contracts';
 import {
   ApiError,
@@ -27,6 +28,7 @@ import {
 import { PasswordService } from '../../services/password.service.js';
 import { TokenService } from '../../services/token.service.js';
 import {
+  accountDeletionMail,
   authMail,
   DisabledMailService,
   mailUnavailable,
@@ -103,6 +105,7 @@ const toPublicUser = (user: UserRecord): PublicUser => ({
 
 const addDays = (days: number): Date => new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 const EMAIL_VERIFICATION_TTL_MS = 10 * 60 * 1000;
+const ACCOUNT_DELETION_LINK_TTL_MS = 30 * 60 * 1000;
 const EMAIL_VERIFICATION_MAX_FAILED_ATTEMPTS = 5;
 const normalizeEmail = (email: string): string => email.trim().toLowerCase();
 const createEmailVerificationCode = (): string =>
@@ -170,7 +173,7 @@ export class AuthService {
       BirKareConfig,
       'REFRESH_TOKEN_TTL_DAYS' | 'AUTH_DEV_MODE' | 'NODE_ENV'
     > &
-      Partial<Pick<BirKareConfig, 'MAIL_APP_SCHEME'>>,
+      Partial<Pick<BirKareConfig, 'MAIL_APP_SCHEME' | 'ACCOUNT_DELETION_WEB_URL'>>,
     private readonly googleIdentityVerifier: GoogleIdentityVerifier,
     private readonly mailService: MailService = new DisabledMailService(),
     private readonly appleIdentityVerifier?: AppleIdentityVerifier,
@@ -334,6 +337,72 @@ export class AuthService {
       // receive only "request accepted / delivery unconfirmed", never "sent".
     }
     return this.allowDevelopmentTokens() ? { developmentResetToken: resetToken } : {};
+  }
+
+  async requestAccountDeletionLink(
+    email: string,
+    context: AuthRequestContext = {},
+  ): Promise<{ developmentDeletionToken?: string }> {
+    this.requireMailAvailability();
+    await this.emailSecurityService?.assertRecoveryAllowed(email, context);
+    const user = await this.repository.getUserByEmail(email);
+    if (!user || user.deletedAt || user.status !== 'ACTIVE') return {};
+
+    const token = createOpaqueToken();
+    await this.repository.replaceEmailToken({
+      userId: user.id,
+      type: 'DELETE_ACCOUNT',
+      tokenHash: hashToken(token),
+      failedAttempts: 0,
+      expiresAt: new Date(Date.now() + ACCOUNT_DELETION_LINK_TTL_MS),
+    });
+
+    try {
+      await this.mailService.send(
+        accountDeletionMail({
+          email: user.email,
+          token,
+          webUrl:
+            this.config.ACCOUNT_DELETION_WEB_URL ??
+            'https://ai.ranvals.com/birkare/hesap-silme/',
+        }),
+      );
+    } catch {
+      // Deliberately hide delivery/account existence from the public endpoint.
+    }
+
+    return this.allowDevelopmentTokens() ? { developmentDeletionToken: token } : {};
+  }
+
+  async confirmAccountDeletionLink(input: ConfirmAccountDeletionLinkInput): Promise<{
+    deletionRequested: true;
+    cleanupNotBefore: string;
+    reversible: false;
+  }> {
+    const token = await this.repository.consumeEmailToken(
+      hashToken(input.token),
+      'DELETE_ACCOUNT',
+    );
+    if (!token) {
+      throw unauthorized(
+        'AUTH_INVALID_DELETION_TOKEN',
+        'Hesap silme bağlantısı geçersiz, kullanılmış veya süresi dolmuş.',
+      );
+    }
+
+    const user = await this.repository.getUserById(token.userId);
+    if (!user || user.deletedAt || user.status !== 'ACTIVE') {
+      throw forbidden('AUTH_ACCOUNT_UNAVAILABLE', 'Bu hesap silme işlemi için kullanılamıyor.');
+    }
+
+    void input.reason;
+    void input.details;
+    const record = await this.repository.requestAccountDeletion(user.id);
+    return {
+      deletionRequested: true,
+      cleanupNotBefore: record.notBefore.toISOString(),
+      reversible: false,
+    };
   }
 
   async resendVerification(
