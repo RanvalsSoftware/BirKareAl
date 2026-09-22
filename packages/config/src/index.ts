@@ -90,6 +90,10 @@ const RawEnvSchema = z.object({
     .string()
     .regex(/^[a-z][a-z0-9+.-]{1,40}$/)
     .default('birkareai'),
+  ACCOUNT_DELETION_WEB_URL: z
+    .string()
+    .url()
+    .default('https://ai.ranvals.com/birkare/hesap-silme/'),
   SUPPORT_EMAIL: z.string().trim().email().max(254).default('birkareal@ranvals.com'),
 
   // OAuth client IDs identify the applications allowed to mint an identity
@@ -271,6 +275,11 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): BirKareConf
   }
   if (isProductionLike && new URL(config.JWT_ISSUER).protocol !== 'https:') {
     throw new Error('Production ve staging ortamında JWT_ISSUER HTTPS kullanmalıdır.');
+  }
+  if (isProductionLike && new URL(config.ACCOUNT_DELETION_WEB_URL).protocol !== 'https:') {
+    throw new Error(
+      'Production ve staging ortamında ACCOUNT_DELETION_WEB_URL HTTPS kullanmalıdır.',
+    );
   }
   if (isProductionLike) {
     const origins = config.CORS_ORIGINS.split(',')
