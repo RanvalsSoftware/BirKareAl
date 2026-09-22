@@ -16,6 +16,19 @@ export const ACCOUNT_DELETION_RECOVERY_MS =
  */
 export const DELETION_GRACE_MS = ACCOUNT_DELETION_RECOVERY_MS;
 export const DELETION_AUDIT_RETENTION_MS = 30 * 24 * 60 * 60 * 1000; // Minimal post-deletion audit row.
+
+/** Protects legacy pending rows created before the 30-day recovery policy shipped. */
+export function accountDeletionRecoveryDeadline(input: {
+  createdAt: Date;
+  notBefore: Date;
+}): Date {
+  return new Date(
+    Math.max(
+      input.notBefore.getTime(),
+      input.createdAt.getTime() + ACCOUNT_DELETION_RECOVERY_MS,
+    ),
+  );
+}
 export const DELETION_IDLE_STATUSES = [
   'DRAFT',
   'BLOCKED',
