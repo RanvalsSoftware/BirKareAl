@@ -205,6 +205,86 @@ test('password re-registration and repeated login cannot repeat the welcome gran
   assert.equal(welcomeCredits[0]?.idempotencyKey, welcomeCreditIdempotencyKey(user.id));
 });
 
+test('password login offers deletion recovery before creating a new session', async () => {
+  const repository = new MemoryRepository();
+  const service = createAuthService(repository, {
+    subject: 'unused-recovery-social',
+    email: 'unused-recovery@example.test',
+  });
+  const input = {
+    email: 'recover-password@example.test',
+    password: 'Password1234',
+    firstName: 'Ece',
+    lastName: 'Kaya',
+    locale: 'tr-TR',
+    dateOfBirth: '1990-01-01',
+    consent: socialRegistration.consent,
+  } as const;
+  const registration = await service.register(input, {});
+  assert.ok(registration.developmentVerificationToken);
+  await service.verifyEmail(input.email, registration.developmentVerificationToken!);
+  const user = await repository.getUserByEmail(input.email);
+  assert.ok(user);
+  await repository.requestAccountDeletion(user.id);
+
+  await assert.rejects(
+    () => service.login({ email: input.email, password: input.password }, {}),
+    (error: unknown) =>
+      error instanceof ApiError &&
+      error.code === 'AUTH_ACCOUNT_DELETION_PENDING' &&
+      typeof error.details?.recoveryUntil === 'string' &&
+      error.details?.recoveryDays === 30,
+  );
+  assert.equal((await repository.getUserById(user.id))?.status, 'DELETION_PENDING');
+
+  const recovered = await service.login(
+    { email: input.email, password: input.password, recoverDeletion: true },
+    {},
+  );
+  assert.equal(recovered.user.status, 'ACTIVE');
+  assert.equal((await repository.getUserById(user.id))?.deletedAt, null);
+  assert.equal(await repository.getAccountDeletion(user.id), null);
+  assert.ok(recovered.refreshToken);
+});
+
+test('linked Google login can explicitly recover a deletion-pending account', async () => {
+  const repository = new MemoryRepository();
+  const identity = {
+    subject: 'google-recovery-subject',
+    email: 'google-recovery@example.test',
+    givenName: 'Gökçe',
+    familyName: 'Test',
+  };
+  const service = createAuthService(repository, identity);
+  const user = await repository.createVerifiedSocialUser({
+    email: identity.email,
+    firstName: 'Gökçe',
+    lastName: 'Test',
+    locale: 'tr-TR',
+    dateOfBirth: new Date('1990-01-01T00:00:00.000Z'),
+    provider: 'GOOGLE',
+    providerAccountId: identity.subject,
+    providerEmail: identity.email,
+    consents: [],
+  });
+  await repository.requestAccountDeletion(user.id);
+
+  await assert.rejects(
+    () => service.googleLogin(socialInput(), {}),
+    (error: unknown) =>
+      error instanceof ApiError && error.code === 'AUTH_ACCOUNT_DELETION_PENDING',
+  );
+
+  const recovered = await service.googleLogin(
+    { ...socialInput(), recoverDeletion: true },
+    {},
+  );
+  if (!('user' in recovered)) assert.fail('Expected recovered social session.');
+  assert.equal(recovered.user.status, 'ACTIVE');
+  assert.equal((await repository.getUserById(user.id))?.deletedAt, null);
+  assert.equal(await repository.getAccountDeletion(user.id), null);
+});
+
 test('purges expired pending social logins in bounded batches', async () => {
   const repository = new MemoryRepository();
   const before = new Date();
