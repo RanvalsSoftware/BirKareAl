@@ -746,9 +746,22 @@ export class PrismaRepository implements BirKareRepository {
     now: Date,
   ): Promise<AccountDeletionRecord | null> {
     return this.prisma.$transaction(async (tx: PrismaClientLike) => {
-      const record = await tx.accountDeletion.findUnique({ where: { userId } });
-      if (!record || record.completedAt || accountDeletionRecoveryDeadline(record) <= now)
-        return null;
+      const [record, user] = await Promise.all([
+        tx.accountDeletion.findUnique({ where: { userId } }),
+        tx.user.findUnique({
+          where: { id: userId },
+          select: { id: true, status: true, deletedAt: true },
+        }),
+      ]);
+      if (!user || user.status !== 'DELETION_PENDING' || !user.deletedAt) return null;
+      if (record?.completedAt) return null;
+
+      const deletedAt = new Date(user.deletedAt);
+      const recoveryUntil = record
+        ? accountDeletionRecoveryDeadline(record)
+        : new Date(deletedAt.getTime() + ACCOUNT_DELETION_RECOVERY_MS);
+      if (recoveryUntil <= now) return null;
+
       const restored = await tx.user.updateMany({
         where: {
           id: userId,
@@ -758,8 +771,18 @@ export class PrismaRepository implements BirKareRepository {
         data: { status: 'ACTIVE', deletedAt: null, updatedAt: now },
       });
       if (restored.count !== 1) return null;
-      await tx.accountDeletion.delete({ where: { userId } });
-      return record;
+      if (record) await tx.accountDeletion.delete({ where: { userId } });
+
+      return (
+        record ?? {
+          userId,
+          identityHashes: [],
+          storageKeys: [],
+          notBefore: recoveryUntil,
+          completedAt: null,
+          createdAt: deletedAt,
+        }
+      );
     });
   }
 
