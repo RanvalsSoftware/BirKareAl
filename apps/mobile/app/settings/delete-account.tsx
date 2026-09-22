@@ -99,7 +99,16 @@ export default function DeleteAccountScreen() {
   async function manageSubscription() {
     setError(null);
     const result = await billing.presentCustomerCenter();
-    if (result.kind === 'error' || result.kind === 'pending') {
+    if (result.kind === 'error') {
+      if (billing.managementUrl) {
+        await Linking.openURL(billing.managementUrl);
+        await billing.refreshFresh();
+        return;
+      }
+      setError(result.message);
+      return;
+    }
+    if (result.kind === 'pending') {
       setError(result.message);
       return;
     }
