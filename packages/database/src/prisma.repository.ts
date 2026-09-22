@@ -7,7 +7,13 @@ import {
 } from '@birkare/shared';
 import type { CatalogFeaturedPerson, CatalogItem } from '@birkare/shared';
 import { randomUUID } from 'node:crypto';
-import { deletionIdentityHash, DELETION_GRACE_MS, DELETION_IDLE_STATUSES } from './deletion.js';
+import {
+  ACCOUNT_DELETION_RECOVERY_MS,
+  accountDeletionRecoveryDeadline,
+  deletionIdentityHash,
+  DELETION_GRACE_MS,
+  DELETION_IDLE_STATUSES,
+} from './deletion.js';
 import type { AccountDeletionRecord } from './types.js';
 import {
   WELCOME_CREDIT_AMOUNT,
