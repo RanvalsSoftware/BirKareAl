@@ -8,6 +8,7 @@ import { AuthService } from '../modules/auth/auth.service.js';
 import { PasswordService } from './password.service.js';
 import { TokenService } from './token.service.js';
 import {
+  accountDeletionMail,
   authMail,
   createMailService,
   DisabledMailService,
@@ -196,6 +197,31 @@ test('auth emails contain escaped app links and copyable one-time codes', () => 
         email: 'recipient@example.test',
         token: 'x',
         scheme: 'https://evil.example',
+      }),
+    { code: 'MAIL_DELIVERY_UNAVAILABLE' },
+  );
+});
+
+test('account deletion mail uses the dedicated BirKare HTTPS web route and one-time token', () => {
+  const token = 'd'.repeat(64);
+  const message = accountDeletionMail({
+    email: 'recipient@example.test',
+    token,
+    webUrl: 'https://ai.ranvals.com/birkare/hesap-silme/',
+  });
+  const linkLine = message.text.split('\n').find((line) => line.startsWith('https://'));
+  assert.ok(linkLine);
+  const link = new URL(linkLine);
+  assert.equal(link.origin, 'https://ai.ranvals.com');
+  assert.equal(link.pathname, '/birkare/hesap-silme/');
+  assert.equal(link.searchParams.get('token'), token);
+  assert.equal(message.to, 'recipient@example.test');
+  assert.throws(
+    () =>
+      accountDeletionMail({
+        email: 'recipient@example.test',
+        token,
+        webUrl: 'http://evil.example/delete',
       }),
     { code: 'MAIL_DELIVERY_UNAVAILABLE' },
   );
@@ -428,4 +454,39 @@ test('disabled mail refuses production auth mail equally for known and unknown a
   }
   const development = authFixture(new DisabledMailService(), true);
   assert.ok((await development.service.register(registration, {})).developmentVerificationToken);
+});
+
+
+test('public deletion link is single-use and starts the existing account cleanup flow', async () => {
+  const mail = new FakeMail();
+  const { service, repository } = authFixture(mail);
+  const input = { ...registration, email: 'delete-link@example.test' };
+  await service.register(input, {});
+  await service.verifyEmail(input.email, deliveredToken(mail));
+  const user = (await repository.getUserByEmail(input.email))!;
+  assert.equal(user.status, 'ACTIVE');
+
+  assert.deepEqual(await service.requestAccountDeletionLink(input.email, {}), {});
+  const deletionMail = mail.sent.at(-1)!;
+  const linkLine = deletionMail.text.split('\n').find((line) => line.startsWith('https://'));
+  assert.ok(linkLine);
+  const token = new URL(linkLine).searchParams.get('token');
+  assert.ok(token);
+
+  const result = await service.confirmAccountDeletionLink({
+    token,
+    reason: 'NO_LONGER_USE',
+  });
+  assert.equal(result.deletionRequested, true);
+  assert.equal(result.reversible, false);
+  assert.equal((await repository.getUserById(user.id))!.status, 'DELETION_PENDING');
+
+  await assert.rejects(
+    () =>
+      service.confirmAccountDeletionLink({
+        token,
+        reason: 'PRIVACY',
+      }),
+    { code: 'AUTH_INVALID_DELETION_TOKEN' },
+  );
 });
