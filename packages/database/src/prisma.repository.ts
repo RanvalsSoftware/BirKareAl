@@ -731,6 +731,31 @@ export class PrismaRepository implements BirKareRepository {
       throw conflict('ACCOUNT_UNAVAILABLE', 'Hesap yeni işlemler için kullanılamıyor.');
   }
 
+  async getAccountDeletion(userId: string): Promise<AccountDeletionRecord | null> {
+    return this.prisma.accountDeletion.findUnique({ where: { userId } });
+  }
+
+  async restoreAccountDeletion(
+    userId: string,
+    now: Date,
+  ): Promise<AccountDeletionRecord | null> {
+    return this.prisma.$transaction(async (tx: PrismaClientLike) => {
+      const record = await tx.accountDeletion.findUnique({ where: { userId } });
+      if (!record || record.completedAt || record.notBefore <= now) return null;
+      const restored = await tx.user.updateMany({
+        where: {
+          id: userId,
+          status: 'DELETION_PENDING',
+          deletedAt: { not: null },
+        },
+        data: { status: 'ACTIVE', deletedAt: null, updatedAt: now },
+      });
+      if (restored.count !== 1) return null;
+      await tx.accountDeletion.delete({ where: { userId } });
+      return record;
+    });
+  }
+
   async listPendingAccountDeletions(now: Date, limit: number): Promise<AccountDeletionRecord[]> {
     return this.prisma.accountDeletion.findMany({
       where: { completedAt: null, notBefore: { lte: now } },
