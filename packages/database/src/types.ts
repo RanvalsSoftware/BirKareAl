@@ -548,6 +548,7 @@ export interface BirKareRepository {
   ): Promise<AccountDeletionRecord>;
   listPendingAccountDeletions(now: Date, limit: number): Promise<AccountDeletionRecord[]>;
   completeAccountDeletion(userId: string): Promise<void>;
+  purgeCompletedAccountDeletions(before: Date, limit: number): Promise<number>;
   updateUser(
     id: string,
     input: Partial<
