@@ -189,6 +189,15 @@ export default function LoginScreen() {
           router.push('/(auth)/social-complete');
           return;
         }
+        if (result.kind === 'deletion_recovery_required') {
+          setRecoveryError(null);
+          setRecovery({
+            kind: 'google',
+            idToken,
+            recoveryUntil: result.recoveryUntil,
+          });
+          return;
+        }
         continueToStudio();
       } catch (error) {
         if (stageDeletionRecovery(error, { kind: 'google', idToken })) return;
@@ -214,6 +223,15 @@ export default function LoginScreen() {
             provider: 'Apple',
           });
           router.push('/(auth)/social-complete');
+          return;
+        }
+        if (result.kind === 'deletion_recovery_required') {
+          setRecoveryError(null);
+          setRecovery({
+            kind: 'apple',
+            input,
+            recoveryUntil: result.recoveryUntil,
+          });
           return;
         }
         continueToStudio();
