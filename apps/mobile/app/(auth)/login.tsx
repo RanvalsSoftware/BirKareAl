@@ -38,7 +38,11 @@ type DeletionRecoveryAttempt =
 function recoveryUntilFrom(error: unknown): string | null {
   const apiError = error as ApiError | null;
   if (apiError?.code !== 'AUTH_ACCOUNT_DELETION_PENDING') return null;
-  const value = apiError.details?.recoveryUntil;
+  const details =
+    apiError.details && typeof apiError.details === 'object'
+      ? (apiError.details as { recoveryUntil?: unknown })
+      : null;
+  const value = details?.recoveryUntil;
   return typeof value === 'string' && Number.isFinite(Date.parse(value)) ? value : null;
 }
 
@@ -544,7 +548,11 @@ const styles = StyleSheet.create({
   bottomCopy: { color: authColors.secondary, fontSize: 14 },
   recoveryModal: { flex: 1, justifyContent: 'flex-end' },
   recoveryShade: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
     backgroundColor: 'rgba(0,0,0,0.38)',
   },
   recoverySheet: {
