@@ -157,6 +157,7 @@ export function useRevenueCat() {
     entitlement,
     subscriptionCancelled,
     subscriptionStatus,
+    managementUrl: customerInfo?.managementURL ?? null,
     entitlementId,
     offeringId,
     appEnv,
