@@ -120,7 +120,7 @@ export type UserConsentRecord = {
   createdAt: Date;
 };
 
-export type EmailTokenType = 'VERIFY_EMAIL' | 'RESET_PASSWORD';
+export type EmailTokenType = 'VERIFY_EMAIL' | 'RESET_PASSWORD' | 'DELETE_ACCOUNT';
 export type AccountDeletionRecord = {
   userId: string;
   identityHashes: string[];
