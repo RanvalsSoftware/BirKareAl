@@ -11,6 +11,16 @@ describe('mobile API base URL resolution', () => {
     ).toBe('http://10.0.2.2:4000');
   });
 
+  it('preserves explicit localhost for the iOS Simulator', () => {
+    expect(
+      resolveApiBaseUrl({
+        configuredApiBaseUrl: 'http://localhost:4000',
+        expoHostUri: 'exp://192.168.1.50:8081',
+        platform: 'ios',
+      }),
+    ).toBe('http://localhost:4000');
+  });
+
   it('never sends iOS to the Android-only 10.0.2.2 alias', () => {
     expect(
       resolveApiBaseUrl({
@@ -21,12 +31,12 @@ describe('mobile API base URL resolution', () => {
     ).toBe('http://192.168.1.29:4000');
   });
 
-  it('uses the Expo LAN host for native loopback development config', () => {
+  it('uses the Expo LAN host for Android loopback development config', () => {
     expect(
       resolveApiBaseUrl({
         configuredApiBaseUrl: 'http://localhost:4000',
         expoHostUri: 'exp://192.168.1.50:8081',
-        platform: 'ios',
+        platform: 'android',
       }),
     ).toBe('http://192.168.1.50:4000');
   });
