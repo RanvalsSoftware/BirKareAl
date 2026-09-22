@@ -6,8 +6,16 @@ export function deletionIdentityHash(secret: string, kind: string, value: string
     .update(`${kind}\0${kind === 'email' ? value.trim().toLowerCase() : value}`)
     .digest('hex');
 }
-export const DELETION_GRACE_MS = 10 * 60 * 1000; // Existing signed asset URLs expire after five minutes.
-export const DELETION_AUDIT_RETENTION_MS = 30 * 24 * 60 * 60 * 1000; // Minimal deletion manifest/audit row.
+export const ACCOUNT_DELETION_RECOVERY_DAYS = 30;
+export const ACCOUNT_DELETION_RECOVERY_MS =
+  ACCOUNT_DELETION_RECOVERY_DAYS * 24 * 60 * 60 * 1000;
+/**
+ * Account access is disabled immediately, but destructive cleanup waits through
+ * the user-visible recovery window. Keep the legacy name as an internal alias
+ * so repository call sites remain explicit about the deletion deadline.
+ */
+export const DELETION_GRACE_MS = ACCOUNT_DELETION_RECOVERY_MS;
+export const DELETION_AUDIT_RETENTION_MS = 30 * 24 * 60 * 60 * 1000; // Minimal post-deletion audit row.
 export const DELETION_IDLE_STATUSES = [
   'DRAFT',
   'BLOCKED',
