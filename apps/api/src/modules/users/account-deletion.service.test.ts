@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { MemoryRepository, PrismaRepository, WELCOME_CREDIT_AMOUNT } from '@birkare/database';
+import {
+  ACCOUNT_DELETION_RECOVERY_DAYS,
+  ACCOUNT_DELETION_RECOVERY_MS,
+  MemoryRepository,
+  PrismaRepository,
+  WELCOME_CREDIT_AMOUNT,
+} from '@birkare/database';
 import { DeleteAccountSchema, UpdatePreferencesSchema } from '@birkare/contracts';
 import { ApiError } from '@birkare/shared';
 import type { StorageProvider } from '@birkare/storage';
@@ -114,7 +120,7 @@ test('deletion requires exact confirmation and exactly one real reauthentication
   );
   assert.equal((await repository.getUserById(user.id))?.status, 'ACTIVE');
   assert.equal(
-    (await repository.listPendingAccountDeletions(new Date(Date.now() + 1000000), 20)).length,
+    (await repository.listPendingAccountDeletions(new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000), 20)).length,
     0,
   );
 });
@@ -148,7 +154,7 @@ test('a password changed during asynchronous reauthentication cannot authorize a
   );
   assert.equal((await f.repository.getUserById(f.user.id))?.status, 'ACTIVE');
   assert.deepEqual(
-    await f.repository.listPendingAccountDeletions(new Date(Date.now() + 601000), 20),
+    await f.repository.listPendingAccountDeletions(new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000), 20),
     [],
   );
 });
@@ -194,7 +200,7 @@ test('Google deletion accepts only a fresh token for the already-linked immutabl
     canVerifyPassword: true,
     canVerifyGoogle: true,
     canVerifyApple: false,
-    cleanupDelayMinutes: 10,
+    recoveryDays: ACCOUNT_DELETION_RECOVERY_DAYS,
   });
   f.google('other-subject');
   await assert.rejects(
@@ -234,7 +240,7 @@ test('Apple deletion accepts only a fresh token for the already-linked immutable
     canVerifyPassword: true,
     canVerifyGoogle: false,
     canVerifyApple: true,
-    cleanupDelayMinutes: 10,
+    recoveryDays: ACCOUNT_DELETION_RECOVERY_DAYS,
   });
   f.apple('other-apple-subject');
   await assert.rejects(
@@ -252,6 +258,34 @@ test('Apple deletion accepts only a fresh token for the already-linked immutable
       .deletionRequested,
     true,
   );
+});
+
+test('a deletion-pending account can be restored during the 30-day recovery window', async () => {
+  const f = await fixture();
+  const session = await f.repository.createSession({
+    userId: f.user.id,
+    refreshTokenHash: 'recovery-old-refresh',
+    expiresAt: new Date(Date.now() + 86_400_000),
+  });
+  const requested = await f.service.request(f.user.id, {
+    confirmation,
+    password: 'correct-password',
+  });
+  assert.equal(requested.reversible, true);
+  assert.equal((await f.repository.getUserById(f.user.id))?.status, 'DELETION_PENDING');
+  assert.ok((await f.repository.getSessionById(session.id))?.revokedAt);
+
+  const restored = await f.repository.restoreAccountDeletion(
+    f.user.id,
+    new Date(Date.now() + 60_000),
+  );
+  assert.ok(restored);
+  const user = await f.repository.getUserById(f.user.id);
+  assert.equal(user?.status, 'ACTIVE');
+  assert.equal(user?.deletedAt, null);
+  assert.equal(await f.repository.getAccountDeletion(f.user.id), null);
+  // Recovery never resurrects sessions that were revoked when deletion began.
+  assert.ok((await f.repository.getSessionById(session.id))?.revokedAt);
 });
 
 test('a partially deleted storage manifest is retained and safely retried before database removal', async () => {
@@ -281,7 +315,7 @@ test('a partially deleted storage manifest is retained and safely retried before
     },
   );
   await service.request(f.user.id, { confirmation, password: 'correct-password' });
-  const later = new Date(Date.now() + 601000);
+  const later = new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000);
   assert.deepEqual(await service.cleanup(later), { completed: 0, failed: 1 });
   assert.deepEqual([...deleted], [first.storageKey]);
   assert.equal((await f.repository.getUserById(f.user.id))?.status, 'DELETION_PENDING');
@@ -305,11 +339,16 @@ test('accepted deletion revokes sessions, delays storage cleanup and rejects new
   });
   const before = Date.now();
   const result = await f.service.request(f.user.id, { confirmation, password: 'correct-password' });
-  assert.equal(result.reversible, false);
-  assert.ok(Date.parse(result.cleanupNotBefore) >= before + 600000);
+  assert.equal(result.reversible, true);
+  assert.equal(result.recoveryDays, ACCOUNT_DELETION_RECOVERY_DAYS);
+  assert.equal(result.recoveryUntil, result.cleanupNotBefore);
+  assert.ok(Date.parse(result.cleanupNotBefore) >= before + ACCOUNT_DELETION_RECOVERY_MS);
   assert.equal((await f.repository.getUserById(f.user.id))?.status, 'DELETION_PENDING');
   assert.ok((await f.repository.getSessionByRefreshHash(session.refreshTokenHash))?.revokedAt);
-  assert.deepEqual(await f.service.cleanup(new Date(before + 599999)), { completed: 0, failed: 0 });
+  assert.deepEqual(
+    await f.service.cleanup(new Date(before + ACCOUNT_DELETION_RECOVERY_MS - 1)),
+    { completed: 0, failed: 0 },
+  );
   assert.ok(await f.repository.getAssetById(asset.id));
   await assert.rejects(
     () => f.repository.createAsset(assetInput(f.user.id, 'late')),
@@ -394,7 +433,7 @@ test('cleanup is retryable and removes only the requested account and its relate
     expiresAt: new Date(Date.now() + 86400000),
   });
   await f.service.request(f.user.id, { confirmation, password: 'correct-password' });
-  const later = new Date(Date.now() + 601000);
+  const later = new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000);
   f.failStorage(true);
   assert.deepEqual(await f.service.cleanup(later), { completed: 0, failed: 1 });
   assert.ok(await f.repository.getUserById(f.user.id));
@@ -436,10 +475,10 @@ test('deleting and re-registering an email or linked Google subject cannot repea
     providerEmail: email,
   });
   await f.service.request(f.user.id, { confirmation, password: 'correct-password' });
-  const records = await f.repository.listPendingAccountDeletions(new Date(Date.now() + 601000), 20);
+  const records = await f.repository.listPendingAccountDeletions(new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000), 20);
   assert.ok(records[0]?.identityHashes.every((value) => /^[a-f0-9]{64}$/.test(value)));
   assert.ok(!JSON.stringify(records[0]?.identityHashes).includes(email));
-  await f.service.cleanup(new Date(Date.now() + 601000));
+  await f.service.cleanup(new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000));
   assert.equal(
     await f.repository.consumePendingSocialLogin('different-email-handoff', 'GOOGLE'),
     null,
@@ -471,11 +510,11 @@ test('30-day deletion audit expires while durable fraud hashes still block repea
   });
   const startedAt = Date.now();
   await f.service.request(f.user.id, { confirmation, password: 'correct-password' });
-  await f.service.cleanup(new Date(startedAt + 10 * 60 * 1000 + 1));
+  await f.service.cleanup(new Date(startedAt + ACCOUNT_DELETION_RECOVERY_MS + 1));
   assert.equal(await f.repository.getUserById(f.user.id), null);
 
   const purged = await f.repository.purgeCompletedAccountDeletions(
-    new Date(startedAt + 31 * 24 * 60 * 60 * 1000),
+    new Date(startedAt + ACCOUNT_DELETION_RECOVERY_MS + 31 * 24 * 60 * 60 * 1000),
     100,
   );
   assert.equal(purged, 1);
@@ -507,7 +546,7 @@ test('reserved work blocks deletion without changing user status or creating a m
   );
   assert.equal((await f.repository.getUserById(f.user.id))?.status, 'ACTIVE');
   assert.deepEqual(
-    await f.repository.listPendingAccountDeletions(new Date(Date.now() + 601000), 20),
+    await f.repository.listPendingAccountDeletions(new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000), 20),
     [],
   );
 });
