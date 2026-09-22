@@ -6,7 +6,12 @@ import {
   notFound,
   unauthorized,
 } from '@birkare/shared';
-import { deletionIdentityHash, DELETION_GRACE_MS, DELETION_IDLE_STATUSES } from './deletion.js';
+import {
+  accountDeletionRecoveryDeadline,
+  deletionIdentityHash,
+  DELETION_GRACE_MS,
+  DELETION_IDLE_STATUSES,
+} from './deletion.js';
 import type { AccountDeletionRecord } from './types.js';
 import {
   WELCOME_CREDIT_AMOUNT,
