@@ -162,16 +162,22 @@ describe('RevenueCat account and purchase lifecycle', () => {
     expect(hasPro(f.client.getSnapshot().customerInfo, entitlementId)).toBe(false);
   });
 
-  it('logs out and blocks purchases without an app account', async () => {
+  it('clears local billing state without creating an anonymous RevenueCat customer', async () => {
     const f = fixture();
     f.setInfo(info(true));
     await f.signIn();
     const logout = f.setUser(null);
     expect(f.client.getSnapshot().customerInfo).toBeNull();
     await logout;
-    expect(f.sdk.logOut).toHaveBeenCalledTimes(1);
+    expect(f.sdk.logOut).not.toHaveBeenCalled();
     expect((await f.client.purchase(pkg)).kind).toBe('error');
     expect(f.sdk.purchasePackage).not.toHaveBeenCalled();
+
+    // The next authenticated account is switched directly with logIn().
+    f.setInfo(info(false, 'next-user'));
+    await f.setUser('user-b');
+    expect(f.sdk.logIn).toHaveBeenCalledWith('user-b');
+    expect(f.client.getSnapshot().status).toBe('ready');
   });
 
   it('discards a late customer response after switching accounts', async () => {
