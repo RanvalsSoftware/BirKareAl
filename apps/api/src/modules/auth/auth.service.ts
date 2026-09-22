@@ -1,9 +1,10 @@
 import type { BirKareConfig } from '@birkare/config';
-import type {
-  BirKareRepository,
-  CreateUserConsentInput,
-  SessionRecord,
-  UserRecord,
+import {
+  ACCOUNT_DELETION_RECOVERY_DAYS,
+  type BirKareRepository,
+  type CreateUserConsentInput,
+  type SessionRecord,
+  type UserRecord,
 } from '@birkare/database';
 import type {
   LoginInput,
@@ -234,15 +235,15 @@ export class AuthService {
     ) {
       throw unauthorized('AUTH_INVALID_CREDENTIALS', 'E-posta veya şifre hatalı.');
     }
-    requireEligibleUser(user);
-    if (!user.emailVerifiedAt)
+    const eligibleUser = await this.resolveLoginUser(user, input.recoverDeletion);
+    if (!eligibleUser.emailVerifiedAt)
       throw forbidden(
         'AUTH_EMAIL_NOT_VERIFIED',
         'Devam etmek için e-posta adresinizi doğrulamanız gerekiyor.',
       );
-    await this.repository.updateUser(user.id, { lastLoginAt: new Date() });
-    const session = await this.createSession(user, input, context, user.passwordHash);
-    return this.toAuthResponse(user, session.session, session.refreshToken);
+    const updatedUser = await this.repository.updateUser(eligibleUser.id, { lastLoginAt: new Date() });
+    const session = await this.createSession(updatedUser, input, context, user.passwordHash);
+    return this.toAuthResponse(updatedUser, session.session, session.refreshToken);
   }
 
   async refresh(input: RefreshInput, context: AuthRequestContext): Promise<AuthSessionResponse> {
@@ -377,7 +378,8 @@ export class AuthService {
   async confirmAccountDeletionLink(input: ConfirmAccountDeletionLinkInput): Promise<{
     deletionRequested: true;
     cleanupNotBefore: string;
-    reversible: false;
+    recoveryUntil: string;
+    reversible: true;
   }> {
     const token = await this.repository.consumeEmailToken(
       hashToken(input.token),
@@ -401,7 +403,8 @@ export class AuthService {
     return {
       deletionRequested: true,
       cleanupNotBefore: record.notBefore.toISOString(),
-      reversible: false,
+      recoveryUntil: record.notBefore.toISOString(),
+      reversible: true,
     };
   }
 
@@ -641,6 +644,52 @@ export class AuthService {
     return { linked: true };
   }
 
+  private async resolveLoginUser(
+    user: UserRecord,
+    recoverDeletion = false,
+  ): Promise<UserRecord> {
+    if (user.status === 'SUSPENDED')
+      throw forbidden('AUTH_ACCOUNT_SUSPENDED', 'Hesabınız geçici olarak askıya alınmış.');
+
+    if (user.status === 'DELETION_PENDING' || user.deletedAt) {
+      const now = new Date();
+      const deletion = await this.repository.getAccountDeletion(user.id);
+      if (!deletion || deletion.completedAt || deletion.notBefore <= now) {
+        throw forbidden(
+          'AUTH_ACCOUNT_UNAVAILABLE',
+          'Hesabın geri alma süresi sona ermiş veya kalıcı silme işlemi başlamış.',
+        );
+      }
+      if (!recoverDeletion) {
+        throw conflict(
+          'AUTH_ACCOUNT_DELETION_PENDING',
+          'Hesabın silinmek üzere bekliyor. Geri alma süresi dolmadan hesabını yeniden etkinleştirebilirsin.',
+          {
+            recoveryUntil: deletion.notBefore.toISOString(),
+            recoveryDays: ACCOUNT_DELETION_RECOVERY_DAYS,
+          },
+        );
+      }
+      const restored = await this.repository.restoreAccountDeletion(user.id, now);
+      if (!restored) {
+        throw conflict(
+          'AUTH_ACCOUNT_DELETION_RECOVERY_EXPIRED',
+          'Hesabın geri alma süresi sona ermiş. Kalıcı silme işlemi devam ediyor.',
+        );
+      }
+      const activeUser = await this.repository.getUserById(user.id);
+      if (!activeUser || activeUser.status !== 'ACTIVE' || activeUser.deletedAt) {
+        throw forbidden('AUTH_ACCOUNT_UNAVAILABLE', 'Hesap yeniden etkinleştirilemedi.');
+      }
+      return activeUser;
+    }
+
+    if (user.status === 'DELETED')
+      throw forbidden('AUTH_ACCOUNT_UNAVAILABLE', 'Bu hesap kullanılamıyor.');
+
+    return user;
+  }
+
   private async createSession(
     user: UserRecord,
     input: Partial<AuthRequestContext>,
@@ -708,11 +757,11 @@ export class AuthService {
 
   private async createSocialSession(
     user: UserRecord,
-    input: Partial<AuthRequestContext>,
+    input: Partial<AuthRequestContext> & { recoverDeletion?: boolean },
     context: AuthRequestContext,
   ): Promise<AuthSessionResponse> {
-    requireEligibleUser(user);
-    const updatedUser = await this.repository.updateUser(user.id, { lastLoginAt: new Date() });
+    const eligibleUser = await this.resolveLoginUser(user, Boolean(input.recoverDeletion));
+    const updatedUser = await this.repository.updateUser(eligibleUser.id, { lastLoginAt: new Date() });
     const session = await this.createSession(updatedUser, input, context);
     return this.toAuthResponse(updatedUser, session.session, session.refreshToken);
   }
