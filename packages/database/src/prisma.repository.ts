@@ -435,17 +435,20 @@ export class PrismaRepository implements BirKareRepository {
     try {
       return await this.prisma.$transaction(async (tx: PrismaClientLike) => {
         const now = new Date();
-        const priorDeletion = await tx.accountDeletion.findFirst({
-          where: {
-            identityHashes: {
-              hasSome: [
-                deletionIdentityHash(this.identitySecret, 'email', input.email),
-                deletionIdentityHash(this.identitySecret, input.provider, input.providerAccountId),
-              ],
-            },
-          },
-          select: { userId: true },
-        });
+        const deletionHashes = [
+          deletionIdentityHash(this.identitySecret, 'email', input.email),
+          deletionIdentityHash(this.identitySecret, input.provider, input.providerAccountId),
+        ];
+        const [priorDeletion, priorDeletionClaim] = await Promise.all([
+          tx.accountDeletion.findFirst({
+            where: { identityHashes: { hasSome: deletionHashes } },
+            select: { userId: true },
+          }),
+          tx.welcomeCreditClaim.findFirst({
+            where: { abuseKeyHash: { in: deletionHashes } },
+            select: { id: true },
+          }),
+        ]);
         const abuseKeyHash =
           input.welcomeCreditAbuseHash ??
           welcomeCreditAbuseHash(this.identitySecret, input.email);
@@ -478,7 +481,7 @@ export class PrismaRepository implements BirKareRepository {
             providerEmail: input.providerEmail,
           },
         });
-        const claim = priorDeletion
+        const claim = priorDeletion || priorDeletionClaim
           ? { count: 0 }
           : await tx.welcomeCreditClaim.createMany({
               data: [{ abuseKeyHash, userId: user.id }],
@@ -677,19 +680,24 @@ export class PrismaRepository implements BirKareRepository {
         where: { ownerId: userId },
         select: { storageKey: true },
       });
+      const identityHashes = [
+        deletionIdentityHash(this.identitySecret, 'email', user.email),
+        ...user.accounts.map((account: any) =>
+          deletionIdentityHash(
+            this.identitySecret,
+            account.provider,
+            account.providerAccountId,
+          ),
+        ),
+      ];
+      await tx.welcomeCreditClaim.createMany({
+        data: identityHashes.map((abuseKeyHash) => ({ abuseKeyHash, userId })),
+        skipDuplicates: true,
+      });
       const record = await tx.accountDeletion.create({
         data: {
           userId,
-          identityHashes: [
-            deletionIdentityHash(this.identitySecret, 'email', user.email),
-            ...user.accounts.map((account: any) =>
-              deletionIdentityHash(
-                this.identitySecret,
-                account.provider,
-                account.providerAccountId,
-              ),
-            ),
-          ],
+          identityHashes,
           storageKeys: assets.map((asset: { storageKey: string }) => asset.storageKey),
           notBefore: new Date(Date.now() + DELETION_GRACE_MS),
         },
@@ -768,6 +776,20 @@ export class PrismaRepository implements BirKareRepository {
         data: { storageKeys: [], completedAt: new Date() },
       });
     });
+  }
+
+  async purgeCompletedAccountDeletions(before: Date, limit: number): Promise<number> {
+    const rows = await this.prisma.accountDeletion.findMany({
+      where: { completedAt: { not: null, lte: before } },
+      orderBy: { completedAt: 'asc' },
+      take: Math.max(0, Math.min(500, limit)),
+      select: { userId: true },
+    });
+    if (rows.length === 0) return 0;
+    const result = await this.prisma.accountDeletion.deleteMany({
+      where: { userId: { in: rows.map((row: { userId: string }) => row.userId) } },
+    });
+    return result.count;
   }
 
   async createSession(
@@ -1045,19 +1067,22 @@ export class PrismaRepository implements BirKareRepository {
         data: { emailVerifiedAt: now, status: 'ACTIVE' },
       });
 
-      const priorDeletion = await tx.accountDeletion.findFirst({
-        where: {
-          identityHashes: {
-            has: deletionIdentityHash(this.identitySecret, 'email', user.email),
-          },
-        },
-        select: { userId: true },
-      });
+      const deletionHash = deletionIdentityHash(this.identitySecret, 'email', user.email);
+      const [priorDeletion, priorDeletionClaim] = await Promise.all([
+        tx.accountDeletion.findFirst({
+          where: { identityHashes: { has: deletionHash } },
+          select: { userId: true },
+        }),
+        tx.welcomeCreditClaim.findFirst({
+          where: { abuseKeyHash: deletionHash },
+          select: { id: true },
+        }),
+      ]);
       const existingWelcome = await tx.creditTransaction.findFirst({
         where: { userId, referenceType: WELCOME_CREDIT_REFERENCE_TYPE },
         select: { id: true },
       });
-      const claimResult = priorDeletion
+      const claimResult = priorDeletion || priorDeletionClaim
         ? { count: 0 }
         : await tx.welcomeCreditClaim.createMany({
             data: [{ abuseKeyHash: welcomeCreditAbuseHash, userId }],
