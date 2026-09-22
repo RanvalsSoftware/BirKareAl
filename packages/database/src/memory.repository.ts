@@ -7,6 +7,7 @@ import {
   unauthorized,
 } from '@birkare/shared';
 import {
+  ACCOUNT_DELETION_RECOVERY_MS,
   accountDeletionRecoveryDeadline,
   deletionIdentityHash,
   DELETION_GRACE_MS,
@@ -459,21 +460,32 @@ export class MemoryRepository implements BirKareRepository {
   ): Promise<AccountDeletionRecord | null> {
     const record = this.accountDeletions.get(userId);
     const user = this.users.get(userId);
-    if (
-      !record ||
-      record.completedAt ||
-      accountDeletionRecoveryDeadline(record) <= now ||
-      !user ||
-      user.status !== 'DELETION_PENDING'
-    )
-      return null;
+    if (!user || user.status !== 'DELETION_PENDING' || !user.deletedAt) return null;
+    if (record?.completedAt) return null;
+
+    const recoveryUntil = record
+      ? accountDeletionRecoveryDeadline(record)
+      : new Date(user.deletedAt.getTime() + ACCOUNT_DELETION_RECOVERY_MS);
+    if (recoveryUntil <= now) return null;
+
+    const deletedAt = user.deletedAt;
     Object.assign(user, {
       status: 'ACTIVE',
       deletedAt: null,
       updatedAt: now,
     });
-    this.accountDeletions.delete(userId);
-    return clone(record);
+    if (record) this.accountDeletions.delete(userId);
+
+    return clone(
+      record ?? {
+        userId,
+        identityHashes: [],
+        storageKeys: [],
+        notBefore: recoveryUntil,
+        completedAt: null,
+        createdAt: deletedAt,
+      },
+    );
   }
 
   async listPendingAccountDeletions(now: Date, limit: number): Promise<AccountDeletionRecord[]> {
