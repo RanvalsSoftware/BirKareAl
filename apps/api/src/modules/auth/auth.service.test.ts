@@ -288,6 +288,52 @@ test('linked Google login can explicitly recover a deletion-pending account', as
   assert.equal(await repository.getAccountDeletion(user.id), null);
 });
 
+test('linked Google login recovers a legacy deletion-pending user even if the manifest is missing', async () => {
+  const repository = new MemoryRepository();
+  const identity = {
+    subject: 'google-orphan-recovery-subject',
+    email: 'google-orphan-recovery@example.test',
+    givenName: 'Legacy',
+    familyName: 'User',
+  };
+  const service = createAuthService(repository, identity);
+  const user = await repository.createVerifiedSocialUser({
+    email: identity.email,
+    firstName: 'Legacy',
+    lastName: 'User',
+    locale: 'tr-TR',
+    dateOfBirth: new Date('1990-01-01T00:00:00.000Z'),
+    provider: 'GOOGLE',
+    providerAccountId: identity.subject,
+    providerEmail: identity.email,
+    consents: [],
+  });
+
+  const deletedAt = new Date(Date.now() - 60_000);
+  await repository.updateUser(user.id, {
+    status: 'DELETION_PENDING',
+    deletedAt,
+  });
+  assert.equal(await repository.getAccountDeletion(user.id), null);
+
+  const pending = await service.googleLogin(socialInput(), {});
+  assert.ok('deletionRecoveryRequired' in pending);
+  if (!('deletionRecoveryRequired' in pending))
+    assert.fail('Expected a legacy deletion recovery response.');
+  assert.equal(pending.deletionRecoveryRequired, true);
+  assert.equal(pending.recoveryDays, 30);
+
+  const recovered = await service.googleLogin(
+    { ...socialInput(), recoverDeletion: true },
+    {},
+  );
+  if (!('user' in recovered)) assert.fail('Expected a recovered session.');
+  assert.equal(recovered.user.status, 'ACTIVE');
+  const stored = await repository.getUserById(user.id);
+  assert.equal(stored?.status, 'ACTIVE');
+  assert.equal(stored?.deletedAt, null);
+});
+
 test('purges expired pending social logins in bounded batches', async () => {
   const repository = new MemoryRepository();
   const before = new Date();
