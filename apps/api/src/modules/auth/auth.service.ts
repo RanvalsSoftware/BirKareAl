@@ -1,6 +1,7 @@
 import type { BirKareConfig } from '@birkare/config';
 import {
   ACCOUNT_DELETION_RECOVERY_DAYS,
+  accountDeletionRecoveryDeadline,
   type BirKareRepository,
   type CreateUserConsentInput,
   type SessionRecord,
@@ -400,10 +401,11 @@ export class AuthService {
     void input.reason;
     void input.details;
     const record = await this.repository.requestAccountDeletion(user.id);
+    const recoveryUntil = accountDeletionRecoveryDeadline(record).toISOString();
     return {
       deletionRequested: true,
-      cleanupNotBefore: record.notBefore.toISOString(),
-      recoveryUntil: record.notBefore.toISOString(),
+      cleanupNotBefore: recoveryUntil,
+      recoveryUntil,
       reversible: true,
     };
   }
@@ -654,7 +656,8 @@ export class AuthService {
     if (user.status === 'DELETION_PENDING' || user.deletedAt) {
       const now = new Date();
       const deletion = await this.repository.getAccountDeletion(user.id);
-      if (!deletion || deletion.completedAt || deletion.notBefore <= now) {
+      const recoveryUntil = deletion ? accountDeletionRecoveryDeadline(deletion) : null;
+      if (!deletion || deletion.completedAt || !recoveryUntil || recoveryUntil <= now) {
         throw forbidden(
           'AUTH_ACCOUNT_UNAVAILABLE',
           'Hesabın geri alma süresi sona ermiş veya kalıcı silme işlemi başlamış.',
@@ -665,7 +668,7 @@ export class AuthService {
           'AUTH_ACCOUNT_DELETION_PENDING',
           'Hesabın silinmek üzere bekliyor. Geri alma süresi dolmadan hesabını yeniden etkinleştirebilirsin.',
           {
-            recoveryUntil: deletion.notBefore.toISOString(),
+            recoveryUntil: recoveryUntil.toISOString(),
             recoveryDays: ACCOUNT_DELETION_RECOVERY_DAYS,
           },
         );
