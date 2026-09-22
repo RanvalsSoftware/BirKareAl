@@ -42,7 +42,11 @@ export const RegisterSchema = z
   .merge(DeviceSchema);
 
 export const LoginSchema = z
-  .object({ email: EmailSchema, password: z.string().min(1).max(128) })
+  .object({
+    email: EmailSchema,
+    password: z.string().min(1).max(128),
+    recoverDeletion: z.boolean().optional().default(false),
+  })
   .merge(DeviceSchema);
 
 export const RefreshSchema = z
@@ -109,6 +113,7 @@ export const SocialLoginSchema = z
     // display defaults; the user confirms them during profile completion.
     firstName: z.string().trim().min(1).max(80).optional(),
     lastName: z.string().trim().min(1).max(80).optional(),
+    recoverDeletion: z.boolean().optional().default(false),
   })
   .merge(DeviceSchema);
 
