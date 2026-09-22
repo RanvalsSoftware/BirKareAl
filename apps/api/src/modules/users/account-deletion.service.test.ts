@@ -403,6 +403,39 @@ test('deleting and re-registering an email or linked Google subject cannot repea
   assert.equal((await f.repository.getWallet(social.id)).available, 0);
 });
 
+test('30-day deletion audit expires while durable fraud hashes still block repeat welcome credit', async () => {
+  const f = await fixture();
+  await f.repository.linkAuthAccount({
+    userId: f.user.id,
+    provider: 'GOOGLE',
+    providerAccountId: 'own-subject',
+    providerEmail: email,
+  });
+  const startedAt = Date.now();
+  await f.service.request(f.user.id, { confirmation, password: 'correct-password' });
+  await f.service.cleanup(new Date(startedAt + 10 * 60 * 1000 + 1));
+  assert.equal(await f.repository.getUserById(f.user.id), null);
+
+  const purged = await f.repository.purgeCompletedAccountDeletions(
+    new Date(startedAt + 31 * 24 * 60 * 60 * 1000),
+    100,
+  );
+  assert.equal(purged, 1);
+
+  const social = await f.repository.createVerifiedSocialUser({
+    email: 'new-address-after-retention@example.test',
+    firstName: 'Test',
+    lastName: 'Social',
+    locale: 'tr-TR',
+    dateOfBirth: new Date('1990-01-01'),
+    provider: 'GOOGLE',
+    providerAccountId: 'own-subject',
+    providerEmail: 'new-address-after-retention@example.test',
+    consents: [],
+  });
+  assert.equal((await f.repository.getWallet(social.id)).available, 0);
+});
+
 test('reserved work blocks deletion without changing user status or creating a manifest', async () => {
   const f = await fixture();
   await f.repository.reserveCredits({
