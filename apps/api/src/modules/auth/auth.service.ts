@@ -669,9 +669,22 @@ export class AuthService {
   ): Promise<DeletionRecoveryRequiredResponse | null> {
     if (user.status !== 'DELETION_PENDING' && !user.deletedAt) return null;
     const deletion = await this.repository.getAccountDeletion(user.id);
-    const recoveryUntil = deletion ? accountDeletionRecoveryDeadline(deletion) : null;
-    if (!deletion || deletion.completedAt || !recoveryUntil || recoveryUntil <= new Date())
-      return null;
+    if (deletion?.completedAt) return null;
+
+    // Compatibility for accounts placed into DELETION_PENDING by the older
+    // short-grace implementation. If the user row still exists but its
+    // deletion manifest is missing, deletedAt is the authoritative request
+    // time and still gets the full 30-day recovery window.
+    const recoveryUntil = deletion
+      ? accountDeletionRecoveryDeadline(deletion)
+      : user.deletedAt
+        ? new Date(
+            user.deletedAt.getTime() +
+              ACCOUNT_DELETION_RECOVERY_DAYS * 24 * 60 * 60 * 1000,
+          )
+        : null;
+
+    if (!recoveryUntil || recoveryUntil <= new Date()) return null;
     return {
       deletionRecoveryRequired: true,
       recoveryUntil: recoveryUntil.toISOString(),
@@ -689,8 +702,21 @@ export class AuthService {
     if (user.status === 'DELETION_PENDING' || user.deletedAt) {
       const now = new Date();
       const deletion = await this.repository.getAccountDeletion(user.id);
-      const recoveryUntil = deletion ? accountDeletionRecoveryDeadline(deletion) : null;
-      if (!deletion || deletion.completedAt || !recoveryUntil || recoveryUntil <= now) {
+      if (deletion?.completedAt) {
+        throw forbidden(
+          'AUTH_ACCOUNT_UNAVAILABLE',
+          'Hesabın kalıcı silme işlemi tamamlanmış.',
+        );
+      }
+      const recoveryUntil = deletion
+        ? accountDeletionRecoveryDeadline(deletion)
+        : user.deletedAt
+          ? new Date(
+              user.deletedAt.getTime() +
+                ACCOUNT_DELETION_RECOVERY_DAYS * 24 * 60 * 60 * 1000,
+            )
+          : null;
+      if (!recoveryUntil || recoveryUntil <= now) {
         throw forbidden(
           'AUTH_ACCOUNT_UNAVAILABLE',
           'Hesabın geri alma süresi sona ermiş veya kalıcı silme işlemi başlamış.',
