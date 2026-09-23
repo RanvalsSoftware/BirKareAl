@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   ACCOUNT_DELETION_RECOVERY_DAYS,
   ACCOUNT_DELETION_RECOVERY_MS,
+  accountDeletionRecoveryDeadline,
   MemoryRepository,
   PrismaRepository,
   WELCOME_CREDIT_AMOUNT,
@@ -508,13 +509,15 @@ test('30-day deletion audit expires while durable fraud hashes still block repea
     providerAccountId: 'own-subject',
     providerEmail: email,
   });
-  const startedAt = Date.now();
   await f.service.request(f.user.id, { confirmation, password: 'correct-password' });
-  await f.service.cleanup(new Date(startedAt + ACCOUNT_DELETION_RECOVERY_MS + 1));
+  const manifest = await f.repository.getAccountDeletion(f.user.id);
+  assert.ok(manifest);
+  const cleanupAt = new Date(accountDeletionRecoveryDeadline(manifest).getTime() + 1);
+  await f.service.cleanup(cleanupAt);
   assert.equal(await f.repository.getUserById(f.user.id), null);
 
   const purged = await f.repository.purgeCompletedAccountDeletions(
-    new Date(startedAt + ACCOUNT_DELETION_RECOVERY_MS + 31 * 24 * 60 * 60 * 1000),
+    new Date(cleanupAt.getTime() + 31 * 24 * 60 * 60 * 1000),
     100,
   );
   assert.equal(purged, 1);
