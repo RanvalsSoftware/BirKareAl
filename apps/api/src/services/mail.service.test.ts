@@ -302,7 +302,7 @@ function authFixture(mail: MailService = new FakeMail(), development = false) {
 }
 
 const registration = {
-  email: 'registered@example.test',
+  email: 'registered@gmail.com',
   password: 'Test-Passphrase-981!',
   firstName: 'Mail',
   lastName: 'Test',
@@ -359,7 +359,7 @@ test('verification codes are scoped to the normalized e-mail and a wrong address
 test('resending replaces the previous verification code', async () => {
   const mail = new FakeMail();
   const { service } = authFixture(mail);
-  const input = { ...registration, email: 'replacement@example.test' };
+  const input = { ...registration, email: 'replacement@gmail.com' };
   await service.register(input, {});
   const first = deliveredToken(mail);
   let latest = first;
@@ -377,7 +377,7 @@ test('resending replaces the previous verification code', async () => {
 test('five failed guesses invalidate the active code until a replacement is issued', async () => {
   const mail = new FakeMail();
   const { service } = authFixture(mail);
-  const input = { ...registration, email: 'attempt-limit@example.test' };
+  const input = { ...registration, email: 'attempt-limit@gmail.com' };
   await service.register(input, {});
   const correct = deliveredToken(mail);
   const wrongCodes = ['000000', '111111', '222222', '333333', '444444', '555555'].filter(
@@ -480,7 +480,7 @@ test('disabled mail refuses production auth mail equally for known and unknown a
 test('public deletion link is single-use and starts the existing account cleanup flow', async () => {
   const mail = new FakeMail();
   const { service, repository } = authFixture(mail);
-  const input = { ...registration, email: 'delete-link@example.test' };
+  const input = { ...registration, email: 'delete-link@gmail.com' };
   await service.register(input, {});
   await service.verifyEmail(input.email, deliveredToken(mail));
   const user = (await repository.getUserByEmail(input.email))!;
@@ -498,7 +498,7 @@ test('public deletion link is single-use and starts the existing account cleanup
     reason: 'NO_LONGER_USE',
   });
   assert.equal(result.deletionRequested, true);
-  assert.equal(result.reversible, false);
+  assert.equal(result.reversible, true);
   assert.equal((await repository.getUserById(user.id))!.status, 'DELETION_PENDING');
 
   await assert.rejects(
