@@ -50,6 +50,8 @@ function fixture(unavailableReason?: string) {
     logIn: vi.fn(async () => ({ customerInfo: latestInfo, created: false })),
     logOut: vi.fn(async () => info()),
     isAnonymous: vi.fn(async () => false),
+    isConfigured: vi.fn(async () => false),
+    getAppUserID: vi.fn(async () => user ?? '$RCAnonymousID:test'),
     getCustomerInfo: vi.fn(async () => latestInfo),
     getOfferings: vi.fn(async () => ({
       current: unrelatedOffering,
@@ -135,6 +137,30 @@ describe('RevenueCat account and purchase lifecycle', () => {
     expect(f.client.getSnapshot().status).toBe('ready');
   });
 
+  it('reconciles a native SDK that is already configured with an anonymous user', async () => {
+    const f = fixture();
+    f.sdk.isConfigured.mockResolvedValue(true);
+    f.sdk.getAppUserID.mockResolvedValue('$RCAnonymousID:stale-device-user');
+
+    await f.signIn();
+
+    expect(f.sdk.configure).not.toHaveBeenCalled();
+    expect(f.sdk.logIn).toHaveBeenCalledWith('user-a');
+    expect(f.client.getSnapshot().status).toBe('ready');
+  });
+
+  it('does not reconfigure or relogin when native RevenueCat already has the same user', async () => {
+    const f = fixture();
+    f.sdk.isConfigured.mockResolvedValue(true);
+    f.sdk.getAppUserID.mockResolvedValue('user-a');
+
+    await f.signIn();
+
+    expect(f.sdk.configure).not.toHaveBeenCalled();
+    expect(f.sdk.logIn).not.toHaveBeenCalled();
+    expect(f.client.getSnapshot().status).toBe('ready');
+  });
+
   it('selects the configured offering instead of an unrelated current offering', async () => {
     const f = fixture();
     await f.signIn();
@@ -170,6 +196,7 @@ describe('RevenueCat account and purchase lifecycle', () => {
     expect(f.client.getSnapshot().customerInfo).toBeNull();
     await logout;
     expect(f.sdk.logOut).not.toHaveBeenCalled();
+    expect(f.sdk.logIn).not.toHaveBeenCalled();
     expect((await f.client.purchase(pkg)).kind).toBe('error');
     expect(f.sdk.purchasePackage).not.toHaveBeenCalled();
 

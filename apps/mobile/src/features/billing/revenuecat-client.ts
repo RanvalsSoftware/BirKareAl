@@ -54,6 +54,27 @@ export function createRevenueCatClient(options: ClientOptions) {
   let sdkModule: SdkModule | null = null;
   let configured = false;
   let sdkUserId: string | null = null;
+
+  const reconcileNativeIdentity = async (
+    sdk: SdkModule['default'],
+    userId: string,
+  ): Promise<void> => {
+    const nativeConfigured = await sdk.isConfigured();
+    if (!nativeConfigured) {
+      sdk.configure({ apiKey: options.apiKey, appUserID: userId });
+      configured = true;
+      sdkUserId = userId;
+      return;
+    }
+
+    configured = true;
+    const nativeUserId = await sdk.getAppUserID();
+    sdkUserId = nativeUserId;
+    if (nativeUserId !== userId) {
+      await sdk.logIn(userId);
+      sdkUserId = userId;
+    }
+  };
   let targetUserId: string | null = null;
   let epoch = 0;
   let queue: Promise<unknown> = Promise.resolve();
@@ -191,18 +212,14 @@ export function createRevenueCatClient(options: ClientOptions) {
       try {
         if (!userId) {
           /**
-           * BirKare purchases are authenticated-only. RevenueCat's logOut()
-           * intentionally creates a fresh $RCAnonymousID, which can race with
-           * iOS automatic subscriber-attribute sync and produce harmless 404
-           * "subscriber was not found" errors during app logout/account deletion.
+           * BirKare purchases are authenticated-only. Never call RevenueCat
+           * logOut(): it intentionally creates a new $RCAnonymousID.
            *
-           * Keep the native SDK on the last identified customer while the app
-           * is signed out, but clear every BirKare-side snapshot above and block
-           * all purchase actions through getUserId()/status. On the next app
-           * login we call RevenueCat logIn(userId) directly; RevenueCat supports
-           * switching from one custom App User ID to another this way.
+           * We clear only BirKare's JS snapshot. The native SDK deliberately
+           * stays identified as the last authenticated App User ID, so account
+           * deletion/sign-out cannot create another anonymous subscriber or
+           * move automatic ATT attributes onto one.
            */
-          sdkUserId = null;
           return;
         }
         if (options.unavailableReason) {
@@ -213,13 +230,7 @@ export function createRevenueCatClient(options: ClientOptions) {
         sdkModule ??= await options.loadSdk();
         if (!current(version, userId)) return;
         const sdk = sdkModule.default;
-        if (!configured) {
-          sdk.configure({ apiKey: options.apiKey, appUserID: userId });
-          configured = true;
-        } else if (sdkUserId !== userId) {
-          await sdk.logIn(userId);
-        }
-        sdkUserId = userId;
+        await reconcileNativeIdentity(sdk, userId);
         if (!listening) {
           sdk.addCustomerInfoUpdateListener(onCustomerInfo);
           listening = true;
