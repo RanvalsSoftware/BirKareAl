@@ -57,6 +57,7 @@ jobs:
           src/features/auth/google-errors.test.ts
           src/features/auth/auth-store.test.ts
           src/features/auth/deletion-recovery-handoff.test.ts
+          src/features/auth/use-auth-notice.test.ts
           src/features/billing/revenuecat-client.test.ts
           src/features/billing/paywall-model.test.ts
           src/features/billing/paywall-reference.test.ts

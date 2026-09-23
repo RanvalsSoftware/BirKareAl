@@ -10,6 +10,8 @@ import { AppleSignInButton } from '@/features/auth/apple-sign-in';
 import { GoogleSignInButton } from '@/features/auth/google-sign-in';
 import { consumeDeletionRecoveryHandoff, recoveryUntilFromError, type SocialDeletionRecoveryAttempt } from '@/features/auth/deletion-recovery-handoff';
 import { setPendingSocialRegistration } from '@/features/auth/social-registration';
+import { AuthSuccessNotice } from '@/features/auth/AuthSuccessNotice';
+import { useRouteAuthNotice } from '@/features/auth/use-auth-notice';
 import { consumePendingOnboardingCreateDraft } from '@/features/create/createFlow';
 import {
   AuthBrandBar, AuthFormCard, AuthHero, AuthLayout, AuthLink, AuthNote, AuthTitle,
@@ -25,7 +27,7 @@ type DeletionRecoveryAttempt =
 export default function LoginScreen() {
   const copy = useCopy();
   const params = useLocalSearchParams<{ email?: string; verified?: string }>();
-  const verified = params.verified === '1';
+  const { visible: verified, dismiss: dismissVerified } = useRouteAuthNotice('verified', params.verified);
   const verifiedEmail = typeof params.email === 'string' ? params.email.trim().toLowerCase() : '';
   const signIn = useAuthStore((store) => store.signIn);
   const signInWithGoogle = useAuthStore((store) => store.signInWithGoogle);
@@ -38,17 +40,20 @@ export default function LoginScreen() {
   const [recovery, setRecovery] = useState<DeletionRecoveryAttempt | null>(null);
   const [recoveryBusy, setRecoveryBusy] = useState(false);
   const [recoveryError, setRecoveryError] = useState<string | null>(null);
-  const { control, handleSubmit, formState: { errors, isSubmitting }, clearErrors, setError } = useForm<LoginValues>({
+  const { control, handleSubmit, formState: { errors, isSubmitting }, clearErrors, setError, setValue } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema), defaultValues: { email: verifiedEmail, password: '' },
   });
 
+  useEffect(() => {
+    if (verifiedEmail) setValue('email', verifiedEmail);
+  }, [verifiedEmail, setValue]);
   // RegisterScreen must not route a deletion-pending identity into the studio.
   // Consume its one-use in-memory handoff here and keep LOGIN behind the blur.
   useFocusEffect(useCallback(() => {
     const pending = consumeDeletionRecoveryHandoff();
     if (pending) { setRecoveryError(null); setRecovery(pending); }
   }, []));
-  useEffect(() => { if (recovery) Keyboard.dismiss(); }, [recovery]);
+  useEffect(() => { if (recovery) { Keyboard.dismiss(); dismissVerified(); } }, [recovery, dismissVerified]);
   useEffect(() => {
     if (!socialError) return;
     const timeout = setTimeout(() => setSocialError(null), 4_000);
@@ -106,6 +111,7 @@ export default function LoginScreen() {
   }, [continueToStudio, copy, recovery, recoveryBusy, signIn, signInWithApple, signInWithGoogle]);
 
   const submit = handleSubmit(async (values) => {
+    dismissVerified();
     try {
       await signIn(values);
       continueToStudio();
@@ -115,6 +121,7 @@ export default function LoginScreen() {
     }
   });
   const completeGoogleSignIn = useCallback(async (idToken: string) => {
+    dismissVerified();
     setSocialError(null);
     try {
       const result = await signInWithGoogle(idToken);
@@ -133,9 +140,10 @@ export default function LoginScreen() {
       if (stageDeletionRecovery(error, { kind: 'google', idToken })) return;
       throw error;
     }
-  }, [continueToStudio, signInWithGoogle, stageDeletionRecovery]);
-  const showGoogleError = useCallback((error: Error) => { setSocialError(error.message); }, []);
+  }, [continueToStudio, signInWithGoogle, stageDeletionRecovery, dismissVerified]);
+  const showGoogleError = useCallback((error: Error) => { dismissVerified(); setSocialError(error.message); }, [dismissVerified]);
   const completeAppleSignIn = useCallback(async (input: { idToken: string; firstName?: string; lastName?: string }) => {
+    dismissVerified();
     setSocialError(null);
     try {
       const result = await signInWithApple(input);
@@ -154,7 +162,7 @@ export default function LoginScreen() {
       if (stageDeletionRecovery(error, { kind: 'apple', input })) return;
       throw error;
     }
-  }, [continueToStudio, signInWithApple, stageDeletionRecovery]);
+  }, [continueToStudio, signInWithApple, stageDeletionRecovery, dismissVerified]);
 
   return (
     <AuthLayout>
@@ -163,15 +171,9 @@ export default function LoginScreen() {
       <AuthTitle eyebrow={copy('STÜDYONA DÖN', 'BACK TO YOUR STUDIO')} title={copy('Tekrar hoş geldin.', 'Welcome back.')}
         subtitle={copy('Hayalindeki kareler seni bekliyor.', 'Your next creation is waiting.')} />
       <AuthFormCard>
-        {verified ? (
-          <View accessibilityLiveRegion="polite" style={styles.verifiedBanner}>
-            <View style={styles.verifiedIcon}><Ionicons color="#0A1C11" name="checkmark" size={17} /></View>
-            <View style={styles.verifiedCopy}>
-              <Text style={styles.verifiedTitle}>{copy('E-posta doğrulandı', 'Email verified')}</Text>
-              <Text style={styles.verifiedText}>{copy('Hesabın hazır. Şimdi güvenle giriş yapabilirsin.', 'Your account is ready. You can sign in now.')}</Text>
-            </View>
-          </View>
-        ) : null}
+        {verified ? <AuthSuccessNotice title={copy('E-posta doğrulandı', 'Email verified')}
+          message={copy('Hesabın hazır. Şimdi güvenle giriş yapabilirsin.', 'Your account is ready. You can sign in now.')}
+          onDismiss={dismissVerified} /> : null}
         <View style={styles.socials}>
           <GoogleSignInButton label={copy('Google ile giriş yap', 'Sign in with Google')} disabled={isSubmitting || Boolean(recovery)} onError={showGoogleError} onSuccess={completeGoogleSignIn} />
           <AppleSignInButton disabled={isSubmitting || Boolean(recovery)} onError={showGoogleError} onSuccess={completeAppleSignIn} />
@@ -185,7 +187,7 @@ export default function LoginScreen() {
               <Ionicons color={authColors.yellow} name="mail-outline" size={18} />
               <TextInput accessibilityLabel={copy('E-posta', 'Email')} autoCapitalize="none" autoComplete="email" autoCorrect={false}
                 blurOnSubmit={false} cursorColor={authColors.yellow} keyboardType="email-address"
-                onBlur={() => { setEmailFocused(false); onBlur(); }} onChangeText={onChange} onFocus={() => setEmailFocused(true)}
+                onBlur={() => { setEmailFocused(false); onBlur(); }} onChangeText={onChange} onFocus={() => { dismissVerified(); setEmailFocused(true); }}
                 onSubmitEditing={() => passwordInputRef.current?.focus()} placeholder="ornek@eposta.com" placeholderTextColor={authColors.muted}
                 rejectResponderTermination={false} returnKeyType="next" selectionColor={authColors.yellow} style={styles.input}
                 underlineColorAndroid="transparent" value={value ?? ''} />
@@ -200,7 +202,7 @@ export default function LoginScreen() {
               <Ionicons color={authColors.yellow} name="lock-closed-outline" size={17} />
               <TextInput ref={passwordInputRef} accessibilityLabel={copy('Şifre', 'Password')} autoComplete="current-password" blurOnSubmit={false}
                 cursorColor={authColors.yellow} onBlur={() => { setPasswordFocused(false); onBlur(); }} onChangeText={onChange}
-                onFocus={() => setPasswordFocused(true)} placeholder={copy('Şifreni gir', 'Enter your password')} placeholderTextColor={authColors.muted}
+                onFocus={() => { dismissVerified(); setPasswordFocused(true); }} placeholder={copy('Şifreni gir', 'Enter your password')} placeholderTextColor={authColors.muted}
                 rejectResponderTermination={false} returnKeyType="go" secureTextEntry={!showPassword} selectionColor={authColors.yellow}
                 style={styles.input} underlineColorAndroid="transparent" value={value ?? ''} />
               <Pressable accessibilityLabel={showPassword ? copy('Şifreyi gizle', 'Hide password') : copy('Şifreyi göster', 'Show password')}
@@ -255,10 +257,6 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  verifiedBanner: { alignItems: 'center', backgroundColor: 'rgba(52,199,89,0.09)', borderColor: 'rgba(72,220,112,0.28)', borderRadius: 16, borderWidth: 1, flexDirection: 'row', gap: 11, marginBottom: 4, paddingHorizontal: 13, paddingVertical: 12 },
-  verifiedIcon: { alignItems: 'center', backgroundColor: '#57E58C', borderRadius: 16, height: 32, justifyContent: 'center', shadowColor: '#57E58C', shadowOpacity: 0.24, shadowRadius: 8, width: 32 },
-  verifiedCopy: { flex: 1 }, verifiedTitle: { color: '#8FF0B0', fontSize: 13, fontWeight: '900' },
-  verifiedText: { color: '#B8C8BE', fontSize: 11, lineHeight: 16, marginTop: 2 },
   socials: { marginTop: 0 }, field: { marginTop: 16 },
   label: { color: '#EFEFEF', fontSize: 13, fontWeight: '800', letterSpacing: 0.1, marginBottom: 8 },
   inputRow: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.025)', borderColor: 'rgba(255,255,255,0.15)', borderRadius: 16, borderWidth: 1, flexDirection: 'row', gap: 13, minHeight: 56, paddingLeft: 15 },

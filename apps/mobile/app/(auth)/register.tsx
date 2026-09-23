@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -29,7 +29,12 @@ export default function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [socialError, setSocialError] = useState<string | null>(null);
-  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const screenRevision = useRef(0);
+  const registering = useRef(false);
+  useFocusEffect(useCallback(() => {
+    screenRevision.current += 1;
+    return () => { screenRevision.current += 1; };
+  }, []));
   const goBack = () => {
     if (router.canGoBack()) { router.back(); return; }
     router.replace('/(auth)/login');
@@ -86,6 +91,9 @@ export default function RegisterScreen() {
   }, [signInWithGoogle]);
   const showGoogleError = useCallback((error: Error) => { setSocialError(error.message); }, []);
   const submit = handleSubmit(async (values) => {
+    if (registering.current) return;
+    registering.current = true;
+    const revision = screenRevision.current;
     try {
       const result = await apiRequest<{ verificationRequired: true; developmentVerificationToken?: string }>(
         '/v1/auth/register', {
@@ -102,19 +110,24 @@ export default function RegisterScreen() {
           }),
         }, { authenticated: false },
       );
-      setRegistrationSuccess(true);
-      await new Promise<void>((resolve) => setTimeout(resolve, 1_400));
-      router.push({ pathname: '/(auth)/verify-email', params: {
+      if (revision !== screenRevision.current) return;
+      // Do not hold the registration form behind a success flag/delay. The
+      // destination shows a one-time notice; verification is still required.
+      router.replace({ pathname: '/(auth)/verify-email', params: {
+        registered: '1',
         email: values.email.trim().toLowerCase(),
         ...(result.developmentVerificationToken ? { code: result.developmentVerificationToken } : {}),
       } });
     } catch (error) {
+      if (revision !== screenRevision.current) return;
       const recovery = verificationRecoveryParams(error, values.email);
       if (recovery) {
-        router.push({ pathname: '/(auth)/verify-email', params: recovery });
+        router.replace({ pathname: '/(auth)/verify-email', params: recovery });
         return;
       }
       setError('root', { message: error instanceof Error ? error.message : 'Kayıt oluşturulamadı.' });
+    } finally {
+      registering.current = false;
     }
   });
 
@@ -249,12 +262,6 @@ export default function RegisterScreen() {
           </CheckRow>
         )} />
         {errors.root?.message ? <Text accessibilityLiveRegion="polite" style={styles.serverError}>{errors.root.message}</Text> : null}
-        {registrationSuccess ? (
-          <View accessibilityLiveRegion="polite" style={styles.successBanner}>
-            <View style={styles.successIcon}><Ionicons color="#08180D" name="checkmark" size={19} /></View>
-            <Text style={styles.successText}>{copy('Başarıyla kayıt oldunuz.', 'Your account was created successfully.')}</Text>
-          </View>
-        ) : null}
         <GradientAuthButton accessibilityLabel={copy('Kayıt ol', 'Sign up')} icon="arrow-forward" loading={isSubmitting} onPress={() => void submit()}>
           {copy('Kayıt ol', 'Sign up')}
         </GradientAuthButton>
@@ -278,9 +285,6 @@ const styles = StyleSheet.create({
   consentHeader: { alignItems: 'center', borderTopColor: 'rgba(255,255,255,.08)', borderTopWidth: 1, flexDirection: 'row', gap: 7, marginTop: 24, paddingTop: 17 },
   consentHeaderText: { color: '#F0D173', fontSize: 12, fontWeight: '800' },
   serverError: { color: '#FF877D', fontSize: 13, lineHeight: 18, marginTop: 14, textAlign: 'center' },
-  successBanner: { alignItems: 'center', backgroundColor: 'rgba(61, 215, 120, 0.12)', borderColor: 'rgba(91, 235, 145, 0.48)', borderRadius: 16, borderWidth: 1, flexDirection: 'row', gap: 11, marginTop: 16, paddingHorizontal: 14, paddingVertical: 12 },
-  successIcon: { alignItems: 'center', backgroundColor: '#55E58C', borderRadius: 16, height: 32, justifyContent: 'center', shadowColor: '#55E58C', shadowOpacity: 0.35, shadowRadius: 8, width: 32 },
-  successText: { color: '#7CF0A7', flex: 1, fontSize: 14, fontWeight: '800' },
   bottomText: { alignItems: 'center', flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
   bottomCopy: { color: authColors.secondary, fontSize: 14 },
 });
