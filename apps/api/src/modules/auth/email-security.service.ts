@@ -8,19 +8,10 @@ import {
   type RateLimiterLike,
   type RateLimiterRes,
 } from 'rate-limiter-flexible';
-import validator from 'validator';
 import type { BirKareConfig } from '@birkare/config';
 import { emailAbuseFingerprint, welcomeCreditAbuseHash } from '@birkare/database';
 import { ApiError, badRequest, unavailable } from '@birkare/shared';
-
-const TYPO_DOMAINS: Readonly<Record<string, string>> = {
-  'gmaill.com': 'gmail.com',
-  'gmial.com': 'gmail.com',
-  'hotmial.com': 'hotmail.com',
-  'outlok.com': 'outlook.com',
-  'yaho.com': 'yahoo.com',
-  'yandexx.com': 'yandex.com',
-};
+import { assertKnownRegistrationProvider, registrationEmailDomain } from './email-provider-policy.js';
 
 const MX_CACHE_TTL_SECONDS = 24 * 60 * 60;
 const HARD_DNS_ERRORS = new Set(['ENODATA', 'ENODOMAIN', 'ENOTFOUND', 'NXDOMAIN']);
@@ -40,9 +31,7 @@ type EmailSecurityConfig = Pick<
 >;
 
 type Resolver = (domain: string) => Promise<Array<{ exchange: string; priority: number }>>;
-
 const normalizeEmail = (email: string): string => email.trim().toLowerCase();
-
 export { emailAbuseFingerprint };
 
 export class EmailSecurityService {
@@ -58,16 +47,12 @@ export class EmailSecurityService {
     redis: Redis | null,
   ) {
     this.redis = redis;
-    this.allowlist = new Set(config.EMAIL_DOMAIN_ALLOWLIST);
-    this.blocklist = new Set(config.EMAIL_DOMAIN_BLOCKLIST);
+    this.allowlist = new Set(config.EMAIL_DOMAIN_ALLOWLIST.map((domain) => domain.trim().toLowerCase()));
+    this.blocklist = new Set(config.EMAIL_DOMAIN_BLOCKLIST.map((domain) => domain.trim().toLowerCase()));
     const limiter = (name: string, points: number, duration: number): RateLimiterLike => {
       const common = { keyPrefix: `birkare_email_${name}`, points, duration };
       return redis
-        ? new RateLimiterRedis({
-            ...common,
-            storeClient: redis,
-            rejectIfRedisNotReady: true,
-          })
+        ? new RateLimiterRedis({ ...common, storeClient: redis, rejectIfRedisNotReady: true })
         : new RateLimiterMemory(common);
     };
     this.limiters = {
@@ -139,72 +124,37 @@ export class EmailSecurityService {
     await this.consume(this.limiters.resendEmail!, email, 'AUTH_RESEND_RATE_LIMITED');
     await this.consume(this.limiters.resendIp!, context.ip ?? 'unknown', 'AUTH_RESEND_RATE_LIMITED');
     if (context.deviceId)
-      await this.consume(
-        this.limiters.resendDevice!,
-        context.deviceId,
-        'AUTH_RESEND_RATE_LIMITED',
-      );
+      await this.consume(this.limiters.resendDevice!, context.deviceId, 'AUTH_RESEND_RATE_LIMITED');
   }
 
   async assertLoginAllowed(email: string, context: EmailSecurityContext): Promise<void> {
+    // Existing identities retain access even if their provider is no longer allowed for signup.
     await this.consume(this.limiters.loginEmail!, email, 'AUTH_LOGIN_RATE_LIMITED');
-    await this.consume(
-      this.limiters.loginIp!,
-      context.ip ?? 'unknown',
-      'AUTH_LOGIN_RATE_LIMITED',
-    );
+    await this.consume(this.limiters.loginIp!, context.ip ?? 'unknown', 'AUTH_LOGIN_RATE_LIMITED');
   }
 
   async assertRecoveryAllowed(email: string, context: EmailSecurityContext): Promise<void> {
     await this.consume(this.limiters.recoveryEmail!, email, 'AUTH_RECOVERY_RATE_LIMITED');
-    await this.consume(
-      this.limiters.recoveryIp!,
-      context.ip ?? 'unknown',
-      'AUTH_RECOVERY_RATE_LIMITED',
-    );
+    await this.consume(this.limiters.recoveryIp!, context.ip ?? 'unknown', 'AUTH_RECOVERY_RATE_LIMITED');
   }
 
   async assertVerificationAllowed(email: string, context: EmailSecurityContext): Promise<void> {
-    await this.consume(
-      this.limiters.verifyEmail!,
-      email,
-      'AUTH_VERIFICATION_RATE_LIMITED',
-    );
-    await this.consume(
-      this.limiters.verifyIp!,
-      context.ip ?? 'unknown',
-      'AUTH_VERIFICATION_RATE_LIMITED',
-    );
+    await this.consume(this.limiters.verifyEmail!, email, 'AUTH_VERIFICATION_RATE_LIMITED');
+    await this.consume(this.limiters.verifyIp!, context.ip ?? 'unknown', 'AUTH_VERIFICATION_RATE_LIMITED');
   }
 
   async validateRegistrationEmail(rawEmail: string): Promise<void> {
     const email = normalizeEmail(rawEmail);
-    if (!validator.isEmail(email, { allow_utf8_local_part: false, require_tld: true })) {
-      throw badRequest('INVALID_EMAIL', 'Geçerli bir e-posta adresi girin.');
-    }
-    const domain = email.slice(email.lastIndexOf('@') + 1);
-    const suggestedDomain = TYPO_DOMAINS[domain];
-    if (suggestedDomain) {
-      throw badRequest(
-        'EMAIL_DOMAIN_TYPO',
-        `${suggestedDomain} yazmak istemiş olabilir misiniz?`,
-        { suggestedDomain },
-      );
-    }
+    const domain = registrationEmailDomain(email);
     if (this.blocklist.has(domain)) {
-      throw badRequest(
-        'EMAIL_DOMAIN_BLOCKED',
-        'Bu e-posta alan adıyla kayıt oluşturulamıyor.',
-      );
+      throw badRequest('EMAIL_DOMAIN_BLOCKED', 'Bu e-posta alan adıyla kayıt oluşturulamıyor.');
     }
+    // Manual allowlisting can correct a disposable-list false positive, but
+    // NEVER widens the fixed provider policy or bypasses ownership verification.
     if (!this.allowlist.has(domain) && !isMailcheckerValid(email)) {
-      throw badRequest(
-        'DISPOSABLE_EMAIL_NOT_ALLOWED',
-        'Geçici e-posta adresleriyle kayıt oluşturulamıyor.',
-      );
+      throw badRequest('DISPOSABLE_EMAIL_NOT_ALLOWED', 'Geçici e-posta adresleriyle kayıt oluşturulamıyor.');
     }
-    // Unit tests use reserved .test domains and inject their own resolver when
-    // MX behavior is the subject under test. Production and staging never skip.
+    assertKnownRegistrationProvider(email, this.config.NODE_ENV);
     if (this.config.NODE_ENV === 'test' && domain.endsWith('.test')) return;
     await this.assertMx(domain);
   }
@@ -218,14 +168,13 @@ export class EmailSecurityService {
       }
       const records = await this.resolveMx(domain);
       const valid = records.some(
-        (record) => typeof record.exchange === 'string' && record.exchange !== '.',
+        (record) => typeof record.exchange === 'string' && record.exchange.trim() !== '' && record.exchange !== '.',
       );
       await this.writeMxCache(domain, valid);
       if (!valid) this.throwMissingMx();
     } catch (error) {
       if (error instanceof ApiError) throw error;
-      const code =
-        error && typeof error === 'object' && 'code' in error ? String(error.code) : 'UNKNOWN';
+      const code = error && typeof error === 'object' && 'code' in error ? String(error.code) : 'UNKNOWN';
       if (HARD_DNS_ERRORS.has(code)) {
         await this.writeMxCache(domain, false);
         this.throwMissingMx();
@@ -238,10 +187,7 @@ export class EmailSecurityService {
   }
 
   private throwMissingMx(): never {
-    throw badRequest(
-      'EMAIL_DOMAIN_NOT_DELIVERABLE',
-      'Bu e-posta alan adı ileti kabul etmiyor.',
-    );
+    throw badRequest('EMAIL_DOMAIN_NOT_DELIVERABLE', 'Bu e-posta alan adı ileti kabul etmiyor.');
   }
 
   private async readMxCache(domain: string): Promise<boolean | null> {
@@ -261,18 +207,10 @@ export class EmailSecurityService {
 
   private async writeMxCache(domain: string, valid: boolean): Promise<void> {
     if (this.redis) {
-      await this.redis.set(
-        `email:mx:${this.hashKey(domain)}`,
-        valid ? '1' : '0',
-        'EX',
-        MX_CACHE_TTL_SECONDS,
-      );
+      await this.redis.set(`email:mx:${this.hashKey(domain)}`, valid ? '1' : '0', 'EX', MX_CACHE_TTL_SECONDS);
       return;
     }
-    this.mxMemoryCache.set(domain, {
-      valid,
-      expiresAt: Date.now() + MX_CACHE_TTL_SECONDS * 1000,
-    });
+    this.mxMemoryCache.set(domain, { valid, expiresAt: Date.now() + MX_CACHE_TTL_SECONDS * 1000 });
   }
 
   private async consume(limiter: RateLimiterLike, rawKey: string, code: string): Promise<void> {
@@ -287,25 +225,15 @@ export class EmailSecurityService {
           details: { retryAfterSeconds: Math.max(1, Math.ceil(reason.msBeforeNext / 1000)) },
         });
       }
-      throw unavailable(
-        'AUTH_SECURITY_STORE_UNAVAILABLE',
-        'Kimlik doğrulama güvenlik servisi geçici olarak kullanılamıyor.',
-      );
+      throw unavailable('AUTH_SECURITY_STORE_UNAVAILABLE', 'Kimlik doğrulama güvenlik servisi geçici olarak kullanılamıyor.');
     }
   }
 
   private isRateLimitResult(value: unknown): value is RateLimiterRes {
-    return Boolean(
-      value &&
-        typeof value === 'object' &&
-        'msBeforeNext' in value &&
-        typeof value.msBeforeNext === 'number',
-    );
+    return Boolean(value && typeof value === 'object' && 'msBeforeNext' in value && typeof value.msBeforeNext === 'number');
   }
 
   private hashKey(value: string): string {
-    return createHmac('sha256', this.config.PASSWORD_PEPPER)
-      .update(value.trim().toLowerCase())
-      .digest('hex');
+    return createHmac('sha256', this.config.PASSWORD_PEPPER).update(value.trim().toLowerCase()).digest('hex');
   }
 }

@@ -41,6 +41,8 @@ jobs:
         run: >-
           pnpm --filter @birkare/api exec tsx --test
           src/modules/auth/auth.service.test.ts
+          src/modules/auth/email-security.service.test.ts
+          src/modules/auth/auth.registration-recovery.test.ts
           src/modules/auth/google-id-token.service.test.ts
           src/modules/auth/apple-id-token.service.test.ts
           src/modules/auth/account-security.test.ts
@@ -54,8 +56,39 @@ jobs:
           src/api/base-url.test.ts
           src/features/auth/google-errors.test.ts
           src/features/auth/auth-store.test.ts
+          src/features/auth/deletion-recovery-handoff.test.ts
           src/features/billing/revenuecat-client.test.ts
           src/features/billing/paywall-model.test.ts
           src/features/billing/paywall-reference.test.ts
           config/revenuecat.test.ts
           src/config/public-env.test.ts
+  recovery-postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: birkare_recovery_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d birkare_recovery_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      # Disposable CI database only. No production credentials are used.
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/birkare_recovery_test?schema=public
+      RECOVERY_TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/birkare_recovery_test?schema=public
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: corepack enable && corepack prepare pnpm@10.18.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @birkare/database exec prisma generate
+      - run: pnpm --filter @birkare/database prisma:deploy
+      - name: Verify deletion and recovery over HTTP against PostgreSQL
+        run: pnpm --filter @birkare/api exec tsx --test src/modules/auth/auth.registration-recovery.test.ts

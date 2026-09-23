@@ -4,19 +4,13 @@
   "version": "0.1.0",
   "description": "BirKare AI — güvenli AI fotoğraf stüdyosu monorepo",
   "packageManager": "pnpm@10.18.0",
-  "engines": {
-    "node": ">=22.13.0",
-    "pnpm": ">=10.0.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "body-parser>qs": "6.16.0"
-    }
-  },
+  "engines": { "node": ">=22.13.0", "pnpm": ">=10.0.0" },
+  "pnpm": { "overrides": { "body-parser>qs": "6.16.0" } },
   "scripts": {
     "dev": "pnpm --parallel --filter @birkare/mobile --filter @birkare/api --filter @birkare/worker dev",
     "dev:mobile": "pnpm --filter @birkare/mobile start",
     "dev:mobile:local": "node apps/mobile/scripts/mobile-env.mjs --env-file .env -- pnpm exec expo start --dev-client --clear",
+    "dev:local:check": "node scripts/check-local-api.mjs",
     "eas:ios:dev-simulator": "cd apps/mobile && pnpm dlx eas-cli@latest build --platform ios --profile development-simulator",
     "dev:ios:local": "node apps/mobile/scripts/mobile-env.mjs --env-file .env -- pnpm exec expo run:ios",
     "dev:android:local": "node apps/mobile/scripts/mobile-env.mjs --env-file .env -- pnpm exec expo run:android",
