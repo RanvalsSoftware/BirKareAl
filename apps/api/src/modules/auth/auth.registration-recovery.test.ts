@@ -11,7 +11,11 @@ import { AuthService } from './auth.service.js';
 import { EmailSecurityService } from './email-security.service.js';
 import { PasswordService } from '../../services/password.service.js';
 import { TokenService } from '../../services/token.service.js';
-import { DisabledMailService } from '../../services/mail.service.js';
+import {
+  DisabledMailService,
+  type MailMessage,
+  type MailService,
+} from '../../services/mail.service.js';
 import type { ApiDependencies } from '../../services/dependencies.js';
 import { AUTH_PROTOCOL_VERSION } from '../../services/auth-runtime.js';
 
@@ -23,11 +27,17 @@ const codeIs = (code: string) => (error: unknown) => error instanceof ApiError &
 const password = 'Recovery-password-2026';
 const logger = { info() {}, warn() {}, error() {} } as unknown as ApiDependencies['logger'];
 
-async function fixture(kind: 'memory' | 'prisma' = 'memory', domain = 'ranvals.com') {
+async function fixture(
+  kind: 'memory' | 'prisma' = 'memory',
+  domain = 'ranvals.com',
+  mailService: MailService = new DisabledMailService(),
+) {
   const id = randomUUID();
   const identity = { subject: `recovery-ci-${id}`, email: `recovery-ci-${id}@${domain}`, issuedAt: Math.floor(Date.now() / 1000) };
   const config = loadConfig({
     NODE_ENV: 'test', AUTH_DEV_MODE: 'true',
+    ACCOUNT_DELETION_WEB_URL: 'http://localhost:3000/birkare/hesap-silme/',
+    CORS_ORIGINS: 'http://localhost:3000',
     DATABASE_PROVIDER: kind,
     ...(kind === 'prisma' ? { DATABASE_URL: process.env.RECOVERY_TEST_DATABASE_URL! } : {}),
   });
@@ -36,7 +46,6 @@ async function fixture(kind: 'memory' | 'prisma' = 'memory', domain = 'ranvals.c
     : await createRepository(config, logger);
   const passwordService = new PasswordService(config.PASSWORD_PEPPER);
   const tokenService = new TokenService(config);
-  const mailService = new DisabledMailService();
   const emailSecurityService = await EmailSecurityService.create(config, {
     connectRedis: false, resolveMx: async () => [{ exchange: 'mx.fixture.invalid', priority: 10 }],
   });
@@ -60,6 +69,66 @@ async function seed(f: Awaited<ReturnType<typeof fixture>>, provider: 'GOOGLE' |
   await f.repository.updateUser(user.id, { passwordHash: await f.passwordService.hash(password) });
   return user;
 }
+
+
+class CaptureMail implements MailService {
+  readonly enabled = true;
+  readonly sent: MailMessage[] = [];
+  async send(message: MailMessage): Promise<void> {
+    this.sent.push(message);
+  }
+}
+
+test('HTTP web deletion request reaches MailService and builds the local BirKare confirmation link', async (t) => {
+  const mail = new CaptureMail();
+  const f = await fixture('memory', 'gmail.com', mail);
+  t.after(() => f.emailSecurityService.close());
+
+  const user = await seed(f);
+  assert.equal(user.status, 'ACTIVE');
+
+  const server = createServer(createApp(f));
+  server.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  t.after(async () => {
+    server.closeAllConnections();
+    await new Promise<void>((done) => server.close(() => done()));
+  });
+
+  const address = server.address();
+  assert.ok(address && typeof address === 'object');
+  const response = await fetch(
+    `http://127.0.0.1:${address.port}/v1/auth/account-deletion/request`,
+    {
+      method: 'POST',
+      headers: {
+        origin: 'http://localhost:3000',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ email: user.email }),
+    },
+  );
+
+  assert.equal(response.status, 202);
+  assert.equal(response.headers.get('access-control-allow-origin'), 'http://localhost:3000');
+  const payload = (await response.json()) as {
+    success?: boolean;
+    data?: { accepted?: boolean; developmentDeletionToken?: string };
+  };
+  assert.equal(payload.success, true);
+  assert.equal(payload.data?.accepted, true);
+  assert.ok(payload.data?.developmentDeletionToken);
+
+  assert.equal(mail.sent.length, 1);
+  const message = mail.sent[0]!;
+  assert.equal(message.to, user.email);
+  assert.equal(message.subject, 'BirKare AI — Hesap silme bağlantın');
+  const linkLine = message.text.split('\n').find((line) => line.startsWith('http://localhost:3000/'));
+  assert.ok(linkLine);
+  const link = new URL(linkLine);
+  assert.equal(link.pathname, '/birkare/hesap-silme/');
+  assert.ok((link.searchParams.get('token') ?? '').length >= 40);
+});
 
 test('new password, Google and Apple accounts cannot bypass the known-provider policy', async (t) => {
   const f = await fixture();

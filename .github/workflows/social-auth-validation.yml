@@ -46,6 +46,7 @@ jobs:
           src/modules/auth/google-id-token.service.test.ts
           src/modules/auth/apple-id-token.service.test.ts
           src/modules/auth/account-security.test.ts
+          src/services/mail.service.test.ts
           src/modules/users/account-deletion.service.test.ts
           src/modules/billing/revenuecat.service.test.ts
           src/modules/billing/revenuecat.credit-packs.test.ts

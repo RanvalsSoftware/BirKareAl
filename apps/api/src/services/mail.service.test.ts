@@ -75,15 +75,23 @@ test('transport enforces TLS validation, bounded timeouts and disables data fetc
   assert.equal(encrypted.requireTLS, false);
 });
 
-test('mail delivery fixes the sender, accepts only the intended recipient and prevents header injection', async () => {
+test('mail delivery fixes the sender, logs SMTP acceptance without PII and prevents header injection', async () => {
   const sent: Parameters<MailTransport['sendMail']>[0][] = [];
+  const events: unknown[] = [];
   const transport: MailTransport = {
     async sendMail(message) {
       sent.push(message);
       return { accepted: [message.to], rejected: [] };
     },
   };
-  const mail = new SmtpMailService(loadConfig(smtpFixture), transport);
+  const mail = new SmtpMailService(loadConfig(smtpFixture), transport, {
+    info(...args: unknown[]) {
+      events.push(args);
+    },
+    warn(...args: unknown[]) {
+      events.push(args);
+    },
+  } as any);
   await mail.send({
     to: 'recipient@example.test',
     replyTo: 'reply@example.test',
@@ -93,6 +101,18 @@ test('mail delivery fixes the sender, accepts only the intended recipient and pr
   assert.deepEqual(sent[0]!.from, { name: 'BirKare AI', address: 'sender@example.test' });
   assert.equal(sent[0]!.disableFileAccess, true);
   assert.equal(sent[0]!.disableUrlAccess, true);
+  const acceptanceLog = JSON.stringify(events);
+  assert.match(acceptanceLog, /MAIL_ACCEPTED/);
+  for (const secret of [
+    'recipient@example.test',
+    'reply@example.test',
+    'sender@example.test',
+    'fixture-app-password-never-used',
+    'Support',
+    'Hello',
+  ]) {
+    assert.ok(!acceptanceLog.includes(secret));
+  }
   await assert.rejects(
     () =>
       mail.send({

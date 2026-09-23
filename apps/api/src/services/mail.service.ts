@@ -85,7 +85,7 @@ export class SmtpMailService implements MailService {
   constructor(
     private readonly config: MailConfig,
     private readonly transport: MailTransport,
-    private readonly logger?: Pick<Logger, 'warn'>,
+    private readonly logger?: Pick<Logger, 'info' | 'warn'>,
   ) {}
 
   async send(message: MailMessage): Promise<void> {
@@ -112,6 +112,12 @@ export class SmtpMailService implements MailService {
       });
       if (!accepted || (result.rejected?.length ?? 0) > 0)
         throw new Error('Recipient not accepted');
+      // Safe operational proof only: never log recipient, subject, body, token,
+      // SMTP response text, or credentials.
+      this.logger?.info(
+        { code: 'MAIL_ACCEPTED', transport: 'smtp' },
+        'Transactional e-posta SMTP tarafından kabul edildi.',
+      );
     } catch {
       // Do not attach the original error: SMTP replies may echo addresses, tokens,
       // credentials or the complete MIME payload. A fixed operational event suffices.
@@ -124,7 +130,10 @@ export class SmtpMailService implements MailService {
   }
 }
 
-export function createMailService(config: MailConfig, logger?: Pick<Logger, 'warn'>): MailService {
+export function createMailService(
+  config: MailConfig,
+  logger?: Pick<Logger, 'info' | 'warn'>,
+): MailService {
   if (config.MAIL_DRIVER === 'disabled') return new DisabledMailService();
   return new SmtpMailService(
     config,
