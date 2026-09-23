@@ -56,7 +56,7 @@ function fixture(unavailableReason?: string) {
     }),
     logOut: vi.fn(async () => info()),
     isAnonymous: vi.fn(async () => false),
-    isConfigured: vi.fn(async () => false),
+    isConfigured: vi.fn(async () => nativeUserId !== null),
     getAppUserID: vi.fn(async () => nativeUserId ?? '$RCAnonymousID:test'),
     getCustomerInfo: vi.fn(async () => latestInfo),
     getOfferings: vi.fn(async () => ({
