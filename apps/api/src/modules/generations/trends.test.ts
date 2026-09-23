@@ -42,6 +42,41 @@ test('all eleven server trend presets survive quote/create/preview validation an
   }
 });
 
+test('AI tool presets are allowlisted and must match their server mode', () => {
+  const toolPayload = {
+    ...payload,
+    trendPreset: undefined,
+    toolPreset: 'light' as const,
+    preserveClothes: true,
+  };
+  assert.equal(CreateGenerationSchema.parse(toolPayload).toolPreset, 'light');
+  assert.equal(QuoteGenerationSchema.parse({
+    mode: 'AI_FILTER',
+    quality: 'STANDARD',
+    numberOfImages: 1,
+    stylePresetId: natural.id,
+    toolPreset: 'light',
+  }).toolPreset, 'light');
+
+  assert.equal(
+    CreateGenerationSchema.safeParse({ ...toolPayload, toolPreset: 'background' }).success,
+    false,
+  );
+  assert.equal(
+    CreateGenerationSchema.safeParse({ ...toolPayload, toolPreset: 'unknown-tool' }).success,
+    false,
+  );
+  assert.equal(
+    CreateGenerationSchema.safeParse({
+      ...toolPayload,
+      trendPreset: 'kpop_star',
+      toolPreset: 'light',
+      preserveClothes: false,
+    }).success,
+    false,
+  );
+});
+
 test('trend requests reject mismatched modes, other characters, identity changes and clothing lock', () => {
   for (const changes of [
     { mode: 'FULL_SCENE', sceneTemplateId: catalogFixtures.scenes[0]!.id },
@@ -114,14 +149,47 @@ test('eleven detailed directions preserve source identities and exclude catalogu
   );
   assert.match(
     buildTrendPrompt('romantic_closeup_80s', 100, '4:5'),
-    /shoulder-to-shoulder portrait.*single source person remains a solo portrait/s,
+    /close casual snapshot framing.*single source person remains a solo portrait/s,
+  );
+});
+
+test('every trend prompt inherits source framing and anti-CGI realism locks', () => {
+  for (const preset of TREND_PRESET_IDS) {
+    const prompt = buildTrendPrompt(preset, 100, '4:5');
+    assert.match(prompt, /SOURCE PHOTOGRAPH AUTHORITY/);
+    assert.match(prompt, /PHOTOGRAPHIC REALISM TARGET/);
+    assert.match(prompt, /real moment a photographer or phone camera/);
+    assert.match(prompt, /REAL-MOMENT RULE/);
+    assert.match(prompt, /not as AI artwork, CGI, 3D rendering/);
+    assert.match(prompt, /do not invent, extend or reconstruct unseen body regions/i);
+  }
+
+  assert.match(
+    buildTrendPrompt('red_carpet_glam', 100, '4:5'),
+    /Do not force a rear three-quarter angle, walking step, invented hands, legs or torso reconstruction/,
+  );
+  assert.match(
+    buildTrendPrompt('red_carpet_glam', 100, '4:5'),
+    /ordinary real press arrival.*Avoid glamour-studio key lighting/s,
+  );
+  assert.match(
+    buildTrendPrompt('analog_90s', 100, '4:5'),
+    /Never invent legs, shoes, hands or a seated posture/,
+  );
+  assert.match(
+    buildTrendPrompt('editorial_cover', 100, '4:5'),
+    /rather than invented anatomy/,
+  );
+  assert.match(
+    buildTrendPrompt('streetwear_editorial', 100, '4:5'),
+    /only if the source contains enough visible body and arm information/,
   );
 });
 
 test('low medium high strengths have distinct actual directions and zero omits art direction', () => {
   assert.match(trendIntensity(20), /SUBTLE.*Keep the original pose/);
   assert.match(trendIntensity(60), /BALANCED.*moderate styling/);
-  assert.match(trendIntensity(100), /FULL.*complete original outfit/);
+  assert.match(trendIntensity(100), /FULL.*complete target wardrobe/);
   assert.match(trendIntensity(500), /100\/100/);
   assert.match(trendIntensity(-2), /0\/100/);
   assert.match(trendIntensity(NaN), /60\/100/);

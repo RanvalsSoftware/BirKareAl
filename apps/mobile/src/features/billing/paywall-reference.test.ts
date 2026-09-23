@@ -17,6 +17,20 @@ describe('reference paywall isolation and real storefront data', () => {
     expect(plans.map((plan) => plan.id)).toEqual(['annual']);
     expect(plans[0]?.package).toBe(yearly);
   });
+
+  it('resolves current Google Play subscription base-plan identifiers', () => {
+    const packages = [
+      pkg('Monthly Android', 'com.birkareai.pro.monthly:monthly-autorenewing', 299.99),
+      pkg('Yearly Android', 'com.birkareai.pro.yearly:yearly-autorenewing', 2499.99),
+      pkg('Lifetime Android', 'com.birkareai.pro.lifetime', 4999.99),
+    ];
+
+    expect(plansFromOffering(offering(packages)).map((plan) => plan.id)).toEqual([
+      'monthly',
+      'annual',
+      'lifetime',
+    ]);
+  });
   it('resolves Test Store products without synthesizing purchasable packages', () => {
     const packages = [pkg('M','monthly',199.99),pkg('Y','yearly',1499.99),pkg('L','lifetime',2999.99)];
     const plans = plansFromOffering(offering(packages));

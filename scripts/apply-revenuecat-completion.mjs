@@ -206,7 +206,12 @@ describe('RevenueCat public build configuration', () => {
   const oldInvalidate = `        // Read the authoritative backend wallet; never add credits on-device.\n        void queryClient\n          .invalidateQueries({\n            queryKey: accountQueryKey(CREDIT_WALLET_QUERY_KEY, state.userId ?? undefined),\n          })\n          .catch(() => undefined);`;
   const newInvalidate = `        // Reconcile the signed-in App User ID on the server. The phone never\n        // grants credits; RevenueCat REST verification and idempotent backend\n        // records remain authoritative. A webhook normally arrives first, while\n        // this call recovers delayed or missed delivery.\n        void apiRequest('/v1/billing/sync', { method: 'POST' })\n          .catch(() => undefined)\n          .finally(() =>\n            queryClient\n              .invalidateQueries({\n                queryKey: accountQueryKey(CREDIT_WALLET_QUERY_KEY, state.userId ?? undefined),\n              })\n              .catch(() => undefined),\n          );`;
   if (!source.includes("apiRequest('/v1/billing/sync'")) {
-    source = replaceRequired(source, oldInvalidate, newInvalidate, 'backend RevenueCat reconciliation');
+    source = replaceRequired(
+      source,
+      oldInvalidate,
+      newInvalidate,
+      'backend RevenueCat reconciliation',
+    );
   }
   write(name, source);
 }
@@ -271,7 +276,7 @@ export function SubscriptionCard() {
         <Text style={styles.detail}>
           {billing.isPro
             ? expires
-              ? `${billing.entitlement?.willRenew ? 'Yenileme' : 'Erişim bitişi'}: ${expires}`
+              ? (billing.entitlement?.willRenew ? 'Yenileme' : 'Erişim bitişi') + ': ' + expires
               : 'Ömür boyu Pro erişimi'
             : 'Premium sahneler, gelişmiş filtreler ve Pro üretim araçları.'}
         </Text>
@@ -344,10 +349,7 @@ const styles = StyleSheet.create({
 {
   const name = 'apps/mobile/app/(tabs)/credits.tsx';
   let source = read(name);
-  source = source.replace(
-    'Math.floor(availableCredits / 3)',
-    'Math.floor(availableCredits / 4)',
-  );
+  source = source.replace('Math.floor(availableCredits / 3)', 'Math.floor(availableCredits / 4)');
   write(name, source);
 }
 
@@ -369,7 +371,12 @@ const styles = StyleSheet.create({
   if (!source.includes('REVENUECAT_ENABLED=true requires')) {
     const marker = `  if (config.AI_PROVIDER === 'openai' && !config.OPENAI_API_KEY) {`;
     const validation = `  if (\n    config.REVENUECAT_ENABLED &&\n    (!config.REVENUECAT_SECRET_API_KEY || !config.REVENUECAT_WEBHOOK_AUTH_TOKEN)\n  ) {\n    throw new Error(\n      'REVENUECAT_ENABLED=true requires REVENUECAT_SECRET_API_KEY and REVENUECAT_WEBHOOK_AUTH_TOKEN.',\n    );\n  }\n`;
-    source = replaceRequired(source, marker, `${validation}${marker}`, 'server RevenueCat config validation');
+    source = replaceRequired(
+      source,
+      marker,
+      `${validation}${marker}`,
+      'server RevenueCat config validation',
+    );
   }
   write(name, source);
 }
@@ -425,16 +432,19 @@ const styles = StyleSheet.create({
     if (!source.includes("from 'node:crypto'")) {
       source = `import { randomUUID } from 'node:crypto';\n${source}`;
     } else if (!source.includes('randomUUID')) {
-      source = source.replace(/import \{([^}]+)\} from 'node:crypto';/, (all, imports) =>
-        `import { ${imports.trim()}, randomUUID } from 'node:crypto';`,
+      source = source.replace(
+        /import \{([^}]+)\} from 'node:crypto';/,
+        (all, imports) => `import { ${imports.trim()}, randomUUID } from 'node:crypto';`,
       );
     }
     const walletField =
-      source.match(/(?:private|protected)(?: readonly)?\s+(\w+)\s*=\s*new Map<[^;\n]*CreditWalletRecord/)?.[1] ??
-      source.match(/async getWallet\([\s\S]{0,900}?this\.(\w+)\.(?:get|set)\(/)?.[1];
+      source.match(
+        /(?:private|protected)(?: readonly)?\s+(\w+)\s*=\s*new Map<[^;\n]*CreditWalletRecord/,
+      )?.[1] ?? source.match(/async getWallet\([\s\S]{0,900}?this\.(\w+)\.(?:get|set)\(/)?.[1];
     const transactionField =
-      source.match(/(?:private|protected)(?: readonly)?\s+(\w+)\s*=\s*new Map<[^;\n]*CreditTransactionRecord/)?.[1] ??
-      source.match(/async listCreditTransactions\([\s\S]{0,900}?this\.(\w+)/)?.[1];
+      source.match(
+        /(?:private|protected)(?: readonly)?\s+(\w+)\s*=\s*new Map<[^;\n]*CreditTransactionRecord/,
+      )?.[1] ?? source.match(/async listCreditTransactions\([\s\S]{0,900}?this\.(\w+)/)?.[1];
     if (!walletField || !transactionField)
       throw new Error('Could not discover memory wallet/transaction stores');
     const marker = `  async reserveCredits(`;
@@ -454,7 +464,8 @@ const styles = StyleSheet.create({
   if (!source.includes('GrantCreditsInput')) {
     source = source.replace(
       /import type \{([\s\S]*?)\} from '\.\/types\.js';/,
-      (all, imports) => `import type {${imports}  GrantCreditsInput,\n  GrantCreditsResult,\n} from './types.js';`,
+      (all, imports) =>
+        `import type {${imports}  GrantCreditsInput,\n  GrantCreditsResult,\n} from './types.js';`,
     );
   }
   if (!source.includes('async grantCredits(')) {

@@ -12,7 +12,8 @@ describe('AI tool presets', () => {
       expect(preset.preserveFace).toBe(true);
       expect(preset.preserveClothes).toBe(true);
       expect(preset.personId).toBeNull();
-      expect(preset.customInstruction!.length).toBeLessThanOrEqual(1000);
+      expect(preset.toolId).toBe(slug);
+      expect(preset.customInstruction).toBe('');
       expect(afterQualityPath(preset.mode!, preset.toolId)).toBe('/create/settings');
     },
   );

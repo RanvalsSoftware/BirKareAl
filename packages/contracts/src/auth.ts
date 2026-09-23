@@ -42,7 +42,11 @@ export const RegisterSchema = z
   .merge(DeviceSchema);
 
 export const LoginSchema = z
-  .object({ email: EmailSchema, password: z.string().min(1).max(128) })
+  .object({
+    email: EmailSchema,
+    password: z.string().min(1).max(128),
+    recoverDeletion: z.boolean().optional(),
+  })
   .merge(DeviceSchema);
 
 export const RefreshSchema = z
@@ -50,11 +54,35 @@ export const RefreshSchema = z
   .merge(DeviceSchema);
 export const LogoutSchema = z.object({ refreshToken: z.string().min(40).max(512) });
 export const ForgotPasswordSchema = z.object({ email: EmailSchema });
+
+export const AccountDeletionReasonSchema = z.enum([
+  'NO_LONGER_USE',
+  'PRIVACY',
+  'NOT_USEFUL',
+  'TECHNICAL_ISSUES',
+  'TOO_EXPENSIVE',
+  'OTHER',
+]);
+
+export const RequestAccountDeletionLinkSchema = z.object({ email: EmailSchema }).strict();
+
+export const ConfirmAccountDeletionLinkSchema = z
+  .object({
+    token: z.string().min(40).max(512),
+    reason: AccountDeletionReasonSchema,
+    details: z.string().trim().max(500).optional(),
+  })
+  .strict();
+
 export const ResetPasswordSchema = z.object({
   token: z.string().min(40).max(512),
   password: PasswordSchema,
 });
-export const VerifyEmailSchema = z.object({ token: z.string().min(40).max(512) });
+export const VerifyEmailSchema = z.object({
+  email: EmailSchema,
+  code: z.string().regex(/^\d{6}$/, 'Doğrulama kodu 6 rakamdan oluşmalıdır.'),
+}).merge(DeviceSchema);
+export const ResendVerificationSchema = z.object({ email: EmailSchema }).merge(DeviceSchema);
 
 /**
  * Profile and legal fields required only when a verified social identity
@@ -85,6 +113,7 @@ export const SocialLoginSchema = z
     // display defaults; the user confirms them during profile completion.
     firstName: z.string().trim().min(1).max(80).optional(),
     lastName: z.string().trim().min(1).max(80).optional(),
+    recoverDeletion: z.boolean().optional(),
   })
   .merge(DeviceSchema);
 
@@ -104,3 +133,4 @@ export type RefreshInput = z.infer<typeof RefreshSchema>;
 export type SocialLoginInput = z.infer<typeof SocialLoginSchema>;
 export type SocialRegistrationInput = z.infer<typeof SocialRegistrationSchema>;
 export type SocialProfileCompletionInput = z.infer<typeof SocialProfileCompletionSchema>;
+export type ConfirmAccountDeletionLinkInput = z.infer<typeof ConfirmAccountDeletionLinkSchema>;

@@ -15,7 +15,10 @@ import {
 } from '@/features/settings/components';
 import { colors, typography } from '@/theme';
 
-type MeResponse = { user: AuthUser; wallet: { available: number; reserved: number } };
+type MeResponse = {
+  user: AuthUser;
+  wallet: { available: number; reserved: number; unlimited: boolean };
+};
 
 function fullName(user: AuthUser | null | undefined): string {
   const name = [user?.firstName?.trim(), user?.lastName?.trim()].filter(Boolean).join(' ');
@@ -67,7 +70,7 @@ export default function ProfileScreen() {
     <SettingsPage
       title="Profil"
       subtitle="Hesabın ve tercihlerin"
-      credits={wallet?.available}
+      credits={wallet?.unlimited ? '∞' : wallet?.available}
       back={false}
     >
       <GlassSurface

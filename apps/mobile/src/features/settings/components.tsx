@@ -18,7 +18,7 @@ export function SettingsPage({
 }: PropsWithChildren<{
   title: string;
   subtitle?: string;
-  credits?: number;
+  credits?: number | string;
   back?: boolean;
   navigation?: boolean;
 }>) {

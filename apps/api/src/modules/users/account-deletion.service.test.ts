@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { MemoryRepository, PrismaRepository, WELCOME_CREDIT_AMOUNT } from '@birkare/database';
+import {
+  ACCOUNT_DELETION_RECOVERY_DAYS,
+  ACCOUNT_DELETION_RECOVERY_MS,
+  accountDeletionRecoveryDeadline,
+  MemoryRepository,
+  PrismaRepository,
+  WELCOME_CREDIT_AMOUNT,
+} from '@birkare/database';
 import { DeleteAccountSchema, UpdatePreferencesSchema } from '@birkare/contracts';
 import { ApiError } from '@birkare/shared';
 import type { StorageProvider } from '@birkare/storage';
@@ -34,6 +41,14 @@ async function fixture() {
   const repository = new MemoryRepository('isolated-test-identity-secret');
   const user = await repository.createUser(userInput());
   await repository.updateUser(user.id, { status: 'ACTIVE', emailVerifiedAt: new Date() });
+  await repository.grantCredits({
+    userId: user.id,
+    amount: WELCOME_CREDIT_AMOUNT,
+    type: 'BONUS',
+    referenceType: 'TEST_FIXTURE',
+    referenceId: user.id,
+    idempotencyKey: `test-fixture:${user.id}`,
+  });
   const deletedKeys: string[] = [];
   let failStorage = false;
   const storage = {
@@ -43,12 +58,15 @@ async function fixture() {
     },
   } as StorageProvider;
   let googleSubject = 'own-subject';
-  let issuedAt = Math.floor(Date.now() / 1000);
+  let googleIssuedAt = Math.floor(Date.now() / 1000);
+  let appleSubject = 'own-apple-subject';
+  let appleIssuedAt = Math.floor(Date.now() / 1000);
   const service = new AccountDeletionService(
     repository,
     storage,
     { verify: async (hash, password) => hash === 'test-hash' && password === 'correct-password' },
-    { verify: async () => ({ subject: googleSubject, email, issuedAt }) },
+    { verify: async () => ({ subject: googleSubject, email, issuedAt: googleIssuedAt }) },
+    { verify: async () => ({ subject: appleSubject, email, issuedAt: appleIssuedAt }) },
   );
   return {
     repository,
@@ -60,7 +78,11 @@ async function fixture() {
     },
     google: (subject: string, iat = Math.floor(Date.now() / 1000)) => {
       googleSubject = subject;
-      issuedAt = iat;
+      googleIssuedAt = iat;
+    },
+    apple: (subject: string, iat = Math.floor(Date.now() / 1000)) => {
+      appleSubject = subject;
+      appleIssuedAt = iat;
     },
   };
 }
@@ -71,6 +93,14 @@ test('deletion requires exact confirmation and exactly one real reauthentication
   assert.equal(
     DeleteAccountSchema.safeParse({ confirmation, password: 'p', googleIdToken: 'x'.repeat(30) })
       .success,
+    false,
+  );
+  assert.equal(
+    DeleteAccountSchema.safeParse({
+      confirmation,
+      googleIdToken: 'x'.repeat(30),
+      appleIdToken: 'y'.repeat(30),
+    }).success,
     false,
   );
   assert.equal(
@@ -91,7 +121,7 @@ test('deletion requires exact confirmation and exactly one real reauthentication
   );
   assert.equal((await repository.getUserById(user.id))?.status, 'ACTIVE');
   assert.equal(
-    (await repository.listPendingAccountDeletions(new Date(Date.now() + 1000000), 20)).length,
+    (await repository.listPendingAccountDeletions(new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000), 20)).length,
     0,
   );
 });
@@ -113,6 +143,11 @@ test('a password changed during asynchronous reauthentication cannot authorize a
         throw new Error('Google must not be used for password reauthentication');
       },
     },
+    {
+      verify: async () => {
+        throw new Error('Apple must not be used for password reauthentication');
+      },
+    },
   );
   await assert.rejects(
     service.request(f.user.id, { confirmation, password: 'correct-password' }),
@@ -120,7 +155,7 @@ test('a password changed during asynchronous reauthentication cannot authorize a
   );
   assert.equal((await f.repository.getUserById(f.user.id))?.status, 'ACTIVE');
   assert.deepEqual(
-    await f.repository.listPendingAccountDeletions(new Date(Date.now() + 601000), 20),
+    await f.repository.listPendingAccountDeletions(new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000), 20),
     [],
   );
 });
@@ -165,7 +200,8 @@ test('Google deletion accepts only a fresh token for the already-linked immutabl
   assert.deepEqual(await f.service.preview(f.user.id), {
     canVerifyPassword: true,
     canVerifyGoogle: true,
-    cleanupDelayMinutes: 10,
+    canVerifyApple: false,
+    recoveryDays: ACCOUNT_DELETION_RECOVERY_DAYS,
   });
   f.google('other-subject');
   await assert.rejects(
@@ -193,6 +229,66 @@ test('Google deletion accepts only a fresh token for the already-linked immutabl
   );
 });
 
+test('Apple deletion accepts only a fresh token for the already-linked immutable subject', async () => {
+  const f = await fixture();
+  await f.repository.linkAuthAccount({
+    userId: f.user.id,
+    provider: 'APPLE',
+    providerAccountId: 'own-apple-subject',
+    providerEmail: email,
+  });
+  assert.deepEqual(await f.service.preview(f.user.id), {
+    canVerifyPassword: true,
+    canVerifyGoogle: false,
+    canVerifyApple: true,
+    recoveryDays: ACCOUNT_DELETION_RECOVERY_DAYS,
+  });
+  f.apple('other-apple-subject');
+  await assert.rejects(
+    () => f.service.request(f.user.id, { confirmation, appleIdToken: 'token' }),
+    matchesCode('DELETION_REAUTH_FAILED'),
+  );
+  f.apple('own-apple-subject', Math.floor(Date.now() / 1000) - 600);
+  await assert.rejects(
+    () => f.service.request(f.user.id, { confirmation, appleIdToken: 'token' }),
+    matchesCode('DELETION_REAUTH_STALE'),
+  );
+  f.apple('own-apple-subject');
+  assert.equal(
+    (await f.service.request(f.user.id, { confirmation, appleIdToken: 'token' }))
+      .deletionRequested,
+    true,
+  );
+});
+
+test('a deletion-pending account can be restored during the 30-day recovery window', async () => {
+  const f = await fixture();
+  const session = await f.repository.createSession({
+    userId: f.user.id,
+    refreshTokenHash: 'recovery-old-refresh',
+    expiresAt: new Date(Date.now() + 86_400_000),
+  });
+  const requested = await f.service.request(f.user.id, {
+    confirmation,
+    password: 'correct-password',
+  });
+  assert.equal(requested.reversible, true);
+  assert.equal((await f.repository.getUserById(f.user.id))?.status, 'DELETION_PENDING');
+  assert.ok((await f.repository.getSessionById(session.id))?.revokedAt);
+
+  const restored = await f.repository.restoreAccountDeletion(
+    f.user.id,
+    new Date(Date.now() + 60_000),
+  );
+  assert.ok(restored);
+  const user = await f.repository.getUserById(f.user.id);
+  assert.equal(user?.status, 'ACTIVE');
+  assert.equal(user?.deletedAt, null);
+  assert.equal(await f.repository.getAccountDeletion(f.user.id), null);
+  // Recovery never resurrects sessions that were revoked when deletion began.
+  assert.ok((await f.repository.getSessionById(session.id))?.revokedAt);
+});
+
 test('a partially deleted storage manifest is retained and safely retried before database removal', async () => {
   const f = await fixture();
   const first = await f.repository.createAsset(assetInput(f.user.id, 'first'));
@@ -213,9 +309,14 @@ test('a partially deleted storage manifest is retained and safely retried before
         throw new Error('Google is not used');
       },
     },
+    {
+      verify: async () => {
+        throw new Error('Apple is not used');
+      },
+    },
   );
   await service.request(f.user.id, { confirmation, password: 'correct-password' });
-  const later = new Date(Date.now() + 601000);
+  const later = new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000);
   assert.deepEqual(await service.cleanup(later), { completed: 0, failed: 1 });
   assert.deepEqual([...deleted], [first.storageKey]);
   assert.equal((await f.repository.getUserById(f.user.id))?.status, 'DELETION_PENDING');
@@ -239,11 +340,16 @@ test('accepted deletion revokes sessions, delays storage cleanup and rejects new
   });
   const before = Date.now();
   const result = await f.service.request(f.user.id, { confirmation, password: 'correct-password' });
-  assert.equal(result.reversible, false);
-  assert.ok(Date.parse(result.cleanupNotBefore) >= before + 600000);
+  assert.equal(result.reversible, true);
+  assert.equal(result.recoveryDays, ACCOUNT_DELETION_RECOVERY_DAYS);
+  assert.equal(result.recoveryUntil, result.cleanupNotBefore);
+  assert.ok(Date.parse(result.cleanupNotBefore) >= before + ACCOUNT_DELETION_RECOVERY_MS);
   assert.equal((await f.repository.getUserById(f.user.id))?.status, 'DELETION_PENDING');
   assert.ok((await f.repository.getSessionByRefreshHash(session.refreshTokenHash))?.revokedAt);
-  assert.deepEqual(await f.service.cleanup(new Date(before + 599999)), { completed: 0, failed: 0 });
+  assert.deepEqual(
+    await f.service.cleanup(new Date(before + ACCOUNT_DELETION_RECOVERY_MS - 1)),
+    { completed: 0, failed: 0 },
+  );
   assert.ok(await f.repository.getAssetById(asset.id));
   await assert.rejects(
     () => f.repository.createAsset(assetInput(f.user.id, 'late')),
@@ -258,6 +364,14 @@ test('accepted deletion revokes sessions, delays storage cleanup and rejects new
 test('cleanup is retryable and removes only the requested account and its related data', async () => {
   const f = await fixture();
   const other = await f.repository.createUser(userInput('keep-me@example.test'));
+  await f.repository.grantCredits({
+    userId: other.id,
+    amount: WELCOME_CREDIT_AMOUNT,
+    type: 'BONUS',
+    referenceType: 'TEST_FIXTURE',
+    referenceId: other.id,
+    idempotencyKey: `test-fixture:${other.id}`,
+  });
   const { ticket } = await f.repository.claimSupportTicket({
     userId: f.user.id,
     idempotencyKey: 'support-deletion-test',
@@ -320,7 +434,7 @@ test('cleanup is retryable and removes only the requested account and its relate
     expiresAt: new Date(Date.now() + 86400000),
   });
   await f.service.request(f.user.id, { confirmation, password: 'correct-password' });
-  const later = new Date(Date.now() + 601000);
+  const later = new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000);
   f.failStorage(true);
   assert.deepEqual(await f.service.cleanup(later), { completed: 0, failed: 1 });
   assert.ok(await f.repository.getUserById(f.user.id));
@@ -362,10 +476,10 @@ test('deleting and re-registering an email or linked Google subject cannot repea
     providerEmail: email,
   });
   await f.service.request(f.user.id, { confirmation, password: 'correct-password' });
-  const records = await f.repository.listPendingAccountDeletions(new Date(Date.now() + 601000), 20);
+  const records = await f.repository.listPendingAccountDeletions(new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000), 20);
   assert.ok(records[0]?.identityHashes.every((value) => /^[a-f0-9]{64}$/.test(value)));
   assert.ok(!JSON.stringify(records[0]?.identityHashes).includes(email));
-  await f.service.cleanup(new Date(Date.now() + 601000));
+  await f.service.cleanup(new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000));
   assert.equal(
     await f.repository.consumePendingSocialLogin('different-email-handoff', 'GOOGLE'),
     null,
@@ -387,6 +501,41 @@ test('deleting and re-registering an email or linked Google subject cannot repea
   assert.equal((await f.repository.getWallet(social.id)).available, 0);
 });
 
+test('30-day deletion audit expires while durable fraud hashes still block repeat welcome credit', async () => {
+  const f = await fixture();
+  await f.repository.linkAuthAccount({
+    userId: f.user.id,
+    provider: 'GOOGLE',
+    providerAccountId: 'own-subject',
+    providerEmail: email,
+  });
+  await f.service.request(f.user.id, { confirmation, password: 'correct-password' });
+  const manifest = await f.repository.getAccountDeletion(f.user.id);
+  assert.ok(manifest);
+  const cleanupAt = new Date(accountDeletionRecoveryDeadline(manifest).getTime() + 1);
+  await f.service.cleanup(cleanupAt);
+  assert.equal(await f.repository.getUserById(f.user.id), null);
+
+  const purged = await f.repository.purgeCompletedAccountDeletions(
+    new Date(cleanupAt.getTime() + 31 * 24 * 60 * 60 * 1000),
+    100,
+  );
+  assert.equal(purged, 1);
+
+  const social = await f.repository.createVerifiedSocialUser({
+    email: 'new-address-after-retention@example.test',
+    firstName: 'Test',
+    lastName: 'Social',
+    locale: 'tr-TR',
+    dateOfBirth: new Date('1990-01-01'),
+    provider: 'GOOGLE',
+    providerAccountId: 'own-subject',
+    providerEmail: 'new-address-after-retention@example.test',
+    consents: [],
+  });
+  assert.equal((await f.repository.getWallet(social.id)).available, 0);
+});
+
 test('reserved work blocks deletion without changing user status or creating a manifest', async () => {
   const f = await fixture();
   await f.repository.reserveCredits({
@@ -400,13 +549,13 @@ test('reserved work blocks deletion without changing user status or creating a m
   );
   assert.equal((await f.repository.getUserById(f.user.id))?.status, 'ACTIVE');
   assert.deepEqual(
-    await f.repository.listPendingAccountDeletions(new Date(Date.now() + 601000), 20),
+    await f.repository.listPendingAccountDeletions(new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000), 20),
     [],
   );
 });
 
-test('appearance contract accepts dark and light themes with persisted glass and motion values', async () => {
-  assert.equal(UpdatePreferencesSchema.safeParse({ theme: 'light' }).success, true);
+test('appearance contract keeps the dark-only theme with persisted glass and motion values', async () => {
+  assert.equal(UpdatePreferencesSchema.safeParse({ theme: 'light' }).success, false);
   assert.equal(UpdatePreferencesSchema.safeParse({ theme: 'system' }).success, false);
   assert.equal(UpdatePreferencesSchema.safeParse({ glassEffects: 'false' }).success, false);
   const preferences = UpdatePreferencesSchema.parse({

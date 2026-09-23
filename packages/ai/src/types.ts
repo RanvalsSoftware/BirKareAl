@@ -7,6 +7,7 @@ export type ImageReference = {
     | 'PRODUCT'
     | 'GARMENT'
     | 'HAND'
+    | 'REFERENCE'
     | 'SCENE'
     | 'PERSON'
     | 'PREVIOUS_OUTPUT';

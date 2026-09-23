@@ -1,4 +1,5 @@
 import { raw, Router } from 'express';
+import { createHash } from 'node:crypto';
 import { AssetParamsSchema, UploadInitiateSchema } from '@birkare/contracts';
 import { createId, forbidden, notFound } from '@birkare/shared';
 import { requireAuth } from '../../middleware/auth.middleware.js';
@@ -24,12 +25,83 @@ const hasExpectedMagicBytes = (bytes: Buffer, mimeType: string): boolean => {
   return false;
 };
 
+const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
+
 async function ownedAsset(deps: ApiDependencies, userId: string, assetId: string) {
   const asset = await deps.repository.getAssetById(assetId);
   if (!asset) throw notFound('ASSET_NOT_FOUND', 'Görsel bulunamadı.');
   if (asset.ownerId !== userId)
     throw forbidden('ASSET_NOT_OWNED', 'Bu görsele erişim yetkiniz yok.');
   return asset;
+}
+
+async function rejectStoredUpload(
+  deps: ApiDependencies,
+  asset: Awaited<ReturnType<typeof ownedAsset>>,
+): Promise<never> {
+  await deps.repository.updateAsset(asset.id, { status: 'REJECTED' });
+  await deps.storage.deleteObject(asset.storageKey).catch(() => undefined);
+  throw forbidden('UPLOAD_VALIDATION_FAILED', 'Yüklenen dosya doğrulanamadı.');
+}
+
+async function readValidatedStoredUpload(
+  deps: ApiDependencies,
+  asset: Awaited<ReturnType<typeof ownedAsset>>,
+): Promise<{ bytes: Buffer; digest: string }> {
+  const details = await deps.storage.statObject(asset.storageKey);
+  if (
+    details.sizeBytes <= 0 ||
+    details.sizeBytes !== asset.sizeBytes ||
+    details.sizeBytes > MAX_UPLOAD_BYTES ||
+    (details.contentType && details.contentType.split(';')[0] !== asset.mimeType)
+  ) {
+    return rejectStoredUpload(deps, asset);
+  }
+
+  // The object is bounded before it is read into process memory.
+  let bytes: Buffer;
+  try {
+    bytes = await deps.storage.getObject(asset.storageKey, { maxBytes: MAX_UPLOAD_BYTES });
+  } catch {
+    return rejectStoredUpload(deps, asset);
+  }
+  const digest = createHash('sha256').update(bytes).digest('hex');
+  if (
+    bytes.length !== details.sizeBytes ||
+    !hasExpectedMagicBytes(bytes, asset.mimeType) ||
+    (asset.sha256 && digest !== asset.sha256.toLowerCase())
+  ) {
+    return rejectStoredUpload(deps, asset);
+  }
+
+  return { bytes, digest };
+}
+
+async function validateStoredUpload(
+  deps: ApiDependencies,
+  asset: Awaited<ReturnType<typeof ownedAsset>>,
+) {
+  const { bytes, digest } = await readValidatedStoredUpload(deps, asset);
+  const finalKey = asset.storageKey.replace(/\/pending\.(jpg|png|webp)$/u, '/original.$1');
+  if (finalKey !== asset.storageKey) {
+    // A presigned PUT remains reusable until its short expiry. Promote the
+    // validated snapshot to a different, never-publicly-writable key so it
+    // cannot be replaced after validation.
+    await deps.storage.putObject({
+      key: finalKey,
+      body: bytes,
+      contentType: asset.mimeType,
+    });
+    const completed = await deps.repository.updateAsset(asset.id, {
+      status: 'READY',
+      storageKey: finalKey,
+      sha256: digest,
+    });
+    await deps.storage.deleteObject(asset.storageKey).catch(() => undefined);
+    return completed;
+  }
+
+  return deps.repository.updateAsset(asset.id, { status: 'READY', sha256: digest });
 }
 
 export function createAssetsRouter(deps: ApiDependencies): Router {
@@ -43,7 +115,7 @@ export function createAssetsRouter(deps: ApiDependencies): Router {
       const assetId = createId();
       const extension = extensionForMime(req.body.mimeType);
       const category = req.body.purpose === 'AVATAR' ? 'avatars' : 'sources';
-      const storageKey = `users/${req.auth!.userId}/${category}/${assetId}/original.${extension}`;
+      const storageKey = `users/${req.auth!.userId}/${category}/${assetId}/pending.${extension}`;
       const asset = await deps.repository.createAsset({
         id: assetId,
         ownerId: req.auth!.userId,
@@ -86,7 +158,7 @@ export function createAssetsRouter(deps: ApiDependencies): Router {
         throw forbidden('UPLOAD_BODY_REQUIRED', 'Yüklenecek görsel bulunamadı.');
       if (asset.status !== 'PENDING_UPLOAD' && asset.status !== 'UPLOADED')
         throw forbidden('UPLOAD_NOT_ACCEPTED', 'Bu yükleme artık kabul edilmiyor.');
-      if (req.body.length > asset.sizeBytes || req.body.length > 15 * 1024 * 1024)
+      if (req.body.length !== asset.sizeBytes || req.body.length > MAX_UPLOAD_BYTES)
         throw forbidden('UPLOAD_SIZE_INVALID', 'Yüklenen dosya beklenen boyutu aşıyor.');
       if (req.header('content-type')?.split(';')[0] !== asset.mimeType)
         throw forbidden('UPLOAD_MIME_INVALID', 'Dosya türü beklenen görsel türüyle eşleşmiyor.');
@@ -105,18 +177,15 @@ export function createAssetsRouter(deps: ApiDependencies): Router {
     validate(AssetParamsSchema, 'params'),
     asyncHandler(async (req, res) => {
       const asset = await ownedAsset(deps, req.auth!.userId, req.params.assetId as string);
+      if (asset.status === 'READY') {
+        sendSuccess(res, req.requestId, { asset });
+        return;
+      }
+      if (asset.status !== 'PENDING_UPLOAD' && asset.status !== 'UPLOADED')
+        throw forbidden('UPLOAD_NOT_ACCEPTED', 'Bu yükleme artık kabul edilmiyor.');
       if (!(await deps.storage.exists(asset.storageKey)))
         throw notFound('UPLOAD_NOT_FOUND', 'Yüklenen dosya depoda bulunamadı.');
-      const bytes = await deps.storage.getObject(asset.storageKey);
-      if (
-        bytes.length === 0 ||
-        bytes.length > asset.sizeBytes ||
-        !hasExpectedMagicBytes(bytes, asset.mimeType)
-      ) {
-        await deps.repository.updateAsset(asset.id, { status: 'REJECTED' });
-        throw forbidden('UPLOAD_VALIDATION_FAILED', 'Yüklenen dosya doğrulanamadı.');
-      }
-      const completed = await deps.repository.updateAsset(asset.id, { status: 'READY' });
+      const completed = await validateStoredUpload(deps, asset);
       sendSuccess(res, req.requestId, { asset: completed });
     }),
   );
@@ -137,6 +206,9 @@ export function createAssetsRouter(deps: ApiDependencies): Router {
       const asset = await ownedAsset(deps, req.auth!.userId, req.params.assetId as string);
       if (asset.status !== 'READY')
         throw forbidden('ASSET_NOT_READY', 'Görsel henüz kullanıma hazır değil.');
+      const validated = await readValidatedStoredUpload(deps, asset);
+      if (!asset.sha256)
+        await deps.repository.updateAsset(asset.id, { sha256: validated.digest });
       const url =
         asset.storageProvider === 'local'
           ? `/v1/assets/${asset.id}/content`
@@ -152,7 +224,8 @@ export function createAssetsRouter(deps: ApiDependencies): Router {
       const asset = await ownedAsset(deps, req.auth!.userId, req.params.assetId as string);
       if (asset.status !== 'READY')
         throw forbidden('ASSET_NOT_READY', 'Görsel henüz kullanıma hazır değil.');
-      const bytes = await deps.storage.getObject(asset.storageKey);
+      const { bytes, digest } = await readValidatedStoredUpload(deps, asset);
+      if (!asset.sha256) await deps.repository.updateAsset(asset.id, { sha256: digest });
       res.setHeader('content-type', asset.mimeType);
       res.setHeader('cache-control', 'private, no-store');
       res.setHeader('content-disposition', 'inline');
@@ -176,10 +249,12 @@ export function createAssetsRouter(deps: ApiDependencies): Router {
     validate(AssetParamsSchema, 'params'),
     asyncHandler(async (req, res) => {
       const asset = await ownedAsset(deps, req.auth!.userId, req.params.assetId as string);
+      if (asset.status === 'DELETED')
+        throw forbidden('UPLOAD_NOT_ACCEPTED', 'Bu yükleme artık kabul edilmiyor.');
       const exists = await deps.storage.exists(asset.storageKey);
-      const updated = await deps.repository.updateAsset(asset.id, {
-        status: exists ? 'READY' : 'REJECTED',
-      });
+      const updated = exists
+        ? await validateStoredUpload(deps, asset)
+        : await deps.repository.updateAsset(asset.id, { status: 'REJECTED' });
       sendSuccess(res, req.requestId, { asset: updated });
     }),
   );

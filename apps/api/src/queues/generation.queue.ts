@@ -17,6 +17,7 @@ export type GenerationJobPayload = {
 
 export interface GenerationQueue {
   enqueue(payload: GenerationJobPayload): Promise<void>;
+  ready(): Promise<boolean>;
   close(): Promise<void>;
 }
 
@@ -56,6 +57,9 @@ export async function createGenerationQueue(input: {
         }, 20);
         timer.unref();
       },
+      async ready() {
+        return true;
+      },
       async close() {},
     };
   }
@@ -81,6 +85,13 @@ export async function createGenerationQueue(input: {
         removeOnComplete: 1_000,
         removeOnFail: 5_000,
       });
+    },
+    async ready() {
+      try {
+        return (await connection.ping()) === 'PONG';
+      } catch {
+        return false;
+      }
     },
     async close() {
       await queue.close();

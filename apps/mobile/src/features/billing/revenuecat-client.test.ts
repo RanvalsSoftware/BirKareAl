@@ -43,13 +43,21 @@ function deferred<T>() {
 
 function fixture(unavailableReason?: string) {
   let user: string | null = 'user-a';
+  let nativeUserId: string | null = null;
   let latestInfo = info();
   let listener: ((value: CustomerInfo) => void) | null = null;
   const sdk = {
-    configure: vi.fn(),
-    logIn: vi.fn(async () => ({ customerInfo: latestInfo, created: false })),
+    configure: vi.fn(({ appUserID }: { appUserID?: string }) => {
+      nativeUserId = appUserID ?? null;
+    }),
+    logIn: vi.fn(async (appUserID: string) => {
+      nativeUserId = appUserID;
+      return { customerInfo: latestInfo, created: false };
+    }),
     logOut: vi.fn(async () => info()),
     isAnonymous: vi.fn(async () => false),
+    isConfigured: vi.fn(async () => nativeUserId !== null),
+    getAppUserID: vi.fn(async () => nativeUserId ?? '$RCAnonymousID:test'),
     getCustomerInfo: vi.fn(async () => latestInfo),
     getOfferings: vi.fn(async () => ({
       current: unrelatedOffering,
@@ -135,6 +143,30 @@ describe('RevenueCat account and purchase lifecycle', () => {
     expect(f.client.getSnapshot().status).toBe('ready');
   });
 
+  it('reconciles a native SDK that is already configured with an anonymous user', async () => {
+    const f = fixture();
+    f.sdk.isConfigured.mockResolvedValue(true);
+    f.sdk.getAppUserID.mockResolvedValue('$RCAnonymousID:stale-device-user');
+
+    await f.signIn();
+
+    expect(f.sdk.configure).not.toHaveBeenCalled();
+    expect(f.sdk.logIn).toHaveBeenCalledWith('user-a');
+    expect(f.client.getSnapshot().status).toBe('ready');
+  });
+
+  it('does not reconfigure or relogin when native RevenueCat already has the same user', async () => {
+    const f = fixture();
+    f.sdk.isConfigured.mockResolvedValue(true);
+    f.sdk.getAppUserID.mockResolvedValue('user-a');
+
+    await f.signIn();
+
+    expect(f.sdk.configure).not.toHaveBeenCalled();
+    expect(f.sdk.logIn).not.toHaveBeenCalled();
+    expect(f.client.getSnapshot().status).toBe('ready');
+  });
+
   it('selects the configured offering instead of an unrelated current offering', async () => {
     const f = fixture();
     await f.signIn();
@@ -162,16 +194,23 @@ describe('RevenueCat account and purchase lifecycle', () => {
     expect(hasPro(f.client.getSnapshot().customerInfo, entitlementId)).toBe(false);
   });
 
-  it('logs out and blocks purchases without an app account', async () => {
+  it('clears local billing state without creating an anonymous RevenueCat customer', async () => {
     const f = fixture();
     f.setInfo(info(true));
     await f.signIn();
     const logout = f.setUser(null);
     expect(f.client.getSnapshot().customerInfo).toBeNull();
     await logout;
-    expect(f.sdk.logOut).toHaveBeenCalledTimes(1);
+    expect(f.sdk.logOut).not.toHaveBeenCalled();
+    expect(f.sdk.logIn).not.toHaveBeenCalled();
     expect((await f.client.purchase(pkg)).kind).toBe('error');
     expect(f.sdk.purchasePackage).not.toHaveBeenCalled();
+
+    // The next authenticated account is switched directly with logIn().
+    f.setInfo(info(false, 'next-user'));
+    await f.setUser('user-b');
+    expect(f.sdk.logIn).toHaveBeenCalledWith('user-b');
+    expect(f.client.getSnapshot().status).toBe('ready');
   });
 
   it('discards a late customer response after switching accounts', async () => {

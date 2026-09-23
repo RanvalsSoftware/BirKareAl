@@ -28,6 +28,12 @@ type PendingSocialRegistrationResponse = {
   profile: PendingSocialProfile;
 };
 
+type DeletionRecoveryRequiredResponse = {
+  deletionRecoveryRequired: true;
+  recoveryUntil: string;
+  recoveryDays: number;
+};
+
 export type PendingSocialProfile = {
   email: string;
   firstName: string | null;
@@ -36,7 +42,8 @@ export type PendingSocialProfile = {
 
 export type SocialSignInResult =
   | { kind: 'authenticated' }
-  | { kind: 'profile_completion_required'; pendingToken: string; profile: PendingSocialProfile };
+  | { kind: 'profile_completion_required'; pendingToken: string; profile: PendingSocialProfile }
+  | { kind: 'deletion_recovery_required'; recoveryUntil: string; recoveryDays: number };
 
 export type CompleteSocialRegistrationInput = {
   acceptedAge: boolean;
@@ -51,9 +58,21 @@ export type CompleteSocialRegistrationInput = {
 };
 
 function requiresSocialProfileCompletion(
-  input: AuthSessionResponse | PendingSocialRegistrationResponse,
+  input:
+    | AuthSessionResponse
+    | PendingSocialRegistrationResponse
+    | DeletionRecoveryRequiredResponse,
 ): input is PendingSocialRegistrationResponse {
   return 'needsProfileCompletion' in input && input.needsProfileCompletion;
+}
+
+function requiresDeletionRecovery(
+  input:
+    | AuthSessionResponse
+    | PendingSocialRegistrationResponse
+    | DeletionRecoveryRequiredResponse,
+): input is DeletionRecoveryRequiredResponse {
+  return 'deletionRecoveryRequired' in input && input.deletionRecoveryRequired;
 }
 
 type AuthState = {
@@ -61,12 +80,16 @@ type AuthState = {
   accessToken: string | null;
   user: AuthUser | null;
   bootstrap: () => Promise<void>;
-  signIn: (input: { email: string; password: string }) => Promise<void>;
-  signInWithGoogle: (idToken: string) => Promise<SocialSignInResult>;
+  signIn: (input: { email: string; password: string; recoverDeletion?: boolean }) => Promise<void>;
+  signInWithGoogle: (
+    idToken: string,
+    options?: { recoverDeletion?: boolean },
+  ) => Promise<SocialSignInResult>;
   signInWithApple: (input: {
     idToken: string;
     firstName?: string;
     lastName?: string;
+    recoverDeletion?: boolean;
   }) => Promise<SocialSignInResult>;
   linkGoogleAccount: (idToken: string) => Promise<void>;
   completeSocialRegistration: (input: CompleteSocialRegistrationInput) => Promise<void>;
@@ -131,10 +154,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     await saveRefreshToken(session.refreshToken);
     set({ state: 'authenticated', accessToken: session.accessToken, user: session.user });
   },
-  async signInWithGoogle(idToken) {
-    const result = await apiRequest<AuthSessionResponse | PendingSocialRegistrationResponse>(
+  async signInWithGoogle(idToken, options) {
+    const result = await apiRequest<
+      AuthSessionResponse | PendingSocialRegistrationResponse | DeletionRecoveryRequiredResponse
+    >(
       '/v1/auth/google',
-      { method: 'POST', body: JSON.stringify({ idToken }) },
+      {
+        method: 'POST',
+        body: JSON.stringify({ idToken, recoverDeletion: Boolean(options?.recoverDeletion) }),
+      },
       { authenticated: false },
     );
     if (requiresSocialProfileCompletion(result)) {
@@ -144,6 +172,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         profile: result.profile,
       };
     }
+    if (requiresDeletionRecovery(result)) {
+      return {
+        kind: 'deletion_recovery_required',
+        recoveryUntil: result.recoveryUntil,
+        recoveryDays: result.recoveryDays,
+      };
+    }
 
     invalidateSessionRequests();
     await saveRefreshToken(result.refreshToken);
@@ -151,7 +186,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     return { kind: 'authenticated' };
   },
   async signInWithApple(input) {
-    const result = await apiRequest<AuthSessionResponse | PendingSocialRegistrationResponse>(
+    const result = await apiRequest<
+      AuthSessionResponse | PendingSocialRegistrationResponse | DeletionRecoveryRequiredResponse
+    >(
       '/v1/auth/apple',
       { method: 'POST', body: JSON.stringify(input) },
       { authenticated: false },
@@ -161,6 +198,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         kind: 'profile_completion_required',
         pendingToken: result.pendingToken,
         profile: result.profile,
+      };
+    }
+    if (requiresDeletionRecovery(result)) {
+      return {
+        kind: 'deletion_recovery_required',
+        recoveryUntil: result.recoveryUntil,
+        recoveryDays: result.recoveryDays,
       };
     }
 

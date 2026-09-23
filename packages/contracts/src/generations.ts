@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  AI_TOOL_PRESET_IDS,
   FASHION_SCENE_IDS,
   NAIL_PRESET_IDS,
   PRODUCT_CATEGORY_IDS,
@@ -47,6 +48,7 @@ const QuoteGenerationObjectSchema = z.object({
   beauty: BeautySettingsSchema.optional(),
   transformation: GenderTransformationSchema.optional(),
   trendPreset: z.enum(TREND_PRESET_IDS).optional(),
+  toolPreset: z.enum(AI_TOOL_PRESET_IDS).optional(),
   studio: StudioSelectionSchema.optional(),
 });
 
@@ -76,6 +78,7 @@ const GenerationRequestSchema = z.object({
   beauty: BeautySettingsSchema.optional(),
   transformation: GenderTransformationSchema.optional(),
   trendPreset: z.enum(TREND_PRESET_IDS).optional(),
+  toolPreset: z.enum(AI_TOOL_PRESET_IDS).optional(),
   studio: StudioSelectionSchema.optional(),
   /** This only selects a catalog record; clients never send a reference image or a public-figure name. */
   characterMode: z.enum(['FICTIONAL', 'LICENSED_REFERENCE']).optional(),
@@ -100,7 +103,10 @@ type ModeSelectionInput = {
   beauty?: unknown;
   transformation?: unknown;
   trendPreset?: unknown;
+  toolPreset?: (typeof AI_TOOL_PRESET_IDS)[number];
   characterMode?: unknown;
+  preserveFace?: boolean;
+  preserveClothes?: boolean;
 };
 
 function validateStudioSelection(
@@ -146,6 +152,7 @@ function validateStudioSelection(
     input.beauty ||
     input.transformation ||
     input.trendPreset ||
+    input.toolPreset ||
     input.characterMode
   ) {
     ctx.addIssue({
@@ -172,8 +179,51 @@ function validateStudioSelection(
   return true;
 }
 
+function validateToolPresetSelection(input: ModeSelectionInput, ctx: z.RefinementCtx) {
+  if (!input.toolPreset) return;
+  const expectedMode = {
+    background: 'BACKGROUND_REPLACE',
+    light: 'AI_FILTER',
+    portrait: 'PRO_PORTRAIT',
+    extend: 'AI_FILTER',
+  }[input.toolPreset];
+
+  if (input.mode !== expectedMode) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['toolPreset'],
+      message: 'AI araç seçimi üretim modu ile eşleşmelidir.',
+    });
+  }
+  if (
+    input.studio ||
+    input.featuredPersonId ||
+    input.characterMode ||
+    input.beauty ||
+    input.transformation ||
+    input.trendPreset
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['toolPreset'],
+      message: 'AI araç presetleri diğer özel üretim modlarıyla birleştirilemez.',
+    });
+  }
+  if (
+    (input.preserveFace === false || input.preserveClothes === false) &&
+    ['background', 'light', 'portrait', 'extend'].includes(input.toolPreset)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['preserveFace'],
+      message: 'AI araç presetlerinde kaynak kişi ve kıyafet koruması açık kalmalıdır.',
+    });
+  }
+}
+
 export const QuoteGenerationSchema = QuoteGenerationObjectSchema.superRefine((input, ctx) => {
   validateStudioSelection(input, ctx, false);
+  validateToolPresetSelection(input, ctx);
 });
 
 function validateGenerationSelection(
@@ -190,6 +240,7 @@ function validateGenerationSelection(
     }
     return;
   }
+  validateToolPresetSelection(input, ctx);
   if (input.userNotes) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -302,6 +353,7 @@ export const CancelGenerationSchema = z.object({ reason: z.string().trim().max(2
 export const GenerationRevisionSchema = z.object({
   instruction: z.string().trim().min(3).max(1000),
   sourceOutputId: UuidSchema,
+  referenceAssetId: UuidSchema.optional(),
   quality: GenerationQualitySchema.default('STANDARD'),
 });
 export const SelectOutputSchema = z.object({ outputId: UuidSchema });

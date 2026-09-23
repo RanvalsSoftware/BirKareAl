@@ -16,27 +16,36 @@ const revenueCatProducts = [
     kind: 'subscription',
     creditPolicy: { cadence: 'monthly', amount: 80 },
     testStoreProductId: 'monthly',
-    platformProductIds: { ios: BIRKARE_PRO_PRODUCTS.monthly.productId },
+    platformProductIds: {
+      ios: BIRKARE_PRO_PRODUCTS.monthly.productId,
+      android: BIRKARE_PRO_PRODUCTS.monthly.productId,
+    },
   },
   {
     ...BIRKARE_PRO_PRODUCTS.annual,
     kind: 'subscription',
     creditPolicy: { cadence: 'monthly', amount: 80 },
     testStoreProductId: 'yearly',
-    platformProductIds: { ios: BIRKARE_PRO_PRODUCTS.annual.productId },
+    platformProductIds: {
+      ios: BIRKARE_PRO_PRODUCTS.annual.productId,
+      android: BIRKARE_PRO_PRODUCTS.annual.productId,
+    },
   },
   {
     ...BIRKARE_PRO_PRODUCTS.lifetime,
     kind: 'non_consumable',
     creditPolicy: { cadence: 'once', amount: 200 },
     testStoreProductId: 'lifetime',
-    platformProductIds: { ios: BIRKARE_PRO_PRODUCTS.lifetime.productId },
+    platformProductIds: {
+      ios: BIRKARE_PRO_PRODUCTS.lifetime.productId,
+      android: BIRKARE_PRO_PRODUCTS.lifetime.productId,
+    },
   },
   ...BIRKARE_CREDIT_PRODUCTS.map((product) => ({
     id: product.id,
     kind: 'consumable' as const,
     creditPolicy: { cadence: 'once' as const, amount: product.credits },
-    platformProductIds: { ios: product.productId },
+    platformProductIds: { ios: product.productId, android: product.productId },
   })),
 ] as const;
 

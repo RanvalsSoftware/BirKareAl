@@ -25,6 +25,14 @@ test('HTTP beauty prices layers, protects premium tools with PRO, replays idempo
     status: 'ACTIVE',
     emailVerifiedAt: new Date(),
   });
+  await repository.grantCredits({
+    userId: user.id,
+    amount: 21,
+    type: 'BONUS',
+    referenceType: 'TEST_FIXTURE',
+    referenceId: user.id,
+    idempotencyKey: `test-fixture:${user.id}`,
+  });
   const session = await repository.createSession({
     userId: user.id,
     refreshTokenHash: 'test-only-beauty',

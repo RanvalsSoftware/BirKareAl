@@ -85,7 +85,7 @@ export class SmtpMailService implements MailService {
   constructor(
     private readonly config: MailConfig,
     private readonly transport: MailTransport,
-    private readonly logger?: Pick<Logger, 'warn'>,
+    private readonly logger?: Pick<Logger, 'info' | 'warn'>,
   ) {}
 
   async send(message: MailMessage): Promise<void> {
@@ -112,6 +112,12 @@ export class SmtpMailService implements MailService {
       });
       if (!accepted || (result.rejected?.length ?? 0) > 0)
         throw new Error('Recipient not accepted');
+      // Safe operational proof only: never log recipient, subject, body, token,
+      // SMTP response text, or credentials.
+      this.logger?.info(
+        { code: 'MAIL_ACCEPTED', transport: 'smtp' },
+        'Transactional e-posta SMTP tarafından kabul edildi.',
+      );
     } catch {
       // Do not attach the original error: SMTP replies may echo addresses, tokens,
       // credentials or the complete MIME payload. A fixed operational event suffices.
@@ -124,7 +130,10 @@ export class SmtpMailService implements MailService {
   }
 }
 
-export function createMailService(config: MailConfig, logger?: Pick<Logger, 'warn'>): MailService {
+export function createMailService(
+  config: MailConfig,
+  logger?: Pick<Logger, 'info' | 'warn'>,
+): MailService {
   if (config.MAIL_DRIVER === 'disabled') return new DisabledMailService();
   return new SmtpMailService(
     config,
@@ -142,19 +151,20 @@ export function authMail(input: {
   const verification = input.kind === 'verification';
   const scheme = input.scheme ?? 'birkareai';
   if (!/^[a-z][a-z0-9+.-]{1,40}$/.test(scheme)) throw mailUnavailable();
+  if (verification && !/^\d{6}$/.test(input.token)) throw mailUnavailable();
   const path = verification ? 'verify-email' : 'reset-password';
   const link = new URL(`${scheme}://${path}`);
-  link.searchParams.set('token', input.token);
+  link.searchParams.set(verification ? 'code' : 'token', input.token);
   if (verification) link.searchParams.set('email', input.email);
   const title = verification ? 'E-posta adresini doğrula' : 'Şifreni yenile';
-  const validity = verification ? '48 saat' : '1 saat';
+  const validity = verification ? '10 dakika' : '1 saat';
   const text = [
     `BirKare AI — ${title}`,
     '',
     `Uygulamayı açmak için: ${link.toString()}`,
     '',
     verification
-      ? `Uygulamadaki doğrulama alanına kopyalayabileceğin kod: ${input.token}`
+      ? `6 haneli doğrulama kodun: ${input.token}`
       : `Uygulamadaki şifre yenileme ekranına kopyalayabileceğin kod: ${input.token}`,
     '',
     `Bu bağlantı ve kod ${validity} geçerlidir ve yalnızca bir kez kullanılabilir.`,
@@ -162,4 +172,44 @@ export function authMail(input: {
     'BirKare AI hiçbir zaman e-postayla şifreni istemez.',
   ].join('\n');
   return { to: input.email, subject: `BirKare AI — ${title}`, text };
+}
+
+export function accountDeletionMail(input: {
+  email: string;
+  token: string;
+  webUrl: string;
+}): MailMessage {
+  let link: URL;
+  try {
+    link = new URL(input.webUrl);
+  } catch {
+    throw mailUnavailable();
+  }
+  const localHttp =
+    link.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(link.hostname);
+  if (
+    (link.protocol !== 'https:' && !localHttp) ||
+    link.username ||
+    link.password ||
+    link.hash ||
+    input.token.length < 40
+  ) {
+    throw mailUnavailable();
+  }
+  link.searchParams.set('token', input.token);
+  const text = [
+    'BirKare AI — Hesap silme talebi',
+    '',
+    'Hesabını kalıcı olarak silme işlemine devam etmek için aşağıdaki tek kullanımlık bağlantıyı aç:',
+    link.toString(),
+    '',
+    'Bu bağlantı 30 dakika geçerlidir ve yalnızca bir kez kullanılabilir.',
+    'Bağlantıyı sen istemediysen bu e-postayı yok say; hesabında hiçbir değişiklik yapılmaz.',
+    'BirKare AI hiçbir zaman bu işlem için e-postayla şifreni istemez.',
+  ].join('\n');
+  return {
+    to: input.email,
+    subject: 'BirKare AI — Hesap silme bağlantın',
+    text,
+  };
 }

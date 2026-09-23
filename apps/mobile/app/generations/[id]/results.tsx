@@ -70,7 +70,7 @@ export default function GenerationResultsScreen() {
   const router = useRouter();
   const { id: rawGenerationId } = useLocalSearchParams<{ id?: string }>();
   const generationId = Array.isArray(rawGenerationId) ? rawGenerationId[0] : rawGenerationId;
-  const { flow } = useCreateFlow();
+  const { flow, reset } = useCreateFlow();
   const accessToken = useAuthStore((store) => store.accessToken);
   const userId = useAuthStore((store) => store.user?.id);
   const [selectedId, setSelectedId] = useState('a');
@@ -373,6 +373,16 @@ export default function GenerationResultsScreen() {
         <Icon name="flag-outline" size={18} color={colors.danger} />
         <Text style={styles.reportActionText}>Raporla</Text>
       </Pressable>
+      <PrimaryButton
+        accessibilityHint="Yeni bir üretime en baştan başlar"
+        icon="add"
+        label="Yeni oluştur"
+        onPress={() => {
+          reset();
+          router.dismissTo('/create' as never);
+        }}
+        style={styles.newCreateAction}
+      />
       <ReportModal
         detail={reportDetail}
         onChangeDetail={setReportDetail}
@@ -587,6 +597,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   reportActionText: { ...typography.label, color: colors.danger },
+  newCreateAction: { marginTop: spacing.xl },
   pressed: { opacity: 0.78 },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.68)', justifyContent: 'flex-end' },
   modalSheet: {

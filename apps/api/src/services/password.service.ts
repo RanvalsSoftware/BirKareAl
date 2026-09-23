@@ -1,4 +1,5 @@
 import argon2 from 'argon2';
+import { createHmac } from 'node:crypto';
 import type { BirKareConfig } from '@birkare/config';
 
 export class PasswordService {
@@ -19,5 +20,16 @@ export class PasswordService {
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Verification codes have a deliberately small, user-friendly key space.
+   * A keyed digest prevents an attacker who obtains the database from
+   * recovering every six-digit code with a trivial offline lookup table.
+   */
+  hashEmailVerificationCode(email: string, code: string): string {
+    return createHmac('sha256', this.pepper)
+      .update(`email-verification:v1\u0000${email.trim().toLowerCase()}\u0000${code}`, 'utf8')
+      .digest('hex');
   }
 }

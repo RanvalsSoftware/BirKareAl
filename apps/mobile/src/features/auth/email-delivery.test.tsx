@@ -1,7 +1,12 @@
 import React from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { authMailToken, EMAIL_REQUEST_NOTICE, verificationRecoveryParams } from './email-delivery';
+import {
+  authMailToken,
+  emailVerificationCode,
+  EMAIL_REQUEST_NOTICE,
+  verificationRecoveryParams,
+} from './email-delivery';
 
 const mocks = vi.hoisted(() => ({
   params: {} as Record<string, unknown>,
@@ -102,14 +107,27 @@ describe('transactional email handoff', () => {
     expect(authMailToken(['first', 'second'])).toBe('');
     expect(authMailToken('x'.repeat(513))).toBe('');
     expect(authMailToken('  token  ')).toBe('token');
+    expect(emailVerificationCode(' 01-2 34x9 ')).toBe('012349');
+    expect(emailVerificationCode(['123456'])).toBe('');
     expect(EMAIL_REQUEST_NOTICE).toContain('teslim edildiği anlamına gelmez');
     expect(EMAIL_REQUEST_NOTICE).not.toContain('bağlantısı gönderildi');
   });
 
   it('picks up an incoming email link while the verification screen is mounted', async () => {
     await mount();
-    const incoming = 'b'.repeat(48);
-    mocks.params = { ...mocks.params, token: incoming };
+    expect(
+      screen!.root.findAll(
+        (node) => typeof node.props.testID === 'string' && node.props.testID.startsWith('verification-code-cell-'),
+      ),
+    ).toHaveLength(6);
+    expect(screen!.root.findByType('TextInput' as never).props).toMatchObject({
+      autoComplete: 'one-time-code',
+      keyboardType: 'number-pad',
+      maxLength: 6,
+      textContentType: 'oneTimeCode',
+    });
+    const incoming = '042179';
+    mocks.params = { ...mocks.params, code: incoming };
     await act(async () => screen!.update(<VerifyEmailScreen />));
     expect(screen!.root.findByType('TextInput' as never).props.value).toBe(incoming);
     expect(mocks.request).not.toHaveBeenCalled();
@@ -124,9 +142,9 @@ describe('transactional email handoff', () => {
         }),
     );
     await mount();
-    const token = 'a'.repeat(48);
+    const code = '042179';
     await act(async () =>
-      screen!.root.findByType('TextInput' as never).props.onChangeText(` ${token} `),
+      screen!.root.findByType('TextInput' as never).props.onChangeText(` ${code} `),
     );
     await act(async () => {
       const press = screen!.root.findByType('GradientAuthButton' as never).props.onPress;
@@ -136,7 +154,10 @@ describe('transactional email handoff', () => {
     expect(mocks.request).toHaveBeenCalledTimes(1);
     expect(mocks.request).toHaveBeenCalledWith(
       '/v1/auth/verify-email',
-      { method: 'POST', body: JSON.stringify({ token }) },
+      {
+        method: 'POST',
+        body: JSON.stringify({ email: 'member@example.test', code }),
+      },
       { authenticated: false },
     );
     await act(async () => finish());
@@ -155,7 +176,9 @@ describe('transactional email handoff', () => {
     mocks.params.delivery = 'failed';
     await mount();
     expect(JSON.stringify(screen!.toJSON())).toContain('Yeniden kayıt olman');
-    await act(async () => screen!.root.findAllByType('AuthLink' as never)[0]!.props.onPress());
+    await act(async () =>
+      screen!.root.findByProps({ accessibilityLabel: 'Kodu tekrar gönder' }).props.onPress(),
+    );
     expect(mocks.request).toHaveBeenCalledWith(
       '/v1/auth/resend-verification',
       { method: 'POST', body: JSON.stringify({ email: 'member@example.test' }) },
@@ -168,7 +191,9 @@ describe('transactional email handoff', () => {
     mocks.params = {};
     await mount();
     await act(async () => screen!.root.findByType('GradientAuthButton' as never).props.onPress());
-    await act(async () => screen!.root.findAllByType('AuthLink' as never)[0]!.props.onPress());
+    await act(async () =>
+      screen!.root.findByProps({ accessibilityLabel: 'Kodu tekrar gönder' }).props.onPress(),
+    );
     expect(mocks.request).not.toHaveBeenCalled();
   });
 });

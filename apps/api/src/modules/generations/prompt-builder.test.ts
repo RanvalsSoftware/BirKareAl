@@ -72,14 +72,21 @@ test('every selectable edit is charged once per output and identity preservation
         mode: 'FULL_SCENE',
         quality: 'STANDARD',
         numberOfImages: 1,
+        premiumModel: true,
         hasSceneTemplate: true,
       },
-      expected: 5,
+      expected: 7,
     },
     {
       label: 'trend',
-      input: { mode: 'AI_FILTER', quality: 'STANDARD', numberOfImages: 1, hasTrend: true },
-      expected: 6,
+      input: {
+        mode: 'AI_FILTER',
+        quality: 'STANDARD',
+        numberOfImages: 1,
+        premiumModel: true,
+        hasTrend: true,
+      },
+      expected: 8,
     },
     {
       label: 'standard beauty',
@@ -141,9 +148,10 @@ test('every selectable edit is charged once per output and identity preservation
       mode: 'AI_FILTER',
       quality: 'HD',
       numberOfImages: 4,
+      premiumModel: true,
       hasTrend: true,
     }).creditCost,
-    36,
+    48,
     'base and trend cost must both scale with the four generated outputs',
   );
   assert.equal(
@@ -185,6 +193,82 @@ function sourceEditFixture(mode: ProjectRecord['mode'], featuredPersonId: string
     catalog: catalogFixtures,
   };
 }
+
+test('server-owned AI tool presets compile distinct bounded edit intents', () => {
+  const natural = catalogFixtures.styles.find((entry) => entry.slug === 'natural-light')!.id;
+  const studio = catalogFixtures.styles.find((entry) => entry.slug === 'studio')!.id;
+  const alpine = scene('alpine-lake').id;
+
+  const cases = [
+    {
+      toolPreset: 'background' as const,
+      mode: 'BACKGROUND_REPLACE' as const,
+      sceneTemplateId: alpine,
+      stylePresetId: natural,
+      expected: /EDIT INTENT: BACKGROUND REPLACEMENT/,
+    },
+    {
+      toolPreset: 'light' as const,
+      mode: 'AI_FILTER' as const,
+      sceneTemplateId: null,
+      stylePresetId: natural,
+      expected: /EDIT INTENT: NATURAL RELIGHTING/,
+    },
+    {
+      toolPreset: 'portrait' as const,
+      mode: 'PRO_PORTRAIT' as const,
+      sceneTemplateId: null,
+      stylePresetId: studio,
+      expected: /EDIT INTENT: PROFESSIONAL PORTRAIT/,
+    },
+    {
+      toolPreset: 'extend' as const,
+      mode: 'AI_FILTER' as const,
+      sceneTemplateId: null,
+      stylePresetId: natural,
+      expected: /EDIT INTENT: CANVAS EXPANSION \/ OUTPAINTING/,
+    },
+  ];
+
+  for (const entry of cases) {
+    const prompt = buildGenerationPrompt({
+      generation: {
+        preserveFace: true,
+        preserveClothes: true,
+        aspectRatio: entry.toolPreset === 'extend' ? '16:9' : '4:5',
+        userInstruction: null,
+        recipe: {
+          version: 1,
+          filterIntensity: entry.toolPreset === 'extend' ? 10 : 35,
+          toolPreset: entry.toolPreset,
+          character: null,
+          composition: {
+            shotType: 'PORTRAIT',
+            cameraAngle: 'EYE_LEVEL',
+            subjectPosition: 'CENTER',
+            backgroundDepth: 'BALANCED',
+          },
+          selection: {
+            sceneTemplateId: entry.sceneTemplateId,
+            stylePresetId: entry.stylePresetId,
+            featuredPersonId: null,
+          },
+        },
+      } as GenerationRecord,
+      project: {
+        mode: entry.mode,
+        composition: 'CLOSE',
+        sceneTemplateId: entry.sceneTemplateId,
+        stylePresetId: entry.stylePresetId,
+        featuredPersonId: null,
+      } as ProjectRecord,
+      catalog: catalogFixtures,
+    });
+    assert.match(prompt, /SERVER EDIT INTENT/);
+    assert.match(prompt, entry.expected);
+    assert.match(prompt, /SOURCE PHOTOGRAPH AUTHORITY/);
+  }
+});
 
 test('localized edits preserve the source person count without requesting a secondary character', () => {
   for (const mode of ['AI_FILTER', 'BACKGROUND_REPLACE'] as const) {
@@ -248,10 +332,10 @@ test('every new scene resolves to its own environment, not an unrelated legacy f
   const expectations = {
     'stadium-night': /football stadium/,
     'award-night': /waterfront terrace/,
-    'red-carpet': /film-premiere red carpet/,
+    'red-carpet': /fictional red-carpet entrance/,
     'luxury-car': /parked, unbranded premium vehicle/,
     'istanbul-sunset': /waterfront city terrace/,
-    'cosmic-camp': /rocky night campsite/,
+    'cosmic-camp': /rocky campsite at night/,
     'waterfront-night': /suspension bridge/,
     'coastal-terrace': /Mediterranean/,
     'window-portrait': /window light/,
@@ -266,6 +350,91 @@ test('every new scene resolves to its own environment, not an unrelated legacy f
     assert.match(background, /original face, hairstyle, clothing/);
     assert.match(background, /pose and expression/);
   }
+});
+
+test('human photographic scenes inherit source-fidelity and anti-CGI rules', () => {
+  const generation = {
+    preserveFace: true,
+    preserveClothes: true,
+    aspectRatio: '4:5',
+    userInstruction: null,
+    recipe: {
+      version: 1,
+      filterIntensity: 60,
+      character: null,
+      composition: {
+        shotType: 'HALF_BODY',
+        cameraAngle: 'EYE_LEVEL',
+        subjectPosition: 'CENTER',
+        backgroundDepth: 'BALANCED',
+      },
+      selection: {
+        sceneTemplateId: scene('waterfront-night').id,
+        stylePresetId: catalogFixtures.styles.find((entry) => entry.slug === 'natural-light')!.id,
+        featuredPersonId: null,
+      },
+    },
+  } as GenerationRecord;
+  const project = {
+    mode: 'FULL_SCENE',
+    composition: 'MEDIUM',
+    sceneTemplateId: scene('waterfront-night').id,
+    stylePresetId: catalogFixtures.styles.find((entry) => entry.slug === 'natural-light')!.id,
+    featuredPersonId: null,
+  } as ProjectRecord;
+  const prompt = buildGenerationPrompt({ generation, project, catalog: catalogFixtures });
+  assert.match(prompt, /SOURCE PHOTOGRAPH AUTHORITY/);
+  assert.match(prompt, /PHOTOGRAPHIC REALISM TARGET/);
+  assert.match(prompt, /not as AI artwork, CGI, 3D rendering/);
+  assert.match(prompt, /explicitly photorealistic/);
+  assert.match(prompt, /captured in a real moment/);
+  assert.match(prompt, /do not invent, extend or reconstruct unseen body regions/i);
+  assert.match(prompt, /real-looking public waterfront promenade/);
+  assert.match(prompt, /Avoid exaggerated neon, excessive bloom, artificial HDR/);
+
+  const redCarpet = buildGenerationPrompt({
+    ...sourceEditFixture('FULL_SCENE'),
+    generation: {
+      ...sourceEditFixture('FULL_SCENE').generation,
+      recipe: {
+        version: 1,
+        filterIntensity: 60,
+        character: null,
+        composition: {
+          shotType: 'HALF_BODY',
+          cameraAngle: 'EYE_LEVEL',
+          subjectPosition: 'CENTER',
+          backgroundDepth: 'BALANCED',
+        },
+        selection: {
+          sceneTemplateId: scene('red-carpet').id,
+          stylePresetId: catalogFixtures.styles.find((entry) => entry.slug === 'natural-light')!.id,
+          featuredPersonId: null,
+        },
+      },
+    } as GenerationRecord,
+    project: {
+      ...sourceEditFixture('FULL_SCENE').project,
+      sceneTemplateId: scene('red-carpet').id,
+    },
+  });
+  assert.match(redCarpet, /photographed like a real event arrival/);
+  assert.match(redCarpet, /Avoid excessive bloom, perfect luxury-ad lighting, synthetic bokeh/);
+});
+
+test('composition never requires invented body regions just to satisfy framing', () => {
+  assert.match(compositionPrompt({
+    shotType: 'HALF_BODY',
+    cameraAngle: 'EYE_LEVEL',
+    subjectPosition: 'CENTER',
+    backgroundDepth: 'BALANCED',
+  }), /only when the source provides enough visible body information/);
+  assert.match(compositionPrompt({
+    shotType: 'FULL_BODY',
+    cameraAngle: 'EYE_LEVEL',
+    subjectPosition: 'CENTER',
+    backgroundDepth: 'BALANCED',
+  }), /never invent major unseen body regions/);
 });
 
 test('filter and portrait modes cannot inherit a stale scene background', () => {
@@ -293,8 +462,8 @@ test('composition respects selected angle without forcing a vertical output', ()
 test('studio styling does not override the chosen environment', () => {
   const studio = catalogFixtures.styles.find((entry) => entry.slug === 'studio');
   assert.ok(studio);
-  assert.match(stylePrompt(studio), /must not replace it/);
-  assert.match(stylePrompt(studio), /warm professional studio/);
+  assert.match(stylePrompt(studio), /must not replace the background/);
+  assert.match(stylePrompt(studio), /professional portrait-lighting/);
 });
 
 test('warm studio has concrete, different light targets at each intensity', () => {

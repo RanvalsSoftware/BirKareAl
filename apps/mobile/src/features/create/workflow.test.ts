@@ -67,6 +67,7 @@ describe('source -> editor -> review navigation', () => {
       trendPreset: null,
       sourceUri: null,
       sourceRightsConfirmed: false,
+      quality: 'Standart',
     });
   });
 
@@ -188,19 +189,58 @@ describe('source -> editor -> review navigation', () => {
     expect(afterSourcePath(getCreateFlow())).toBe('/create/settings');
   });
 
-  it('resets source choice and consent on a new creation', () => {
+  it('resets every draft field before a new creation', () => {
     updateCreateFlow({
+      beauty: withBeautyIntensity(emptyBeautySettings(), 'naturalBalance', 35),
+      transformation: { kind: 'gender-swap', presentation: 'feminine' },
+      trendPreset: 'kpop_star',
+      toolId: 'beauty',
       sourceKind: 'fictional',
       sourceCharacterId: 'persona-aras',
       sourceUri: 'file:///demo.png',
+      sourceName: 'demo.png',
+      mode: 'portrait',
+      sceneId: 'scene-neon',
+      personId: 'persona-aras',
+      styleId: 'filter-studio',
+      composition: 'Selfie',
+      aspectRatio: '9:16',
+      quality: 'HD',
+      numberOfImages: 4,
+      filterIntensity: 25,
+      preserveFace: false,
+      preserveClothes: false,
+      saveSource: false,
       sourceRightsConfirmed: true,
+      onboardingDraftPending: true,
+      customInstruction: 'Keep this out of the next creation.',
     });
     resetCreateFlow();
-    expect(getCreateFlow()).toMatchObject({
+
+    expect(getCreateFlow()).toEqual({
+      beauty: null,
+      transformation: null,
+      trendPreset: null,
+      toolId: null,
       sourceKind: 'photo',
       sourceCharacterId: null,
+      mode: 'scene',
       sourceUri: null,
+      sourceName: null,
+      sceneId: null,
+      personId: null,
+      styleId: null,
+      composition: 'Orta',
+      aspectRatio: '4:5',
+      quality: 'Standart',
+      numberOfImages: 1,
+      filterIntensity: 60,
+      preserveFace: true,
+      preserveClothes: true,
+      saveSource: true,
       sourceRightsConfirmed: false,
+      onboardingDraftPending: false,
+      customInstruction: '',
     });
   });
 });

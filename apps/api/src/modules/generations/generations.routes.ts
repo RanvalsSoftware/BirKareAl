@@ -279,6 +279,7 @@ function createGenerationRecipe(
     beauty?: LegacyGenerationRecipe['beauty'];
     transformation?: LegacyGenerationRecipe['transformation'];
     trendPreset?: LegacyGenerationRecipe['trendPreset'];
+    toolPreset?: LegacyGenerationRecipe['toolPreset'];
   },
   character: CharacterAuthorization | null,
   selection: GenerationSelectionInput,
@@ -296,6 +297,7 @@ function createGenerationRecipe(
     ...(input.beauty ? { beauty: input.beauty } : {}),
     ...(input.transformation ? { transformation: input.transformation } : {}),
     ...(input.trendPreset ? { trendPreset: input.trendPreset } : {}),
+    ...(input.toolPreset ? { toolPreset: input.toolPreset } : {}),
     composition: input.compositionDetails ?? legacyComposition(input.composition),
     character: character
       ? character.mode === 'LICENSED_REFERENCE'
@@ -418,16 +420,21 @@ type ModelLaneInput = {
   hasBeauty?: boolean;
   hasTransformation?: boolean;
   hasFeaturedPerson?: boolean;
+  hasTrend?: boolean;
 };
 
 /**
  * Model choice is derived only from the server-validated request snapshot.
- * Preview always stays on Flare; identity-sensitive final edits use Sunburst.
+ * Preview always stays on Flare. Standard/HD full-scene and trend transforms
+ * use the precision lane because they rebuild substantial surroundings while
+ * preserving a real person's identity and source-supported anatomy.
  */
 function usesPremiumImageModel(input: ModelLaneInput): boolean {
   if (input.quality === 'PREVIEW') return false;
   return (
+    input.mode === 'FULL_SCENE' ||
     input.mode === 'PRO_PORTRAIT' ||
+    Boolean(input.hasTrend) ||
     Boolean(input.hasBeauty) ||
     Boolean(input.hasTransformation) ||
     Boolean(input.hasFeaturedPerson)
@@ -482,6 +489,7 @@ async function reserveCreateAndEnqueue(
           hasBeauty: Boolean(input.recipe.beauty),
           hasTransformation: Boolean(input.recipe.transformation),
           hasFeaturedPerson: Boolean(pricedSelection!.featuredPersonId),
+          hasTrend: Boolean(input.recipe.trendPreset),
         });
   const model = configuredImageModel(deps, premiumModel);
   const quote =
@@ -595,7 +603,8 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
           ...quote,
           modelLane: req.body.quality === 'PREVIEW' ? 'FAST' : plan.modelLane,
           availableCredits: wallet.available,
-          canGenerate: wallet.available >= quote.creditCost,
+          unlimitedCredits: Boolean(wallet.unlimited),
+          canGenerate: Boolean(wallet.unlimited) || wallet.available >= quote.creditCost,
         });
         return;
       }
@@ -609,6 +618,7 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
         hasBeauty: Boolean(req.body.beauty),
         hasTransformation: Boolean(req.body.transformation),
         hasFeaturedPerson: Boolean(req.body.featuredPersonId),
+        hasTrend: Boolean(req.body.trendPreset),
       });
       const quote = calculateCreditQuote({
         mode: req.body.mode,
@@ -634,7 +644,8 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
         ...quote,
         modelLane: premiumModel ? 'PREMIUM' : 'FAST',
         availableCredits: wallet.available,
-        canGenerate: wallet.available >= quote.creditCost,
+        unlimitedCredits: Boolean(wallet.unlimited),
+        canGenerate: Boolean(wallet.unlimited) || wallet.available >= quote.creditCost,
       });
     }),
   );
@@ -980,19 +991,22 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
       );
       if (['COMPLETED', 'FAILED', 'BLOCKED', 'CANCELLED'].includes(generation.status))
         throw conflict('GENERATION_NOT_CANCELLABLE', 'Bu üretim artık iptal edilemez.');
-      await deps.repository.releaseCredits({
+      const settlement = await deps.repository.releaseCredits({
         userId: generation.userId,
         generationId: generation.id,
         amount: generation.reservedCredits,
         reason: req.body.reason ?? 'Kullanıcı iptal etti.',
+        finalization: {
+          status: 'CANCELLED',
+          stage: 'CANCELLED',
+          progress: 100,
+          refundedCredits: generation.reservedCredits,
+          completedAt: new Date(),
+        },
       });
-      const updated = await deps.repository.updateGeneration(generation.id, {
-        status: 'CANCELLED',
-        stage: 'CANCELLED',
-        progress: 100,
-        refundedCredits: generation.reservedCredits,
-        completedAt: new Date(),
-      });
+      if (!settlement.applied || !settlement.generation)
+        throw conflict('GENERATION_NOT_CANCELLABLE', 'Bu üretim artık iptal edilemez.');
+      const updated = settlement.generation;
       sendSuccess(res, req.requestId, await presentation(deps, updated));
     }),
   );
@@ -1041,6 +1055,29 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
       const output = parent.outputs.find((item) => item.id === req.body.sourceOutputId);
       if (!output) throw notFound('GENERATION_OUTPUT_NOT_FOUND', 'Revizyon kaynağı bulunamadı.');
       const project = await ownedProject(deps, req.auth!.userId, parent.projectId);
+      const referenceAsset = req.body.referenceAssetId
+        ? await deps.repository.getAssetById(req.body.referenceAssetId)
+        : null;
+      if (req.body.referenceAssetId) {
+        assertReadyStudioSource(referenceAsset, req.auth!.userId);
+      }
+      const revisionInstruction = referenceAsset
+        ? `${req.body.instruction}\n\nINPUT IMAGE MARKED REFERENCE is an optional visual reference. Apply only the details explicitly requested above. Do not copy identity, face, body, logos, text or unrelated background from the reference image.`
+        : req.body.instruction;
+      const recordRevisionMessages = async (generationId: string) => {
+        await deps.repository.addGenerationMessage({
+          generationId,
+          role: 'USER',
+          content: req.body.instruction,
+        });
+        await deps.repository.addGenerationMessage({
+          generationId,
+          role: 'ASSISTANT',
+          content: referenceAsset
+            ? 'İsteğin ve eklediğin referans yeni bir sürüm olarak hazırlanıyor.'
+            : 'İsteğin yeni bir sürüm olarak hazırlanıyor.',
+        });
+      };
       if (parent.recipe?.version === 2) {
         if (project.mode !== parent.recipe.studio.kind) {
           throw conflict(
@@ -1080,10 +1117,20 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
           preserveFace: true,
           preserveClothes: true,
           recipe: parent.recipe,
-          inputs: studioSources.inputs,
-          instruction: req.body.instruction,
+          inputs: referenceAsset
+            ? [
+                ...studioSources.inputs,
+                {
+                  assetId: referenceAsset.id,
+                  role: 'REFERENCE',
+                  sortOrder: studioSources.inputs.length,
+                },
+              ]
+            : studioSources.inputs,
+          instruction: revisionInstruction,
           parentGenerationId: parent.id,
         });
+        await recordRevisionMessages(result.generation.id);
         sendSuccess(
           res,
           req.requestId,
@@ -1115,12 +1162,16 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
         recipe.selection?.stylePresetId,
         await deps.repository.getCatalog(),
       );
-      // Portrait tools are recomputed from the original, never recursively from an AI output.
-      const revisionSourceId =
-        recipe.beauty || recipe.transformation || recipe.trendPreset
-          ? parent.sourceAssetId
-          : output.assetId;
-      if (recipe.beauty || recipe.transformation || recipe.trendPreset) {
+      // Identity-sensitive and bounded edit tools are always recomputed from the original upload.
+      // Never recursively edit a generated output for beauty, trends, relighting, portrait,
+      // background replacement or canvas expansion because each generation would compound drift.
+      const requiresOriginalSource =
+        Boolean(recipe.beauty) ||
+        Boolean(recipe.transformation) ||
+        Boolean(recipe.trendPreset) ||
+        Boolean(recipe.toolPreset);
+      const revisionSourceId = requiresOriginalSource ? parent.sourceAssetId : output.assetId;
+      if (requiresOriginalSource) {
         const source = await deps.repository.getAssetById(revisionSourceId);
         if (
           !source ||
@@ -1152,9 +1203,16 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
         preserveFace: parent.preserveFace,
         preserveClothes: parent.preserveClothes,
         recipe,
-        instruction: req.body.instruction,
+        inputs: [
+          { assetId: revisionSourceId, role: 'PRIMARY_USER', sortOrder: 0 },
+          ...(referenceAsset
+            ? [{ assetId: referenceAsset.id, role: 'REFERENCE' as const, sortOrder: 1 }]
+            : []),
+        ],
+        instruction: revisionInstruction,
         parentGenerationId: parent.id,
       });
+      await recordRevisionMessages(result.generation.id);
       sendSuccess(
         res,
         req.requestId,

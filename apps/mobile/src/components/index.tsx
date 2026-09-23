@@ -121,8 +121,12 @@ export function LogoMark({
       </Animated.View>
       {withWordmark ? (
         <View style={styles.wordmarkCopy}>
-          <Text numberOfLines={1} adjustsFontSizeToFit style={styles.wordmarkText}>BirKare <Text style={styles.wordmarkAi}>AI</Text></Text>
-          <Text numberOfLines={1} adjustsFontSizeToFit style={styles.wordmarkCaption}>hayalindeki kareye adım at</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit style={styles.wordmarkText}>
+            BirKare <Text style={styles.wordmarkAi}>AI</Text>
+          </Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit style={styles.wordmarkCaption}>
+            hayalindeki kareye adım at
+          </Text>
         </View>
       ) : null}
     </View>
@@ -363,7 +367,12 @@ export function AppHeader({
   compact?: boolean;
 }) {
   return (
-    <GlassSurface radius={28} tone="gold" style={styles.headerSurface} contentStyle={[styles.header, compact && styles.headerCompact]}>
+    <GlassSurface
+      radius={28}
+      tone="gold"
+      style={styles.headerSurface}
+      contentStyle={[styles.header, compact && styles.headerCompact]}
+    >
       <View style={styles.headerLeft}>
         {back ? <BackButton /> : null}
         <View style={styles.headerTitleWrap}>
@@ -382,13 +391,24 @@ export function AppHeader({
   );
 }
 
-export function CreditBadge({ credits, pro = false }: { credits?: number; pro?: boolean }) {
+export function CreditBadge({
+  credits,
+  pro = false,
+}: {
+  credits?: number | string;
+  pro?: boolean;
+}) {
   const router = useRouter();
   const reducedMotion = useReducedMotion();
   const [scale] = useState(() => new Animated.Value(1));
   function pressAnimation(pressed: boolean) {
     if (reducedMotion) return;
-    Animated.spring(scale, { toValue: pressed ? 0.95 : 1, useNativeDriver: true, speed: 28, bounciness: 5 }).start();
+    Animated.spring(scale, {
+      toValue: pressed ? 0.95 : 1,
+      useNativeDriver: true,
+      speed: 28,
+      bounciness: 5,
+    }).start();
   }
   return (
     <Animated.View style={{ alignSelf: 'flex-start', transform: [{ scale }] }}>
@@ -396,7 +416,8 @@ export function CreditBadge({ credits, pro = false }: { credits?: number; pro?: 
         accessibilityRole="button"
         accessibilityLabel={`${credits ?? 'Yükleniyor'} kredi${pro ? ', Pro üye' : ''}`}
         accessibilityHint="Kredi bakiyeni ve paketleri görüntüle"
-        onPressIn={() => pressAnimation(true)} onPressOut={() => pressAnimation(false)}
+        onPressIn={() => pressAnimation(true)}
+        onPressOut={() => pressAnimation(false)}
         onPress={() => {
           void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
           router.push('/(tabs)/credits' as never);
@@ -504,16 +525,23 @@ export function CategoryChip({
       accessibilityLabel={label}
       accessibilityState={{ selected: Boolean(selected) }}
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.chipPressable,
-        pressed && styles.buttonPressed,
-      ]}
+      style={({ pressed }) => [styles.chipPressable, pressed && styles.buttonPressed]}
     >
-      <GlassSurface radius={22} tone="gold" selected={selected} glow={selected} contentStyle={styles.chip}>
-      {icon ? (
-        <Icon name={icon} size={15} color={selected ? colors.accentYellow : colors.textSecondary} />
-      ) : null}
-      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
+      <GlassSurface
+        radius={22}
+        tone="gold"
+        selected={selected}
+        glow={selected}
+        contentStyle={styles.chip}
+      >
+        {icon ? (
+          <Icon
+            name={icon}
+            size={15}
+            color={selected ? colors.accentYellow : colors.textSecondary}
+          />
+        ) : null}
+        <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
       </GlassSurface>
     </Pressable>
   );
@@ -557,7 +585,6 @@ export function VisualTile({
       <View style={[styles.tileArt, imageSource ? styles.tileArtPortrait : styles.tileArtDefault]}>
         {imageSource ? (
           <>
-            <LinearGradient colors={palette} style={StyleSheet.absoluteFill} />
             <View pointerEvents="none" style={styles.tileImageCanvas}>
               <Image fadeDuration={0} source={imageSource} style={styles.tileImage} />
             </View>
@@ -673,15 +700,39 @@ export function UploadTile({
   onPress: () => void;
   label?: string;
 }) {
+  const [measuredSource, setMeasuredSource] = useState<{
+    uri: string;
+    aspectRatio: number;
+  } | null>(null);
+  const sourceAspectRatio =
+    measuredSource && measuredSource.uri === sourceUri ? measuredSource.aspectRatio : null;
+  const selectedAspectRatio = sourceAspectRatio
+    ? Math.min(1.8, Math.max(0.72, sourceAspectRatio))
+    : 4 / 3;
+
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={sourceUri ? 'Seçili kaynak fotoğrafı değiştir' : label}
       onPress={onPress}
-      style={({ pressed }) => [styles.uploadTile, pressed && styles.tilePressed]}
+      style={({ pressed }) => [
+        styles.uploadTile,
+        sourceUri ? [styles.uploadTileSelected, { aspectRatio: selectedAspectRatio }] : null,
+        pressed && styles.tilePressed,
+      ]}
     >
       {sourceUri ? (
-        <Image source={{ uri: sourceUri }} style={styles.uploadImage} resizeMode="cover" />
+        <Image
+          source={{ uri: sourceUri }}
+          style={styles.uploadImage}
+          resizeMode="contain"
+          onLoad={({ nativeEvent }) => {
+            const { width, height } = nativeEvent.source;
+            if (width > 0 && height > 0 && sourceUri) {
+              setMeasuredSource({ uri: sourceUri, aspectRatio: width / height });
+            }
+          }}
+        />
       ) : (
         <>
           <View style={styles.uploadIcon}>
@@ -875,7 +926,12 @@ export function ProgressSteps({
   );
 }
 
-function AnimatedProgressSegment({ active, current, reducedMotion, delay }: {
+function AnimatedProgressSegment({
+  active,
+  current,
+  reducedMotion,
+  delay,
+}: {
   active: boolean;
   current: boolean;
   reducedMotion: boolean;
@@ -884,15 +940,33 @@ function AnimatedProgressSegment({ active, current, reducedMotion, delay }: {
   const [fill] = useState(() => new Animated.Value(0));
   useEffect(() => {
     fill.stopAnimation();
-    if (reducedMotion) { fill.setValue(active ? 1 : 0); return; }
-    const animation = Animated.timing(fill, { toValue: active ? 1 : 0, duration: 520, delay: active ? delay : 0, useNativeDriver: false });
+    if (reducedMotion) {
+      fill.setValue(active ? 1 : 0);
+      return;
+    }
+    const animation = Animated.timing(fill, {
+      toValue: active ? 1 : 0,
+      duration: 520,
+      delay: active ? delay : 0,
+      useNativeDriver: false,
+    });
     animation.start();
     return () => animation.stop();
   }, [active, delay, fill, reducedMotion]);
   return (
     <View style={[styles.progressSegment, current && styles.progressSegmentCurrent]}>
-      <Animated.View style={[styles.progressSegmentFill, { width: fill.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }]}>
-        <LinearGradient colors={current ? ['#FFF5CD', '#FFC400'] : ['#C9BC96', '#9F8952']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+      <Animated.View
+        style={[
+          styles.progressSegmentFill,
+          { width: fill.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) },
+        ]}
+      >
+        <LinearGradient
+          colors={current ? ['#FFF5CD', '#FFC400'] : ['#C9BC96', '#9F8952']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
         <View style={styles.progressSegmentHighlight} />
       </Animated.View>
     </View>
@@ -942,7 +1016,13 @@ const styles = StyleSheet.create({
   logoOuter: { alignItems: 'center', justifyContent: 'center' },
   logoImage: { height: '100%', resizeMode: 'contain', width: '100%' },
   wordmarkCopy: { flexShrink: 1 },
-  wordmarkText: { color: '#F5D76D', fontSize: 23, lineHeight: 30, fontWeight: '600', letterSpacing: -0.6 },
+  wordmarkText: {
+    color: '#F5D76D',
+    fontSize: 23,
+    lineHeight: 30,
+    fontWeight: '600',
+    letterSpacing: -0.6,
+  },
   wordmarkAi: { fontWeight: '300', letterSpacing: 0.3 },
   wordmarkCaption: { fontSize: 9, lineHeight: 13, color: '#92908A', marginTop: 1 },
   primaryButton: {
@@ -1037,7 +1117,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
   },
-  creditText: { fontSize: 19, lineHeight: 24, fontWeight: '600', color: colors.textPrimary, fontVariant: ['tabular-nums'] },
+  creditText: {
+    fontSize: 19,
+    lineHeight: 24,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    fontVariant: ['tabular-nums'],
+  },
   proInline: { ...typography.overline, fontSize: 9, color: colors.accentYellow, marginLeft: 2 },
   proBadge: {
     alignSelf: 'flex-start',
@@ -1110,7 +1196,7 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
   },
-  tileImage: { height: '100%', resizeMode: 'contain', width: '100%' },
+  tileImage: { height: '100%', resizeMode: 'cover', width: '100%' },
   tileGradientArt: { justifyContent: 'flex-end', padding: 10 },
   tileGrain: { ...StyleSheet.absoluteFill, opacity: 0.18, backgroundColor: '#000' },
   tileGlowOne: {
@@ -1222,6 +1308,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     padding: spacing.lg,
   },
+  uploadTileSelected: {
+    minHeight: 0,
+    padding: 0,
+    backgroundColor: '#050505',
+    borderStyle: 'solid',
+  },
   uploadIcon: {
     width: 58,
     height: 58,
@@ -1317,9 +1409,31 @@ const styles = StyleSheet.create({
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginVertical: 4 },
   progressArea: { marginVertical: spacing.sm },
   progressBars: { flexDirection: 'row', gap: 5 },
-  progressSegment: { height: 6, flex: 1, borderRadius: 3, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.07)', borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.12)' },
-  progressSegmentFill: { position: 'absolute', top: 0, bottom: 0, left: 0, borderRadius: 3, overflow: 'hidden' },
-  progressSegmentHighlight: { position: 'absolute', top: 0, left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: 'rgba(255,255,255,0.62)' },
+  progressSegment: {
+    height: 6,
+    flex: 1,
+    borderRadius: 3,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  progressSegmentFill: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressSegmentHighlight: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(255,255,255,0.62)',
+  },
   progressSegmentCurrent: { borderColor: 'rgba(255,229,143,0.42)' },
   progressCaption: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 7 },
   progressLabel: { ...typography.caption, color: colors.accentYellow },

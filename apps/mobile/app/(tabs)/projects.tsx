@@ -142,10 +142,7 @@ export default function ProjectsScreen() {
 
   useEffect(() => {
     if (!projectsQuery.error) return;
-    const timeout = setTimeout(
-      () => setVisibleError(queryErrorMessage(projectsQuery.error)),
-      0,
-    );
+    const timeout = setTimeout(() => setVisibleError(queryErrorMessage(projectsQuery.error)), 0);
     return () => clearTimeout(timeout);
   }, [projectsQuery.error]);
 
@@ -215,14 +212,7 @@ export default function ProjectsScreen() {
                     icon={project.icon}
                     imageSource={project.source}
                     badge={project.isFavorite ? '★' : undefined}
-                    onPress={
-                      project.outputGenerationId
-                        ? () =>
-                            router.push(
-                              `/generations/${project.outputGenerationId}/results` as never,
-                            )
-                        : undefined
-                    }
+                    onPress={() => router.push(`/projects/${project.id}` as never)}
                   />
                   <Text style={styles.projectMeta}>
                     {project.outputAssetId

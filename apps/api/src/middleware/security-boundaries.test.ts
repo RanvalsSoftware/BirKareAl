@@ -79,6 +79,22 @@ describe('HTTP security boundaries', () => {
     });
   });
 
+  it('reports not-ready when the shared auth security store is unavailable', async () => {
+    const deps = {
+      config: loadConfig({ NODE_ENV: 'test', CORS_ORIGINS: 'https://allowed.example' }),
+      logger: { info() {}, warn() {}, error() {} },
+      repository: { kind: 'prisma', readiness: async () => ({ ready: true }) },
+      emailSecurityService: { ready: async () => false },
+      generationQueue: { ready: async () => true },
+    } as unknown as ApiDependencies;
+    await withServer(createApp(deps), async (baseUrl) => {
+      const response = await fetch(`${baseUrl}/ready`);
+      const body = (await response.json()) as { error?: { code?: string } };
+      assert.equal(response.status, 503);
+      assert.equal(body.error?.code, 'NOT_READY');
+    });
+  });
+
   it('rate-limits forced RevenueCat sync per authenticated user', async () => {
     const app = express();
     app.use((req, _res, next) => {
@@ -131,7 +147,9 @@ describe('production secret boundaries', () => {
       R2_ACCESS_KEY_ID: 'fixture-access-key',
       R2_SECRET_ACCESS_KEY: 'fixture-secret-key',
       JWT_ACCESS_SECRET: 'fixture-jwt-secret-at-least-32-characters',
-      PASSWORD_PEPPER: 'fixture-password-pepper',
+      PASSWORD_PEPPER: 'fixture-password-pepper-at-least-32-characters',
+      JWT_ISSUER: 'https://api.example.test',
+      CORS_ORIGINS: 'https://app.example.test',
       AUTH_DEV_MODE: 'false',
       REVENUECAT_ENABLED: 'true',
       REVENUECAT_WEBHOOK_AUTH_TOKEN: 'fixture-webhook-token-at-least-24-characters',
@@ -140,10 +158,46 @@ describe('production secret boundaries', () => {
     } satisfies NodeJS.ProcessEnv;
 
     assert.throws(() => loadConfig(production), /Secret API key \(sk_\.\.\.\)/);
+    assert.throws(
+      () =>
+        loadConfig({
+          ...production,
+          R2_ENDPOINT: 'http://account.r2.cloudflarestorage.com',
+          REVENUECAT_SECRET_API_KEY: 'sk_fixture-server-secret-key',
+        }),
+      /R2_ENDPOINT HTTPS/,
+    );
     assert.equal(
       loadConfig({ ...production, REVENUECAT_SECRET_API_KEY: 'sk_fixture-server-secret-key' })
         .REVENUECAT_ENABLED,
       true,
+    );
+    assert.throws(
+      () =>
+        loadConfig({
+          ...production,
+          REVENUECAT_SECRET_API_KEY: 'sk_fixture-server-secret-key',
+          CORS_ORIGINS: '*',
+        }),
+      /CORS_ORIGINS yalnızca açık HTTPS origin/,
+    );
+    assert.throws(
+      () =>
+        loadConfig({
+          ...production,
+          REVENUECAT_SECRET_API_KEY: 'sk_fixture-server-secret-key',
+          JWT_ISSUER: 'http://api.example.test',
+        }),
+      /JWT_ISSUER HTTPS/,
+    );
+    assert.throws(
+      () =>
+        loadConfig({
+          ...production,
+          REVENUECAT_SECRET_API_KEY: 'sk_fixture-server-secret-key',
+          PASSWORD_PEPPER: 'fixture-jwt-secret-at-least-32-characters',
+        }),
+      /birbirinden farklı/,
     );
   });
 });

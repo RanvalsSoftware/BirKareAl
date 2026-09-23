@@ -12,6 +12,17 @@ create_an_app_called_birkare_pro
 
 iOS development ve App Store Sandbox derlemeleri, RevenueCat'teki iOS uygulamasının `appl_` public SDK anahtarını kullanır. Android development henüz `test_` Test Store anahtarını kullanabilir. Bu anahtarların hiçbiri gizli sunucu anahtarı değildir. Production/staging ve mevcut release bayrakları `test_` anahtarını reddeder.
 
+`eas.json` içindeki `staging` profili `distribution: "store"` kullandığı için
+iOS çıktısı App Store Connect/TestFlight hattına gider. Bu bir production tahsilatı
+anlamına gelmez: TestFlight üzerinden yapılan uygulama içi satın almalar Apple
+sandbox ortamında çalışır ve gerçek ücret çekmez. TestFlight kullanmadan cihazda
+denemek için `development` veya `preview` profiliyle development/ad hoc build
+kurun; iOS 18 ve sonrasında cihazda **Ayarlar > Geliştirici > Sandbox Apple
+Account** bölümünden App Store Connect sandbox test kullanıcısıyla oturum açın.
+Apple sandbox testi yine `appl_` public SDK anahtarını kullanır. RevenueCat'in
+`test_` anahtarıyla açılan Test Store ise Apple sandbox'tan ayrı, yalnız
+RevenueCat'e ait sahte mağaza akışıdır.
+
 Telefonda kredi eklenmez. Satın alma veya restore sonrasında mobil uygulama `/v1/billing/revenuecat/sync` çağırır; API entitlement'ı RevenueCat'ten tekrar okuyup krediyi veri tabanında idempotent verir. Webhook aynı doğrulamayı bağımsız olarak tetikler. Ömür boyu plan sınırsız AI üretimi anlamına gelmez; yalnız yapılandırılmış tek seferlik kredi hakkını verir.
 
 **Gerçek ücretli ürünleri ancak backend secret ve webhook ayarları tamamlandıktan sonra açın.** Public `test_` SDK anahtarı sunucunun satın almayı doğrulaması için yeterli değildir.
@@ -194,6 +205,9 @@ Cihazda ayrıca her üç Test Store paketi, ödeme iptali, restore, Customer Cen
 Release öncesi RevenueCat Test Store, Apple sandbox ve Google Play test track ayrı ayrı doğrulanmalıdır. Test Store anahtarıyla oluşturulan bir native development build, App Store/Play Store canlı ödeme doğrulamasının yerine geçmez.
 
 ## Resmî kaynaklar
+
+Android Play Console, service-account, ürün/base-plan, RTDN ve kapalı test
+adımları ayrıca `docs/GOOGLE_PLAY_REVENUECAT_SETUP.md` içinde tutulur.
 
 - https://www.revenuecat.com/docs/getting-started/installation/reactnative
 - https://www.revenuecat.com/docs/getting-started/installation/expo

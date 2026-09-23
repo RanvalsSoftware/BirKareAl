@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MOBILE_PRO_PRICE_POLICY, expectedTryPriceMatches } from './billing-policy';
 import { ProPaywallView } from './ProPaywallView';
@@ -49,7 +49,16 @@ export function CustomProPaywall() {
     if (!billing.ready || billing.busy) return;
     if (billing.isPro) {
       const result = await billing.presentCustomerCenter();
-      if (result.kind === 'error' || result.kind === 'pending') {
+      if (result.kind === 'error') {
+        if (billing.managementUrl) {
+          await Linking.openURL(billing.managementUrl);
+          await billing.refreshFresh();
+          return;
+        }
+        notify(result);
+        return;
+      }
+      if (result.kind === 'pending') {
         notify(result);
         return;
       }

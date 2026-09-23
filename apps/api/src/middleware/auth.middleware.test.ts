@@ -40,7 +40,7 @@ async function check(
   const error = await new Promise<unknown>((resolve) => {
     void requireAuth(tokenService, {
       getUserById: async () => currentUser,
-      listSessions: async () => currentSessions,
+      getSessionById: async () => currentSessions[0] ?? null,
     })(req, {} as Response, (err) => resolve(err));
   });
   return { req, error };

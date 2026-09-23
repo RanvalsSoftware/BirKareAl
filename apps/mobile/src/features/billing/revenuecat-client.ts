@@ -54,6 +54,27 @@ export function createRevenueCatClient(options: ClientOptions) {
   let sdkModule: SdkModule | null = null;
   let configured = false;
   let sdkUserId: string | null = null;
+
+  const reconcileNativeIdentity = async (
+    sdk: SdkModule['default'],
+    userId: string,
+  ): Promise<void> => {
+    const nativeConfigured = await sdk.isConfigured();
+    if (!nativeConfigured) {
+      sdk.configure({ apiKey: options.apiKey, appUserID: userId });
+      configured = true;
+      sdkUserId = userId;
+      return;
+    }
+
+    configured = true;
+    const nativeUserId = await sdk.getAppUserID();
+    sdkUserId = nativeUserId;
+    if (nativeUserId !== userId) {
+      await sdk.logIn(userId);
+      sdkUserId = userId;
+    }
+  };
   let targetUserId: string | null = null;
   let epoch = 0;
   let queue: Promise<unknown> = Promise.resolve();
@@ -190,10 +211,15 @@ export function createRevenueCatClient(options: ClientOptions) {
       if (!current(version, userId)) return;
       try {
         if (!userId) {
-          if (configured && sdkModule && !(await sdkModule.default.isAnonymous())) {
-            await sdkModule.default.logOut();
-          }
-          sdkUserId = null;
+          /**
+           * BirKare purchases are authenticated-only. Never call RevenueCat
+           * logOut(): it intentionally creates a new $RCAnonymousID.
+           *
+           * We clear only BirKare's JS snapshot. The native SDK deliberately
+           * stays identified as the last authenticated App User ID, so account
+           * deletion/sign-out cannot create another anonymous subscriber or
+           * move automatic ATT attributes onto one.
+           */
           return;
         }
         if (options.unavailableReason) {
@@ -204,13 +230,7 @@ export function createRevenueCatClient(options: ClientOptions) {
         sdkModule ??= await options.loadSdk();
         if (!current(version, userId)) return;
         const sdk = sdkModule.default;
-        if (!configured) {
-          sdk.configure({ apiKey: options.apiKey, appUserID: userId });
-          configured = true;
-        } else if (sdkUserId !== userId) {
-          await sdk.logIn(userId);
-        }
-        sdkUserId = userId;
+        await reconcileNativeIdentity(sdk, userId);
         if (!listening) {
           sdk.addCustomerInfoUpdateListener(onCustomerInfo);
           listening = true;

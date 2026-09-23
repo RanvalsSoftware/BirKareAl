@@ -3,6 +3,7 @@ import { createApp } from './app.js';
 import { createApiDependencies } from './services/dependencies.js';
 import { AccountDeletionService } from './modules/users/account-deletion.service.js';
 import { GoogleIdTokenService } from './modules/auth/google-id-token.service.js';
+import { AppleIdTokenService } from './modules/auth/apple-id-token.service.js';
 
 async function main(): Promise<void> {
   const deps = await createApiDependencies();
@@ -14,6 +15,7 @@ async function main(): Promise<void> {
     deps.storage,
     deps.passwordService,
     new GoogleIdTokenService(deps.config),
+    new AppleIdTokenService(deps.config),
   );
   let deletionSweepRunning = false;
   const sweepAccountDeletions = async () => {
@@ -68,6 +70,7 @@ async function main(): Promise<void> {
     clearInterval(deletionCleanupTimer);
     await new Promise<void>((resolve) => server.close(() => resolve()));
     await deps.generationQueue.close();
+    await deps.emailSecurityService.close();
     await deps.repository.disconnect();
     process.exit(0);
   };

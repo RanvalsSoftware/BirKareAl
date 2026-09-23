@@ -22,12 +22,14 @@ export function CreateHeader({
   step,
   total = 3,
   fallback,
+  right,
 }: {
   title: string;
   subtitle?: string;
   step?: number;
   total?: number;
   fallback?: string;
+  right?: React.ReactNode;
 }) {
   return (
     <>
@@ -37,6 +39,7 @@ export function CreateHeader({
           <Text style={styles.title}>{title}</Text>
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
         </View>
+        {right}
       </View>
       {step ? <ProgressSteps current={step} total={total} labels={stepLabels} /> : null}
     </>

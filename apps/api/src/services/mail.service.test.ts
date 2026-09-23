@@ -1,12 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { loadConfig } from '@birkare/config';
+import { VerifyEmailSchema } from '@birkare/contracts';
 import { MemoryRepository } from '@birkare/database';
 import { ApiError, hashToken } from '@birkare/shared';
 import { AuthService } from '../modules/auth/auth.service.js';
 import { PasswordService } from './password.service.js';
 import { TokenService } from './token.service.js';
 import {
+  accountDeletionMail,
   authMail,
   createMailService,
   DisabledMailService,
@@ -73,15 +75,23 @@ test('transport enforces TLS validation, bounded timeouts and disables data fetc
   assert.equal(encrypted.requireTLS, false);
 });
 
-test('mail delivery fixes the sender, accepts only the intended recipient and prevents header injection', async () => {
+test('mail delivery fixes the sender, logs SMTP acceptance without PII and prevents header injection', async () => {
   const sent: Parameters<MailTransport['sendMail']>[0][] = [];
+  const events: unknown[] = [];
   const transport: MailTransport = {
     async sendMail(message) {
       sent.push(message);
       return { accepted: [message.to], rejected: [] };
     },
   };
-  const mail = new SmtpMailService(loadConfig(smtpFixture), transport);
+  const mail = new SmtpMailService(loadConfig(smtpFixture), transport, {
+    info(...args: unknown[]) {
+      events.push(args);
+    },
+    warn(...args: unknown[]) {
+      events.push(args);
+    },
+  } as any);
   await mail.send({
     to: 'recipient@example.test',
     replyTo: 'reply@example.test',
@@ -91,6 +101,18 @@ test('mail delivery fixes the sender, accepts only the intended recipient and pr
   assert.deepEqual(sent[0]!.from, { name: 'BirKare AI', address: 'sender@example.test' });
   assert.equal(sent[0]!.disableFileAccess, true);
   assert.equal(sent[0]!.disableUrlAccess, true);
+  const acceptanceLog = JSON.stringify(events);
+  assert.match(acceptanceLog, /MAIL_ACCEPTED/);
+  for (const secret of [
+    'recipient@example.test',
+    'reply@example.test',
+    'sender@example.test',
+    'fixture-app-password-never-used',
+    'Support',
+    'Hello',
+  ]) {
+    assert.ok(!acceptanceLog.includes(secret));
+  }
   await assert.rejects(
     () =>
       mail.send({
@@ -164,7 +186,8 @@ test('disabled mail transport fails closed without opening a network connection'
 
 test('auth emails contain escaped app links and copyable one-time codes', () => {
   for (const kind of ['verification', 'password-reset'] as const) {
-    const message = authMail({ kind, email: 'recipient+test@example.test', token: 'abc_DEF-123' });
+    const token = kind === 'verification' ? '042179' : 'abc_DEF-123';
+    const message = authMail({ kind, email: 'recipient+test@example.test', token });
     const url = new URL(
       message.text
         .split('\n')
@@ -173,11 +196,20 @@ test('auth emails contain escaped app links and copyable one-time codes', () => 
     );
     assert.equal(url.protocol, 'birkareai:');
     assert.equal(url.host, kind === 'verification' ? 'verify-email' : 'reset-password');
-    assert.equal(url.searchParams.get('token'), 'abc_DEF-123');
-    assert.ok(message.text.includes('kod: abc_DEF-123'));
-    assert.ok(message.text.includes(kind === 'verification' ? '48 saat' : '1 saat'));
+    assert.equal(url.searchParams.get(kind === 'verification' ? 'code' : 'token'), token);
+    assert.ok(message.text.includes(token));
+    assert.ok(message.text.includes(kind === 'verification' ? '10 dakika' : '1 saat'));
     assert.equal(message.to, 'recipient+test@example.test');
   }
+  assert.throws(
+    () =>
+      authMail({
+        kind: 'verification',
+        email: 'recipient@example.test',
+        token: '12345',
+      }),
+    { code: 'MAIL_DELIVERY_UNAVAILABLE' },
+  );
   assert.throws(
     () =>
       authMail({
@@ -188,6 +220,47 @@ test('auth emails contain escaped app links and copyable one-time codes', () => 
       }),
     { code: 'MAIL_DELIVERY_UNAVAILABLE' },
   );
+});
+
+test('account deletion mail uses the dedicated BirKare HTTPS web route and one-time token', () => {
+  const token = 'd'.repeat(64);
+  const message = accountDeletionMail({
+    email: 'recipient@example.test',
+    token,
+    webUrl: 'https://ai.ranvals.com/birkare/hesap-silme/',
+  });
+  const linkLine = message.text.split('\n').find((line) => line.startsWith('https://'));
+  assert.ok(linkLine);
+  const link = new URL(linkLine);
+  assert.equal(link.origin, 'https://ai.ranvals.com');
+  assert.equal(link.pathname, '/birkare/hesap-silme/');
+  assert.equal(link.searchParams.get('token'), token);
+  assert.equal(message.to, 'recipient@example.test');
+  assert.throws(
+    () =>
+      accountDeletionMail({
+        email: 'recipient@example.test',
+        token,
+        webUrl: 'http://evil.example/delete',
+      }),
+    { code: 'MAIL_DELIVERY_UNAVAILABLE' },
+  );
+});
+
+test('verification API contract requires an e-mail-scoped six-digit numeric code', () => {
+  assert.deepEqual(VerifyEmailSchema.parse({ email: ' USER@Example.Test ', code: '042179' }), {
+    email: 'user@example.test',
+    code: '042179',
+  });
+  for (const body of [
+    { code: '042179' },
+    { email: 'user@example.test', code: '42179' },
+    { email: 'user@example.test', code: '0421790' },
+    { email: 'user@example.test', code: '04A179' },
+    { email: 'user@example.test', token: '042179' },
+  ]) {
+    assert.equal(VerifyEmailSchema.safeParse(body).success, false);
+  }
 });
 
 class FakeMail implements MailService {
@@ -229,7 +302,7 @@ function authFixture(mail: MailService = new FakeMail(), development = false) {
 }
 
 const registration = {
-  email: 'registered@example.test',
+  email: 'registered@gmail.com',
   password: 'Test-Passphrase-981!',
   firstName: 'Mail',
   lastName: 'Test',
@@ -245,24 +318,81 @@ const registration = {
 } as const;
 
 function deliveredToken(mail: FakeMail, index = mail.sent.length - 1) {
-  const match = /kod: ([a-zA-Z0-9_-]+)/.exec(mail.sent[index]!.text);
+  const match = /(?:kodun|kod): ([a-zA-Z0-9_-]+)/.exec(mail.sent[index]!.text);
   assert.ok(match);
   return match[1]!;
 }
 
-test('production registration sends a single-use verification token but exposes no development token', async () => {
+test('production registration sends a single-use six-digit verification code but exposes no development code', async () => {
   const mail = new FakeMail();
   const { service, repository } = authFixture(mail);
   assert.deepEqual(await service.register(registration, {}), { verificationRequired: true });
   assert.equal(mail.sent.length, 1);
   const raw = deliveredToken(mail);
-  assert.ok(raw.length >= 32);
+  assert.match(raw, /^\d{6}$/);
   const before = await repository.getUserByEmail(registration.email);
   assert.equal(before!.status, 'PENDING_VERIFICATION');
   assert.equal(before!.emailVerifiedAt, null);
-  await service.verifyEmail(raw);
+  await service.verifyEmail(registration.email, raw);
   assert.equal((await repository.getUserByEmail(registration.email))!.status, 'ACTIVE');
-  await assert.rejects(() => service.verifyEmail(raw), { code: 'AUTH_INVALID_VERIFICATION_TOKEN' });
+  await assert.rejects(() => service.verifyEmail(registration.email, raw), {
+    code: 'AUTH_INVALID_VERIFICATION_TOKEN',
+  });
+});
+
+test('verification codes are scoped to the normalized e-mail and a wrong address does not consume the code', async () => {
+  const mail = new FakeMail();
+  const { service, passwordService } = authFixture(mail);
+  await service.register(registration, {});
+  const code = deliveredToken(mail);
+
+  assert.notEqual(
+    passwordService.hashEmailVerificationCode(registration.email, code),
+    passwordService.hashEmailVerificationCode('other@example.test', code),
+  );
+  await assert.rejects(() => service.verifyEmail('other@example.test', code), {
+    code: 'AUTH_INVALID_VERIFICATION_TOKEN',
+  });
+  await service.verifyEmail(` ${registration.email.toUpperCase()} `, code);
+});
+
+test('resending replaces the previous verification code', async () => {
+  const mail = new FakeMail();
+  const { service } = authFixture(mail);
+  const input = { ...registration, email: 'replacement@gmail.com' };
+  await service.register(input, {});
+  const first = deliveredToken(mail);
+  let latest = first;
+  for (let attempt = 0; attempt < 10 && latest === first; attempt += 1) {
+    await service.resendVerification(input.email);
+    latest = deliveredToken(mail);
+  }
+  assert.notEqual(latest, first);
+  await assert.rejects(() => service.verifyEmail(input.email, first), {
+    code: 'AUTH_INVALID_VERIFICATION_TOKEN',
+  });
+  await service.verifyEmail(input.email, latest);
+});
+
+test('five failed guesses invalidate the active code until a replacement is issued', async () => {
+  const mail = new FakeMail();
+  const { service } = authFixture(mail);
+  const input = { ...registration, email: 'attempt-limit@gmail.com' };
+  await service.register(input, {});
+  const correct = deliveredToken(mail);
+  const wrongCodes = ['000000', '111111', '222222', '333333', '444444', '555555'].filter(
+    (candidate) => candidate !== correct,
+  );
+  for (const wrong of wrongCodes.slice(0, 5)) {
+    await assert.rejects(() => service.verifyEmail(input.email, wrong), {
+      code: 'AUTH_INVALID_VERIFICATION_TOKEN',
+    });
+  }
+  await assert.rejects(() => service.verifyEmail(input.email, correct), {
+    code: 'AUTH_INVALID_VERIFICATION_TOKEN',
+  });
+  await service.resendVerification(input.email);
+  await service.verifyEmail(input.email, deliveredToken(mail));
 });
 
 test('failed registration mail reports delivery failure and resend recovers the same pending account', async () => {
@@ -276,7 +406,7 @@ test('failed registration mail reports delivery failure and resend recovers the 
   assert.equal(pending!.status, 'PENDING_VERIFICATION');
   mail.fail = false;
   assert.deepEqual(await service.resendVerification(registration.email), {});
-  await service.verifyEmail(deliveredToken(mail));
+  await service.verifyEmail(registration.email, deliveredToken(mail));
   assert.equal((await repository.getUserByEmail(registration.email))!.id, pending!.id);
 });
 
@@ -284,7 +414,7 @@ test('password reset sends single-use mail, hides account existence and revokes 
   const mail = new FakeMail();
   const { service, repository, passwordService } = authFixture(mail);
   await service.register(registration, {});
-  await service.verifyEmail(deliveredToken(mail));
+  await service.verifyEmail(registration.email, deliveredToken(mail));
   const user = (await repository.getUserByEmail(registration.email))!;
   await repository.createSession({
     userId: user.id,
@@ -293,7 +423,20 @@ test('password reset sends single-use mail, hides account existence and revokes 
   });
   assert.deepEqual(await service.forgotPassword(registration.email), {});
   assert.deepEqual(await service.forgotPassword('absent@example.test'), {});
+  const replacedReset = deliveredToken(mail);
+  assert.deepEqual(await service.forgotPassword(registration.email), {});
   const reset = deliveredToken(mail);
+  await assert.rejects(() => service.resetPassword(replacedReset, 'Replacement-Passphrase-982!'), {
+    code: 'AUTH_INVALID_RESET_TOKEN',
+  });
+  const legacyReset = 'legacy-reset-token-that-must-not-survive-success';
+  await repository.createEmailToken({
+    userId: user.id,
+    type: 'RESET_PASSWORD',
+    tokenHash: hashToken(legacyReset),
+    failedAttempts: 0,
+    expiresAt: new Date(Date.now() + 60_000),
+  });
   await service.resetPassword(reset, 'Replacement-Passphrase-982!');
   assert.ok(
     await passwordService.verify(
@@ -303,6 +446,9 @@ test('password reset sends single-use mail, hides account existence and revokes 
   );
   assert.ok((await repository.listSessions(user.id)).every((session) => session.revokedAt));
   await assert.rejects(() => service.resetPassword(reset, 'Other-Passphrase-983!'), {
+    code: 'AUTH_INVALID_RESET_TOKEN',
+  });
+  await assert.rejects(() => service.resetPassword(legacyReset, 'Other-Passphrase-983!'), {
     code: 'AUTH_INVALID_RESET_TOKEN',
   });
   mail.fail = true;
@@ -328,4 +474,39 @@ test('disabled mail refuses production auth mail equally for known and unknown a
   }
   const development = authFixture(new DisabledMailService(), true);
   assert.ok((await development.service.register(registration, {})).developmentVerificationToken);
+});
+
+
+test('public deletion link is single-use and starts the existing account cleanup flow', async () => {
+  const mail = new FakeMail();
+  const { service, repository } = authFixture(mail);
+  const input = { ...registration, email: 'delete-link@gmail.com' };
+  await service.register(input, {});
+  await service.verifyEmail(input.email, deliveredToken(mail));
+  const user = (await repository.getUserByEmail(input.email))!;
+  assert.equal(user.status, 'ACTIVE');
+
+  assert.deepEqual(await service.requestAccountDeletionLink(input.email, {}), {});
+  const deletionMail = mail.sent.at(-1)!;
+  const linkLine = deletionMail.text.split('\n').find((line) => line.startsWith('https://'));
+  assert.ok(linkLine);
+  const token = new URL(linkLine).searchParams.get('token');
+  assert.ok(token);
+
+  const result = await service.confirmAccountDeletionLink({
+    token,
+    reason: 'NO_LONGER_USE',
+  });
+  assert.equal(result.deletionRequested, true);
+  assert.equal(result.reversible, true);
+  assert.equal((await repository.getUserById(user.id))!.status, 'DELETION_PENDING');
+
+  await assert.rejects(
+    () =>
+      service.confirmAccountDeletionLink({
+        token,
+        reason: 'PRIVACY',
+      }),
+    { code: 'AUTH_INVALID_DELETION_TOKEN' },
+  );
 });

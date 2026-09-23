@@ -4,7 +4,8 @@ import path from 'node:path';
 const root = process.cwd();
 const p = (name) => path.join(root, name);
 const read = (name) => fs.readFileSync(p(name), 'utf8');
-const write = (name, value) => fs.writeFileSync(p(name), value.endsWith('\n') ? value : `${value}\n`);
+const write = (name, value) =>
+  fs.writeFileSync(p(name), value.endsWith('\n') ? value : `${value}\n`);
 
 await import('./apply-revenuecat-completion-v2.mjs');
 
@@ -32,11 +33,14 @@ await import('./apply-revenuecat-completion-v2.mjs');
 {
   const name = 'packages/database/src/memory.repository.ts';
   let source = read(name);
-  const method = source.match(/async grantCredits\([\s\S]*?\n  }\n\n  async reserveCredits/ m)?.[0];
+  const method = source.match(/async grantCredits\([\s\S]*?\n  }\n\n  async reserveCredits/m)?.[0];
   if (method) {
     const transactionField = method.match(/Array\.from\(this\.(\w+)\.values\(\)\)/)?.[1];
     if (transactionField) {
-      const declaration = source.match(new RegExp(`(?:private|protected)[^\\n]*\\b${transactionField}\\b[^\\n]*`))?.[0] ?? '';
+      const declaration =
+        source.match(
+          new RegExp(`(?:private|protected)[^\\n]*\\b${transactionField}\\b[^\\n]*`),
+        )?.[0] ?? '';
       if (!declaration.includes('new Map')) {
         source = source.replace(
           `Array.from(this.${transactionField}.values())`,

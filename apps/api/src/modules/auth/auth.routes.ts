@@ -1,10 +1,13 @@
 import { Router } from 'express';
 import {
+  ConfirmAccountDeletionLinkSchema,
   ForgotPasswordSchema,
   LoginSchema,
   LogoutSchema,
   RefreshSchema,
   RegisterSchema,
+  RequestAccountDeletionLinkSchema,
+  ResendVerificationSchema,
   ResetPasswordSchema,
   SessionParamsSchema,
   SocialLoginSchema,
@@ -13,7 +16,10 @@ import {
 } from '@birkare/contracts';
 import { notFound } from '@birkare/shared';
 import { requireAuth } from '../../middleware/auth.middleware.js';
-import { authRateLimit } from '../../middleware/rate-limit.middleware.js';
+import {
+  authRateLimit,
+  emailVerificationRateLimit,
+} from '../../middleware/rate-limit.middleware.js';
 import { validate } from '../../middleware/validate.middleware.js';
 import type { ApiDependencies } from '../../services/dependencies.js';
 import { asyncHandler, getRequestContext, sendSuccess } from '../../services/http.js';
@@ -74,13 +80,35 @@ export function createAuthRouter(deps: ApiDependencies): Router {
     authRateLimit,
     validate(ForgotPasswordSchema),
     asyncHandler(async (req, res) => {
-      const result = await deps.authService.forgotPassword(req.body.email);
+      const result = await deps.authService.forgotPassword(req.body.email, getRequestContext(req));
       // Request acceptance is not a delivery claim; remain identical for known,
       // unknown and undeliverable addresses to avoid account enumeration.
       sendSuccess(res, req.requestId, { accepted: true, delivery: 'unconfirmed', ...result });
     }),
   );
 
+  router.post(
+    '/account-deletion/request',
+    authRateLimit,
+    validate(RequestAccountDeletionLinkSchema),
+    asyncHandler(async (req, res) => {
+      const result = await deps.authService.requestAccountDeletionLink(
+        req.body.email,
+        getRequestContext(req),
+      );
+      sendSuccess(res, req.requestId, { accepted: true, delivery: 'unconfirmed', ...result }, 202);
+    }),
+  );
+
+  router.post(
+    '/account-deletion/confirm',
+    authRateLimit,
+    validate(ConfirmAccountDeletionLinkSchema),
+    asyncHandler(async (req, res) => {
+      const result = await deps.authService.confirmAccountDeletionLink(req.body);
+      sendSuccess(res, req.requestId, result, 202);
+    }),
+  );
   router.post(
     '/reset-password',
     authRateLimit,
@@ -94,9 +122,13 @@ export function createAuthRouter(deps: ApiDependencies): Router {
   router.post(
     '/verify-email',
     authRateLimit,
+    emailVerificationRateLimit,
     validate(VerifyEmailSchema),
     asyncHandler(async (req, res) => {
-      await deps.authService.verifyEmail(req.body.token);
+      await deps.authService.verifyEmail(req.body.email, req.body.code, {
+        ...getRequestContext(req),
+        deviceId: req.body.deviceId,
+      });
       sendSuccess(res, req.requestId, { verified: true });
     }),
   );
@@ -104,9 +136,12 @@ export function createAuthRouter(deps: ApiDependencies): Router {
   router.post(
     '/resend-verification',
     authRateLimit,
-    validate(ForgotPasswordSchema),
+    validate(ResendVerificationSchema),
     asyncHandler(async (req, res) => {
-      const result = await deps.authService.resendVerification(req.body.email);
+      const result = await deps.authService.resendVerification(req.body.email, {
+        ...getRequestContext(req),
+        deviceId: req.body.deviceId,
+      });
       sendSuccess(res, req.requestId, { accepted: true, delivery: 'unconfirmed', ...result });
     }),
   );

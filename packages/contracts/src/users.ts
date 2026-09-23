@@ -13,10 +13,12 @@ export const DeleteAccountSchema = z
     confirmation: z.literal('HESABIMI SIL'),
     password: z.string().min(1).max(256).optional(),
     googleIdToken: z.string().min(20).max(12000).optional(),
+    appleIdToken: z.string().min(20).max(12000).optional(),
   })
   .strict()
   .refine(
-    (input) => Boolean(input.password) !== Boolean(input.googleIdToken),
+    (input) =>
+      [input.password, input.googleIdToken, input.appleIdToken].filter(Boolean).length === 1,
     'Tek bir yeniden doğrulama yöntemi gereklidir.',
   );
 

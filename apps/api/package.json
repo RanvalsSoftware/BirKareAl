@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node --watch --env-file-if-exists=../../.env --env-file-if-exists=../../.local-credentials/deployment/mail.env --import tsx src/server.ts",
     "start": "node --env-file-if-exists=../../.env --env-file-if-exists=../../.local-credentials/deployment/mail.env --import tsx src/server.ts",
-    "test": "tsx --test src/app.revenuecat.test.ts src/services/mail.service.test.ts src/modules/auth/auth.service.test.ts src/modules/auth/google-id-token.service.test.ts src/modules/auth/apple-id-token.service.test.ts src/modules/auth/account-security.test.ts src/middleware/auth.middleware.test.ts src/middleware/security-boundaries.test.ts src/modules/users/account-deletion.service.test.ts src/modules/assets/assets.routes.test.ts src/modules/billing/revenuecat.service.test.ts src/modules/generations/prompt-builder.test.ts src/modules/generations/studio.test.ts src/modules/generations/idempotency.test.ts src/modules/generations/beauty.test.ts src/modules/generations/beauty.routes.test.ts src/modules/generations/trends.test.ts src/modules/generations/trends.routes.test.ts src/modules/generations/provider-errors.test.ts src/modules/generations/runtime.test.ts",
+    "test": "tsx --test src/app.revenuecat.test.ts src/services/mail.service.test.ts src/modules/auth/auth.service.test.ts src/modules/auth/email-security.service.test.ts src/modules/auth/google-id-token.service.test.ts src/modules/auth/apple-id-token.service.test.ts src/modules/auth/account-security.test.ts src/middleware/auth.middleware.test.ts src/middleware/security-boundaries.test.ts src/modules/users/account-deletion.service.test.ts src/modules/assets/assets.routes.test.ts src/modules/billing/revenuecat.service.test.ts src/modules/generations/prompt-builder.test.ts src/modules/generations/studio.test.ts src/modules/generations/idempotency.test.ts src/modules/generations/beauty.test.ts src/modules/generations/beauty.routes.test.ts src/modules/generations/trends.test.ts src/modules/generations/trends.routes.test.ts src/modules/generations/provider-errors.test.ts src/modules/generations/runtime.test.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
@@ -21,12 +21,15 @@
     "bullmq": "^5.40.3",
     "compression": "^1.8.0",
     "cors": "^2.8.5",
-    "express": "^4.21.2",
+    "express": "^4.22.3",
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.0.0",
     "ioredis": "^5.5.0",
     "jose": "^5.10.0",
+    "mailchecker": "^6.0.21",
     "nodemailer": "10.0.1",
+    "rate-limiter-flexible": "^11.2.1",
+    "validator": "^13.15.35",
     "zod": "^3.24.2"
   },
   "devDependencies": {
@@ -34,6 +37,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
     "@types/nodemailer": "8.0.1",
+    "@types/validator": "^13.15.10",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3"
   }

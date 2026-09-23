@@ -1,6 +1,7 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { getRefreshToken, saveRefreshToken, clearRefreshToken } from '../features/auth/token-store';
+import { resolveApiBaseUrl } from './base-url';
 
 export type ApiError = Error & {
   code?: string;
@@ -90,34 +91,24 @@ export function captureSessionRequestScope() {
 
 const extra = Constants.expoConfig?.extra as { apiBaseUrl?: string } | undefined;
 const configuredApiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL ?? extra?.apiBaseUrl;
-const platformDefaultApiBaseUrl =
-  Platform.OS === 'android' ? 'http://10.0.2.2:4000' : 'http://localhost:4000';
 
-function getExpoDevelopmentApiBaseUrl(): string | null {
-  if (Platform.OS === 'web') return null;
+// Never let an Android-emulator-only address leak into an iOS development build.
+// On native development builds, loopback addresses resolve through Expo's Metro
+// LAN host when available; explicit public HTTPS release endpoints remain untouched.
+export const apiBaseUrl = resolveApiBaseUrl({
+  configuredApiBaseUrl,
+  expoHostUri: Constants.expoConfig?.hostUri,
+  platform: Platform.OS,
+});
 
-  const hostUri = Constants.expoConfig?.hostUri;
-  if (!hostUri) return null;
-
-  try {
-    const host = new URL(hostUri.includes('://') ? hostUri : `http://${hostUri}`).hostname;
-    if (!host || host === 'localhost' || host === '127.0.0.1') return null;
-    return `http://${host}:4000`;
-  } catch {
-    return null;
-  }
+if (__DEV__) {
+  console.info('[BirKare API] runtime config', {
+    apiBaseUrl,
+    configuredApiBaseUrl: configuredApiBaseUrl ?? null,
+    expoHostUri: Constants.expoConfig?.hostUri ?? null,
+    platform: Platform.OS,
+  });
 }
-
-const expoDevelopmentApiBaseUrl = getExpoDevelopmentApiBaseUrl();
-
-// `localhost` inside an Android emulator or a physical device is not the
-// development machine. Expo exposes Metro's LAN host while developing, so use
-// that address on real devices and retain 10.0.2.2 as the Android emulator fallback.
-export const apiBaseUrl = (
-  !configuredApiBaseUrl || configuredApiBaseUrl === 'http://localhost:4000'
-    ? (expoDevelopmentApiBaseUrl ?? platformDefaultApiBaseUrl)
-    : configuredApiBaseUrl
-).replace(/\/$/, '');
 
 export function configureSessionBridge(input: {
   getAccessToken: TokenReader;
@@ -199,8 +190,10 @@ export async function apiRequest<T>(
 ): Promise<T> {
   return withRequestTimeout(async (signal) => {
     const revision = sessionRevision;
-    const perform = (accessToken: string | null) =>
-      fetch(`${apiBaseUrl}${path}`, {
+    const perform = async (accessToken: string | null) => {
+      const url = `${apiBaseUrl}${path}`;
+      if (__DEV__) console.info('[BirKare API] request', init.method ?? 'GET', url);
+      const response = await fetch(url, {
         ...init,
         signal,
         headers: {
@@ -211,6 +204,9 @@ export async function apiRequest<T>(
           ...(accessToken ? { authorization: `Bearer ${accessToken}` } : {}),
         },
       });
+      if (__DEV__) console.info('[BirKare API] response', response.status, url);
+      return response;
+    };
 
     let accessToken = options.authenticated === false ? null : readAccessToken();
     let response = await perform(accessToken);

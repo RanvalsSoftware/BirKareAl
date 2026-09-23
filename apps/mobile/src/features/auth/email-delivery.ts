@@ -6,6 +6,10 @@ export function authMailToken(value: unknown): string {
   return typeof value === 'string' && value.trim().length <= 512 ? value.trim() : '';
 }
 
+export function emailVerificationCode(value: unknown): string {
+  return typeof value === 'string' ? value.replace(/\D/g, '').slice(0, 6) : '';
+}
+
 export function verificationRecoveryParams(error: unknown, email: string) {
   if (
     !error ||

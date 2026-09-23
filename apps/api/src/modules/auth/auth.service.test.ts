@@ -170,6 +170,8 @@ test('password re-registration and repeated login cannot repeat the welcome gran
   const registration = await service.register(registrationInput, {});
   const user = await repository.getUserByEmail('password-registration@example.test');
   assert.ok(user);
+  assert.equal((await repository.getWallet(user.id)).available, 0);
+  assert.deepEqual(await repository.listCreditTransactions(user.id), []);
   const consents = await repository.listUserConsents(user.id);
   assert.equal(consents.length, 5);
   assert.ok(
@@ -183,7 +185,7 @@ test('password re-registration and repeated login cannot repeat the welcome gran
     (error: unknown) => error instanceof ApiError && error.code === 'AUTH_EMAIL_ALREADY_EXISTS',
   );
   assert.ok(registration.developmentVerificationToken);
-  await service.verifyEmail(registration.developmentVerificationToken);
+  await service.verifyEmail(registrationInput.email, registration.developmentVerificationToken);
   await service.login(
     { email: registrationInput.email, password: registrationInput.password },
     { deviceId: 'first-install' },
@@ -201,6 +203,135 @@ test('password re-registration and repeated login cannot repeat the welcome gran
   assert.equal(wallet.lifetimeEarned, WELCOME_CREDIT_AMOUNT);
   assert.equal(welcomeCredits.length, 1);
   assert.equal(welcomeCredits[0]?.idempotencyKey, welcomeCreditIdempotencyKey(user.id));
+});
+
+test('password login offers deletion recovery before creating a new session', async () => {
+  const repository = new MemoryRepository();
+  const service = createAuthService(repository, {
+    subject: 'unused-recovery-social',
+    email: 'unused-recovery@example.test',
+  });
+  const input = {
+    email: 'recover-password@example.test',
+    password: 'Password1234',
+    firstName: 'Ece',
+    lastName: 'Kaya',
+    locale: 'tr-TR',
+    dateOfBirth: '1990-01-01',
+    consent: socialRegistration.consent,
+  } as const;
+  const registration = await service.register(input, {});
+  assert.ok(registration.developmentVerificationToken);
+  await service.verifyEmail(input.email, registration.developmentVerificationToken!);
+  const user = await repository.getUserByEmail(input.email);
+  assert.ok(user);
+  await repository.requestAccountDeletion(user.id);
+
+  await assert.rejects(
+    () => service.login({ email: input.email, password: input.password }, {}),
+    (error: unknown) =>
+      error instanceof ApiError &&
+      error.code === 'AUTH_ACCOUNT_DELETION_PENDING' &&
+      typeof error.details?.recoveryUntil === 'string' &&
+      error.details?.recoveryDays === 30,
+  );
+  assert.equal((await repository.getUserById(user.id))?.status, 'DELETION_PENDING');
+
+  const recovered = await service.login(
+    { email: input.email, password: input.password, recoverDeletion: true },
+    {},
+  );
+  assert.equal(recovered.user.status, 'ACTIVE');
+  assert.equal((await repository.getUserById(user.id))?.deletedAt, null);
+  assert.equal(await repository.getAccountDeletion(user.id), null);
+  assert.ok(recovered.refreshToken);
+});
+
+test('linked Google login can explicitly recover a deletion-pending account', async () => {
+  const repository = new MemoryRepository();
+  const identity = {
+    subject: 'google-recovery-subject',
+    email: 'google-recovery@example.test',
+    givenName: 'Gökçe',
+    familyName: 'Test',
+  };
+  const service = createAuthService(repository, identity);
+  const user = await repository.createVerifiedSocialUser({
+    email: identity.email,
+    firstName: 'Gökçe',
+    lastName: 'Test',
+    locale: 'tr-TR',
+    dateOfBirth: new Date('1990-01-01T00:00:00.000Z'),
+    provider: 'GOOGLE',
+    providerAccountId: identity.subject,
+    providerEmail: identity.email,
+    consents: [],
+  });
+  await repository.requestAccountDeletion(user.id);
+
+  const pending = await service.googleLogin(socialInput(), {});
+  assert.ok('deletionRecoveryRequired' in pending);
+  if (!('deletionRecoveryRequired' in pending))
+    assert.fail('Expected a deletion recovery response.');
+  assert.equal(pending.deletionRecoveryRequired, true);
+  assert.equal(pending.recoveryDays, 30);
+  assert.ok(Number.isFinite(Date.parse(pending.recoveryUntil)));
+  assert.equal((await repository.getUserById(user.id))?.status, 'DELETION_PENDING');
+
+  const recovered = await service.googleLogin(
+    { ...socialInput(), recoverDeletion: true },
+    {},
+  );
+  if (!('user' in recovered)) assert.fail('Expected recovered social session.');
+  assert.equal(recovered.user.status, 'ACTIVE');
+  assert.equal((await repository.getUserById(user.id))?.deletedAt, null);
+  assert.equal(await repository.getAccountDeletion(user.id), null);
+});
+
+test('linked Google login recovers a legacy deletion-pending user even if the manifest is missing', async () => {
+  const repository = new MemoryRepository();
+  const identity = {
+    subject: 'google-orphan-recovery-subject',
+    email: 'google-orphan-recovery@example.test',
+    givenName: 'Legacy',
+    familyName: 'User',
+  };
+  const service = createAuthService(repository, identity);
+  const user = await repository.createVerifiedSocialUser({
+    email: identity.email,
+    firstName: 'Legacy',
+    lastName: 'User',
+    locale: 'tr-TR',
+    dateOfBirth: new Date('1990-01-01T00:00:00.000Z'),
+    provider: 'GOOGLE',
+    providerAccountId: identity.subject,
+    providerEmail: identity.email,
+    consents: [],
+  });
+
+  const deletedAt = new Date(Date.now() - 60_000);
+  await repository.updateUser(user.id, {
+    status: 'DELETION_PENDING',
+    deletedAt,
+  });
+  assert.equal(await repository.getAccountDeletion(user.id), null);
+
+  const pending = await service.googleLogin(socialInput(), {});
+  assert.ok('deletionRecoveryRequired' in pending);
+  if (!('deletionRecoveryRequired' in pending))
+    assert.fail('Expected a legacy deletion recovery response.');
+  assert.equal(pending.deletionRecoveryRequired, true);
+  assert.equal(pending.recoveryDays, 30);
+
+  const recovered = await service.googleLogin(
+    { ...socialInput(), recoverDeletion: true },
+    {},
+  );
+  if (!('user' in recovered)) assert.fail('Expected a recovered session.');
+  assert.equal(recovered.user.status, 'ACTIVE');
+  const stored = await repository.getUserById(user.id);
+  assert.equal(stored?.status, 'ACTIVE');
+  assert.equal(stored?.deletedAt, null);
 });
 
 test('purges expired pending social logins in bounded batches', async () => {
@@ -280,7 +411,7 @@ test('requires the authenticated account e-mail to match before linking Google',
     (await repository.listCreditTransactions(user.id)).filter(
       (item) => item.referenceType === 'WELCOME_CREDIT',
     ).length,
-    1,
+    0,
   );
 });
 
@@ -294,6 +425,14 @@ test('Google linking rejects a different email and unavailable accounts', async 
     locale: 'tr-TR',
     dateOfBirth: new Date('1990-01-01'),
     consents: [],
+  });
+  await repository.grantCredits({
+    userId: user.id,
+    amount: WELCOME_CREDIT_AMOUNT,
+    type: 'BONUS',
+    referenceType: 'TEST_FIXTURE',
+    referenceId: user.id,
+    idempotencyKey: `test-fixture:${user.id}`,
   });
   await repository.updateUser(user.id, { status: 'ACTIVE', emailVerifiedAt: new Date() });
   const wrongEmail = createAuthService(repository, {
@@ -335,7 +474,7 @@ test('old email verification and reset links cannot reactivate a deleted account
   assert.ok(reset.developmentResetToken);
   await repository.updateUser(user.id, { status: 'DELETION_PENDING', deletedAt: new Date() });
   await assert.rejects(
-    () => service.verifyEmail(registration.developmentVerificationToken!),
+    () => service.verifyEmail(input.email, registration.developmentVerificationToken!),
     (error: unknown) => error instanceof ApiError && error.code === 'AUTH_ACCOUNT_UNAVAILABLE',
   );
   await assert.rejects(
@@ -398,6 +537,14 @@ test('a retried generation reservation with the same key spends credits only onc
     locale: 'tr-TR',
     dateOfBirth: new Date('1990-01-01T00:00:00.000Z'),
     consents: [],
+  });
+  await repository.grantCredits({
+    userId: user.id,
+    amount: WELCOME_CREDIT_AMOUNT,
+    type: 'BONUS',
+    referenceType: 'TEST_FIXTURE',
+    referenceId: user.id,
+    idempotencyKey: `test-fixture:${user.id}`,
   });
   const request = {
     userId: user.id,
