@@ -16,7 +16,8 @@
       "env": {
         "EXPO_PUBLIC_APP_ENV": "staging",
         "EXPO_PUBLIC_API_BASE_URL": "https://birkare-api.ranvals.com",
-        "EXPO_PUBLIC_SUPPORT_EMAIL": "birkareal@ranvals.com"
+        "EXPO_PUBLIC_SUPPORT_EMAIL": "birkareal@ranvals.com",
+        "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY": "goog_tcWALgjpXQEKKvqBUqhGsfVBaPV"
       },
       "android": { "buildType": "apk" }
     },
@@ -27,7 +28,8 @@
       "env": {
         "EXPO_PUBLIC_APP_ENV": "staging",
         "EXPO_PUBLIC_API_BASE_URL": "https://birkare-api.ranvals.com",
-        "EXPO_PUBLIC_SUPPORT_EMAIL": "birkareal@ranvals.com"
+        "EXPO_PUBLIC_SUPPORT_EMAIL": "birkareal@ranvals.com",
+        "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY": "goog_tcWALgjpXQEKKvqBUqhGsfVBaPV"
       },
       "autoIncrement": false,
       "android": { "buildType": "app-bundle", "credentialsSource": "remote" }
@@ -39,7 +41,8 @@
       "env": {
         "EXPO_PUBLIC_APP_ENV": "production",
         "EXPO_PUBLIC_API_BASE_URL": "https://birkare-api.ranvals.com",
-        "EXPO_PUBLIC_SUPPORT_EMAIL": "birkareal@ranvals.com"
+        "EXPO_PUBLIC_SUPPORT_EMAIL": "birkareal@ranvals.com",
+        "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY": "goog_tcWALgjpXQEKKvqBUqhGsfVBaPV"
       },
       "autoIncrement": false,
       "android": { "buildType": "app-bundle", "credentialsSource": "remote" }
