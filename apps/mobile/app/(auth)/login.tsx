@@ -2,9 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { BlurView } from 'expo-blur';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Keyboard, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuthStore } from '@/features/auth/auth-store';
 import { AppleSignInButton } from '@/features/auth/apple-sign-in';
 import { GoogleSignInButton } from '@/features/auth/google-sign-in';
@@ -15,7 +15,7 @@ import { useRouteAuthNotice } from '@/features/auth/use-auth-notice';
 import { consumePendingOnboardingCreateDraft } from '@/features/create/createFlow';
 import {
   AuthBrandBar, AuthFormCard, AuthHero, AuthLayout, AuthLink, AuthNote, AuthTitle,
-  Divider, GradientAuthButton, authColors,
+  Divider, FormField, PasswordFormField, GradientAuthButton, authColors,
 } from '@/features/auth/auth-ui';
 import { loginSchema, type LoginValues } from '@/features/auth/validation';
 import { useCopy } from '@/features/settings/language-store';
@@ -32,11 +32,7 @@ export default function LoginScreen() {
   const signIn = useAuthStore((store) => store.signIn);
   const signInWithGoogle = useAuthStore((store) => store.signInWithGoogle);
   const signInWithApple = useAuthStore((store) => store.signInWithApple);
-  const passwordInputRef = useRef<TextInput>(null);
-  const [showPassword, setShowPassword] = useState(false);
   const [socialError, setSocialError] = useState<string | null>(null);
-  const [emailFocused, setEmailFocused] = useState(false);
-  const [passwordFocused, setPasswordFocused] = useState(false);
   const [recovery, setRecovery] = useState<DeletionRecoveryAttempt | null>(null);
   const [recoveryBusy, setRecoveryBusy] = useState(false);
   const [recoveryError, setRecoveryError] = useState<string | null>(null);
@@ -180,39 +176,43 @@ export default function LoginScreen() {
         </View>
         {socialError ? <Text accessibilityLiveRegion="polite" style={styles.serverError}>{socialError}</Text> : null}
         <Divider />
-        <Controller control={control} name="email" render={({ field: { onBlur, onChange, value } }) => (
-          <View style={styles.field}>
-            <Text style={styles.label}>{copy('E-posta', 'Email')}</Text>
-            <View style={[styles.inputRow, emailFocused && styles.inputRowFocused]}>
-              <Ionicons color={authColors.yellow} name="mail-outline" size={18} />
-              <TextInput accessibilityLabel={copy('E-posta', 'Email')} autoCapitalize="none" autoComplete="email" autoCorrect={false}
-                blurOnSubmit={false} cursorColor={authColors.yellow} keyboardType="email-address"
-                onBlur={() => { setEmailFocused(false); onBlur(); }} onChangeText={onChange} onFocus={() => { dismissVerified(); setEmailFocused(true); }}
-                onSubmitEditing={() => passwordInputRef.current?.focus()} placeholder="ornek@eposta.com" placeholderTextColor={authColors.muted}
-                rejectResponderTermination={false} returnKeyType="next" selectionColor={authColors.yellow} style={styles.input}
-                underlineColorAndroid="transparent" value={value ?? ''} />
-            </View>
-            {errors.email?.message ? <Text style={styles.fieldError}>{errors.email.message}</Text> : null}
-          </View>
-        )} />
-        <Controller control={control} name="password" render={({ field: { onBlur, onChange, value } }) => (
-          <View style={styles.field}>
-            <Text style={styles.label}>{copy('Şifre', 'Password')}</Text>
-            <View style={[styles.inputRow, passwordFocused && styles.inputRowFocused]}>
-              <Ionicons color={authColors.yellow} name="lock-closed-outline" size={17} />
-              <TextInput ref={passwordInputRef} accessibilityLabel={copy('Şifre', 'Password')} autoComplete="current-password" blurOnSubmit={false}
-                cursorColor={authColors.yellow} onBlur={() => { setPasswordFocused(false); onBlur(); }} onChangeText={onChange}
-                onFocus={() => { dismissVerified(); setPasswordFocused(true); }} placeholder={copy('Şifreni gir', 'Enter your password')} placeholderTextColor={authColors.muted}
-                rejectResponderTermination={false} returnKeyType="go" secureTextEntry={!showPassword} selectionColor={authColors.yellow}
-                style={styles.input} underlineColorAndroid="transparent" value={value ?? ''} />
-              <Pressable accessibilityLabel={showPassword ? copy('Şifreyi gizle', 'Hide password') : copy('Şifreyi göster', 'Show password')}
-                accessibilityRole="button" hitSlop={10} onPress={() => setShowPassword((current) => !current)} style={styles.eyeButton}>
-                <Ionicons color={authColors.secondary} name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={19} />
-              </Pressable>
-            </View>
-            {errors.password?.message ? <Text style={styles.fieldError}>{errors.password.message}</Text> : null}
-          </View>
-        )} />
+        <Controller
+          control={control}
+          name="email"
+          render={({ field: { onBlur, onChange, value } }) => (
+            <FormField
+              label={copy('E-posta', 'Email')}
+              autoCapitalize="none"
+              autoComplete="email"
+              autoCorrect={false}
+              keyboardType="email-address"
+              onBlur={onBlur}
+              onChangeText={onChange}
+              placeholder="ornek@eposta.com"
+              returnKeyType="next"
+              value={value ?? ''}
+              icon={<Ionicons color={authColors.yellow} name="mail-outline" size={18} />}
+              error={errors.email?.message}
+            />
+          )}
+        />
+        <Controller
+          control={control}
+          name="password"
+          render={({ field: { onBlur, onChange, value } }) => (
+            <PasswordFormField
+              label={copy('Şifre', 'Password')}
+              autoComplete="current-password"
+              onBlur={onBlur}
+              onChangeText={onChange}
+              placeholder={copy('Şifreni gir', 'Enter your password')}
+              returnKeyType="go"
+              value={value ?? ''}
+              icon={<Ionicons color={authColors.yellow} name="lock-closed-outline" size={17} />}
+              error={errors.password?.message}
+            />
+          )}
+        />
         <View style={styles.forgot}><AuthLink onPress={() => router.push('/(auth)/forgot-password')}>{copy('Şifremi unuttum', 'Forgot password')}</AuthLink></View>
         {errors.root?.message ? <Text accessibilityLiveRegion="polite" style={styles.serverError}>{errors.root.message}</Text> : null}
         <GradientAuthButton accessibilityLabel={copy('Giriş yap', 'Sign in')} icon="arrow-forward" loading={isSubmitting} onPress={() => void submit()}>{copy('Giriş yap', 'Sign in')}</GradientAuthButton>
@@ -257,13 +257,8 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  socials: { marginTop: 0 }, field: { marginTop: 16 },
-  label: { color: '#EFEFEF', fontSize: 13, fontWeight: '800', letterSpacing: 0.1, marginBottom: 8 },
-  inputRow: { alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.025)', borderColor: 'rgba(255,255,255,0.15)', borderRadius: 16, borderWidth: 1, flexDirection: 'row', gap: 13, minHeight: 56, paddingLeft: 15 },
-  inputRowFocused: { borderColor: 'rgba(255,196,0,0.72)', shadowColor: '#FFC400', shadowOffset: { height: 0, width: 0 }, shadowOpacity: 0.14, shadowRadius: 7 },
-  input: { color: authColors.text, flex: 1, fontSize: 16, minHeight: 55, paddingVertical: 0 },
-  eyeButton: { alignItems: 'center', height: 48, justifyContent: 'center', width: 46 },
-  fieldError: { color: '#FF928A', fontSize: 12, lineHeight: 17, marginTop: 6 }, forgot: { alignItems: 'flex-end', marginTop: 13 },
+  socials: { marginTop: 0 },
+  forgot: { alignItems: 'flex-end', marginTop: 13 },
   serverError: { color: '#FF877D', fontSize: 13, lineHeight: 18, marginTop: 14, textAlign: 'center' },
   bottomText: { alignItems: 'center', flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
   bottomCopy: { color: authColors.secondary, fontSize: 14 },
