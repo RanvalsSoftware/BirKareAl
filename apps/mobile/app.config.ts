@@ -97,6 +97,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     bundleIdentifier: 'com.birkareai.mobile',
     usesAppleSignIn: true,
     infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
       NSPhotoLibraryUsageDescription:
         'BirKare AI, seçtiğiniz fotoğrafı sahne ve filtre önizlemesi oluşturmak için kullanır.',
       NSCameraUsageDescription:
