@@ -49,6 +49,7 @@ jobs:
           src/modules/users/account-deletion.service.test.ts
           src/modules/billing/revenuecat.service.test.ts
           src/modules/billing/revenuecat.credit-packs.test.ts
+          src/app.cors.test.ts
           src/middleware/auth.middleware.test.ts
       - name: Run mobile auth and billing tests
         run: >-

@@ -36,9 +36,17 @@ export function createApp(deps: ApiDependencies): Express {
   });
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
   app.use(compression());
+
+  // The public BirKare deletion page is part of the account lifecycle, not an
+  // arbitrary third-party origin. Always trust exactly its configured origin
+  // in addition to the general CORS allowlist so a production env omission
+  // cannot break web account deletion with Safari's generic "Load failed".
+  const allowedCorsOrigins = new Set(deps.config.CORS_ORIGINS);
+  allowedCorsOrigins.add(new URL(deps.config.ACCOUNT_DELETION_WEB_URL).origin);
+
   app.use(cors({
     origin(origin, callback) {
-      if (!origin || deps.config.CORS_ORIGINS.includes(origin)) return callback(null, true);
+      if (!origin || allowedCorsOrigins.has(origin)) return callback(null, true);
       return callback(forbidden('CORS_ORIGIN_DENIED', 'Bu kaynaktan gelen isteğe izin verilmiyor.'));
     },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
