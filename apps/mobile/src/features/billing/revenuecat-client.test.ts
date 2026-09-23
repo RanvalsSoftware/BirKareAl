@@ -43,15 +43,21 @@ function deferred<T>() {
 
 function fixture(unavailableReason?: string) {
   let user: string | null = 'user-a';
+  let nativeUserId: string | null = null;
   let latestInfo = info();
   let listener: ((value: CustomerInfo) => void) | null = null;
   const sdk = {
-    configure: vi.fn(),
-    logIn: vi.fn(async () => ({ customerInfo: latestInfo, created: false })),
+    configure: vi.fn(({ appUserID }: { appUserID?: string }) => {
+      nativeUserId = appUserID ?? null;
+    }),
+    logIn: vi.fn(async (appUserID: string) => {
+      nativeUserId = appUserID;
+      return { customerInfo: latestInfo, created: false };
+    }),
     logOut: vi.fn(async () => info()),
     isAnonymous: vi.fn(async () => false),
     isConfigured: vi.fn(async () => false),
-    getAppUserID: vi.fn(async () => user ?? '$RCAnonymousID:test'),
+    getAppUserID: vi.fn(async () => nativeUserId ?? '$RCAnonymousID:test'),
     getCustomerInfo: vi.fn(async () => latestInfo),
     getOfferings: vi.fn(async () => ({
       current: unrelatedOffering,
