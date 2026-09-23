@@ -32,9 +32,9 @@ test('accepts supported providers and Apple relay, but a corporate MX no longer 
     resolveMx: async (domain) => { domains.push(domain); return [{ exchange: `mx.${domain}`, priority: 10 }]; },
   });
   for (const domain of KNOWN_EMAIL_DOMAINS) await service.validateRegistrationEmail(`user@${domain}`);
-  assert.deepEqual(domains, [...KNOWN_EMAIL_DOMAINS]);
   await assert.rejects(service.validateRegistrationEmail('user@ranvals.com'), matchesCode('EMAIL_PROVIDER_NOT_ALLOWED'));
   assert.ok(!domains.includes('ranvals.com'));
+  assert.deepEqual(domains, [...KNOWN_EMAIL_DOMAINS]);
 });
 
 test('uses exact domain matching and a manual allowlist cannot expand the provider policy', async () => {
