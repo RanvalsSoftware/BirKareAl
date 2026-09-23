@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { CatalogSearchQuerySchema, SlugParamsSchema } from '@birkare/contracts';
+import { listStudioCatalog } from '@birkare/ai';
 import { notFound } from '@birkare/shared';
 import { validate } from '../../middleware/validate.middleware.js';
 import type { ApiDependencies } from '../../services/dependencies.js';
@@ -10,6 +11,13 @@ const enabled = <T extends { enabled: boolean }>(items: T[]) =>
 
 export function createCatalogRouter(deps: ApiDependencies): Router {
   const router = Router();
+
+  router.get(
+    '/studio',
+    asyncHandler(async (req, res) => {
+      sendSuccess(res, req.requestId, listStudioCatalog());
+    }),
+  );
 
   router.get(
     '/home',

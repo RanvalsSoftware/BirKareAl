@@ -12,7 +12,7 @@ x-backend-environment: &backend-environment
   CORS_ORIGINS: ${CORS_ORIGINS:?Set allowed HTTPS origins}
   TRUST_PROXY: ${TRUST_PROXY:-false}
   DATABASE_PROVIDER: prisma
-  DATABASE_URL: "postgresql://${DB_USER:?Set Cloud SQL DB user}:${DB_PASSWORD:?Set Cloud SQL DB password}@cloudsql-proxy:5432/${DB_NAME:?Set Cloud SQL DB name}?schema=public&sslmode=disable"
+  DATABASE_URL: 'postgresql://${DB_USER:?Set Cloud SQL DB user}:${DB_PASSWORD:?Set Cloud SQL DB password}@cloudsql-proxy:5432/${DB_NAME:?Set Cloud SQL DB name}?schema=public&sslmode=disable'
   QUEUE_DRIVER: bullmq
   REDIS_URL: redis://:${REDIS_PASSWORD:?Set Redis password}@redis:6379/0
   ENABLE_INLINE_WORKER: 'false'
@@ -22,9 +22,22 @@ x-backend-environment: &backend-environment
   AI_PROVIDER: openai
   OPENAI_API_KEY: ${OPENAI_API_KEY:?Set OpenAI key}
   OPENAI_TEXT_MODEL: ${OPENAI_TEXT_MODEL:-gpt-4.1-mini}
-  OPENAI_IMAGE_MODEL: ${OPENAI_IMAGE_MODEL:-gpt-image-1-mini}
+  OPENAI_IMAGE_MODEL: ${OPENAI_IMAGE_MODEL:-gpt-image-2.5-flare}
+  OPENAI_IMAGE_PREMIUM_MODEL: ${OPENAI_IMAGE_PREMIUM_MODEL:-gpt-image-2.5-sunburst}
   OPENAI_MODERATION_MODEL: ${OPENAI_MODERATION_MODEL:-omni-moderation-latest}
   DISABLE_ALL_GENERATION: ${DISABLE_ALL_GENERATION:-true}
+  REVENUECAT_ENABLED: ${REVENUECAT_ENABLED:-false}
+  REVENUECAT_SECRET_API_KEY: ${REVENUECAT_SECRET_API_KEY:-}
+  REVENUECAT_WEBHOOK_AUTH_TOKEN: ${REVENUECAT_WEBHOOK_AUTH_TOKEN:-}
+  REVENUECAT_WEBHOOK_SIGNING_SECRET: ${REVENUECAT_WEBHOOK_SIGNING_SECRET:-}
+  REVENUECAT_ENTITLEMENT_ID: ${REVENUECAT_ENTITLEMENT_ID:-create_an_app_called_birkare_pro}
+  REVENUECAT_OFFERING_ID: ${REVENUECAT_OFFERING_ID:-birkare_pro}
+  REVENUECAT_MONTHLY_PRODUCT_IDS: ${REVENUECAT_MONTHLY_PRODUCT_IDS:-monthly,com.birkareai.pro.monthly}
+  REVENUECAT_ANNUAL_PRODUCT_IDS: ${REVENUECAT_ANNUAL_PRODUCT_IDS:-yearly,com.birkareai.pro.yearly}
+  REVENUECAT_LIFETIME_PRODUCT_IDS: ${REVENUECAT_LIFETIME_PRODUCT_IDS:-lifetime,com.birkareai.pro.lifetime}
+  REVENUECAT_MONTHLY_CREDITS: ${REVENUECAT_MONTHLY_CREDITS:-80}
+  REVENUECAT_ANNUAL_MONTHLY_CREDITS: ${REVENUECAT_ANNUAL_MONTHLY_CREDITS:-80}
+  REVENUECAT_LIFETIME_CREDITS: ${REVENUECAT_LIFETIME_CREDITS:-200}
   STORAGE_DRIVER: local
   LOCAL_STORAGE_PATH: /srv/app/.local-storage
   ALLOW_LOCAL_STORAGE: 'true'
@@ -109,8 +122,16 @@ services:
         condition: service_started
     environment:
       NODE_ENV: production
-      DATABASE_URL: "postgresql://${DB_USER:?Set Cloud SQL DB user}:${DB_PASSWORD:?Set Cloud SQL DB password}@cloudsql-proxy:5432/${DB_NAME:?Set Cloud SQL DB name}?schema=public&sslmode=disable"
-    command: [node, /srv/app/packages/database/node_modules/prisma/build/index.js, migrate, deploy, --schema, /srv/app/packages/database/prisma/schema.prisma]
+      DATABASE_URL: 'postgresql://${DB_USER:?Set Cloud SQL DB user}:${DB_PASSWORD:?Set Cloud SQL DB password}@cloudsql-proxy:5432/${DB_NAME:?Set Cloud SQL DB name}?schema=public&sslmode=disable'
+    command:
+      [
+        node,
+        /srv/app/packages/database/node_modules/prisma/build/index.js,
+        migrate,
+        deploy,
+        --schema,
+        /srv/app/packages/database/prisma/schema.prisma,
+      ]
 
   api:
     <<: *backend-runtime

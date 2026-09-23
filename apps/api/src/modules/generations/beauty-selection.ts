@@ -1,13 +1,7 @@
-import {
-  badRequest,
-  forbidden,
-  premiumBeautySelections,
-  type BeautySettings,
-  type GenderTransformation,
-} from '@birkare/shared';
+import { badRequest, type BeautySettings, type GenderTransformation } from '@birkare/shared';
 import type { AssetRecord, CatalogSnapshot, ProjectRecord } from '@birkare/database';
 
-/** Fail closed until server-verified store entitlements exist; credits do not imply PRO. */
+/** Keep beauty isolated from scenes/characters; premium access is verified before reservation. */
 export function assertBeautyAccess(input: {
   mode: string;
   beauty?: BeautySettings;
@@ -25,12 +19,6 @@ export function assertBeautyAccess(input: {
     throw badRequest(
       'BEAUTY_SELECTION_INVALID',
       'Güzellik ve görünüm dönüşümü ayrı, yalnız fotoğrafa uygulanan araçlardır.',
-    );
-  }
-  if (input.beauty && premiumBeautySelections(input.beauty).length) {
-    throw forbidden(
-      'BEAUTY_PRO_UNAVAILABLE',
-      'Bu PRO güzellik seçeneği henüz kullanıma açılmadı. Diğer rötuşları kullanabilirsiniz.',
     );
   }
 }

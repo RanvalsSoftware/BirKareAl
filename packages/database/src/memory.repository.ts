@@ -22,6 +22,7 @@ import type {
   CreatePendingSocialLoginInput,
   CreditTransactionRecord,
   CreditWalletRecord,
+  GrantCreditsInput,
   EmailTokenRecord,
   EmailTokenType,
   GenerationMessageRecord,
@@ -722,8 +723,21 @@ export class MemoryRepository implements BirKareRepository {
 
   async createGeneration(input: CreateGenerationInput): Promise<GenerationRecord> {
     const now = new Date();
+    const generationId = input.id ?? createId();
+    const generationInputs = (
+      input.inputs?.length
+        ? input.inputs
+        : [{ assetId: input.sourceAssetId, role: 'PRIMARY_USER' as const, sortOrder: 0 }]
+    ).map((item) => ({
+      id: createId(),
+      generationId,
+      assetId: item.assetId,
+      role: item.role,
+      sortOrder: item.sortOrder,
+      createdAt: now,
+    }));
     const generation: GenerationRecord = {
-      id: input.id ?? createId(),
+      id: generationId,
       userId: input.userId,
       projectId: input.projectId,
       parentGenerationId: input.parentGenerationId,
@@ -738,11 +752,12 @@ export class MemoryRepository implements BirKareRepository {
       preserveClothes: input.preserveClothes,
       recipe: input.recipe,
       userInstruction: input.userInstruction,
-      compiledPrompt: null,
-      promptVersion: '2026-09-intensity-v4',
+      compiledPrompt: input.compiledPrompt ?? null,
+      promptVersion: input.promptVersion ?? null,
       provider: input.provider,
       model: input.model,
       providerRequestId: null,
+      providerUsage: null,
       reservedCredits: input.reservedCredits,
       chargedCredits: 0,
       refundedCredits: 0,
@@ -755,6 +770,7 @@ export class MemoryRepository implements BirKareRepository {
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
+      inputs: generationInputs,
       outputs: [],
     };
     this.generations.set(generation.id, generation);
@@ -785,7 +801,7 @@ export class MemoryRepository implements BirKareRepository {
     input: Partial<
       Omit<
         GenerationRecord,
-        'id' | 'userId' | 'projectId' | 'sourceAssetId' | 'createdAt' | 'outputs'
+        'id' | 'userId' | 'projectId' | 'sourceAssetId' | 'createdAt' | 'inputs' | 'outputs'
       >
     >,
   ): Promise<GenerationRecord> {
@@ -955,6 +971,48 @@ export class MemoryRepository implements BirKareRepository {
     return clone(wallet);
   }
 
+  async grantCredits(input: GrantCreditsInput): Promise<{
+    wallet: CreditWalletRecord;
+    transaction: CreditTransactionRecord;
+    created: boolean;
+  }> {
+    this.assertAccountWritable(input.userId);
+    const wallet = this.wallets.get(input.userId);
+    if (!wallet) throw notFound('WALLET_NOT_FOUND', 'Kredi cüzdanı bulunamadı.');
+    const existingId = this.transactionIdsByIdempotencyKey.get(input.idempotencyKey);
+    const existing = existingId ? this.transactions.get(existingId) : undefined;
+    if (existing) {
+      if (
+        existing.userId !== input.userId ||
+        existing.type !== input.type ||
+        existing.referenceType !== input.referenceType ||
+        existing.referenceId !== input.referenceId
+      ) {
+        throw conflict(
+          'IDEMPOTENCY_KEY_REUSED',
+          'Bu Idempotency-Key farklı bir kredi işlemiyle zaten kullanıldı.',
+        );
+      }
+      return { wallet: clone(wallet), transaction: clone(existing), created: false };
+    }
+    wallet.available += input.amount;
+    wallet.lifetimeEarned += input.amount;
+    wallet.version += 1;
+    wallet.updatedAt = new Date();
+    const transaction = this.recordTransaction({
+      userId: input.userId,
+      type: input.type,
+      amount: input.amount,
+      availableAfter: wallet.available,
+      reservedAfter: wallet.reserved,
+      referenceType: input.referenceType,
+      referenceId: input.referenceId,
+      idempotencyKey: input.idempotencyKey,
+      description: input.description ?? null,
+    });
+    return { wallet: clone(wallet), transaction: clone(transaction), created: true };
+  }
+
   async listCreditTransactions(userId: string): Promise<CreditTransactionRecord[]> {
     return [...this.transactions.values()]
       .filter((transaction) => transaction.userId === userId)
@@ -979,25 +1037,47 @@ export class MemoryRepository implements BirKareRepository {
     return clone(record);
   }
 
-  async claimSupportTicket(input: CreateSupportTicketInput): Promise<{ ticket: SupportTicketRecord; created: boolean }> {
+  async claimSupportTicket(
+    input: CreateSupportTicketInput,
+  ): Promise<{ ticket: SupportTicketRecord; created: boolean }> {
     const key = `${input.userId}\u0000${input.idempotencyKey}`;
     const existing = this.supportTickets.get(key);
     if (existing) return { ticket: clone(existing), created: false };
     const now = new Date();
-    const ticket: SupportTicketRecord = { ...input, id: createId(), status: 'PENDING', createdAt: now, updatedAt: now, sentAt: null };
+    const ticket: SupportTicketRecord = {
+      ...input,
+      id: createId(),
+      status: 'PENDING',
+      createdAt: now,
+      updatedAt: now,
+      sentAt: null,
+    };
     this.supportTickets.set(key, ticket);
     return { ticket: clone(ticket), created: true };
   }
 
   async getSupportTicket(userId: string, ticketId: string): Promise<SupportTicketRecord | null> {
-    const ticket = [...this.supportTickets.values()].find((entry) => entry.userId === userId && entry.id === ticketId);
+    const ticket = [...this.supportTickets.values()].find(
+      (entry) => entry.userId === userId && entry.id === ticketId,
+    );
     return ticket ? clone(ticket) : null;
   }
 
-  async completeSupportTicketDelivery(userId: string, ticketId: string, status: 'SENT' | 'UNCONFIRMED'): Promise<SupportTicketRecord> {
-    const ticket = [...this.supportTickets.values()].find((entry) => entry.userId === userId && entry.id === ticketId);
+  async completeSupportTicketDelivery(
+    userId: string,
+    ticketId: string,
+    status: 'SENT' | 'UNCONFIRMED',
+  ): Promise<SupportTicketRecord> {
+    const ticket = [...this.supportTickets.values()].find(
+      (entry) => entry.userId === userId && entry.id === ticketId,
+    );
     if (!ticket) throw notFound('SUPPORT_TICKET_NOT_FOUND', 'Destek talebi bulunamadı.');
-    if (ticket.status === 'PENDING') Object.assign(ticket, { status, updatedAt: new Date(), sentAt: status === 'SENT' ? new Date() : null });
+    if (ticket.status === 'PENDING')
+      Object.assign(ticket, {
+        status,
+        updatedAt: new Date(),
+        sentAt: status === 'SENT' ? new Date() : null,
+      });
     return clone(ticket);
   }
 

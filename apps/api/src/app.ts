@@ -1,8 +1,8 @@
 import compression from 'compression';
 import cors from 'cors';
-import express, { type Express } from 'express';
+import express, { type Express, type Request } from 'express';
 import helmet from 'helmet';
-import { errorEnvelope, successEnvelope } from '@birkare/shared';
+import { errorEnvelope, forbidden, successEnvelope } from '@birkare/shared';
 import { createAssetsRouter } from './modules/assets/assets.routes.js';
 import { createAuthRouter } from './modules/auth/auth.routes.js';
 import { createBillingRouter } from './modules/billing/billing.routes.js';
@@ -43,7 +43,9 @@ export function createApp(deps: ApiDependencies): Express {
     cors({
       origin(origin, callback) {
         if (!origin || deps.config.CORS_ORIGINS.includes(origin)) return callback(null, true);
-        return callback(new Error('CORS origin not allowed'));
+        return callback(
+          forbidden('CORS_ORIGIN_DENIED', 'Bu kaynaktan gelen isteğe izin verilmiyor.'),
+        );
       },
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       // The shared mobile client sends X-Platform on every request. It must be
@@ -59,7 +61,18 @@ export function createApp(deps: ApiDependencies): Express {
       maxAge: 600,
     }),
   );
-  app.use(express.json({ limit: '1mb', strict: true }));
+  app.use(
+    express.json({
+      limit: '1mb',
+      strict: true,
+      verify(req, _res, body) {
+        const request = req as Request;
+        if (request.originalUrl.split('?')[0] === '/v1/billing/revenuecat/webhook') {
+          request.rawBody = Buffer.from(body);
+        }
+      },
+    }),
+  );
 
   app.get('/health', (_req, res) => {
     res
@@ -100,11 +113,14 @@ export function createApp(deps: ApiDependencies): Express {
   });
   app.use('/v1/auth', createAuthRouter(deps));
   app.use('/v1/catalog', createCatalogRouter(deps));
+  // Billing owns a public RevenueCat webhook protected by its own secret.
+  // Mount it before the broad /v1 asset router, whose auth middleware applies
+  // to every request that reaches it rather than only to matched asset paths.
+  app.use('/v1/billing', createBillingRouter(deps));
   app.use('/v1', createAssetsRouter(deps));
   app.use('/v1/projects', createProjectsRouter(deps));
   app.use('/v1/generations', createGenerationsRouter(deps));
   app.use('/v1/me', createUsersRouter(deps));
-  app.use('/v1/billing', createBillingRouter(deps));
   app.use('/v1/support', createSupportRouter(deps));
 
   app.use(notFoundMiddleware);

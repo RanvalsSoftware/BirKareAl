@@ -18,8 +18,10 @@ import {
 } from '@/features/auth/auth-ui';
 import { forgotPasswordSchema, type ForgotPasswordValues } from '@/features/auth/validation';
 import { EMAIL_REQUEST_NOTICE } from '@/features/auth/email-delivery';
+import { useCopy } from '@/features/settings/language-store';
 
 export default function ForgotPasswordScreen() {
+  const copy = useCopy();
   const {
     control,
     handleSubmit,
@@ -56,7 +58,10 @@ export default function ForgotPasswordScreen() {
       }
     } catch (error) {
       setError('root', {
-        message: error instanceof Error ? error.message : 'İstek gönderilemedi.',
+        message:
+          error instanceof Error
+            ? error.message
+            : copy('İstek gönderilemedi.', 'Could not send the request.'),
       });
     }
   });
@@ -74,9 +79,12 @@ export default function ForgotPasswordScreen() {
       <AuthBrandBar onBack={goBack} />
       <AuthHero variant="forgot" />
       <AuthTitle
-        eyebrow="HESAP GÜVENLİĞİ"
-        title="Şifreni yenile."
-        subtitle="E-posta adresini gir; hesabın varsa güvenli bir sıfırlama bağlantısı göndereceğiz."
+        eyebrow={copy('HESAP GÜVENLİĞİ', 'ACCOUNT SECURITY')}
+        title={copy('Şifreni yenile.', 'Reset your password.')}
+        subtitle={copy(
+          'E-posta adresini gir; hesabın varsa güvenli bir sıfırlama bağlantısı göndereceğiz.',
+          'Enter your email and we will send a secure reset link if an account exists.',
+        )}
       />
       <AuthFormCard>
         <Controller
@@ -84,11 +92,11 @@ export default function ForgotPasswordScreen() {
           name="email"
           render={({ field: { onBlur, onChange, value } }) => (
             <View style={styles.field}>
-              <Text style={styles.label}>E-posta</Text>
+              <Text style={styles.label}>{copy('E-posta', 'Email')}</Text>
               <View style={styles.inputRow}>
                 <Ionicons color={authColors.yellow} name="mail-outline" size={18} />
                 <TextInput
-                  accessibilityLabel="E-posta"
+                  accessibilityLabel={copy('E-posta', 'Email')}
                   autoCapitalize="none"
                   autoComplete="email"
                   autoCorrect={false}
@@ -128,11 +136,11 @@ export default function ForgotPasswordScreen() {
           loading={isSubmitting}
           onPress={() => void submit()}
         >
-          Bağlantı gönder
+          {copy('Bağlantı gönder', 'Send link')}
         </GradientAuthButton>
       </AuthFormCard>
       <View style={styles.returnLink}>
-        <AuthLink onPress={goBack}>Giriş ekranına dön</AuthLink>
+        <AuthLink onPress={goBack}>{copy('Giriş ekranına dön', 'Back to sign in')}</AuthLink>
       </View>
     </AuthLayout>
   );

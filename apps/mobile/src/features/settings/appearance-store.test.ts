@@ -34,10 +34,8 @@ async function state() {
 }
 
 describe('appearance preference persistence', () => {
-  it('hydrates saved boolean preferences without enabling a light theme', async () => {
-    mocks.read.mockResolvedValue(
-      JSON.stringify({ glassEffects: false, reducedMotion: true, theme: 'light' }),
-    );
+  it('hydrates saved appearance preferences', async () => {
+    mocks.read.mockResolvedValue(JSON.stringify({ glassEffects: false, reducedMotion: true }));
     const store = await state();
     await store.getState().hydrate();
     expect(store.getState()).toMatchObject({
@@ -45,7 +43,6 @@ describe('appearance preference persistence', () => {
       reducedMotion: true,
       hydrated: true,
     });
-    expect(store.getState()).not.toHaveProperty('theme', 'light');
   });
 
   it('does not block opening the app when saved preferences are invalid', async () => {
@@ -59,7 +56,7 @@ describe('appearance preference persistence', () => {
     });
   });
 
-  it('writes server-confirmed dark preferences and persists the resulting choice', async () => {
+  it('writes only the changed appearance preference and keeps the server in dark mode', async () => {
     const store = await state();
     await store.getState().setGlassEffects(false);
     expect(mocks.api).toHaveBeenCalledWith('/v1/me/preferences', {

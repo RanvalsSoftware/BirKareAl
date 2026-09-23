@@ -149,8 +149,9 @@ export function createAuthRouter(deps: ApiDependencies): Router {
     '/apple',
     authRateLimit,
     validate(SocialLoginSchema),
-    asyncHandler(async (_req, _res) => {
-      await deps.authService.socialLogin();
+    asyncHandler(async (req, res) => {
+      const data = await deps.authService.appleLogin(req.body, getRequestContext(req));
+      sendSuccess(res, req.requestId, data);
     }),
   );
 

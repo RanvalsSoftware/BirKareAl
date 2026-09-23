@@ -26,8 +26,8 @@ const payload = {
   filterIntensity: 60,
 };
 
-test('all nine trend presets survive quote/create/preview validation and reject unknown IDs', () => {
-  assert.equal(TREND_PRESET_IDS.length, 9);
+test('all eleven server trend presets survive quote/create/preview validation and reject unknown IDs', () => {
+  assert.equal(TREND_PRESET_IDS.length, 11);
   for (const trendPreset of TREND_PRESET_IDS) {
     for (const schema of [
       QuoteGenerationSchema,
@@ -91,12 +91,13 @@ test('trend source is the original project photo, never a catalogue/generated/de
     );
 });
 
-test('nine detailed directions preserve source identity and exclude catalogue demographics and generic filter lock', () => {
+test('eleven detailed directions preserve source identities and exclude catalogue demographics and generic filter lock', () => {
   const prompts = TREND_PRESET_IDS.map((preset) => buildTrendPrompt(preset, 100, '9:16'));
-  assert.equal(new Set(prompts).size, 9);
+  assert.equal(new Set(prompts).size, 11);
   for (const prompt of prompts) {
     assert.ok(prompt.length > 2500);
     assert.match(prompt, /IDENTITY LOCK/);
+    assert.match(prompt, /exact number of visible people/);
     assert.match(prompt, /9:16 without stretching/);
     assert.match(prompt, /CAMERA AND POSE/);
     assert.doesNotMatch(
@@ -107,6 +108,14 @@ test('nine detailed directions preserve source identity and exclude catalogue de
   assert.match(buildTrendPrompt('analog_90s', 100, '4:5'), /Direct on-camera flash/);
   assert.match(buildTrendPrompt('old_money_portrait', 100, '4:5'), /Soft side window light/);
   assert.match(buildTrendPrompt('neon_club_night', 100, '4:5'), /close handheld selfie/);
+  assert.match(
+    buildTrendPrompt('romantic_dinner_80s', 100, '4:5'),
+    /candlelit table.*exactly the people visible/s,
+  );
+  assert.match(
+    buildTrendPrompt('romantic_closeup_80s', 100, '4:5'),
+    /shoulder-to-shoulder portrait.*single source person remains a solo portrait/s,
+  );
 });
 
 test('low medium high strengths have distinct actual directions and zero omits art direction', () => {

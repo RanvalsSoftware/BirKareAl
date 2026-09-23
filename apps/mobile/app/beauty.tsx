@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
@@ -13,6 +13,7 @@ import {
 } from '@/components';
 import { RequireAuthenticated } from '@/features/auth/require-authenticated';
 import { useAvailableCredits } from '@/features/billing/use-wallet';
+import { useRevenueCat } from '@/features/billing/revenuecat';
 import { beautyOptions, type BeautyOption } from '@/features/beauty/catalog';
 import { BeautyRail } from '@/features/beauty/BeautyRail';
 import { IntensitySlider } from '@/features/beauty/IntensitySlider';
@@ -44,6 +45,7 @@ function BeautyEditor() {
   const { selected } = useLocalSearchParams<{ selected?: string }>();
   const { flow, set } = useCreateFlow();
   const credits = useAvailableCredits();
+  const billing = useRevenueCat();
   const initialized = useRef(false);
   const [selectedId, setSelectedId] = useState<BeautyOptionId>();
   const [group, setGroup] = useState<(typeof groups)[number]>('Tümü');
@@ -61,7 +63,7 @@ function BeautyEditor() {
     const initialOption = beautyOptions.find((entry) => entry.id === selected);
     const next = flow.beauty ?? withBeautyIntensity(emptyBeautySettings(), 'naturalBalance', 35);
     const beauty =
-      !flow.beauty && initialOption && !initialOption.isPro
+      !flow.beauty && initialOption && (!initialOption.isPro || billing.isPro)
         ? withBeautyIntensity(
             next,
             initialOption.id,
@@ -69,8 +71,8 @@ function BeautyEditor() {
           )
         : next;
     setSelectedId(
-      initialOption?.isPro
-        ? initialOption.id
+      initialOption?.isPro && !billing.isPro
+        ? undefined
         : (beautyOptions.find(
             (entry) => entry.id === initialOption?.id && beautyIntensity(beauty, entry.id) > 0,
           )?.id ?? beautyOptions.find((entry) => beautyIntensity(beauty, entry.id) > 0)?.id),
@@ -97,15 +99,15 @@ function BeautyEditor() {
         sourceName: null,
         sourceRightsConfirmed: false,
       });
-  }, [flow.beauty, flow.sourceKind, selected, set]);
+  }, [billing.isPro, flow.beauty, flow.sourceKind, selected, set]);
 
   function update(settings: BeautySettings) {
     set({ beauty: settings });
   }
   function selectOption(next: BeautyOption) {
     setShowOriginal(false);
-    if (next.isPro) {
-      setSelectedId(selectedId === next.id ? undefined : next.id);
+    if (next.isPro && !billing.isPro) {
+      router.push('/pro' as never);
       return;
     }
     const enabled = beautyIntensity(settings, next.id) > 0;
@@ -197,6 +199,7 @@ function BeautyEditor() {
       </Text>
       <ScrollView
         horizontal
+        style={styles.groupScroll}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.groups}
       >
@@ -213,6 +216,7 @@ function BeautyEditor() {
         options={visibleOptions}
         selectedId={selectedId}
         settings={settings}
+        proUnlocked={billing.isPro}
         onSelect={selectOption}
       />
       {option && selectedId ? (
@@ -228,24 +232,27 @@ function BeautyEditor() {
               <Text style={styles.optionName}>{option.name}</Text>
               <Text style={styles.hint}>{option.description}</Text>
             </View>
-            <Text style={styles.value}>{option.isPro ? 'PRO' : `%${intensity}`}</Text>
+            <Text style={styles.value}>
+              {option.isPro && !billing.isPro ? 'PRO' : `%${intensity}`}
+            </Text>
           </View>
           {option.isPro ? (
             <Text style={styles.proHint}>
-              PRO yakında. Bu görünüm henüz üretime açık değil; standart seçeneklerle devam
-              edebilirsin.
+              {billing.isPro
+                ? 'Premium güzellik aktif. Bu üretimde +2 kredi olarak hesaplanır.'
+                : 'Bu premium görünümü kullanmak için BirKare Pro gerekir.'}
             </Text>
           ) : null}
           <IntensitySlider
             value={intensity}
-            disabled={option.isPro}
+            disabled={Boolean(option.isPro && !billing.isPro)}
             onChange={(value) => update(withBeautyIntensity(settings, selectedId, value))}
           />
           <View style={styles.levels}>
             {[20, 50, 80].map((value, index) => (
               <Pressable
                 key={value}
-                disabled={option.isPro}
+                disabled={Boolean(option.isPro && !billing.isPro)}
                 onPress={() => update(withBeautyIntensity(settings, selectedId, value))}
                 style={[styles.level, intensity === value && styles.levelSelected]}
               >
@@ -347,10 +354,10 @@ function BeautyEditor() {
       </Notice>
       <WizardFooter
         label={!flow.sourceUri ? 'Fotoğrafını seç' : 'AI üretim özetini gör'}
-        disabled={Boolean(option?.isPro) || !hasBeautyAdjustments(settings)}
+        disabled={Boolean(option?.isPro && !billing.isPro) || !hasBeautyAdjustments(settings)}
         onPress={() => {
-          if (option?.isPro) {
-            Alert.alert('PRO yakında', 'Bu görünüm henüz üretime açık değil.');
+          if (option?.isPro && !billing.isPro) {
+            router.push('/pro' as never);
             return;
           }
           if (!hasBeautyAdjustments(settings)) return;
@@ -361,8 +368,8 @@ function BeautyEditor() {
           );
         }}
         hint={
-          option?.isPro
-            ? 'Standart bir görünüm seçerek devam et.'
+          option?.isPro && !billing.isPro
+            ? 'Premium görünüm için Pro erişimini aç.'
             : !hasBeautyAdjustments(settings)
               ? 'Devam etmek için en az bir görünüm seç.'
               : 'Kredi maliyeti sonraki ekranda onayına sunulur.'
@@ -413,6 +420,7 @@ const styles = StyleSheet.create({
   action: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 42 },
   actionText: { ...typography.caption, color: colors.accentYellow, fontWeight: '600' },
   previewHint: { fontSize: 11, lineHeight: 16, color: colors.textMuted, marginTop: 6 },
+  groupScroll: { flexGrow: 0, flexShrink: 0 },
   groups: { gap: 8, paddingTop: 16, paddingBottom: 4 },
   controls: { marginTop: 12 },
   controlsContent: { padding: 15, borderRadius: 24, backgroundColor: '#211D18' },

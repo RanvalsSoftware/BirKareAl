@@ -81,6 +81,10 @@ export const SocialLoginSchema = z
     // the only provider credential accepted by the API: authorization codes,
     // access tokens, and OAuth client secrets must never be sent here.
     idToken: z.string().min(10).max(8192),
+    // Apple returns the name only on the first authorization. These values are
+    // display defaults; the user confirms them during profile completion.
+    firstName: z.string().trim().min(1).max(80).optional(),
+    lastName: z.string().trim().min(1).max(80).optional(),
   })
   .merge(DeviceSchema);
 

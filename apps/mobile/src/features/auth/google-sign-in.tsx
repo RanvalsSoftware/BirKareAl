@@ -2,10 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { useState } from 'react';
 import { Platform } from 'react-native';
+import { useCopy } from '@/features/settings/language-store';
 import { SocialButton } from './auth-ui';
 import { GoogleAuthError, googleConfigurationError, googleSignInError } from './google-errors';
 
 type NativeGoogleSignIn = typeof import('@react-native-google-signin/google-signin');
+
 
 type GoogleConfigExtra = {
   googleIosClientId?: string;
@@ -133,12 +135,13 @@ function configureGoogle(
  * the BirKare server verifies before granting its own application session.
  */
 export function GoogleSignInButton({
-  label = 'Google ile devam et',
+  label = 'Google ile giriş yap',
   forceReauthentication = false,
   disabled = false,
   onError,
   onSuccess,
 }: GoogleSignInButtonProps) {
+  const copy = useCopy();
   const [isWorking, setIsWorking] = useState(false);
   const clientIds = getGoogleOAuthClientIds();
   const configurationError = getConfigurationError(clientIds);
@@ -196,8 +199,9 @@ export function GoogleSignInButton({
   return (
     <SocialButton
       disabled={disabled || isWorking}
-      icon={<Ionicons name="logo-google" color="#191919" size={19} />}
+      icon={<Ionicons name="logo-google" color="#111111" size={20} />}
       loading={isWorking}
+      loadingLabel={copy('Google açılıyor…', 'Opening Google…')}
       onPress={startGoogleSignIn}
       tone="light"
     >

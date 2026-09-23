@@ -14,6 +14,20 @@ export type CreditWallet = {
   reserved: number;
 };
 
+export type CreditTransaction = {
+  id: string;
+  type: string;
+  amount: number;
+  status: string;
+  description: string | null;
+  referenceId: string | null;
+  referenceType: string | null;
+  availableAfter: number | null;
+  reservedAfter: number | null;
+  createdAt: string;
+  completedAt: string | null;
+};
+
 /**
  * One authoritative balance source for every screen. Refetching on focus keeps
  * the badge in sync immediately after a generation reserves or spends credit.
@@ -40,4 +54,23 @@ export function useCreditWallet() {
 
 export function useAvailableCredits(): number {
   return useCreditWallet().data?.available ?? INITIAL_CREDIT_PLACEHOLDER;
+}
+
+export function useCreditTransactions() {
+  const authenticated = useAuthStore((store) => store.state === 'authenticated');
+  const userId = useAuthStore((store) => store.user?.id);
+  const query = useQuery({
+    queryKey: accountQueryKey(['credit-transactions'], userId),
+    queryFn: ({ signal }) =>
+      apiRequest<{ items: CreditTransaction[] }>('/v1/billing/transactions', { signal }),
+    enabled: authenticated && Boolean(userId),
+    staleTime: 0,
+  });
+  const { refetch } = query;
+  useFocusEffect(
+    useCallback(() => {
+      if (authenticated) void refetch();
+    }, [authenticated, refetch]),
+  );
+  return query;
 }

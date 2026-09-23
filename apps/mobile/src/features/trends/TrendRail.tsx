@@ -1,8 +1,8 @@
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors } from '@/theme';
-import { trends } from './catalog';
-import type { TrendPresetId } from './presets';
+import { featuredTrends } from './catalog';
+import { isEightiesTrend, type TrendPresetId } from './presets';
 
 export function TrendRail({
   selected,
@@ -17,32 +17,36 @@ export function TrendRail({
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.rail}
     >
-      {trends.map((trend, index) => (
-        <Pressable
-          key={trend.id}
-          accessibilityRole="button"
-          accessibilityLabel={`${trend.name}. ${trend.description}`}
-          accessibilityState={{ selected: selected === trend.id }}
-          onPress={() => onSelect(trend.id)}
-          style={({ pressed }) => [
-            styles.card,
-            selected === trend.id && styles.selected,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Image source={trend.source} style={styles.image} resizeMode="cover" />
-          <LinearGradient colors={['transparent', 'rgba(5,5,5,.94)']} style={styles.shade} />
-          <View style={styles.number}>
-            <Text style={styles.numberText}>{index + 1}</Text>
-          </View>
-          <View style={styles.copy}>
-            <Text style={styles.name}>{trend.name}</Text>
-            <Text style={styles.hint} numberOfLines={2}>
-              {trend.description}
-            </Text>
-          </View>
-        </Pressable>
-      ))}
+      {featuredTrends.map((trend, index) => {
+        const isSelected =
+          selected === trend.id || (trend.id === 'pop_icon_80s' && isEightiesTrend(selected));
+        return (
+          <Pressable
+            key={trend.id}
+            accessibilityRole="button"
+            accessibilityLabel={`${trend.name}. ${trend.description}`}
+            accessibilityState={{ selected: isSelected }}
+            onPress={() => onSelect(trend.id)}
+            style={({ pressed }) => [
+              styles.card,
+              isSelected && styles.selected,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Image source={trend.source} style={styles.image} resizeMode="cover" />
+            <LinearGradient colors={['transparent', 'rgba(5,5,5,.94)']} style={styles.shade} />
+            <View style={styles.number}>
+              <Text style={styles.numberText}>{index + 1}</Text>
+            </View>
+            <View style={styles.copy}>
+              <Text style={styles.name}>{trend.name}</Text>
+              <Text style={styles.hint} numberOfLines={2}>
+                {trend.description}
+              </Text>
+            </View>
+          </Pressable>
+        );
+      })}
     </ScrollView>
   );
 }

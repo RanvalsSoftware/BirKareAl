@@ -38,6 +38,9 @@ vi.mock('@/features/auth/social-registration', () => ({
 vi.mock('@/features/create/createFlow', () => ({
   consumePendingOnboardingCreateDraft: () => null,
 }));
+vi.mock('@/features/settings/language-store', () => ({
+  useCopy: () => (turkish: string) => turkish,
+}));
 vi.mock('@/features/auth/validation', () => import('./validation'));
 vi.mock('@/features/auth/auth-ui', () => ({
   AuthBrandBar: 'AuthBrandBar',

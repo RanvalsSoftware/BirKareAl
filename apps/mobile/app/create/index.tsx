@@ -104,13 +104,14 @@ export default function CreateStartScreen() {
   const [section, setSection] = useState<CreateSection>(() => sectionForMode(flow.mode));
 
   useEffect(() => {
+    let sectionTimeout: ReturnType<typeof setTimeout> | undefined;
     // This is the ordinary creation entry, including a bare /create deep link.
     // Beauty/gender editors have their own routes and must not hijack its next step.
     set(standardCreationSelection());
     if (mode === 'light' || mode === 'extend') {
       const preset = getToolPreset(mode);
       if (preset) set(preset);
-      setSection('tools');
+      sectionTimeout = setTimeout(() => setSection('tools'), 0);
     } else if (mode && modes.some((item) => item.id === mode)) {
       const nextMode = mode as CreateMode;
       set(standardCreationSelection({
@@ -126,8 +127,11 @@ export default function CreateStartScreen() {
         styleId: null,
         customInstruction: '',
       }));
-      setSection(sectionForMode(nextMode));
+      sectionTimeout = setTimeout(() => setSection(sectionForMode(nextMode)), 0);
     }
+    return () => {
+      if (sectionTimeout) clearTimeout(sectionTimeout);
+    };
   }, [mode, set]);
 
   const activeSection = sections.find((item) => item.id === section) ?? sections[0];

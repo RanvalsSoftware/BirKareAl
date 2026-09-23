@@ -18,30 +18,26 @@ async function main() {
   if (config.AI_PROVIDER !== 'openai' || config.DISABLE_ALL_GENERATION)
     throw new Error('OpenAI generation is not enabled in this server environment.');
   if (!config.OPENAI_API_KEY) throw new Error('Backend OPENAI_API_KEY is missing.');
-  const response = await fetch(
-    `https://api.openai.com/v1/models/${encodeURIComponent(config.OPENAI_IMAGE_MODEL)}`,
-    {
+  for (const [lane, model] of [
+    ['fast', config.OPENAI_IMAGE_MODEL],
+    ['premium', config.OPENAI_IMAGE_PREMIUM_MODEL],
+  ] as const) {
+    const response = await fetch(`https://api.openai.com/v1/models/${encodeURIComponent(model)}`, {
       headers: { Authorization: `Bearer ${config.OPENAI_API_KEY}` },
       signal: AbortSignal.timeout(15_000),
-    },
-  );
-  // Never print a raw response/error: invalid-key errors may quote the key.
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw providerFailure({
-      status: response.status,
-      code: body.error?.code,
-      type: body.error?.type,
-      request_id: response.headers.get('x-request-id'),
     });
+    // Never print a raw response/error: invalid-key errors may quote the key.
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw providerFailure({
+        status: response.status,
+        code: body.error?.code,
+        type: body.error?.type,
+        request_id: response.headers.get('x-request-id'),
+      });
+    }
+    console.log(JSON.stringify({ check: 'model-access', status: response.status, lane, model }));
   }
-  console.log(
-    JSON.stringify({
-      check: 'model-access',
-      status: response.status,
-      model: config.OPENAI_IMAGE_MODEL,
-    }),
-  );
 
   const requestId = `provider-diagnostic-${Date.now()}`;
   const render = args.includes('--generate-smoke');
@@ -71,6 +67,7 @@ async function main() {
   const started = Date.now();
   const result = await new OpenAIImageGenerationProvider(config).generate({
     requestId,
+    model: config.OPENAI_IMAGE_MODEL,
     prompt,
     sourceImages: [],
     quality: 'low',

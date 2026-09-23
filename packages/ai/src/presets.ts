@@ -1,5 +1,5 @@
 import type { CatalogFeaturedPerson, CatalogItem } from '@birkare/shared';
-import type { GenerationRecipe, ProjectRecord } from '@birkare/database';
+import type { LegacyGenerationRecipe, ProjectRecord } from '@birkare/database';
 
 /** Catalog slugs map to fixed prompt fragments; display names are never interpolated into a prompt. */
 const SCENE_PRESETS: Record<string, string> = {
@@ -124,7 +124,7 @@ const STYLE_INTENSITY: Record<string, readonly [string, string, string]> = {
   ],
 };
 
-const DEFAULT_COMPOSITION: GenerationRecipe['composition'] = {
+const DEFAULT_COMPOSITION: LegacyGenerationRecipe['composition'] = {
   shotType: 'PORTRAIT',
   cameraAngle: 'EYE_LEVEL',
   subjectPosition: 'CENTER',
@@ -143,7 +143,7 @@ export type ResolvedGenerationSelection = {
 };
 
 export function resolveGenerationSelection(
-  recipe: GenerationRecipe | null,
+  recipe: LegacyGenerationRecipe | null,
   project: ProjectRecord,
 ): ResolvedGenerationSelection {
   if (recipe?.selection) {
@@ -162,7 +162,7 @@ export function resolveGenerationSelection(
 
 export function recipeFromLegacyComposition(
   composition: ProjectRecord['composition'],
-): GenerationRecipe['composition'] {
+): LegacyGenerationRecipe['composition'] {
   switch (composition) {
     case 'SELFIE':
       return { ...DEFAULT_COMPOSITION, shotType: 'CLOSE_SELFIE', backgroundDepth: 'SHALLOW' };
@@ -178,9 +178,9 @@ export function recipeFromLegacyComposition(
 }
 
 export function normalizeGenerationRecipe(
-  recipe: GenerationRecipe | null,
+  recipe: LegacyGenerationRecipe | null,
   legacyComposition: ProjectRecord['composition'],
-): GenerationRecipe {
+): LegacyGenerationRecipe {
   if (!recipe) {
     return {
       version: 1,
@@ -267,7 +267,7 @@ export function intensityPrompt(value: number, style: CatalogItem | null = null)
   ].join(' ');
 }
 
-export function compositionPrompt(composition: GenerationRecipe['composition']): string {
+export function compositionPrompt(composition: LegacyGenerationRecipe['composition']): string {
   const shot = {
     CLOSE_SELFIE:
       'Use a close handheld smartphone selfie composition with natural, undistorted facial perspective.',
