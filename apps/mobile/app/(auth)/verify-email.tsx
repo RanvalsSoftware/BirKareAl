@@ -255,6 +255,7 @@ export default function VerifyEmailScreen() {
             ]}
           >
             <Ionicons
+              pointerEvents="none"
               color={authColors.yellow}
               name="key-outline"
               size={18}
@@ -262,6 +263,7 @@ export default function VerifyEmailScreen() {
 
             <TextInput
               ref={inputRef}
+              pointerEvents="auto"
               accessibilityLabel="Doğrulama kodu"
               autoCapitalize="none"
               autoCorrect={false}
