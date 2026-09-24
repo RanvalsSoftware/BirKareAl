@@ -92,6 +92,7 @@ export function AuthLayout({ children }: PropsWithChildren) {
       >
         <ScrollView
           contentContainerStyle={styles.scroll}
+          disableScrollViewPanResponder
           keyboardDismissMode="none"
           keyboardShouldPersistTaps="always"
           showsVerticalScrollIndicator={false}
@@ -347,13 +348,19 @@ export function PasswordFormField({
   label,
   error,
   icon,
+  inputRef,
   onBlur: onInputBlur,
   onChangeText,
   onFocus: onInputFocus,
   style: inputStyle,
   value,
   ...inputProps
-}: Omit<TextInputProps, 'secureTextEntry'> & { label: string; error?: string; icon?: ReactNode }) {
+}: Omit<TextInputProps, 'secureTextEntry'> & {
+  label: string;
+  error?: string;
+  icon?: ReactNode;
+  inputRef?: Ref<TextInput>;
+}) {
   const [visible, setVisible] = useState(false);
   const [focused, setFocused] = useState(false);
   return (
@@ -372,6 +379,7 @@ export function PasswordFormField({
           </View>
         ) : null}
         <TextInput
+          ref={inputRef}
           {...inputProps}
           accessibilityLabel={inputProps.accessibilityLabel ?? label}
           cursorColor={authColors.yellow}

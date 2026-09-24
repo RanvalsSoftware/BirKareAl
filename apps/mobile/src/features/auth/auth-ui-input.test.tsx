@@ -1,6 +1,6 @@
 import { createElement, isValidElement, type ReactElement } from 'react';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { FormField } from './auth-ui';
+import { AuthLayout, FormField, PasswordFormField } from './auth-ui';
 
 const mocks = await vi.hoisted(async () => {
   // Metro resolves PNG require() to a numeric asset ID; reproduce that in Node.
@@ -106,5 +106,33 @@ describe('auth native text input touch and focus wiring', () => {
     expect(input.props.onSubmitEditing).toBe(next);
     expect(input.props.submitBehavior).toBe('submit');
     expect(input.props.value).toBe('');
+  });
+
+  it('forwards password refs while leaving touch handling on the native input', () => {
+    const ref = vi.fn();
+    const nodes = descendants(
+      PasswordFormField({
+        label: 'Şifre',
+        inputRef: ref,
+        icon: createElement('Icon'),
+        value: 'secret',
+      }),
+    );
+    const input = nodes.find((node) => node.type === 'TextInput')!;
+    const leadingIcon = nodes.find(
+      (node) => node.props.pointerEvents === 'none' && node.type === 'View',
+    )!;
+    expect(input.props.ref).toBe(ref);
+    expect(input.props.pointerEvents).toBe('auto');
+    expect(input.props.editable).toBe(true);
+    expect(leadingIcon).toBeTruthy();
+  });
+
+  it('does not let the auth ScrollView pan responder steal input taps', () => {
+    const scroll = descendants(AuthLayout({ children: createElement('Text') })).find(
+      (node) => node.type === 'ScrollView',
+    )!;
+    expect(scroll.props.disableScrollViewPanResponder).toBe(true);
+    expect(scroll.props.keyboardShouldPersistTaps).toBe('always');
   });
 });

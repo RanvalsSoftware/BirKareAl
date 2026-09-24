@@ -132,3 +132,100 @@ test('HTTP photo upload accepts exact ArrayBuffer bytes; MIME, ownership and rev
     );
   }
 });
+
+
+test('retry-validation never marks arbitrary stored bytes READY', async () => {
+  const repository = new MemoryRepository();
+  const objects = new Map<string, Buffer>();
+  const storage: StorageProvider = {
+    createDownloadUrl: async ({ key }) => `/test/${key}`,
+    deleteObject: async (key) => {
+      objects.delete(key);
+    },
+    createUploadUrl: async ({ key, contentType }) => ({
+      url: `/test/${key}`,
+      headers: { 'Content-Type': contentType },
+    }),
+    putObject: async ({ key, body }) => {
+      objects.set(key, Buffer.from(body));
+    },
+    getObject: async (key) => objects.get(key)!,
+    exists: async (key) => objects.has(key),
+  };
+  const tokenService = new TokenService({
+    JWT_ACCESS_SECRET: 'test-only-access-secret-with-enough-length',
+    JWT_ACCESS_TTL_SECONDS: 900,
+    JWT_ISSUER: 'https://api.example.test',
+    JWT_USER_AUDIENCE: 'birkare-mobile',
+  });
+  const initial = await repository.createUser({
+    email: 'retry-upload@example.test',
+    firstName: 'Retry',
+    lastName: 'Upload',
+    passwordHash: 'unused',
+    locale: 'tr-TR',
+    dateOfBirth: new Date('1990-01-01'),
+    consents: [],
+  });
+  const user = await repository.updateUser(initial.id, {
+    status: 'ACTIVE',
+    emailVerifiedAt: new Date(),
+  });
+  const session = await repository.createSession({
+    userId: user.id,
+    refreshTokenHash: 'retry-upload',
+    expiresAt: new Date(Date.now() + 86400000),
+  });
+  const { accessToken } = await tokenService.issueAccessToken(user, session.id);
+  const authorized = { Authorization: `Bearer ${accessToken}` };
+  const logger = { error() {}, warn() {} } as unknown as ApiDependencies['logger'];
+  const app = express();
+  app.use(express.json());
+  app.use(
+    '/v1',
+    createAssetsRouter({
+      repository,
+      storage,
+      tokenService,
+      config: { STORAGE_DRIVER: 'r2' },
+    } as unknown as ApiDependencies),
+  );
+  app.use(createErrorMiddleware(logger, false));
+  const server = app.listen(0, '127.0.0.1');
+  await new Promise<void>((resolve) => server.once('listening', resolve));
+  const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+
+  try {
+    const initiate = await fetch(`${base}/v1/uploads/initiate`, {
+      method: 'POST',
+      headers: { ...authorized, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        purpose: 'USER_SOURCE',
+        fileName: 'fake.png',
+        mimeType: 'image/png',
+        sizeBytes: 64,
+      }),
+    });
+    assert.equal(initiate.status, 201);
+    const { data } = (await initiate.json()) as { data: { assetId: string } };
+    const asset = await repository.getAssetById(data.assetId);
+    assert.ok(asset);
+    objects.set(asset.storageKey, Buffer.from('not a png'));
+
+    const retried = await fetch(`${base}/v1/assets/${data.assetId}/retry-validation`, {
+      method: 'POST',
+      headers: authorized,
+    });
+    assert.equal(retried.status, 403);
+    assert.equal(
+      ((await retried.json()) as { error: { code: string } }).error.code,
+      'UPLOAD_VALIDATION_FAILED',
+    );
+    assert.equal((await repository.getAssetById(data.assetId))?.status, 'REJECTED');
+  } finally {
+    server.closeAllConnections();
+    await new Promise<void>((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve())),
+    );
+  }
+});
