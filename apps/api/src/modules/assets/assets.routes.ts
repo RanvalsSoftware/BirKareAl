@@ -111,6 +111,7 @@ export function createAssetsRouter(deps: ApiDependencies): Router {
       if (
         bytes.length === 0 ||
         bytes.length > asset.sizeBytes ||
+        bytes.length > 15 * 1024 * 1024 ||
         !hasExpectedMagicBytes(bytes, asset.mimeType)
       ) {
         await deps.repository.updateAsset(asset.id, { status: 'REJECTED' });
@@ -177,9 +178,22 @@ export function createAssetsRouter(deps: ApiDependencies): Router {
     asyncHandler(async (req, res) => {
       const asset = await ownedAsset(deps, req.auth!.userId, req.params.assetId as string);
       const exists = await deps.storage.exists(asset.storageKey);
+      if (!exists) {
+        const updated = await deps.repository.updateAsset(asset.id, { status: 'REJECTED' });
+        sendSuccess(res, req.requestId, { asset: updated });
+        return;
+      }
+      const bytes = await deps.storage.getObject(asset.storageKey);
+      const valid =
+        bytes.length > 0 &&
+        bytes.length <= asset.sizeBytes &&
+        bytes.length <= 15 * 1024 * 1024 &&
+        hasExpectedMagicBytes(bytes, asset.mimeType);
       const updated = await deps.repository.updateAsset(asset.id, {
-        status: exists ? 'READY' : 'REJECTED',
+        status: valid ? 'READY' : 'REJECTED',
       });
+      if (!valid)
+        throw forbidden('UPLOAD_VALIDATION_FAILED', 'Yüklenen dosya doğrulanamadı.');
       sendSuccess(res, req.requestId, { asset: updated });
     }),
   );
