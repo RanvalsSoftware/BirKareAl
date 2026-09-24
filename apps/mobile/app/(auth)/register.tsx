@@ -187,8 +187,9 @@ export default function RegisterScreen() {
               <View style={[styles.field, styles.nameField]}>
                 <Text style={styles.label}>Ad</Text>
                 <View style={styles.inputRow}>
-                  <Ionicons color={authColors.yellow} name="person-outline" size={16} />
+                  <Ionicons pointerEvents="none" color={authColors.yellow} name="person-outline" size={16} />
                   <TextInput
+                    pointerEvents="auto"
                     accessibilityLabel="Ad"
                     autoComplete="given-name"
                     blurOnSubmit={false}
@@ -219,8 +220,9 @@ export default function RegisterScreen() {
               <View style={[styles.field, styles.nameField]}>
                 <Text style={styles.label}>Soyad</Text>
                 <View style={styles.inputRow}>
-                  <Ionicons color={authColors.yellow} name="person-outline" size={16} />
+                  <Ionicons pointerEvents="none" color={authColors.yellow} name="person-outline" size={16} />
                   <TextInput
+                    pointerEvents="auto"
                     ref={lastNameInputRef}
                     accessibilityLabel="Soyad"
                     autoComplete="family-name"
@@ -253,8 +255,9 @@ export default function RegisterScreen() {
             <View style={styles.field}>
               <Text style={styles.label}>E-posta</Text>
               <View style={styles.inputRow}>
-                <Ionicons color={authColors.yellow} name="mail-outline" size={18} />
+                <Ionicons pointerEvents="none" color={authColors.yellow} name="mail-outline" size={18} />
                 <TextInput
+                    pointerEvents="auto"
                   ref={emailInputRef}
                   accessibilityLabel="E-posta"
                   autoCapitalize="none"
@@ -289,8 +292,9 @@ export default function RegisterScreen() {
             <View style={styles.field}>
               <Text style={styles.label}>Doğum yılı</Text>
               <View style={styles.inputRow}>
-                <Ionicons color={authColors.yellow} name="calendar-outline" size={17} />
+                <Ionicons pointerEvents="none" color={authColors.yellow} name="calendar-outline" size={17} />
                 <TextInput
+                    pointerEvents="auto"
                   ref={birthYearInputRef}
                   accessibilityLabel="Doğum yılı"
                   blurOnSubmit={false}
@@ -323,8 +327,9 @@ export default function RegisterScreen() {
             <View style={styles.field}>
               <Text style={styles.label}>Şifre</Text>
               <View style={styles.inputRow}>
-                <Ionicons color={authColors.yellow} name="lock-closed-outline" size={17} />
+                <Ionicons pointerEvents="none" color={authColors.yellow} name="lock-closed-outline" size={17} />
                 <TextInput
+                    pointerEvents="auto"
                   ref={passwordInputRef}
                   accessibilityLabel="Şifre"
                   autoComplete="new-password"
@@ -370,8 +375,9 @@ export default function RegisterScreen() {
             <View style={styles.field}>
               <Text style={styles.label}>Şifre tekrar</Text>
               <View style={styles.inputRow}>
-                <Ionicons color={authColors.yellow} name="shield-checkmark-outline" size={17} />
+                <Ionicons pointerEvents="none" color={authColors.yellow} name="shield-checkmark-outline" size={17} />
                 <TextInput
+                    pointerEvents="auto"
                   ref={confirmationInputRef}
                   accessibilityLabel="Şifre tekrar"
                   autoComplete="new-password"
@@ -410,7 +416,7 @@ export default function RegisterScreen() {
           )}
         />
         <View style={styles.consentHeader}>
-          <Ionicons color={authColors.yellow} name="sparkles-outline" size={15} />
+          <Ionicons pointerEvents="none" color={authColors.yellow} name="sparkles-outline" size={15} />
           <Text style={styles.consentHeaderText}>Güvenli kullanım onayları</Text>
         </View>
         <Controller
