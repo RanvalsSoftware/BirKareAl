@@ -16,6 +16,7 @@ async function main(): Promise<void> {
     deps.passwordService,
     new GoogleIdTokenService(deps.config),
     new AppleIdTokenService(deps.config),
+    deps.revenueCatService,
   );
   let deletionSweepRunning = false;
   const sweepAccountDeletions = async () => {
