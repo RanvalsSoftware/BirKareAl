@@ -738,11 +738,7 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
           aspectRatio: req.body.aspectRatio,
           status: 'ACTIVE',
         });
-        const secondaryPersonInput =
-        recipe.trendPreset && isDualPersonTrend(recipe.trendPreset)
-          ? parent.inputs.find((item) => item.role === 'SECONDARY_PERSON')
-          : undefined;
-      const result = await reserveCreateAndEnqueue(deps, {
+        const result = await reserveCreateAndEnqueue(deps, {
           userId: req.auth!.userId,
           requestId: req.requestId,
           project,
@@ -1245,6 +1241,10 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
           await deps.repository.getCatalog(),
         );
       }
+      const secondaryPersonInput =
+        recipe.trendPreset && isDualPersonTrend(recipe.trendPreset)
+          ? parent.inputs.find((item) => item.role === 'SECONDARY_PERSON')
+          : undefined;
       const result = await reserveCreateAndEnqueue(deps, {
         userId: req.auth!.userId,
         requestId: req.requestId,
