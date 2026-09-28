@@ -21,6 +21,14 @@ function reversedGoogleClientId(clientId: string): string {
   return `com.googleusercontent.apps.${clientId.slice(0, -googleClientIdSuffix.length)}`;
 }
 
+function positiveBuildNumber(value: string | undefined, fallback: number): number {
+  const parsed = Number(value ?? fallback);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    throw new Error('BIRKARE_ANDROID_VERSION_CODE pozitif tam sayı olmalıdır.');
+  }
+  return parsed;
+}
+
 const googleWebClientId =
   nonEmpty(process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? process.env.GOOGLE_WEB_CLIENT_ID) ||
   suppliedGoogleWebClientId;
@@ -34,6 +42,15 @@ const googleIosUrlScheme =
   nonEmpty(process.env.EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME) ||
   reversedGoogleClientId(googleIosClientId);
 const publicConfig = resolvePublicMobileConfig(process.env);
+const appVersion = nonEmpty(process.env.BIRKARE_APP_VERSION) || '1.0.0';
+const iosBuildNumber = nonEmpty(process.env.BIRKARE_IOS_BUILD_NUMBER) || '2';
+if (!/^\d+(?:\.\d+){1,2}$/.test(appVersion)) {
+  throw new Error('BIRKARE_APP_VERSION 1.0 veya 1.0.0 biçiminde olmalıdır.');
+}
+if (!/^\d+$/.test(iosBuildNumber) || Number(iosBuildNumber) < 1) {
+  throw new Error('BIRKARE_IOS_BUILD_NUMBER pozitif tam sayı olmalıdır.');
+}
+const androidVersionCode = positiveBuildNumber(process.env.BIRKARE_ANDROID_VERSION_CODE, 2);
 
 const plugins: NonNullable<ExpoConfig['plugins']> = [
   'expo-router',
@@ -83,7 +100,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   name: appName,
   slug: 'birkare-ai',
   scheme: 'birkareai',
-  version: '0.1.0',
+  version: appVersion,
   // App icons must be opaque. Keeping the transparent gold mark here makes
   // iOS flatten it over white, which is why the installed icon looked like a
   // white tile even though the application itself uses a black theme.
@@ -95,6 +112,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     icon: './assets/onboarding/images/brand/logo-gold-icon-black.png',
     supportsTablet: true,
     bundleIdentifier: 'com.birkareai.mobile',
+    buildNumber: iosBuildNumber,
     usesAppleSignIn: true,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
@@ -118,7 +136,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
     permissions: ['com.android.vending.BILLING'],
     // New Play upload after removing broad media permissions.
-    versionCode: 2,
+    versionCode: androidVersionCode,
     adaptiveIcon: {
       foregroundImage: './assets/onboarding/images/brand/logo-gold-icon.png',
       backgroundColor: '#050505',

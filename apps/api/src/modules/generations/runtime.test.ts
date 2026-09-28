@@ -549,15 +549,18 @@ test('studio worker validates, moderates and renders every typed input in determ
     promptVersion: previousPromptVersion,
     compiledPrompt: immutablePrompt,
   });
-  let moderatedRoles: string[] = [];
+  const moderatedRoleBatches: string[][] = [];
   let renderedRoles: string[] = [];
   let renderedPrompt = '';
   const moderationProvider: ModerationProvider = {
     name: 'fake',
     async moderateText(input) {
-      moderatedRoles = input.sourceImages?.map((image) => image.role) ?? [];
-      assert.deepEqual(input.sourceImages?.[0]?.buffer, png);
-      assert.deepEqual(input.sourceImages?.[1]?.buffer, context.garmentBytes);
+      const roles = input.sourceImages?.map((image) => image.role) ?? [];
+      moderatedRoleBatches.push(roles);
+      if (roles[0] !== 'PREVIOUS_OUTPUT') {
+        assert.deepEqual(input.sourceImages?.[0]?.buffer, png);
+        assert.deepEqual(input.sourceImages?.[1]?.buffer, context.garmentBytes);
+      }
       return { flagged: false, categories: [] };
     },
   };
@@ -579,7 +582,10 @@ test('studio worker validates, moderates and renders every typed input in determ
       config: { OPENAI_IMAGE_MODEL: 'test-fast' },
     },
   );
-  assert.deepEqual(moderatedRoles, ['PRIMARY_PERSON', 'GARMENT']);
+  assert.deepEqual(moderatedRoleBatches, [
+    ['PRIMARY_PERSON', 'GARMENT'],
+    ['PREVIOUS_OUTPUT'],
+  ]);
   assert.deepEqual(renderedRoles, ['PRIMARY_PERSON', 'GARMENT']);
   assert.equal(
     renderedPrompt,
@@ -796,6 +802,45 @@ test('moderation service failure stops safely and refunds rather than calling th
   assert.equal(result?.failureCode, 'MODERATION_UNAVAILABLE');
   assert.equal(result?.refundedCredits, 2);
   assert.equal(calls, 0);
+});
+
+test('generated output is moderated before storage publication and blocked outputs refund credits', async () => {
+  const context = await fixture();
+  const fakeProvider = new FakeImageGenerationProvider();
+  let moderationCalls = 0;
+  const moderationProvider: ModerationProvider = {
+    name: 'openai',
+    async moderateText(input) {
+      moderationCalls += 1;
+      if (moderationCalls === 1) {
+        assert.equal(input.sourceImages?.[0]?.role, 'USER');
+        return { flagged: false, categories: [] };
+      }
+      assert.equal(input.sourceImages?.length, 1);
+      assert.equal(input.sourceImages?.[0]?.role, 'PREVIOUS_OUTPUT');
+      return { flagged: true, categories: ['violence'] };
+    },
+  };
+  await runGeneration(
+    { generationId: context.generation.id, requestId: 'post-render-output-moderation' },
+    {
+      ...context,
+      imageProvider: fakeProvider,
+      moderationProvider,
+      config: { OPENAI_IMAGE_MODEL: 'test' },
+    },
+  );
+  const result = await context.repository.getGenerationById(context.generation.id);
+  assert.equal(moderationCalls, 2);
+  assert.equal(result?.status, 'BLOCKED');
+  assert.equal(result?.stage, 'OUTPUT_MODERATION');
+  assert.equal(result?.failureCode, 'OUTPUT_MODERATION_BLOCKED');
+  assert.equal(result?.outputs.length, 0);
+  assert.equal(result?.refundedCredits, 2);
+  assert.equal(
+    (await context.repository.getWallet(context.user.id)).available,
+    context.walletBefore.available,
+  );
 });
 
 test('passing preflight never overrides a later image-provider safety refusal', async () => {

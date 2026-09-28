@@ -20,6 +20,9 @@ vi.mock('@/features/settings/language-store', () => ({
 }));
 vi.mock('@/hooks/useReducedMotion', () => ({ useReducedMotion: () => false }));
 vi.mock('expo-router', () => ({
+  useFocusEffect: (effect: () => void | (() => void)) => {
+    React.useEffect(effect, [effect]);
+  },
   useLocalSearchParams: () => mocks.params,
   router: { canGoBack: () => false, push: mocks.push, replace: mocks.replace },
 }));

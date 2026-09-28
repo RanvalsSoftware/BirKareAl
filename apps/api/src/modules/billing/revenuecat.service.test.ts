@@ -32,11 +32,19 @@ function config(overrides: Partial<BirKareConfig> = {}) {
   } as BirKareConfig;
 }
 
-function subscriber(productId: string, input?: { expires?: string | null; sandbox?: boolean }) {
+function subscriber(
+  productId: string,
+  input?: {
+    expires?: string | null;
+    sandbox?: boolean;
+    purchaseDate?: string;
+    originalPurchaseDate?: string;
+  },
+) {
   const subscription = {
     expires_date: input?.expires === undefined ? '2026-10-11T12:00:00.000Z' : input.expires,
-    purchase_date: '2026-09-11T10:00:00.000Z',
-    original_purchase_date: '2026-01-11T10:00:00.000Z',
+    purchase_date: input?.purchaseDate ?? '2026-09-11T10:00:00.000Z',
+    original_purchase_date: input?.originalPurchaseDate ?? '2026-01-11T10:00:00.000Z',
     store: 'app_store',
     is_sandbox: input?.sandbox ?? true,
     unsubscribe_detected_at: null,
@@ -72,7 +80,11 @@ function subscriber(productId: string, input?: { expires?: string | null; sandbo
   };
 }
 
-function fixture(payload: unknown, configOverrides: Partial<BirKareConfig> = {}) {
+function fixture(
+  payload: unknown,
+  configOverrides: Partial<BirKareConfig> = {},
+  current: Date = fixedNow,
+) {
   const idempotency = new Map<string, unknown>();
   const grants = new Map<string, CreditTransactionRecord>();
   let grantCalls = 0;
@@ -134,7 +146,7 @@ function fixture(payload: unknown, configOverrides: Partial<BirKareConfig> = {})
     config: config(configOverrides),
     repository,
     fetchImpl,
-    now: () => fixedNow,
+    now: () => current,
   });
   return { service, repository, fetchImpl, grants, wallet, grantCalls: () => grantCalls };
 }
@@ -159,14 +171,37 @@ describe('RevenueCat server verification and credit grants', () => {
     assert.match([...f.grants.keys()][0]!, new RegExp(`revenuecat:${USER_ID}:monthly`));
   });
 
-  it('grants the current month for an annual subscriber without backfill', async () => {
+  it('grants annual-plan monthly credits on the purchase anniversary cadence', async () => {
     const f = fixture(subscriber('com.birkareai.pro.yearly'));
     const status = await f.service.readStatus(USER_ID, true);
     assert.deepEqual(
       { active: status.active, plan: status.plan, creditsGranted: status.creditsGranted },
       { active: true, plan: 'annual', creditsGranted: 80 },
     );
-    assert.match([...f.grants.keys()][0]!, /2026-09/);
+    assert.match([...f.grants.keys()][0]!, /2026-01-11:month-8/);
+  });
+
+  it('does not advance an annual credit period just because the UTC calendar month changed', async () => {
+    const annual = subscriber('com.birkareai.pro.yearly', {
+      expires: '2027-09-28T12:00:00.000Z',
+      purchaseDate: '2026-09-28T10:00:00.000Z',
+      originalPurchaseDate: '2026-09-28T10:00:00.000Z',
+    });
+    const beforeAnniversary = fixture(
+      annual,
+      {},
+      new Date('2026-10-01T12:00:00.000Z'),
+    );
+    await beforeAnniversary.service.readStatus(USER_ID, true);
+    assert.match([...beforeAnniversary.grants.keys()][0]!, /2026-09-28:month-0/);
+
+    const onAnniversary = fixture(
+      annual,
+      {},
+      new Date('2026-10-28T12:00:00.000Z'),
+    );
+    await onAnniversary.service.readStatus(USER_ID, true);
+    assert.match([...onAnniversary.grants.keys()][0]!, /2026-09-28:month-1/);
   });
 
   it('maps current Google Play base-plan identifiers to the configured plans', async () => {
@@ -230,6 +265,25 @@ describe('RevenueCat server verification and credit grants', () => {
       service.assertActive(USER_ID),
       (error: unknown) => (error as { code?: string }).code === 'BIRKARE_PRO_REQUIRED',
     );
+  });
+
+  it('deletes RevenueCat customer data and treats 404 as retry-safe success', async () => {
+    for (const status of [200, 404]) {
+      const calls: Array<{ url: string; method?: string }> = [];
+      const service = createRevenueCatService({
+        config: config(),
+        repository: {} as BirKareRepository,
+        fetchImpl: async (url, init) => {
+          calls.push({ url: String(url), method: init?.method });
+          return new Response(status === 200 ? JSON.stringify({ deleted: true }) : '', { status });
+        },
+        now: () => fixedNow,
+      });
+      await service.deleteCustomer(USER_ID);
+      assert.equal(calls.length, 1);
+      assert.equal(calls[0]?.method, 'DELETE');
+      assert.match(calls[0]?.url ?? '', new RegExp(encodeURIComponent(USER_ID)));
+    }
   });
 
   it('authenticates and de-duplicates RevenueCat webhooks', async () => {
