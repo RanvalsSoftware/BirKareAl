@@ -46,6 +46,7 @@ BEGIN
     WHERE "idempotencyKey" = grant_key
   ) THEN
     INSERT INTO "CreditTransaction" (
+      "id",
       "userId",
       "type",
       "status",
@@ -60,6 +61,13 @@ BEGIN
       "completedAt"
     )
     VALUES (
+      (
+        substr(md5(grant_key), 1, 8) || '-' ||
+        substr(md5(grant_key), 9, 4) || '-' ||
+        substr(md5(grant_key), 13, 4) || '-' ||
+        substr(md5(grant_key), 17, 4) || '-' ||
+        substr(md5(grant_key), 21, 12)
+      )::uuid,
       NEW."userId",
       'ADMIN_ADJUSTMENT',
       'COMPLETED',
@@ -103,6 +111,7 @@ WITH target_users AS (
 ),
 inserted AS (
   INSERT INTO "CreditTransaction" (
+    "id",
     "userId",
     "type",
     "status",
@@ -117,6 +126,13 @@ inserted AS (
     "completedAt"
   )
   SELECT
+    (
+      substr(md5('admin:promotional-1000:' || target."userId" || ':v1'), 1, 8) || '-' ||
+      substr(md5('admin:promotional-1000:' || target."userId" || ':v1'), 9, 4) || '-' ||
+      substr(md5('admin:promotional-1000:' || target."userId" || ':v1'), 13, 4) || '-' ||
+      substr(md5('admin:promotional-1000:' || target."userId" || ':v1'), 17, 4) || '-' ||
+      substr(md5('admin:promotional-1000:' || target."userId" || ':v1'), 21, 12)
+    )::uuid,
     target."userId",
     'ADMIN_ADJUSTMENT',
     'COMPLETED',
