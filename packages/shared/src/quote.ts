@@ -8,6 +8,8 @@ export type QuoteInput = {
   premiumModel?: boolean;
   hasFilter?: boolean;
   hasTrend?: boolean;
+  /** An additional separately uploaded person source used by an eligible trend. */
+  hasSecondarySource?: boolean;
   beautyTier?: 'STANDARD' | 'PREMIUM';
   hasFeaturedPerson?: boolean;
   hasSceneTemplate?: boolean;
@@ -71,6 +73,10 @@ export function calculateCreditQuote(input: QuoteInput): CreditQuote {
     addPerImage('Standart güzellik', 1);
   } else if (input.hasFilter) {
     addPerImage('AI filtre', 1);
+  }
+
+  if (input.hasSecondarySource) {
+    addPerImage('İkinci kişi referansı', 1);
   }
 
   if (input.hasSceneTemplate) {
