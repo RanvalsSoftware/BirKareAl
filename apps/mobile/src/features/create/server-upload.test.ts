@@ -26,6 +26,7 @@ const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2
 const webp = new TextEncoder().encode('RIFF0000WEBPexample');
 const heic = new Uint8Array([0, 0, 0, 24, ...new TextEncoder().encode('ftypheic0000mif1heic')]);
 let keyIndex = 0;
+let uploadIndex = 0;
 const newKey = () => `upload_test_attempt_${++keyIndex}`;
 const sourceFlow = (update: Partial<CreateFlow> = {}): CreateFlow => ({
   mode: 'scene',
@@ -71,21 +72,26 @@ beforeEach(() => {
   mocks.api.mockReset();
   mocks.convert.mockReset();
   fetchMock.mockReset();
+  uploadIndex = 0;
   vi.stubGlobal('fetch', fetchMock);
   fetchMock.mockImplementation(async () => imageResponse());
   mocks.api.mockImplementation(async (path: string, init?: RequestInit) => {
     if (path === '/v1/generations/quote')
       return { creditCost: 1, availableCredits: 21, canGenerate: true, breakdown: [] };
-    if (path === '/v1/uploads/initiate')
-      return { assetId: 'asset-1', uploadUrl: '/v1/uploads/asset-1/content', method: 'PUT' };
-    if (path === '/v1/uploads/asset-1/content') {
-      expect(init?.body).toBeInstanceOf(ArrayBuffer);
-      return { assetId: 'asset-1', uploaded: true };
+    if (path === '/v1/uploads/initiate') {
+      const assetId = `asset-${++uploadIndex}`;
+      return { assetId, uploadUrl: `/v1/uploads/${assetId}/content`, method: 'PUT' };
     }
-    if (path === '/v1/uploads/asset-1/complete')
+    const contentMatch = path.match(/^\/v1\/uploads\/(asset-\d+)\/content$/);
+    if (contentMatch) {
+      expect(init?.body).toBeInstanceOf(ArrayBuffer);
+      return { assetId: contentMatch[1], uploaded: true };
+    }
+    const completeMatch = path.match(/^\/v1\/uploads\/(asset-\d+)\/complete$/);
+    if (completeMatch)
       return {
         asset: {
-          id: 'asset-1',
+          id: completeMatch[1],
           status: 'READY',
           mimeType: 'image/jpeg',
           sizeBytes: jpeg.byteLength,
@@ -131,6 +137,35 @@ describe('binary upload and generation startup', () => {
       );
     },
   );
+
+  it('uploads two separate people for an eligible 80s trend and prices the extra source', async () => {
+    await startCreateGeneration(
+      sourceFlow({
+        ...trendCreationSelection('romantic_dinner_80s'),
+        secondarySourceUri: 'file:///partner.jpg',
+        secondarySourceName: 'partner.jpg',
+        secondarySourceRightsConfirmed: true,
+      }),
+      { idempotencyKey: newKey() },
+    );
+
+    expect(callsAt('/v1/uploads/initiate')).toHaveLength(2);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe('file:///source.jpg');
+    expect(fetchMock.mock.calls[1]?.[0]).toBe('file:///partner.jpg');
+
+    const quote = JSON.parse(callsAt('/v1/generations/quote')[0]![1].body);
+    expect(quote).toMatchObject({
+      trendPreset: 'romantic_dinner_80s',
+      hasSecondaryTrendPerson: true,
+    });
+
+    const generation = JSON.parse(callsAt('/v1/generations')[0]![1].body);
+    expect(generation).toMatchObject({
+      trendPreset: 'romantic_dinner_80s',
+      sourceAssetId: 'asset-1',
+      secondarySourceAssetId: 'asset-2',
+    });
+  });
 
   it('requires a fresh submission key when the trend changes', async () => {
     const idempotencyKey = newKey();
