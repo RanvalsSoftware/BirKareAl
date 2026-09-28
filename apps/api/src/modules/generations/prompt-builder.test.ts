@@ -89,6 +89,18 @@ test('every selectable edit is charged once per output and identity preservation
       expected: 8,
     },
     {
+      label: 'two-person trend',
+      input: {
+        mode: 'AI_FILTER',
+        quality: 'STANDARD',
+        numberOfImages: 1,
+        premiumModel: true,
+        hasTrend: true,
+        hasSecondarySource: true,
+      },
+      expected: 9,
+    },
+    {
       label: 'standard beauty',
       input: {
         mode: 'AI_FILTER',
@@ -153,6 +165,18 @@ test('every selectable edit is charged once per output and identity preservation
     }).creditCost,
     48,
     'base and trend cost must both scale with the four generated outputs',
+  );
+  assert.equal(
+    calculateCreditQuote({
+      mode: 'AI_FILTER',
+      quality: 'HD',
+      numberOfImages: 2,
+      premiumModel: true,
+      hasTrend: true,
+      hasSecondarySource: true,
+    }).creditCost,
+    26,
+    'second-person source cost scales per output',
   );
   assert.equal(
     calculateCreditQuote({
