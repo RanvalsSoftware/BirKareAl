@@ -6,7 +6,11 @@ import {
   QuoteGenerationSchema,
 } from '@birkare/contracts';
 import { buildGenerationPrompt, normalizeGenerationRecipe } from '@birkare/ai';
-import { catalogFixtures, TREND_PRESET_IDS } from '@birkare/shared';
+import {
+  catalogFixtures,
+  DUAL_PERSON_TREND_IDS,
+  TREND_PRESET_IDS,
+} from '@birkare/shared';
 import type { AssetRecord, GenerationRecord, ProjectRecord } from '@birkare/database';
 import { buildTrendPrompt, trendIntensity } from '../../../../../packages/ai/src/trend-prompt.js';
 import { assertTrendSelection, assertTrendSource } from './trend-selection.js';
@@ -77,6 +81,50 @@ test('AI tool presets are allowlisted and must match their server mode', () => {
   );
 });
 
+test('dual-person trend sources are allowlisted only for the two supported 80s presets', () => {
+  const secondarySourceAssetId = 'e8ee7bf9-4b4e-4f36-9bf8-84390edfb7e9';
+  assert.deepEqual(DUAL_PERSON_TREND_IDS, [
+    'romantic_dinner_80s',
+    'romantic_closeup_80s',
+  ]);
+
+  for (const trendPreset of DUAL_PERSON_TREND_IDS) {
+    assert.equal(
+      CreateGenerationSchema.safeParse({
+        ...payload,
+        trendPreset,
+        secondarySourceAssetId,
+      }).success,
+      true,
+    );
+    assert.equal(
+      QuoteGenerationSchema.safeParse({
+        ...payload,
+        trendPreset,
+        hasSecondaryTrendPerson: true,
+      }).success,
+      true,
+    );
+  }
+
+  assert.equal(
+    CreateGenerationSchema.safeParse({
+      ...payload,
+      trendPreset: 'kpop_star',
+      secondarySourceAssetId,
+    }).success,
+    false,
+  );
+  assert.equal(
+    QuoteGenerationSchema.safeParse({
+      ...payload,
+      trendPreset: 'analog_90s',
+      hasSecondaryTrendPerson: true,
+    }).success,
+    false,
+  );
+});
+
 test('trend requests reject mismatched modes, other characters, identity changes and clothing lock', () => {
   for (const changes of [
     { mode: 'FULL_SCENE', sceneTemplateId: catalogFixtures.scenes[0]!.id },
@@ -142,15 +190,29 @@ test('eleven detailed directions preserve source identities and exclude catalogu
   }
   assert.match(buildTrendPrompt('analog_90s', 100, '4:5'), /Direct on-camera flash/);
   assert.match(buildTrendPrompt('old_money_portrait', 100, '4:5'), /Soft side window light/);
-  assert.match(buildTrendPrompt('neon_club_night', 100, '4:5'), /close handheld selfie/);
+  assert.match(
+    buildTrendPrompt('neon_club_night', 100, '4:5'),
+    /clearly contemporary 2020s.*No analog film grain/s,
+  );
   assert.match(
     buildTrendPrompt('romantic_dinner_80s', 100, '4:5'),
-    /candlelit table.*exactly the people visible/s,
+    /candlelit table.*exactly the people supplied/s,
   );
   assert.match(
     buildTrendPrompt('romantic_closeup_80s', 100, '4:5'),
     /close casual snapshot framing.*single source person remains a solo portrait/s,
   );
+});
+
+test('two separately supplied people stay distinct in eligible trend prompts', () => {
+  for (const preset of DUAL_PERSON_TREND_IDS) {
+    const prompt = buildTrendPrompt(preset, 100, '4:5', '', true);
+    assert.match(prompt, /TWO SEPARATE SOURCES/);
+    assert.match(prompt, /INPUT IMAGE 1 contains person A and INPUT IMAGE 2 contains person B/);
+    assert.match(prompt, /exactly these two foreground people/);
+    assert.match(prompt, /must not blend, average or swap/);
+    assert.match(prompt, /not a collage, face swap or synthetic composite/);
+  }
 });
 
 test('every trend prompt inherits source framing and anti-CGI realism locks', () => {
@@ -174,7 +236,7 @@ test('every trend prompt inherits source framing and anti-CGI realism locks', ()
   );
   assert.match(
     buildTrendPrompt('analog_90s', 100, '4:5'),
-    /Never invent legs, shoes, hands or a seated posture/,
+    /Never crop the head.*invent legs, shoes or hands/s,
   );
   assert.match(
     buildTrendPrompt('editorial_cover', 100, '4:5'),
