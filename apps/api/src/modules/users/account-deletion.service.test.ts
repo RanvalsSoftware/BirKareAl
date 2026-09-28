@@ -330,6 +330,52 @@ test('a partially deleted storage manifest is retained and safely retried before
   assert.equal(await f.repository.getUserById(f.user.id), null);
 });
 
+test('final deletion also removes RevenueCat customer data and retries if that provider is unavailable', async () => {
+  const f = await fixture();
+  const asset = await f.repository.createAsset(assetInput(f.user.id, 'revenuecat-delete'));
+  const deleted = new Set<string>();
+  let revenueCatCalls = 0;
+  let failRevenueCat = true;
+  const service = new AccountDeletionService(
+    f.repository,
+    {
+      deleteObject: async (key: string) => {
+        deleted.add(key);
+      },
+    } as StorageProvider,
+    { verify: async () => true },
+    {
+      verify: async () => {
+        throw new Error('Google is not used');
+      },
+    },
+    {
+      verify: async () => {
+        throw new Error('Apple is not used');
+      },
+    },
+    {
+      deleteCustomer: async (userId: string) => {
+        assert.equal(userId, f.user.id);
+        revenueCatCalls += 1;
+        if (failRevenueCat) throw new Error('temporary RevenueCat outage');
+      },
+    },
+  );
+  await service.request(f.user.id, { confirmation, password: 'correct-password' });
+  const later = new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000);
+
+  assert.deepEqual(await service.cleanup(later), { completed: 0, failed: 1 });
+  assert.deepEqual([...deleted], [asset.storageKey]);
+  assert.equal(revenueCatCalls, 1);
+  assert.ok(await f.repository.getUserById(f.user.id));
+
+  failRevenueCat = false;
+  assert.deepEqual(await service.cleanup(later), { completed: 1, failed: 0 });
+  assert.equal(revenueCatCalls, 2);
+  assert.equal(await f.repository.getUserById(f.user.id), null);
+});
+
 test('accepted deletion revokes sessions, delays storage cleanup and rejects new uploads/credit reservations', async () => {
   const f = await fixture();
   const asset = await f.repository.createAsset(assetInput(f.user.id));
