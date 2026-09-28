@@ -1,7 +1,11 @@
 import { apiBaseUrl, apiRequest, captureSessionRequestScope } from '@/api/client';
 import { sourceImageAsJpeg } from './source-image-normalizer';
 import type { BeautySettings, GenderTransformation } from '@/features/beauty/settings';
-import { getTrendPreset, type TrendPresetId } from '../trends/presets';
+import {
+  getTrendPreset,
+  supportsSecondPersonTrend,
+  type TrendPresetId,
+} from '../trends/presets';
 
 import type {
   AspectRatio,
@@ -61,6 +65,7 @@ export type CreateFlowServerSelection = {
   beauty?: BeautySettings;
   transformation?: GenderTransformation;
   trendPreset?: TrendPresetId;
+  hasSecondaryTrendPerson: boolean;
   toolPreset?: ServerToolPreset;
   title: string;
   mode: ServerProjectMode;
@@ -107,6 +112,7 @@ export type StartedGeneration = {
 export type StartCreateGenerationResult = {
   selection: CreateFlowServerSelection;
   upload: UploadedSourceAsset;
+  secondaryUpload?: UploadedSourceAsset;
   project: ServerProject;
   quote: GenerationQuote;
   generation: StartedGeneration;
@@ -309,6 +315,22 @@ function assertFlowIsValid(flow: CreateFlow) {
   ) {
     flowError('FLOW_INVALID', 'Görsel sayısı 1 ile 4 arasında olmalıdır.');
   }
+  if (
+    flow.secondarySourceUri &&
+    (!flow.trendPreset || !supportsSecondPersonTrend(flow.trendPreset))
+  ) {
+    flowError(
+      'FLOW_INVALID',
+      'İkinci kişi fotoğrafı yalnızca desteklenen iki kişilik akımlarda kullanılabilir.',
+    );
+  }
+  if (
+    flow.secondarySourceUri &&
+    flow.sourceUri &&
+    flow.secondarySourceUri === flow.sourceUri
+  ) {
+    flowError('FLOW_INVALID', 'İkinci kişi için farklı bir fotoğraf seçmelisin.');
+  }
   if (flow.customInstruction.trim().length > 1000) {
     flowError('FLOW_INVALID', 'Özel talimat en fazla 1000 karakter olabilir.');
   }
@@ -404,6 +426,11 @@ export function resolveCreateFlow(flow: CreateFlow): CreateFlowServerSelection {
     aspectRatio: flow.aspectRatio,
     numberOfImages: flow.numberOfImages,
     filterIntensity: flow.filterIntensity,
+    hasSecondaryTrendPerson: Boolean(
+      flow.secondarySourceUri &&
+        flow.trendPreset &&
+        supportsSecondPersonTrend(flow.trendPreset),
+    ),
     sceneTemplateId,
     stylePresetId,
     featuredPersonId,
@@ -428,6 +455,7 @@ function quotePayload(selection: CreateFlowServerSelection) {
     ...(selection.beauty ? { beauty: selection.beauty } : {}),
     ...(selection.transformation ? { transformation: selection.transformation } : {}),
     ...(selection.trendPreset ? { trendPreset: selection.trendPreset } : {}),
+    ...(selection.hasSecondaryTrendPerson ? { hasSecondaryTrendPerson: true } : {}),
     ...(selection.toolPreset ? { toolPreset: selection.toolPreset } : {}),
   };
 }
@@ -746,6 +774,7 @@ type SubmissionAttempt = {
   fingerprint: string;
   quote?: GenerationQuote;
   upload?: UploadedSourceAsset;
+  secondaryUpload?: UploadedSourceAsset;
   project?: ServerProject;
   generationRequested?: boolean;
   result?: StartCreateGenerationResult;
@@ -779,11 +808,23 @@ export async function startCreateGeneration(
       'Devam etmek için fotoğrafı kullanma hakkına sahip olduğunu onaylamalısın.',
     );
   }
+  if (flow.secondarySourceUri && !flow.secondarySourceRightsConfirmed) {
+    flowError(
+      'SOURCE_RIGHTS_REQUIRED',
+      'İkinci kişi fotoğrafını kullanma hakkına sahip olduğunu da onaylamalısın.',
+    );
+  }
 
   const selection = resolveCreateFlow(flow);
   const key = createSubmissionKey(options.idempotencyKey);
   const attemptKey = `${requestScope.revision}:${key}`;
-  const fingerprint = JSON.stringify([flow.sourceUri, flow.sourceName, selection]);
+  const fingerprint = JSON.stringify([
+    flow.sourceUri,
+    flow.sourceName,
+    flow.secondarySourceUri,
+    flow.secondarySourceName,
+    selection,
+  ]);
   let attempt = submissionAttempts.get(attemptKey);
   if (attempt && attempt.fingerprint !== fingerprint) {
     flowError(
@@ -827,6 +868,18 @@ export async function startCreateGeneration(
     );
     requestScope.assertCurrent();
     const upload = currentAttempt.upload;
+    if (selection.hasSecondaryTrendPerson && flow.secondarySourceUri) {
+      currentAttempt.secondaryUpload ??= await uploadSourceAsset(
+        {
+          sourceUri: flow.secondarySourceUri,
+          sourceName: flow.secondarySourceName,
+        },
+        requestScope.assertCurrent,
+        options.onProgress,
+      );
+      requestScope.assertCurrent();
+    }
+    const secondaryUpload = currentAttempt.secondaryUpload;
     options.onProgress?.('CREATING');
     requestScope.assertCurrent();
     if (!currentAttempt.project) {
@@ -858,6 +911,7 @@ export async function startCreateGeneration(
       body: JSON.stringify({
         projectId: currentAttempt.project.id,
         sourceAssetId: upload.assetId,
+        ...(secondaryUpload ? { secondarySourceAssetId: secondaryUpload.assetId } : {}),
         mode: selection.mode,
         sceneTemplateId: selection.sceneTemplateId,
         featuredPersonId: selection.featuredPersonId,
@@ -886,6 +940,7 @@ export async function startCreateGeneration(
     const result = {
       selection,
       upload,
+      ...(secondaryUpload ? { secondaryUpload } : {}),
       project: currentAttempt.project,
       quote,
       generation,
