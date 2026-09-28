@@ -18,6 +18,10 @@ export type CreateFlow = {
   mode: CreateMode;
   sourceUri: string | null;
   sourceName: string | null;
+  /** Optional second person source for explicitly supported two-person trends. */
+  secondarySourceUri: string | null;
+  secondarySourceName: string | null;
+  secondarySourceRightsConfirmed: boolean;
   sceneId: string | null;
   personId: string | null;
   styleId: string | null;
@@ -47,6 +51,9 @@ const initialFlow: CreateFlow = {
   mode: 'scene',
   sourceUri: null,
   sourceName: null,
+  secondarySourceUri: null,
+  secondarySourceName: null,
+  secondarySourceRightsConfirmed: false,
   sceneId: null,
   personId: null,
   styleId: null,
@@ -89,6 +96,9 @@ export function standardCreationSelection(update: Partial<CreateFlow> = {}): Par
   return {
     toolId: null,
     filterIntensity: 60,
+    secondarySourceUri: null,
+    secondarySourceName: null,
+    secondarySourceRightsConfirmed: false,
     ...update,
     beauty: null,
     transformation: null,
