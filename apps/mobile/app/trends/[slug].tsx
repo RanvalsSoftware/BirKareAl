@@ -1,5 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import {
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CreditBadge, GlassSurface, Icon, Notice, Screen } from '@/components';
@@ -11,8 +21,14 @@ import { useCreateFlow } from '@/features/create/createFlow';
 import { CreateHeader, FieldLabel, MiniChoice, WizardFooter } from '@/features/create/components';
 import { eightiesTrends, trends } from '@/features/trends/catalog';
 import { TrendRail } from '@/features/trends/TrendRail';
-import { isEightiesTrend, trendCreationSelection } from '@/features/trends/presets';
-import { colors, typography } from '@/theme';
+import {
+  isEightiesTrend,
+  supportsSecondPersonTrend,
+  trendCreationSelection,
+} from '@/features/trends/presets';
+import { colors, radii, spacing, typography } from '@/theme';
+
+const MAX_TREND_SOURCE_BYTES = 15 * 1024 * 1024;
 
 export default function TrendScreen() {
   const { slug } = useLocalSearchParams<{ slug?: string }>();
@@ -46,6 +62,41 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
   const [advanced, setAdvanced] = useState(false);
   const credits = useAvailableCredits();
   const isEighties = isEightiesTrend(trend.id);
+  const supportsSecondPerson = supportsSecondPersonTrend(trend.id);
+  const secondaryReady =
+    !flow.secondarySourceUri || Boolean(flow.secondarySourceRightsConfirmed);
+
+  async function chooseSecondPerson() {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: false,
+        quality: 0.9,
+        selectionLimit: 1,
+      });
+      if (result.canceled || !result.assets[0]) return;
+      const asset = result.assets[0];
+      if (asset.fileSize && asset.fileSize > MAX_TREND_SOURCE_BYTES) {
+        Alert.alert(
+          'Dosya büyük',
+          'İkinci kişi fotoğrafı en fazla 15 MB olabilir. Daha küçük bir görsel seç.',
+        );
+        return;
+      }
+      if (asset.uri === flow.sourceUri) {
+        Alert.alert('Farklı fotoğraf seç', 'İkinci kişi için farklı bir kaynak fotoğraf kullan.');
+        return;
+      }
+      set({
+        secondarySourceUri: asset.uri,
+        secondarySourceName: asset.fileName?.trim() || 'İkinci kişi fotoğrafı',
+        secondarySourceRightsConfirmed: false,
+      });
+    } catch {
+      Alert.alert('Fotoğraf seçilemedi', 'İkinci kişi fotoğrafını tekrar seçmeyi dene.');
+    }
+  }
+
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
@@ -184,11 +235,124 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
         </Pressable>
         <Text style={styles.small}>AI ile uygulanır</Text>
       </View>
+      {supportsSecondPerson ? (
+        <View style={styles.secondaryCard}>
+          <View style={styles.secondaryHeading}>
+            <View style={styles.secondaryHeadingCopy}>
+              <Text style={styles.title}>İkinci kişi (isteğe bağlı)</Text>
+              <Text style={styles.small}>
+                Yan yana çekilmiş fotoğraf gerekmez. İki ayrı kişiyi tek sahnede doğal biçimde
+                birleştiririz.
+              </Text>
+            </View>
+            <View style={styles.secondaryCost}>
+              <Text style={styles.secondaryCostText}>+1 kredi / görsel</Text>
+            </View>
+          </View>
+          {flow.secondarySourceUri ? (
+            <>
+              <View style={styles.secondarySourceRow}>
+                <Image
+                  source={{ uri: flow.secondarySourceUri }}
+                  resizeMode="cover"
+                  style={styles.secondaryThumb}
+                />
+                <View style={styles.secondarySourceCopy}>
+                  <Text style={styles.secondarySourceTitle}>İkinci kişi seçildi</Text>
+                  <Text style={styles.small} numberOfLines={1}>
+                    {flow.secondarySourceName || 'İkinci kişi fotoğrafı'}
+                  </Text>
+                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="İkinci kişi fotoğrafını kaldır"
+                  onPress={() =>
+                    set({
+                      secondarySourceUri: null,
+                      secondarySourceName: null,
+                      secondarySourceRightsConfirmed: false,
+                    })
+                  }
+                  style={styles.secondaryRemove}
+                >
+                  <Icon name="close" size={20} color={colors.textSecondary} />
+                </Pressable>
+              </View>
+              <Pressable
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: Boolean(flow.secondarySourceRightsConfirmed) }}
+                onPress={() =>
+                  set({
+                    secondarySourceRightsConfirmed: !flow.secondarySourceRightsConfirmed,
+                  })
+                }
+                style={[
+                  styles.rightsRow,
+                  flow.secondarySourceRightsConfirmed && styles.rightsRowChecked,
+                ]}
+              >
+                <View
+                  style={[
+                    styles.checkbox,
+                    flow.secondarySourceRightsConfirmed && styles.checkboxChecked,
+                  ]}
+                >
+                  {flow.secondarySourceRightsConfirmed ? (
+                    <Icon name="checkmark" size={15} color="#171000" />
+                  ) : null}
+                </View>
+                <Text style={styles.rightsText}>
+                  Bu ikinci fotoğrafı kullanma hakkım var ve görseldeki kişinin izni bulunuyor.
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => void chooseSecondPerson()}
+                style={styles.secondaryChange}
+              >
+                <Icon name="images-outline" size={17} color={colors.accentYellow} />
+                <Text style={styles.link}>İkinci fotoğrafı değiştir</Text>
+              </Pressable>
+            </>
+          ) : (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => void chooseSecondPerson()}
+              style={styles.secondaryAdd}
+            >
+              <Icon name="add" size={20} color="#171000" />
+              <Text style={styles.secondaryAddText}>Ayrı fotoğraftan kişi ekle</Text>
+            </Pressable>
+          )}
+          <Text style={styles.secondaryFootnote}>
+            Kimlikler ayrı ayrı korunur; yüzler karıştırılmaz. İkinci kişi yalnızca bu iki 80’ler
+            görünümünde desteklenir.
+          </Text>
+        </View>
+      ) : null}
       <Text style={styles.detail}>{trend.detail}</Text>
       <Text style={styles.small}>
         Örnek yüz kopyalanmaz. Önizleme yalnız renk fikri verir; kıyafet, poz ve ortam dönüşümü AI
         üretiminde uygulanır.
       </Text>
+
+      <View style={styles.instructionCard}>
+        <Text style={styles.title}>İsteğe bağlı sahne notu</Text>
+        <Text style={styles.small}>
+          Arka planı, ortamı veya küçük stil ayrıntılarını değiştirebilirsin. Kimlik ve doğal anatomi
+          her zaman korunur.
+        </Text>
+        <TextInput
+          accessibilityLabel="Akım için özel sahne talimatı"
+          value={flow.customInstruction}
+          onChangeText={(customInstruction) => set({ customInstruction })}
+          placeholder="Örn. arka planı yağmurlu İstanbul gecesi yap…"
+          placeholderTextColor={colors.textMuted}
+          multiline
+          maxLength={1000}
+          style={styles.instructionInput}
+        />
+      </View>
 
       <GlassSurface
         radius={24}
@@ -271,20 +435,26 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
       ) : null}
       <WizardFooter
         label={
-          flow.sourceUri && flow.sourceRightsConfirmed ? 'Üretim özetini gör' : 'Fotoğrafını seç'
+          flow.sourceUri && flow.sourceRightsConfirmed
+            ? secondaryReady
+              ? 'Üretim özetini gör'
+              : 'İkinci fotoğrafı onayla'
+            : 'Fotoğrafını seç'
         }
-        disabled={!canContinue}
+        disabled={!canContinue || !secondaryReady}
         onPress={() =>
           router.push(
-            (flow.sourceUri && flow.sourceRightsConfirmed
+            (flow.sourceUri && flow.sourceRightsConfirmed && secondaryReady
               ? '/create/review'
               : '/create/upload') as never,
           )
         }
         hint={
-          canContinue
-            ? 'Kaydırmak ücretsizdir. Üretim maliyetini bir sonraki ekranda onaylarsın.'
-            : 'Bir etki uygulamak için yoğunluğu artır.'
+          !secondaryReady
+            ? 'İkinci fotoğraf için kullanım hakkını onayla.'
+            : canContinue
+              ? 'Kaydırmak ücretsizdir. Üretim maliyetini bir sonraki ekranda onaylarsın.'
+              : 'Bir etki uygulamak için yoğunluğu artır.'
         }
       />
       <Text style={styles.moreTitle}>Diğer akımlar</Text>
@@ -418,6 +588,116 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 18,
     marginBottom: 12,
+  },
+  secondaryCard: {
+    marginTop: 14,
+    padding: 14,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: '#F5C8423D',
+    backgroundColor: '#171619',
+    gap: 11,
+  },
+  secondaryHeading: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  secondaryHeadingCopy: { flex: 1, gap: 4 },
+  secondaryCost: {
+    borderRadius: radii.pill,
+    backgroundColor: '#F5C84218',
+    borderWidth: 1,
+    borderColor: '#F5C8425C',
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+  },
+  secondaryCostText: { color: colors.accentYellow, fontSize: 10, fontWeight: '800' },
+  secondarySourceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 9,
+    borderRadius: radii.md,
+    backgroundColor: colors.surfaceElevated,
+  },
+  secondaryThumb: { width: 56, height: 68, borderRadius: 11 },
+  secondarySourceCopy: { flex: 1 },
+  secondarySourceTitle: { ...typography.label, color: colors.textPrimary, marginBottom: 3 },
+  secondaryRemove: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryAdd: {
+    minHeight: 48,
+    borderRadius: radii.md,
+    backgroundColor: colors.accentYellow,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    paddingHorizontal: 14,
+  },
+  secondaryAddText: { ...typography.label, color: '#171000', fontWeight: '800' },
+  secondaryChange: {
+    minHeight: 42,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    alignSelf: 'flex-start',
+  },
+  secondaryFootnote: { fontSize: 10, lineHeight: 15, color: colors.textMuted },
+  rightsRow: {
+    minHeight: 58,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    padding: 10,
+  },
+  rightsRowChecked: {
+    borderColor: colors.accentYellow,
+    backgroundColor: colors.accentYellowSoft,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: colors.borderStrong,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: { backgroundColor: colors.accentYellow, borderColor: colors.accentYellow },
+  rightsText: { flex: 1, ...typography.caption, color: colors.textSecondary, lineHeight: 18 },
+  instructionCard: {
+    marginTop: spacing.md,
+    padding: 14,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    gap: 7,
+  },
+  instructionInput: {
+    minHeight: 86,
+    maxHeight: 140,
+    marginTop: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceElevated,
+    ...typography.body,
+    color: colors.textPrimary,
+    textAlignVertical: 'top',
   },
   moreTitle: { color: '#fff', fontSize: 20, fontWeight: '700', marginTop: 24, marginBottom: 8 },
 });
