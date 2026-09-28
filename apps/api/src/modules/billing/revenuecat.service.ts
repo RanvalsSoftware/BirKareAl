@@ -119,6 +119,41 @@ function utcMonthKey(value: Date): string {
   return `${value.getUTCFullYear()}-${String(value.getUTCMonth() + 1).padStart(2, '0')}`;
 }
 
+function daysInUtcMonth(year: number, month: number): number {
+  return new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+}
+
+/**
+ * Annual plans grant their monthly credit allowance on the purchase-day cadence,
+ * not at UTC calendar-month boundaries. A 28 September purchase therefore stays
+ * in period 0 until 28 October instead of receiving another grant on 1 October.
+ */
+function annualCreditPeriodKey(subscription: RevenueCatSubscription | undefined, current: Date): string {
+  const anchor =
+    validDate(subscription?.original_purchase_date) ??
+    validDate(subscription?.purchase_date) ??
+    current;
+  let elapsed =
+    (current.getUTCFullYear() - anchor.getUTCFullYear()) * 12 +
+    (current.getUTCMonth() - anchor.getUTCMonth());
+  const anniversaryDay = Math.min(
+    anchor.getUTCDate(),
+    daysInUtcMonth(current.getUTCFullYear(), current.getUTCMonth()),
+  );
+  const anniversaryThisMonth = Date.UTC(
+    current.getUTCFullYear(),
+    current.getUTCMonth(),
+    anniversaryDay,
+    anchor.getUTCHours(),
+    anchor.getUTCMinutes(),
+    anchor.getUTCSeconds(),
+    anchor.getUTCMilliseconds(),
+  );
+  if (current.getTime() < anniversaryThisMonth) elapsed -= 1;
+  const period = Math.max(0, elapsed);
+  return `${anchor.toISOString().slice(0, 10)}:month-${period}`;
+}
+
 function safeTokenEquals(received: string, expected: string): boolean {
   const normalize = (value: string) => value.trim().replace(/^Bearer\s+/i, '');
   const left = Buffer.from(normalize(received));
@@ -330,7 +365,9 @@ export function createRevenueCatService(dependencies: Dependencies) {
         const period = validDate(subscription?.purchase_date) ?? now();
         creditsGranted = (await grant(userId, productId, plan, utcMonthKey(period))).credits;
       } else {
-        creditsGranted = (await grant(userId, productId, plan, utcMonthKey(now()))).credits;
+        creditsGranted = (
+          await grant(userId, productId, plan, annualCreditPeriodKey(subscription, now()))
+        ).credits;
       }
     }
 
