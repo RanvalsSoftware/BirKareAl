@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import {
   ActivityIndicator,
   Image,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -45,6 +47,7 @@ export default function GenerationEditScreen() {
   const [reference, setReference] = useState<LocalReference | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const messagesRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     if (!generationId) return;
@@ -180,95 +183,114 @@ export default function GenerationEditScreen() {
           <Text style={styles.previewBadgeText}>AI düzenleme</Text>
         </View>
       </View>
-      <ScrollView
-        style={styles.messages}
-        contentContainerStyle={styles.messagesContent}
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        style={styles.keyboardArea}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
       >
-        <View style={[styles.bubble, styles.aiBubble]}>
-          <Text style={styles.bubbleText}>
-            Elbette. Sonucu doğal tutarak neyi değiştirmemi istersin?
-          </Text>
-        </View>
-        {serverMessages
-          .filter((item) => item.role !== 'SYSTEM')
-          .map((item) => (
-            <View
-              key={item.id}
-              style={[styles.bubble, item.role === 'USER' ? styles.userBubble : styles.aiBubble]}
-            >
-              <Text style={[styles.bubbleText, item.role === 'USER' && styles.userBubbleText]}>
-                {item.content}
-              </Text>
-            </View>
-          ))}
-        <Text style={styles.suggestionLabel}>Önerilen düzenlemeler</Text>
         <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.suggestions}
+          ref={messagesRef}
+          style={styles.messages}
+          contentContainerStyle={styles.messagesContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+          onContentSizeChange={() => messagesRef.current?.scrollToEnd({ animated: true })}
         >
-          {starters.map((item) => (
-            <CategoryChip key={item} label={item} onPress={() => setMessage(item)} />
-          ))}
-        </ScrollView>
-        <Notice tone="neutral">
-          Her AI düzenlemesi yeni bir sürüm oluşturur; önceki sonucunu her zaman geri alabilirsin.
-        </Notice>
-      </ScrollView>
-      {error ? (
-        <View style={styles.error}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
-      ) : null}
-      {reference ? (
-        <View style={styles.referenceRow}>
-          <Image source={{ uri: reference.uri }} style={styles.referenceThumb} />
-          <View style={styles.referenceCopy}>
-            <Text style={styles.referenceTitle}>Görsel referansı eklendi</Text>
-            <Text numberOfLines={1} style={styles.referenceName}>
-              {reference.fileName}
+          <View style={[styles.bubble, styles.aiBubble]}>
+            <Text style={styles.bubbleText}>
+              Elbette. Sonucu doğal tutarak neyi değiştirmemi istersin?
             </Text>
           </View>
-          <Pressable accessibilityLabel="Referansı kaldır" onPress={() => setReference(null)}>
-            <Icon name="close-circle" size={24} color={colors.textSecondary} />
-          </Pressable>
+          {serverMessages
+            .filter((item) => item.role !== 'SYSTEM')
+            .map((item) => (
+              <View
+                key={item.id}
+                style={[styles.bubble, item.role === 'USER' ? styles.userBubble : styles.aiBubble]}
+              >
+                <Text style={[styles.bubbleText, item.role === 'USER' && styles.userBubbleText]}>
+                  {item.content}
+                </Text>
+              </View>
+            ))}
+          <Text style={styles.suggestionLabel}>Önerilen düzenlemeler</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.suggestions}
+          >
+            {starters.map((item) => (
+              <CategoryChip key={item} label={item} onPress={() => setMessage(item)} />
+            ))}
+          </ScrollView>
+          <Notice tone="neutral">
+            Her AI düzenlemesi yeni bir sürüm oluşturur; önceki sonucunu her zaman geri alabilirsin.
+          </Notice>
+        </ScrollView>
+        {error ? (
+          <View style={styles.error}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        ) : null}
+        {reference ? (
+          <View style={styles.referenceRow}>
+            <Image source={{ uri: reference.uri }} style={styles.referenceThumb} />
+            <View style={styles.referenceCopy}>
+              <Text style={styles.referenceTitle}>Görsel referansı eklendi</Text>
+              <Text numberOfLines={1} style={styles.referenceName}>
+                {reference.fileName}
+              </Text>
+            </View>
+            <Pressable accessibilityLabel="Referansı kaldır" onPress={() => setReference(null)}>
+              <Icon name="close-circle" size={24} color={colors.textSecondary} />
+            </Pressable>
+          </View>
+        ) : null}
+        <View style={styles.composerDock}>
+          <View style={styles.composer}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Referans fotoğraf ekle"
+              disabled={busy}
+              onPress={chooseReference}
+              style={styles.attach}
+            >
+              <Icon name="attach" size={24} color={colors.textSecondary} />
+            </Pressable>
+            <TextInput
+              value={message}
+              editable={!busy}
+              onChangeText={setMessage}
+              onFocus={() =>
+                setTimeout(() => messagesRef.current?.scrollToEnd({ animated: true }), 120)
+              }
+              onSubmitEditing={() => void submitRevision()}
+              returnKeyType="send"
+              submitBehavior="submit"
+              placeholder="İstediğin değişikliği yaz…"
+              placeholderTextColor={colors.textMuted}
+              style={styles.input}
+              multiline
+              accessibilityLabel="Düzenleme isteği"
+            />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Düzenleme isteğini gönder"
+              onPress={() => void submitRevision()}
+              style={[styles.send, (!message.trim() || busy || !sourceOutput) && styles.sendDisabled]}
+              disabled={!message.trim() || busy || !sourceOutput}
+            >
+              {busy ? (
+                <ActivityIndicator color={colors.background} />
+              ) : (
+                <Icon name="arrow-up" size={21} color={colors.background} />
+              )}
+            </Pressable>
+          </View>
         </View>
-      ) : null}
-      <View style={styles.composer}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Referans fotoğraf ekle"
-          disabled={busy}
-          onPress={chooseReference}
-          style={styles.attach}
-        >
-          <Icon name="attach" size={24} color={colors.textSecondary} />
-        </Pressable>
-        <TextInput
-          value={message}
-          editable={!busy}
-          onChangeText={setMessage}
-          placeholder="İstediğin değişikliği yaz…"
-          placeholderTextColor={colors.textMuted}
-          style={styles.input}
-          multiline
-          accessibilityLabel="Düzenleme isteği"
-        />
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Düzenleme isteğini gönder"
-          onPress={() => void submitRevision()}
-          style={[styles.send, (!message.trim() || busy || !sourceOutput) && styles.sendDisabled]}
-          disabled={!message.trim() || busy || !sourceOutput}
-        >
-          {busy ? (
-            <ActivityIndicator color={colors.background} />
-          ) : (
-            <Icon name="arrow-up" size={21} color={colors.background} />
-          )}
-        </Pressable>
-      </View>
+      </KeyboardAvoidingView>
     </Screen>
   );
 }
@@ -309,6 +331,7 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   previewBadgeText: { ...typography.caption, color: colors.textPrimary, fontWeight: '700' },
+  keyboardArea: { flex: 1, minHeight: 0 },
   messages: { flex: 1, marginTop: spacing.md },
   messagesContent: { gap: 10, paddingBottom: 12 },
   bubble: { maxWidth: '86%', paddingHorizontal: 14, paddingVertical: 11, borderRadius: radii.md },
@@ -350,6 +373,11 @@ const styles = StyleSheet.create({
   referenceCopy: { flex: 1 },
   referenceTitle: { ...typography.caption, color: colors.textPrimary, fontWeight: '700' },
   referenceName: { ...typography.caption, color: colors.textMuted, fontSize: 11 },
+  composerDock: {
+    paddingTop: 10,
+    paddingBottom: Platform.OS === 'ios' ? 8 : 10,
+    backgroundColor: colors.background,
+  },
   composer: {
     minHeight: 60,
     borderRadius: radii.xl,
