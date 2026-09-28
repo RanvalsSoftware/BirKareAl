@@ -267,6 +267,25 @@ describe('RevenueCat server verification and credit grants', () => {
     );
   });
 
+  it('deletes RevenueCat customer data and treats 404 as retry-safe success', async () => {
+    for (const status of [200, 404]) {
+      const calls: Array<{ url: string; method?: string }> = [];
+      const service = createRevenueCatService({
+        config: config(),
+        repository: {} as BirKareRepository,
+        fetchImpl: async (url, init) => {
+          calls.push({ url: String(url), method: init?.method });
+          return new Response(status === 200 ? JSON.stringify({ deleted: true }) : '', { status });
+        },
+        now: () => fixedNow,
+      });
+      await service.deleteCustomer(USER_ID);
+      assert.equal(calls.length, 1);
+      assert.equal(calls[0]?.method, 'DELETE');
+      assert.match(calls[0]?.url ?? '', new RegExp(encodeURIComponent(USER_ID)));
+    }
+  });
+
   it('authenticates and de-duplicates RevenueCat webhooks', async () => {
     const f = fixture(subscriber('monthly'));
     const payload = {
