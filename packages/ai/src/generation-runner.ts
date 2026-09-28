@@ -693,11 +693,11 @@ export async function runGeneration(
       return;
     }
 
-    await setStage(repository, generation.id, 'POST_PROCESSING');
-    for (const [index, image] of response.images.entries()) {
+    const validatedOutputs = response.images.map((image) => {
       if (
         image.bytes.length === 0 ||
         image.bytes.length > 30 * 1024 * 1024 ||
+        !isSupportedSourceMimeType(image.mimeType) ||
         !hasExpectedMagicBytes(image.bytes, image.mimeType)
       ) {
         throw new ApiError({
@@ -706,6 +706,47 @@ export async function runGeneration(
           message: 'Görsel sağlayıcısı geçersiz çıktı döndürdü.',
         });
       }
+      return image as { bytes: Buffer; mimeType: ImageReference['mimeType'] };
+    });
+
+    await setStage(repository, generation.id, 'MODERATING_OUTPUT');
+    const outputModeration = await moderationProvider.moderateText({
+      text: 'AI-generated image output safety review.',
+      requestId: input.requestId,
+      sourceImages: validatedOutputs.map((image) => ({
+        buffer: image.bytes,
+        mimeType: image.mimeType,
+        role: 'PREVIOUS_OUTPUT',
+      })),
+    });
+    generation = (await repository.getGenerationById(generation.id))!;
+    if (!generation || TERMINAL_GENERATION_STATUSES.has(generation.status)) return;
+    if (outputModeration.flagged) {
+      await safeRelease(repository, generation, outputModeration.reason ?? 'Çıktı moderasyon engeli', {
+        status: 'BLOCKED',
+        stage: 'OUTPUT_MODERATION',
+        progress: 100,
+        failureCode: 'OUTPUT_MODERATION_BLOCKED',
+        failureMessage:
+          'Oluşturulan görsel güvenlik kontrolünden geçemedi. Ayrılan krediniz iade edildi.',
+        refundedCredits: generation.reservedCredits,
+        completedAt: new Date(),
+      });
+      logger.warn(
+        {
+          generationId: generation.id,
+          requestId: input.requestId,
+          code: 'OUTPUT_MODERATION_BLOCKED',
+          moderationStage: 'output',
+          moderationCategories: safeModerationCategories(outputModeration.categories),
+        },
+        'Üretim çıktı güvenlik kontrolünde durduruldu.',
+      );
+      return;
+    }
+
+    await setStage(repository, generation.id, 'POST_PROCESSING');
+    for (const [index, image] of validatedOutputs.entries()) {
       const extension =
         image.mimeType === 'image/webp' ? 'webp' : image.mimeType === 'image/jpeg' ? 'jpg' : 'png';
       const key = `users/${generation.userId}/generations/${generation.id}/preview-${index + 1}.${extension}`;
