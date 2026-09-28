@@ -69,6 +69,7 @@ export default function ProjectDetailScreen() {
   const accessToken = useAuthStore((store) => store.accessToken);
   const [detail, setDetail] = useState<ProjectDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [actualImageRatio, setActualImageRatio] = useState<number | null>(null);
 
   useEffect(() => {
     if (!projectId) return;
@@ -103,7 +104,10 @@ export default function ProjectDetailScreen() {
         headers: accessToken ? { authorization: `Bearer ${accessToken}` } : undefined,
       }
     : null;
-  const previewAspectRatio = shareAspectRatio(detail?.project.aspectRatio);
+  const previewAspectRatio =
+    actualImageRatio && Number.isFinite(actualImageRatio) && actualImageRatio > 0
+      ? actualImageRatio
+      : shareAspectRatio(detail?.project.aspectRatio);
   const openShare = () => {
     if (!activeGeneration || !activeOutput) return;
     router.push({
@@ -157,7 +161,15 @@ export default function ProjectDetailScreen() {
       {detail && imageSource && activeGeneration && activeOutput ? (
         <>
           <View style={[styles.preview, { aspectRatio: previewAspectRatio }]}>
-            <Image source={imageSource} resizeMode="contain" style={styles.previewImage} />
+            <Image
+              source={imageSource}
+              resizeMode="contain"
+              style={styles.previewImage}
+              onLoad={(event) => {
+                const { width, height } = event.nativeEvent.source;
+                if (width > 0 && height > 0) setActualImageRatio(width / height);
+              }}
+            />
             <View style={styles.aiBadge}>
               <Icon name="sparkles" size={13} color={colors.accentYellow} />
               <Text style={styles.aiBadgeText}>AI ile oluşturuldu</Text>
@@ -299,7 +311,7 @@ function IconAction({
 }
 
 const styles = StyleSheet.create({
-  content: { paddingBottom: 42 },
+  content: { paddingBottom: 46 },
   headerMore: {
     width: 44,
     height: 44,
@@ -315,12 +327,18 @@ const styles = StyleSheet.create({
   preview: {
     width: '100%',
     maxHeight: 680,
-    borderColor: colors.border,
-    borderRadius: radii.xl,
+    minHeight: 260,
+    borderColor: 'rgba(255,255,255,0.14)',
+    borderRadius: 28,
     borderWidth: 1,
     marginTop: spacing.sm,
     overflow: 'hidden',
     position: 'relative',
+    backgroundColor: '#070707',
+    shadowColor: '#F5C842',
+    shadowOpacity: 0.10,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 6 },
   },
   previewImage: {
     width: '100%',
@@ -340,7 +358,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   aiBadgeText: { ...typography.caption, color: colors.textPrimary, fontWeight: '700' },
-  actions: { flexDirection: 'row', gap: 10, marginTop: spacing.md },
+  actions: { flexDirection: 'row', gap: 10, marginTop: 14 },
   editAction: {
     alignItems: 'center',
     backgroundColor: colors.accentYellow,
@@ -349,7 +367,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     justifyContent: 'center',
-    minHeight: 56,
+    minHeight: 58,
+    shadowColor: '#F5C842',
+    shadowOpacity: 0.28,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 4 },
   },
   editActionText: { ...typography.h3, color: '#050505' },
   iconAction: {
@@ -360,6 +382,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     justifyContent: 'center',
     width: 58,
+    minHeight: 58,
   },
   aiEditPressable: { marginTop: spacing.md },
   aiEditCard: {
