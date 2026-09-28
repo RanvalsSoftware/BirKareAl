@@ -73,6 +73,7 @@ export default function ReviewScreen() {
         JSON.stringify(flow.beauty),
         JSON.stringify(flow.transformation),
         flow.trendPreset,
+        flow.secondarySourceUri ? 'secondary-person' : 'single-person',
       ].join('|'),
     [
       flow.mode,
@@ -84,6 +85,7 @@ export default function ReviewScreen() {
       flow.beauty,
       flow.transformation,
       flow.trendPreset,
+      flow.secondarySourceUri,
     ],
   );
   const quoteRequestKey = `${quoteInputKey}:${quoteRefresh}`;
@@ -177,9 +179,12 @@ export default function ReviewScreen() {
   const availableCredits = quote?.availableCredits ?? 0;
   const unlimitedCredits = Boolean(quote?.unlimitedCredits);
   const remainingCredits = unlimitedCredits ? '∞' : Math.max(0, availableCredits - cost);
+  const secondarySourceReady =
+    !flow.secondarySourceUri || Boolean(flow.secondarySourceRightsConfirmed);
   const readyToStart = Boolean(
     flow.sourceUri &&
     flow.sourceRightsConfirmed &&
+    secondarySourceReady &&
     (retryingSameSubmission || (quote?.canGenerate && !isQuoting)) &&
     !isStarting,
   );
@@ -270,6 +275,22 @@ export default function ReviewScreen() {
           />
         </View>
       </View>
+      {flow.secondarySourceUri ? (
+        <View style={styles.secondarySummary}>
+          <Image
+            source={{ uri: flow.secondarySourceUri }}
+            resizeMode="cover"
+            style={styles.secondarySummaryImage}
+          />
+          <View style={styles.secondarySummaryCopy}>
+            <Text style={styles.secondarySummaryTitle}>İkinci kişi kaynağı</Text>
+            <Text style={styles.secondarySummaryText}>
+              Ayrı fotoğraftaki kişinin kimliği korunarak aynı sahneye eklenir.
+            </Text>
+          </View>
+          <Icon name="people-outline" size={20} color={colors.accentYellow} />
+        </View>
+      ) : null}
       {flow.mode === 'character' ? (
         <View style={styles.details}>
           <Detail label="Karakter" value={person} icon="person-outline" />
@@ -322,6 +343,16 @@ export default function ReviewScreen() {
               'Kredi özeti güvenle doğrulanıyor.'
             )}
           </Text>
+          {quote ? (
+            <View style={styles.breakdown}>
+              {quote.breakdown.map((item) => (
+                <View key={item.label} style={styles.breakdownRow}>
+                  <Text style={styles.breakdownLabel}>{item.label}</Text>
+                  <Text style={styles.breakdownValue}>+{item.credits}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
         </View>
         {quoteError && quoteErrorVisible ? (
           <Pressable
@@ -531,4 +562,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   retryQuoteText: { ...typography.label, color: colors.accentYellow },
+  secondarySummary: {
+    marginTop: spacing.md,
+    minHeight: 78,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: '#F5C8423D',
+    backgroundColor: colors.surface,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    padding: 10,
+  },
+  secondarySummaryImage: { width: 48, height: 58, borderRadius: 10 },
+  secondarySummaryCopy: { flex: 1 },
+  secondarySummaryTitle: { ...typography.label, color: colors.textPrimary, fontWeight: '800' },
+  secondarySummaryText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    lineHeight: 17,
+    marginTop: 2,
+  },
+  breakdown: {
+    marginTop: 10,
+    paddingTop: 9,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+    gap: 5,
+  },
+  breakdownRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
+  breakdownLabel: { ...typography.caption, color: colors.textMuted },
+  breakdownValue: { ...typography.caption, color: colors.textPrimary, fontWeight: '700' },
 });
