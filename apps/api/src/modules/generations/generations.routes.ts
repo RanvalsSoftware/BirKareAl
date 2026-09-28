@@ -21,6 +21,7 @@ import {
   createId,
   forbidden,
   hashStable,
+  isDualPersonTrend,
   notFound,
   premiumBeautySelections,
   unavailable,
@@ -148,6 +149,36 @@ async function studioGenerationInputs(
       { assetId: garment.id, role: 'GARMENT', sortOrder: 1 },
     ],
   };
+}
+
+async function trendGenerationInputs(
+  deps: ApiDependencies,
+  input: {
+    userId: string;
+    source: AssetRecord;
+    trendPreset?: string;
+    secondarySourceAssetId?: string;
+  },
+): Promise<Array<{ assetId: string; role: GenerationInputRole; sortOrder: number }> | undefined> {
+  if (!input.secondarySourceAssetId) return undefined;
+  if (!input.trendPreset || !isDualPersonTrend(input.trendPreset)) {
+    throw badRequest(
+      'SECONDARY_PERSON_NOT_ALLOWED',
+      'İkinci kişi fotoğrafı yalnızca desteklenen iki kişilik akımlarda kullanılabilir.',
+    );
+  }
+  if (input.secondarySourceAssetId === input.source.id) {
+    throw badRequest(
+      'SECONDARY_PERSON_MUST_DIFFER',
+      'İkinci kişi için farklı bir kaynak fotoğraf seçmelisiniz.',
+    );
+  }
+  const secondary = await deps.repository.getAssetById(input.secondarySourceAssetId);
+  assertReadyStudioSource(secondary, input.userId);
+  return [
+    { assetId: input.source.id, role: 'PRIMARY_USER', sortOrder: 0 },
+    { assetId: secondary.id, role: 'SECONDARY_PERSON', sortOrder: 1 },
+  ];
 }
 
 type CharacterAuthorization =
@@ -517,6 +548,9 @@ async function reserveCreateAndEnqueue(
             !input.recipe.transformation &&
             !input.recipe.trendPreset,
           hasTrend: Boolean(input.recipe.trendPreset),
+          hasSecondarySource: Boolean(
+            input.inputs?.some((item) => item.role === 'SECONDARY_PERSON'),
+          ),
           beautyTier: input.recipe.beauty
             ? premiumBeautySelections(input.recipe.beauty).length
               ? 'PREMIUM'
@@ -631,6 +665,7 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
           !req.body.transformation &&
           !req.body.trendPreset,
         hasTrend: Boolean(req.body.trendPreset),
+        hasSecondarySource: Boolean(req.body.hasSecondaryTrendPerson),
         beautyTier: req.body.beauty
           ? premiumBeautySelections(req.body.beauty).length
             ? 'PREMIUM'
@@ -703,7 +738,11 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
           aspectRatio: req.body.aspectRatio,
           status: 'ACTIVE',
         });
-        const result = await reserveCreateAndEnqueue(deps, {
+        const secondaryPersonInput =
+        recipe.trendPreset && isDualPersonTrend(recipe.trendPreset)
+          ? parent.inputs.find((item) => item.role === 'SECONDARY_PERSON')
+          : undefined;
+      const result = await reserveCreateAndEnqueue(deps, {
           userId: req.auth!.userId,
           requestId: req.requestId,
           project,
@@ -749,6 +788,12 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
         await deps.repository.getCatalog(),
       );
       assertTrendSource(req.body, source, project);
+      const generationInputs = await trendGenerationInputs(deps, {
+        userId: req.auth!.userId,
+        source,
+        trendPreset: req.body.trendPreset,
+        secondarySourceAssetId: req.body.secondarySourceAssetId,
+      });
       assertBeautyAccess({ ...req.body, ...selection });
       assertBeautySource(
         req.body,
@@ -778,6 +823,7 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
         preserveFace: req.body.preserveFace,
         preserveClothes: req.body.preserveClothes,
         recipe,
+        inputs: generationInputs,
         instruction: req.body.customInstruction,
         idempotencyKey: key,
       });
@@ -911,6 +957,12 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
         await deps.repository.getCatalog(),
       );
       assertTrendSource(req.body, source, project);
+      const generationInputs = await trendGenerationInputs(deps, {
+        userId: req.auth!.userId,
+        source,
+        trendPreset: req.body.trendPreset,
+        secondarySourceAssetId: req.body.secondarySourceAssetId,
+      });
       assertBeautyAccess({ ...req.body, ...selection });
       assertBeautySource(
         req.body,
@@ -940,6 +992,7 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
         preserveFace: req.body.preserveFace,
         preserveClothes: req.body.preserveClothes,
         recipe,
+        inputs: generationInputs,
         instruction: req.body.customInstruction,
         idempotencyKey: key,
       });
@@ -1205,8 +1258,23 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
         recipe,
         inputs: [
           { assetId: revisionSourceId, role: 'PRIMARY_USER', sortOrder: 0 },
+          ...(secondaryPersonInput
+            ? [
+                {
+                  assetId: secondaryPersonInput.assetId,
+                  role: 'SECONDARY_PERSON' as const,
+                  sortOrder: 1,
+                },
+              ]
+            : []),
           ...(referenceAsset
-            ? [{ assetId: referenceAsset.id, role: 'REFERENCE' as const, sortOrder: 1 }]
+            ? [
+                {
+                  assetId: referenceAsset.id,
+                  role: 'REFERENCE' as const,
+                  sortOrder: secondaryPersonInput ? 2 : 1,
+                },
+              ]
             : []),
         ],
         instruction: revisionInstruction,
