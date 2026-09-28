@@ -396,6 +396,41 @@ export function createRevenueCatService(dependencies: Dependencies) {
     return status;
   }
 
+  async function deleteCustomer(userId: string): Promise<void> {
+    if (!configured()) return;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), config.REVENUECAT_REQUEST_TIMEOUT_MS);
+    try {
+      const response = await fetchImpl(
+        `${REVENUECAT_API_BASE}/subscribers/${encodeURIComponent(userId)}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${config.REVENUECAT_SECRET_API_KEY}`,
+            Accept: 'application/json',
+          },
+          signal: controller.signal,
+        },
+      );
+      // RevenueCat documents 404 as retry-safe success for "ensure deleted".
+      if (response.status !== 200 && response.status !== 404) {
+        throw unavailable(
+          'REVENUECAT_CUSTOMER_DELETE_FAILED',
+          'Abonelik servisindeki hesap verisi silinemedi. İşlem daha sonra tekrar denenecek.',
+        );
+      }
+      cache.delete(userId);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'ApiError') throw error;
+      throw unavailable(
+        'REVENUECAT_CUSTOMER_DELETE_FAILED',
+        'Abonelik servisindeki hesap verisi silinemedi. İşlem daha sonra tekrar denenecek.',
+      );
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
   async function processWebhook(
     authorization: string | undefined,
     payload: RevenueCatWebhookEvent,
@@ -468,6 +503,7 @@ export function createRevenueCatService(dependencies: Dependencies) {
     planFor,
     readStatus,
     assertActive,
+    deleteCustomer,
     processWebhook,
     clearUserCache(userId: string) {
       cache.delete(userId);
