@@ -5,36 +5,37 @@ export const trendPresets = [
   {
     id: 'kpop_star',
     name: 'K-Pop Star',
-    description: 'Parlak konser ışıkları ve özgün sahne stili.',
+    description: 'Modern konser ışıkları, gerçek sahne fotoğrafı ve güçlü performans stili.',
     detail:
-      'Pembe ve lavanta konser ışıkları, özgün siyah sahne kıyafeti ve dinamik üç çeyrek açı.',
+      'Premium ama giyilebilir siyah sahne stili, doğal yüz dokusu, gerçek konser ışığı ve dinamik fakat anatomik poz.',
   },
   {
     id: 'pop_icon_80s',
     name: '80’ler Retro',
-    description: 'Pop sahnesi, şık akşam yemeği ve yakın portreyle üç retro görünüm.',
+    description: '80’ler sahnesi, analog doku ve daha geniş retro kadraj.',
     detail:
-      'Hacimli saçlar, deri detaylar ve pembe-mavi sahne ışıklarıyla güçlü bir 80’ler pop portresi.',
+      'Bel veya diz üstüne kadar nefes alan kadraj, hacimli saç, deri detaylar ve pembe-mavi analog sahne ışığı.',
   },
   {
     id: 'romantic_dinner_80s',
     name: 'Şık Akşam Yemeği',
-    description: 'Mum ışığı, gece manzarası ve zarif 80’ler davet stili.',
+    description: 'Mum ışığı, zarif 80’ler daveti; tek kişi veya iki ayrı fotoğraftan iki kişi.',
     detail:
-      'Kaynak fotoğraftaki kişileri koruyan, mumlarla aydınlanan şık bir masada sıcak altın ve pembe ışıklı 80’ler gecesi.',
+      'Tek kişilik şık yemek portresi ya da iki ayrı kaynak fotoğraftaki kişiyi kimliklerini koruyarak aynı masada birleştiren doğal 80’ler gecesi.',
   },
   {
     id: 'romantic_closeup_80s',
     name: 'Yakın Retro Portre',
-    description: 'Denim, deri ve neonlarla samimi analog yakın plan.',
+    description: 'Denim, deri ve analog flaş; tek kişi veya iki ayrı fotoğraftan iki kişi.',
     detail:
-      'Retro lokanta atmosferinde denim ve deri detayları, doğrudan flaş ve kontrollü film dokusuyla yakın portre.',
+      'Retro lokanta atmosferinde doğal yakın plan; ikinci fotoğraf eklenirse iki kişiyi yüz ve beden kimliklerini karıştırmadan aynı karede birleştirir.',
   },
   {
     id: 'analog_90s',
     name: '90’lar Analog',
-    description: 'Doğrudan flaş, film dokusu ve rahat sokak stili.',
-    detail: 'Akşam kaldırımında rahat denim, doğrudan flaş ve kontrollü analog film dokusu.',
+    description: '90’lar kompakt kamera hissi, doğrudan flaş ve rahat sokak stili.',
+    detail:
+      'Başın tamamı kadrajda kalacak şekilde daha geniş, gündelik bir sokak karesi; rahat denim, doğrudan flaş ve gerçek analog film dokusu.',
   },
   {
     id: 'y2k_celebrity',
@@ -58,9 +59,9 @@ export const trendPresets = [
   {
     id: 'old_money_portrait',
     name: 'Sade Lüks',
-    description: 'Zamansız kıyafetler ve doğal pencere ışığı.',
+    description: 'Doğal duruş, zamansız kıyafet ve sade pencere ışığı.',
     detail:
-      'Klasik okuma odasında krem ve lacivert tonlar, doğal pencere ışığı ve sakin bir portre.',
+      'Kaynak yüz ve baş-boyun hizasını koruyan klasik okuma odası portresi; krem-lacivert tonlar, doğal pencere ışığı ve 50–85 mm portre hissi.',
   },
   {
     id: 'streetwear_editorial',
@@ -71,8 +72,9 @@ export const trendPresets = [
   {
     id: 'neon_club_night',
     name: 'Neon Gece',
-    description: 'Renkli müzik ışıkları ve enerjik gece atmosferi.',
-    detail: 'Pembe ve mavi ışıklar, disko topu ve doğal bir yakın selfie kompozisyonu.',
+    description: 'Modern kulüp gecesi; temiz dijital kamera görünümü ve canlı ışıklar.',
+    detail:
+      '80’lerden ayrı olarak analog film tanesi veya retro saç/kıyafet yok: modern gece stili, telefon/kamera flaşı, pembe-camgöbeği ışık ve doğal sosyal an.',
   },
 ] as const;
 
@@ -83,6 +85,17 @@ export const EIGHTIES_TREND_IDS = [
   'romantic_dinner_80s',
   'romantic_closeup_80s',
 ] as const satisfies readonly TrendPresetId[];
+
+export const DUAL_PERSON_TREND_IDS = [
+  'romantic_dinner_80s',
+  'romantic_closeup_80s',
+] as const satisfies readonly TrendPresetId[];
+
+export function supportsSecondPersonTrend(
+  id: string | null | undefined,
+): id is (typeof DUAL_PERSON_TREND_IDS)[number] {
+  return DUAL_PERSON_TREND_IDS.some((presetId) => presetId === id);
+}
 
 export function isEightiesTrend(id: string | null | undefined): id is TrendPresetId {
   return EIGHTIES_TREND_IDS.some((presetId) => presetId === id);
