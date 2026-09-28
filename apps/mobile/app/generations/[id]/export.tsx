@@ -35,6 +35,7 @@ export default function ExportScreen() {
   >(null);
   const generation = loadedGeneration?.requestScope === requestScope ? loadedGeneration : null;
   const [error, setError] = useState<string | null>(null);
+  const [actualImageRatio, setActualImageRatio] = useState<number | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -76,7 +77,10 @@ export default function ExportScreen() {
     }
   }, [generation, outputId, token]);
 
-  const ratio = shareAspectRatio(generation?.aspectRatio);
+  const ratio =
+    actualImageRatio && Number.isFinite(actualImageRatio) && actualImageRatio > 0
+      ? actualImageRatio
+      : shareAspectRatio(generation?.aspectRatio);
   const shareOther = async () => {
     if (!generationId || !selection) return;
     try {
@@ -100,6 +104,10 @@ export default function ExportScreen() {
         >
           <Icon name="chevron-back" size={26} color={colors.textPrimary} />
         </Pressable>
+        <View style={styles.topTitleWrap}>
+          <Text style={styles.topTitle}>Paylaş</Text>
+          <Text style={styles.topSubtitle}>Görsel olduğu haliyle korunur</Text>
+        </View>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Diğer paylaşım seçenekleri"
@@ -122,6 +130,10 @@ export default function ExportScreen() {
             resizeMode="contain"
             source={selection.imageSource}
             style={styles.previewImage}
+            onLoad={(event) => {
+              const { width, height } = event.nativeEvent.source;
+              if (width > 0 && height > 0) setActualImageRatio(width / height);
+            }}
           />
         ) : (
           <View style={styles.previewEmpty}>
@@ -159,12 +171,26 @@ export default function ExportScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { paddingBottom: 42, gap: spacing.md },
+  content: { paddingBottom: 46, gap: spacing.md },
   topBar: {
-    minHeight: 52,
+    minHeight: 58,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 10,
+  },
+  topTitleWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  topTitle: { ...typography.h3, color: colors.textPrimary, fontSize: 17 },
+  topSubtitle: {
+    ...typography.caption,
+    color: colors.textMuted,
+    fontSize: 10,
+    marginTop: 1,
   },
   topButton: {
     width: 46,
@@ -179,19 +205,24 @@ const styles = StyleSheet.create({
   preview: {
     width: '100%',
     maxHeight: 660,
-    borderRadius: radii.xl,
+    minHeight: 260,
+    borderRadius: 24,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: '#080808',
+    borderColor: 'rgba(255,255,255,0.14)',
+    backgroundColor: '#070707',
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#F5C842',
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 5 },
   },
   previewImage: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#080808',
+    backgroundColor: '#070707',
   },
   previewEmpty: { alignItems: 'center', justifyContent: 'center', gap: 8 },
   previewEmptyText: { ...typography.caption, color: colors.textMuted },
