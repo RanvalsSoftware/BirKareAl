@@ -1,0 +1,44 @@
+name: Sync Expo SDK patch versions
+
+on:
+  push:
+    branches:
+      - fix/release-hardening-photorealism
+    paths:
+      - '.github/workflows/sync-expo-sdk-patches.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-expo-sdk-patches
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fix/release-hardening-photorealism
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: corepack enable && corepack prepare pnpm@10.18.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - name: Align Expo SDK dependencies
+        working-directory: apps/mobile
+        run: pnpm exec expo install --fix
+      - name: Verify Expo doctor
+        working-directory: apps/mobile
+        run: pnpm exec expo-doctor
+      - name: Commit lockfile and package alignment
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add apps/mobile/package.json pnpm-lock.yaml
+          git commit -m 'chore(mobile): align Expo SDK patch versions' || true
+          git push origin HEAD:fix/release-hardening-photorealism
