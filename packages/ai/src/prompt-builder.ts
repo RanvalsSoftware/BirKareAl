@@ -1,5 +1,5 @@
 import type { CatalogSnapshot, GenerationRecord, ProjectRecord } from '@birkare/database';
-export const GENERATION_PROMPT_VERSION = '2026-09-trend-fidelity-v9';
+export const GENERATION_PROMPT_VERSION = '2026-09-trend-quality-v10';
 import { buildBeautyPrompt, buildGenderTransformationPrompt } from './beauty-prompt.js';
 import { buildTrendPrompt } from './trend-prompt.js';
 import { buildStudioPrompt } from './studio-prompt.js';

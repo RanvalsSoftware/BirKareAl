@@ -693,6 +693,26 @@ export async function runGeneration(
       quality: qualityForProvider(generation.quality),
       size: sizeForProvider(generation),
       numberOfImages: generation.requestedImageCount,
+      ...(generation.recipe?.version === 1 && generation.recipe.trendPreset
+        ? {
+            trend: {
+              preset: generation.recipe.trendPreset,
+              intensity: generation.recipe.filterIntensity,
+            },
+          }
+        : {}),
+      // A quality-review network wait must never revive a cancelled/deleted job.
+      assertActive: async () => {
+        const active = await repository.getGenerationById(input.generationId);
+        if (!active || active.deletedAt || TERMINAL_GENERATION_STATUSES.has(active.status)) {
+          throw new ApiError({
+            statusCode: 409,
+            code: 'GENERATION_NOT_ACTIVE',
+            message: 'Üretim artık etkin değil.',
+            expose: false,
+          });
+        }
+      },
     });
 
     generation = (await repository.getGenerationById(generation.id))!;
@@ -766,6 +786,7 @@ export async function runGeneration(
         generationId: generation.id,
         requestId: input.requestId,
         outputCount: response.images.length,
+        ...(response.qualityReview ? { qualityReview: response.qualityReview } : {}),
       },
       'Generation tamamlandı.',
     );

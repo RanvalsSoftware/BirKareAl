@@ -1,3 +1,5 @@
+import type { TrendPreset } from '@birkare/shared';
+
 export type ImageReference = {
   buffer: Buffer;
   mimeType: 'image/jpeg' | 'image/png' | 'image/webp';
@@ -9,6 +11,7 @@ export type ImageReference = {
     | 'GARMENT'
     | 'HAND'
     | 'REFERENCE'
+    | 'STYLE_REFERENCE'
     | 'SCENE'
     | 'PERSON'
     | 'PREVIOUS_OUTPUT';
@@ -24,12 +27,28 @@ export type ImageGenerationInput = {
   /** Flexible GPT-Image-2 sizes plus GPT-Image-1 Mini's portrait canvas. */
   size: '1024x1024' | '1024x1280' | '1024x1536' | '1536x1920' | '1152x2048' | '1536x1024';
   numberOfImages: number;
+  /** Compiled from the persisted recipe by the worker, never parsed from user text. */
+  trend?: { preset: TrendPreset; intensity: number };
+  /** Re-check cancellation/deletion before a quality review or bounded repair render. */
+  assertActive?: () => Promise<void>;
+};
+
+export type TrendQualityTelemetry = {
+  policyVersion: string;
+  renderAttempts: number;
+  reviewRequests: number;
+  repairedImages: number;
+  reviewerInputTokens: number;
+  reviewerOutputTokens: number;
+  renderRequestIds: string[];
 };
 
 export type ImageGenerationOutput = {
   providerRequestId?: string;
   images: Array<{ bytes: Buffer; mimeType: string }>;
+  /** Aggregate image-render usage, including a repair; review usage is separate below. */
   usage?: { inputTokens?: number; outputTokens?: number };
+  qualityReview?: TrendQualityTelemetry;
 };
 
 export interface ImageGenerationProvider {

@@ -10,6 +10,8 @@ import type {
   ModerationResult,
 } from './types.js';
 import { providerFailure, safeModerationCategories } from './provider-errors.js';
+import { TrendQualityImageProvider } from './trend-quality-provider.js';
+import { OpenAITrendQualityReviewer } from './trend-quality-review.js';
 
 // The SDK otherwise retries image requests and may wait several minutes per
 // attempt. Never silently submit a second paid render after a lost response.
@@ -175,7 +177,7 @@ export class OpenAIModerationProvider implements ModerationProvider {
         statusCode: 503,
         code: 'MODERATION_UNAVAILABLE',
         message:
-          'Güvenlik hizmeti yapılandırılmadığı için üretim başlatılamadı. Ayrılan krediniz iade edildi.',
+          'Güvenlik hizmeti yapılandırılmadığı için üretim başlatılmadı. Ayrılan krediniz iade edildi.',
         expose: true,
       });
     const moduleName = 'openai';
@@ -247,7 +249,12 @@ export class OpenAIModerationProvider implements ModerationProvider {
 export function createImageGenerationProvider(config: BirKareConfig): ImageGenerationProvider {
   if (config.DISABLE_ALL_GENERATION || config.AI_PROVIDER === 'disabled')
     return new DisabledImageGenerationProvider();
-  if (config.AI_PROVIDER === 'openai') return new OpenAIImageGenerationProvider(config);
+  if (config.AI_PROVIDER === 'openai') {
+    return new TrendQualityImageProvider(
+      new OpenAIImageGenerationProvider(config),
+      new OpenAITrendQualityReviewer(config),
+    );
+  }
   return new FakeImageGenerationProvider();
 }
 
