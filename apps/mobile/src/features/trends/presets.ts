@@ -106,7 +106,14 @@ export function getTrendPreset(id: string | null | undefined) {
 }
 export function trendCreationSelection(
   id: TrendPresetId,
-  source?: Pick<CreateFlow, 'sourceKind' | 'sourceCharacterId'>,
+  source?: Pick<
+    CreateFlow,
+    | 'sourceKind'
+    | 'sourceCharacterId'
+    | 'secondarySourceUri'
+    | 'secondarySourceName'
+    | 'secondarySourceRightsConfirmed'
+  >,
 ): Partial<CreateFlow> {
   return {
     mode: 'filter',
@@ -123,13 +130,11 @@ export function trendCreationSelection(
     preserveClothes: false,
     customInstruction: '',
     filterIntensity: 60,
-    ...(!supportsSecondPersonTrend(id)
-      ? {
-          secondarySourceUri: null,
-          secondarySourceName: null,
-          secondarySourceRightsConfirmed: false,
-        }
-      : {}),
+    secondarySourceUri: supportsSecondPersonTrend(id) ? (source?.secondarySourceUri ?? null) : null,
+    secondarySourceName: supportsSecondPersonTrend(id) ? (source?.secondarySourceName ?? null) : null,
+    secondarySourceRightsConfirmed: supportsSecondPersonTrend(id)
+      ? Boolean(source?.secondarySourceRightsConfirmed)
+      : false,
     ...(source?.sourceKind === 'fictional' || source?.sourceCharacterId
       ? { sourceUri: null, sourceName: null, sourceRightsConfirmed: false }
       : {}),
