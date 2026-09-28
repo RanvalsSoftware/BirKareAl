@@ -111,12 +111,18 @@ type ActiveCatalogSelection = {
 };
 
 const requiredInputRoles = (generation: GenerationRecord): GenerationInputRole[] => {
+  const secondaryPersonRoles: GenerationInputRole[] = generation.inputs.some(
+    (input) => input.role === 'SECONDARY_PERSON',
+  )
+    ? ['SECONDARY_PERSON']
+    : [];
   const referenceRoles: GenerationInputRole[] = generation.inputs.some(
     (input) => input.role === 'REFERENCE',
   )
     ? ['REFERENCE']
     : [];
-  if (generation.recipe?.version !== 2) return ['PRIMARY_USER', ...referenceRoles];
+  if (generation.recipe?.version !== 2)
+    return ['PRIMARY_USER', ...secondaryPersonRoles, ...referenceRoles];
   switch (generation.recipe.studio.kind) {
     case 'PRODUCT_STUDIO':
       return ['PRODUCT', ...referenceRoles];
@@ -131,6 +137,8 @@ const providerRole = (role: GenerationInputRole): ImageReference['role'] => {
   switch (role) {
     case 'PRIMARY_USER':
       return 'USER';
+    case 'SECONDARY_PERSON':
+      return 'SECONDARY_PERSON';
     case 'PRIMARY_PERSON':
       return 'PRIMARY_PERSON';
     case 'PRODUCT':
