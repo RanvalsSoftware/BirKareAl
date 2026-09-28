@@ -2,9 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
-  Modal,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -12,10 +10,10 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { apiBaseUrl, apiRequest } from '@/api/client';
-import { AppHeader, Icon, Notice, Screen, VisualTile } from '@/components';
+import { AppHeader, Icon, Notice, Screen } from '@/components';
 import { GlassSurface } from '@/components/GlassSurface';
 import { useAuthStore } from '@/features/auth/auth-store';
-import { GeneratedSharePanel } from '@/features/sharing/GeneratedSharePanel';
+import { shareAspectRatio } from '@/features/sharing/output';
 import { colors, radii, spacing, typography } from '@/theme';
 
 type ProjectOutput = {
@@ -71,7 +69,6 @@ export default function ProjectDetailScreen() {
   const accessToken = useAuthStore((store) => store.accessToken);
   const [detail, setDetail] = useState<ProjectDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     if (!projectId) return;
@@ -106,6 +103,14 @@ export default function ProjectDetailScreen() {
         headers: accessToken ? { authorization: `Bearer ${accessToken}` } : undefined,
       }
     : null;
+  const previewAspectRatio = shareAspectRatio(detail?.project.aspectRatio);
+  const openShare = () => {
+    if (!activeGeneration || !activeOutput) return;
+    router.push({
+      pathname: '/generations/[id]/export',
+      params: { id: activeGeneration.id, outputId: activeOutput.id },
+    } as never);
+  };
 
   if (!projectId) {
     return (
@@ -122,6 +127,21 @@ export default function ProjectDetailScreen() {
         back
         title={detail?.project.title?.trim() || 'Proje ayrıntısı'}
         subtitle={detail ? dateLabel(detail.project.updatedAt) : 'Yükleniyor…'}
+        right={
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Proje paylaşım seçenekleri"
+            disabled={!activeOutput}
+            onPress={openShare}
+            style={({ pressed }) => [
+              styles.headerMore,
+              !activeOutput && styles.disabled,
+              pressed && activeOutput && styles.pressed,
+            ]}
+          >
+            <Icon name="ellipsis-horizontal" size={23} color={colors.textPrimary} />
+          </Pressable>
+        }
       />
       {!detail && !error ? (
         <View style={styles.loading}>
@@ -136,8 +156,8 @@ export default function ProjectDetailScreen() {
       ) : null}
       {detail && imageSource && activeGeneration && activeOutput ? (
         <>
-          <View style={styles.preview}>
-            <Image source={imageSource} resizeMode="cover" style={styles.previewImage} />
+          <View style={[styles.preview, { aspectRatio: previewAspectRatio }]}>
+            <Image source={imageSource} resizeMode="contain" style={styles.previewImage} />
             <View style={styles.aiBadge}>
               <Icon name="sparkles" size={13} color={colors.accentYellow} />
               <Text style={styles.aiBadgeText}>AI ile oluşturuldu</Text>
@@ -166,7 +186,7 @@ export default function ProjectDetailScreen() {
                 } as never)
               }
             />
-            <IconAction name="share-outline" label="Paylaş" onPress={() => setShareOpen(true)} />
+            <IconAction name="share-outline" label="Paylaş" onPress={openShare} />
           </View>
           <Pressable
             accessibilityRole="button"
@@ -186,48 +206,67 @@ export default function ProjectDetailScreen() {
               <Icon name="chevron-forward" size={22} color={colors.textSecondary} />
             </GlassSurface>
           </Pressable>
-          <Text style={styles.sectionTitle}>Sürüm geçmişi</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.versions}
-          >
-            {completed.map((generation, index) => {
+          <View style={styles.sectionHeading}>
+            <Text style={styles.sectionTitle}>Sürüm geçmişi</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Tüm sürümleri gör"
+              onPress={() => router.push(`/generations/${activeGeneration.id}/results` as never)}
+              style={({ pressed }) => [styles.seeAll, pressed && styles.pressed]}
+            >
+              <Text style={styles.seeAllText}>Tümünü gör</Text>
+              <Icon name="chevron-forward" size={18} color={colors.textSecondary} />
+            </Pressable>
+          </View>
+          <View style={styles.versions}>
+            {completed.slice(0, 4).map((generation, index) => {
               const output = preferredOutput(generation);
-              return (
-                <VisualTile
-                  key={generation.id}
-                  size="small"
-                  title={`Varyasyon ${completed.length - index}`}
-                  subtitle={dateLabel(generation.completedAt ?? generation.createdAt)}
-                  palette={['#171717', '#050505']}
-                  icon="✦"
-                  badge={index === 0 ? 'AKTİF' : undefined}
-                  imageSource={
-                    output
-                      ? {
-                          uri: `${apiBaseUrl}/v1/assets/${encodeURIComponent(output.assetId)}/content`,
-                          headers: accessToken
-                            ? { authorization: `Bearer ${accessToken}` }
-                            : undefined,
-                        }
-                      : undefined
+              const versionImageSource = output
+                ? {
+                    uri: `${apiBaseUrl}/v1/assets/${encodeURIComponent(output.assetId)}/content`,
+                    headers: accessToken ? { authorization: `Bearer ${accessToken}` } : undefined,
                   }
+                : null;
+              return (
+                <Pressable
+                  key={generation.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Varyasyon ${completed.length - index}`}
                   onPress={() => router.push(`/generations/${generation.id}/results` as never)}
-                />
+                  style={({ pressed }) => [styles.versionRow, pressed && styles.pressed]}
+                >
+                  <View style={styles.versionThumb}>
+                    {versionImageSource ? (
+                      <Image
+                        source={versionImageSource}
+                        resizeMode="contain"
+                        style={styles.versionThumbImage}
+                      />
+                    ) : (
+                      <Icon name="image-outline" size={22} color={colors.textMuted} />
+                    )}
+                    {index === 0 ? (
+                      <View style={styles.activePill}>
+                        <Text style={styles.activePillText}>AKTİF</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                  <View style={styles.versionCopy}>
+                    <Text style={styles.versionTitle}>
+                      Varyasyon {completed.length - index}
+                    </Text>
+                    <Text style={styles.versionDate}>
+                      {dateLabel(generation.completedAt ?? generation.createdAt)}
+                    </Text>
+                  </View>
+                  <Icon name="ellipsis-horizontal" size={21} color={colors.textSecondary} />
+                </Pressable>
               );
             })}
-          </ScrollView>
+          </View>
           <Notice tone="neutral" title="Seçili sonuç">
             Bu sonuç kaydedilebilir ve paylaşılabilir. Her düzenleme ayrı bir sürüm olarak korunur.
           </Notice>
-          <ShareSheet
-            generationId={activeGeneration.id}
-            imageSource={imageSource}
-            onClose={() => setShareOpen(false)}
-            outputId={activeOutput.id}
-            visible={shareOpen}
-          />
         </>
       ) : detail ? (
         <Notice tone="neutral" title="Üretim hazırlanıyor">
@@ -235,78 +274,6 @@ export default function ProjectDetailScreen() {
         </Notice>
       ) : null}
     </Screen>
-  );
-}
-
-function ShareSheet({
-  generationId,
-  imageSource,
-  onClose,
-  outputId,
-  visible,
-}: {
-  generationId: string;
-  imageSource: { uri: string; headers?: { authorization: string } };
-  onClose: () => void;
-  outputId: string;
-  visible: boolean;
-}) {
-  return (
-    <Modal
-      animationType="slide"
-      onRequestClose={onClose}
-      presentationStyle="overFullScreen"
-      statusBarTranslucent
-      transparent
-      visible={visible}
-    >
-      <View accessibilityViewIsModal style={styles.shareBackdrop}>
-        <Pressable
-          accessibilityLabel="Paylaşım penceresini kapat"
-          accessibilityRole="button"
-          onPress={onClose}
-          style={StyleSheet.absoluteFill}
-        />
-        <View style={styles.shareSheet}>
-          <View style={styles.shareHandle} />
-          <View style={styles.shareHeader}>
-            <View style={styles.shareHeaderCopy}>
-              <Text accessibilityRole="header" style={styles.shareTitle}>
-                Kareyi paylaş
-              </Text>
-              <Text style={styles.shareSubtitle}>Sonucun bu sayfadan ayrılmadan hazır.</Text>
-            </View>
-            <Pressable
-              accessibilityLabel="Paylaşım penceresini kapat"
-              accessibilityRole="button"
-              hitSlop={8}
-              onPress={onClose}
-              style={styles.shareClose}
-            >
-              <Icon name="close" size={20} color={colors.textSecondary} />
-            </Pressable>
-          </View>
-          <ScrollView
-            contentContainerStyle={styles.shareScroll}
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={styles.sharePreview}>
-              <Image
-                accessibilityLabel="Paylaşılacak seçili AI görseli"
-                resizeMode="cover"
-                source={imageSource}
-                style={StyleSheet.absoluteFill}
-              />
-              <View style={styles.sharePreviewBadge}>
-                <Icon name="sparkles" size={12} color={colors.accentYellow} />
-                <Text style={styles.sharePreviewBadgeText}>Seçili sonuç</Text>
-              </View>
-            </View>
-            <GeneratedSharePanel generationId={generationId} outputId={outputId} ready />
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
   );
 }
 
@@ -333,10 +300,21 @@ function IconAction({
 
 const styles = StyleSheet.create({
   content: { paddingBottom: 42 },
+  headerMore: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceElevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   loading: { alignItems: 'center', gap: 10, justifyContent: 'center', minHeight: 320 },
   loadingText: { ...typography.body, color: colors.textSecondary },
   preview: {
-    aspectRatio: 4 / 5,
+    width: '100%',
+    maxHeight: 680,
     borderColor: colors.border,
     borderRadius: radii.xl,
     borderWidth: 1,
@@ -344,7 +322,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
   },
-  previewImage: { ...StyleSheet.absoluteFill },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#080808',
+  },
   aiBadge: {
     alignItems: 'center',
     backgroundColor: colors.overlay,
@@ -398,84 +380,54 @@ const styles = StyleSheet.create({
   aiEditCopy: { flex: 1 },
   aiEditTitle: { ...typography.h3, color: colors.textPrimary },
   aiEditDetail: { ...typography.caption, color: colors.textSecondary, marginTop: 3 },
-  sectionTitle: {
-    ...typography.h3,
-    color: colors.textPrimary,
-    marginBottom: spacing.sm,
+  sectionHeading: {
     marginTop: spacing.xl,
-  },
-  versions: { gap: 10, paddingBottom: spacing.md, paddingRight: spacing.lg },
-  pressed: { opacity: 0.8, transform: [{ scale: 0.99 }] },
-  shareBackdrop: {
-    backgroundColor: 'rgba(0,0,0,0.74)',
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  shareSheet: {
-    backgroundColor: '#0D0D0F',
-    borderColor: 'rgba(255,196,0,0.24)',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    borderWidth: 1,
-    maxHeight: '90%',
-    overflow: 'hidden',
-    paddingHorizontal: spacing.lg,
-  },
-  shareHandle: {
-    alignSelf: 'center',
-    backgroundColor: colors.borderStrong,
-    borderRadius: radii.pill,
-    height: 4,
-    marginTop: 10,
-    width: 44,
-  },
-  shareHeader: {
-    alignItems: 'center',
+    marginBottom: spacing.sm,
+    minHeight: 38,
     flexDirection: 'row',
-    gap: spacing.md,
-    justifyContent: 'space-between',
-    paddingBottom: spacing.md,
-    paddingTop: spacing.lg,
-  },
-  shareHeaderCopy: { flex: 1 },
-  shareTitle: { ...typography.h3, color: colors.textPrimary },
-  shareSubtitle: { ...typography.caption, color: colors.textSecondary, marginTop: 3 },
-  shareClose: {
     alignItems: 'center',
-    backgroundColor: colors.surfaceElevated,
-    borderColor: colors.border,
-    borderRadius: 20,
-    borderWidth: 1,
-    height: 40,
-    justifyContent: 'center',
-    width: 40,
+    justifyContent: 'space-between',
   },
-  shareScroll: { gap: spacing.md, paddingBottom: 34 },
-  sharePreview: {
-    aspectRatio: 16 / 9,
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
+  sectionTitle: { ...typography.h3, color: colors.textPrimary },
+  seeAll: { minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 3 },
+  seeAllText: { ...typography.caption, color: colors.textSecondary, fontWeight: '700' },
+  versions: { gap: 9, paddingBottom: spacing.md },
+  versionRow: {
+    minHeight: 92,
     borderRadius: radii.lg,
     borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: '#0F0F10',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 9,
+  },
+  versionThumb: {
+    width: 104,
+    height: 72,
+    borderRadius: 14,
+    backgroundColor: '#080808',
     overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
     position: 'relative',
   },
-  sharePreviewBadge: {
-    alignItems: 'center',
-    backgroundColor: colors.overlay,
-    borderRadius: radii.pill,
-    bottom: 10,
-    flexDirection: 'row',
-    gap: 5,
-    left: 10,
-    minHeight: 28,
-    paddingHorizontal: 9,
+  versionThumbImage: { width: '100%', height: '100%', backgroundColor: '#080808' },
+  activePill: {
     position: 'absolute',
+    top: 6,
+    right: 6,
+    minHeight: 24,
+    paddingHorizontal: 8,
+    borderRadius: radii.pill,
+    backgroundColor: 'rgba(245,245,245,0.78)',
+    justifyContent: 'center',
   },
-  sharePreviewBadgeText: {
-    ...typography.caption,
-    color: colors.textPrimary,
-    fontSize: 10,
-    fontWeight: '700',
-  },
+  activePillText: { ...typography.caption, color: '#161616', fontSize: 9, fontWeight: '900' },
+  versionCopy: { flex: 1 },
+  versionTitle: { ...typography.h3, color: colors.textPrimary, fontSize: 16 },
+  versionDate: { ...typography.caption, color: colors.textMuted, marginTop: 4 },
+  pressed: { opacity: 0.8, transform: [{ scale: 0.99 }] },
+  disabled: { opacity: 0.4 },
 });
