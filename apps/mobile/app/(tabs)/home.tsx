@@ -79,7 +79,7 @@ const homeSlides: HomeSlide[] = [
     action: 'Sahneyi seç',
     icon: 'football',
     palette: ['#0B2939', '#52731D'],
-    source: require('../../assets/home/images/slider/football.png'),
+    source: require('../../assets/home/images/slider/football.webp'),
     route: '/create/upload',
     createPreset: {
       mode: 'scene',
@@ -96,7 +96,7 @@ const homeSlides: HomeSlide[] = [
     action: 'Güzelliği keşfet',
     icon: 'color-filter',
     palette: ['#6B3240', '#D28A75'],
-    source: require('../../assets/home/images/slider/beauty.png'),
+    source: require('../../assets/home/images/slider/beauty.webp'),
     route: '/beauty',
   },
   {
@@ -107,7 +107,7 @@ const homeSlides: HomeSlide[] = [
     action: 'Arka planı seç',
     icon: 'layers',
     palette: ['#3A251F', '#D88835'],
-    source: require('../../assets/home/images/slider/background.png'),
+    source: require('../../assets/home/images/slider/background.webp'),
     route: '/create/upload',
     createPreset: {
       mode: 'background',

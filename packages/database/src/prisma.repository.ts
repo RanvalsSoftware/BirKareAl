@@ -456,8 +456,7 @@ export class PrismaRepository implements BirKareRepository {
           }),
         ]);
         const abuseKeyHash =
-          input.welcomeCreditAbuseHash ??
-          welcomeCreditAbuseHash(this.identitySecret, input.email);
+          input.welcomeCreditAbuseHash ?? welcomeCreditAbuseHash(this.identitySecret, input.email);
         const user = await tx.user.create({
           data: {
             email: input.email.toLowerCase(),
@@ -487,12 +486,13 @@ export class PrismaRepository implements BirKareRepository {
             providerEmail: input.providerEmail,
           },
         });
-        const claim = priorDeletion || priorDeletionClaim
-          ? { count: 0 }
-          : await tx.welcomeCreditClaim.createMany({
-              data: [{ abuseKeyHash, userId: user.id }],
-              skipDuplicates: true,
-            });
+        const claim =
+          priorDeletion || priorDeletionClaim
+            ? { count: 0 }
+            : await tx.welcomeCreditClaim.createMany({
+                data: [{ abuseKeyHash, userId: user.id }],
+                skipDuplicates: true,
+              });
         const welcomeAmount = claim.count === 1 ? WELCOME_CREDIT_AMOUNT : 0;
         await tx.userConsent.createMany({
           data: input.consents.map((consent) => ({ ...consent, userId: user.id })),
@@ -689,11 +689,7 @@ export class PrismaRepository implements BirKareRepository {
       const identityHashes = [
         deletionIdentityHash(this.identitySecret, 'email', user.email),
         ...user.accounts.map((account: any) =>
-          deletionIdentityHash(
-            this.identitySecret,
-            account.provider,
-            account.providerAccountId,
-          ),
+          deletionIdentityHash(this.identitySecret, account.provider, account.providerAccountId),
         ),
       ];
       await tx.welcomeCreditClaim.createMany({
@@ -741,10 +737,7 @@ export class PrismaRepository implements BirKareRepository {
     return this.prisma.accountDeletion.findUnique({ where: { userId } });
   }
 
-  async restoreAccountDeletion(
-    userId: string,
-    now: Date,
-  ): Promise<AccountDeletionRecord | null> {
+  async restoreAccountDeletion(userId: string, now: Date): Promise<AccountDeletionRecord | null> {
     return this.prisma.$transaction(async (tx: PrismaClientLike) => {
       const [record, user] = await Promise.all([
         tx.accountDeletion.findUnique({ where: { userId } }),
@@ -1086,8 +1079,7 @@ export class PrismaRepository implements BirKareRepository {
         },
         data: { updatedAt: now },
       });
-      if (locked.count !== 1)
-        return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false };
+      if (locked.count !== 1) return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false };
       const token = await tx.emailToken.findFirst({
         where: {
           userId,
@@ -1120,8 +1112,7 @@ export class PrismaRepository implements BirKareRepository {
         },
         data: { usedAt: now },
       });
-      if (claimed.count !== 1)
-        return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false };
+      if (claimed.count !== 1) return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false };
 
       await tx.user.update({
         where: { id: userId },
@@ -1143,12 +1134,13 @@ export class PrismaRepository implements BirKareRepository {
         where: { userId, referenceType: WELCOME_CREDIT_REFERENCE_TYPE },
         select: { id: true },
       });
-      const claimResult = priorDeletion || priorDeletionClaim
-        ? { count: 0 }
-        : await tx.welcomeCreditClaim.createMany({
-            data: [{ abuseKeyHash: welcomeCreditAbuseHash, userId }],
-            skipDuplicates: true,
-          });
+      const claimResult =
+        priorDeletion || priorDeletionClaim
+          ? { count: 0 }
+          : await tx.welcomeCreditClaim.createMany({
+              data: [{ abuseKeyHash: welcomeCreditAbuseHash, userId }],
+              skipDuplicates: true,
+            });
       const shouldGrant = claimResult.count === 1 && !existingWelcome;
       if (shouldGrant) {
         const wallet = await tx.creditWallet.update({

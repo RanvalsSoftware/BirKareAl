@@ -10,6 +10,7 @@ coverage/
 .env.*
 !.env.example
 !.env.production.example
+!apps/mobile/.env.production
 apps/mobile/ios/
 apps/mobile/android/
 apps/mobile/.expo/

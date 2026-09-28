@@ -11,6 +11,19 @@ export type ApiError = Error & {
 };
 
 export const API_REQUEST_TIMEOUT_MS = 30_000;
+export const NETWORK_REQUEST_FAILED_MESSAGE =
+  'Sunucuya şu anda ulaşılamıyor. İnternet bağlantını kontrol edip tekrar dene.';
+
+/** Never expose native URLSession/Expo fetch internals to application screens. */
+async function fetchWithTransportError(url: string, init: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, init);
+  } catch {
+    const error = new Error(NETWORK_REQUEST_FAILED_MESSAGE) as ApiError;
+    error.code = 'NETWORK_REQUEST_FAILED';
+    throw error;
+  }
+}
 
 /** Bounds fetching AND reading the response body, including on native devices. */
 function withRequestTimeout<T>(
@@ -90,7 +103,10 @@ export function captureSessionRequestScope() {
 }
 
 const extra = Constants.expoConfig?.extra as { apiBaseUrl?: string } | undefined;
-const configuredApiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL ?? extra?.apiBaseUrl;
+// app.config.ts validates the embedded value for store builds. Prefer it over
+// Metro's raw dotenv substitution so a stale local shell cannot override the
+// release manifest at runtime.
+const configuredApiBaseUrl = extra?.apiBaseUrl ?? process.env.EXPO_PUBLIC_API_BASE_URL;
 
 // Never let an Android-emulator-only address leak into an iOS development build.
 // On native development builds, loopback addresses resolve through Expo's Metro
@@ -147,7 +163,7 @@ async function refreshAccessToken(revision: number): Promise<string | null> {
       assertCurrentSession(revision);
       if (!refreshToken) return null;
       const payload = await withRequestTimeout(async (signal) => {
-        const response = await fetch(`${apiBaseUrl}/v1/auth/refresh`, {
+        const response = await fetchWithTransportError(`${apiBaseUrl}/v1/auth/refresh`, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ refreshToken }),
@@ -193,7 +209,7 @@ export async function apiRequest<T>(
     const perform = async (accessToken: string | null) => {
       const url = `${apiBaseUrl}${path}`;
       if (__DEV__) console.info('[BirKare API] request', init.method ?? 'GET', url);
-      const response = await fetch(url, {
+      const response = await fetchWithTransportError(url, {
         ...init,
         signal,
         headers: {

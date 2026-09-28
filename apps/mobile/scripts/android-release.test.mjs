@@ -3,6 +3,7 @@ import { test } from 'vitest';
 import { createRequire } from 'node:module';
 import {
   certificateFingerprint,
+  parseReleaseArguments,
   validateCredentials,
   parseUploadCredentials,
   verifyUploadKeyListing,
@@ -41,6 +42,18 @@ test('accepts a dedicated upload key without changing it', () => {
     keyPassword: 'test-only',
   };
   assert.equal(validateCredentials({ android: { keystore } }), keystore);
+});
+test('accepts an explicit ignored credentials file without weakening release checks', () => {
+  const defaults = parseReleaseArguments([]);
+  assert.ok(defaults.credentialsFile.endsWith('/apps/mobile/credentials.json'));
+
+  const options = parseReleaseArguments(['--check', '--credentials-file', 'credentials.json']);
+  assert.equal(options.check, true);
+  assert.ok(options.credentialsFile.endsWith('/apps/mobile/credentials.json'));
+  assert.throws(
+    () => parseReleaseArguments(['--credentials-file']),
+    /Usage: node scripts\/android-release\.mjs/,
+  );
 });
 test('parses a complete certificate fingerprint and rejects unsigned output', () => {
   const sha256 = Array(32).fill('AB').join(':');

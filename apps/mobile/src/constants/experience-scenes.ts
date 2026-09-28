@@ -49,7 +49,7 @@ export const experienceScenes: readonly ExperienceScene[] = [
     description: 'Kurgusal veya lisanslı karakterlerle güvenli fan karesi.',
     badge: 'Popüler',
     icon: 'people-outline',
-    source: require('../../assets/onboarding/images/categories/talent.png'),
+    source: require('../../assets/onboarding/images/categories/talent.webp'),
     palette: ['#121D31', '#3E6A47'],
     creditCost: 4,
     preset: {
@@ -70,7 +70,7 @@ export const experienceScenes: readonly ExperienceScene[] = [
     shortTitle: 'Arka Plan',
     description: 'Fotoğrafını yeni bir atmosferle buluştur.',
     icon: 'layers-outline',
-    source: require('../../assets/onboarding/images/categories/background.png'),
+    source: require('../../assets/onboarding/images/categories/background.webp'),
     palette: ['#422516', '#E39A51'],
     creditCost: 2,
     preset: {
@@ -91,7 +91,7 @@ export const experienceScenes: readonly ExperienceScene[] = [
     shortTitle: 'Sanat',
     description: 'Pop art, çizim ve özgün AI dokuları.',
     icon: 'color-palette-outline',
-    source: require('../../assets/onboarding/images/categories/sanatsal.png'),
+    source: require('../../assets/onboarding/images/categories/sanatsal.webp'),
     palette: ['#007B96', '#ED297D'],
     creditCost: 2,
     preset: {
@@ -112,7 +112,7 @@ export const experienceScenes: readonly ExperienceScene[] = [
     shortTitle: 'Portre',
     description: 'Stüdyo ışığında temiz bir portre görünümü.',
     icon: 'person-outline',
-    source: require('../../assets/onboarding/images/categories/portre.png'),
+    source: require('../../assets/onboarding/images/categories/portre.webp'),
     palette: ['#15151B', '#52647A'],
     creditCost: 3,
     preset: {
@@ -133,7 +133,7 @@ export const experienceScenes: readonly ExperienceScene[] = [
     shortTitle: 'Sinematik',
     description: 'Gece ışıkları ve güçlü sahne atmosferi.',
     icon: 'film-outline',
-    source: require('../../assets/onboarding/images/categories/cinematic.png'),
+    source: require('../../assets/onboarding/images/categories/cinematic.webp'),
     palette: ['#101923', '#6B431F'],
     creditCost: 3,
     preset: {
@@ -154,7 +154,7 @@ export const experienceScenes: readonly ExperienceScene[] = [
     shortTitle: 'Yüz',
     description: 'Yüzünü koruyan, yakın plan ve dengeli bir portre görünümü.',
     icon: 'sparkles-outline',
-    source: require('../../assets/onboarding/images/categories/face.png'),
+    source: require('../../assets/onboarding/images/categories/face.webp'),
     palette: ['#6A422A', '#E0B17F'],
     creditCost: 3,
     preset: {

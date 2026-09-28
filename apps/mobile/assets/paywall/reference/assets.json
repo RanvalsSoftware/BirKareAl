@@ -1,50 +1,50 @@
 [
   {
-    "file": "scene-galata.png",
+    "file": "scene-galata.webp",
     "width": 480,
     "height": 640,
     "source": "ChatGPT Image 14 Eyl 2026 11_48_19.png",
-    "bytes": 549877,
-    "sha256": "59578a5936eaf86db3a7af681355f2fd7e86e56d223f261a15fae8382f63efa6"
+    "bytes": 79788,
+    "sha256": "280e2928a1214fd6029f051636c8e102dc1f9185492c425b2e8f3f4ca8e1993d"
   },
   {
-    "file": "scene-cappadocia.png",
+    "file": "scene-cappadocia.webp",
     "width": 480,
     "height": 640,
     "source": "ChatGPT Image 14 Eyl 2026 11_48_27.png",
-    "bytes": 566107,
-    "sha256": "22f890123dfe777260efca3b2080b5033d065c57c5ca2bdc14dbd026683f28db"
+    "bytes": 82090,
+    "sha256": "52930bad9d093109b78ee2a63b8ff1cc89d73073cd98d29b90aadde87bba615b"
   },
   {
-    "file": "scene-portrait.png",
+    "file": "scene-portrait.webp",
     "width": 480,
     "height": 640,
     "source": "ChatGPT Image 14 Eyl 2026 11_48_44.png",
-    "bytes": 460959,
-    "sha256": "236cb18463ed97a1d153b0dca868f7831628587587905eca6f5853b8d6192cac"
+    "bytes": 60874,
+    "sha256": "99dd6bd6e0fda1c18dea5b90f5c2660e7d770ea7ad44e4d5548e39fc01fa6bc5"
   },
   {
-    "file": "icon-infinity.png",
+    "file": "icon-infinity.webp",
     "width": 192,
     "height": 192,
     "source": "ChatGPT Image 14 Eyl 2026 11_48_49.png",
-    "bytes": 62541,
-    "sha256": "a2970debf3b541404e30d9beb786874fca59ba1d7978b4a50ad35274a7bf79c5"
+    "bytes": 46640,
+    "sha256": "8c4a3c289efde03ba3d84671f920b8af9cb66ec0ddfcd558b2f000930f35358f"
   },
   {
-    "file": "icon-people.png",
+    "file": "icon-people.webp",
     "width": 192,
     "height": 192,
     "source": "ChatGPT Image 14 Eyl 2026 11_48_53.png",
-    "bytes": 57558,
-    "sha256": "c813ef6d837de5f1bf0134fdd3690e743d522ea21dac7315c043b66c9e2d423c"
+    "bytes": 40746,
+    "sha256": "1e5b261bb0575c4002ecfec0af4a3d6f854c94e7043c95b87bf164464d77a9f1"
   },
   {
-    "file": "icon-wand.png",
+    "file": "icon-wand.webp",
     "width": 192,
     "height": 192,
     "source": "ChatGPT Image 14 Eyl 2026 11_48_59.png",
-    "bytes": 56939,
-    "sha256": "8351ab84fa24fe05718606ff93fa718f85baa10c643729fcac2a2447a668445f"
+    "bytes": 41488,
+    "sha256": "dc405da5e38a120becc10163e55674d9c6e7afcfe469aaaf160e89886ad0b873"
   }
 ]

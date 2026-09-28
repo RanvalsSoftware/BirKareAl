@@ -52,7 +52,6 @@ export function createRevenueCatClient(options: ClientOptions) {
   };
   const subscribers = new Set<() => void>();
   let sdkModule: SdkModule | null = null;
-  let configured = false;
   let sdkUserId: string | null = null;
 
   const reconcileNativeIdentity = async (
@@ -62,12 +61,10 @@ export function createRevenueCatClient(options: ClientOptions) {
     const nativeConfigured = await sdk.isConfigured();
     if (!nativeConfigured) {
       sdk.configure({ apiKey: options.apiKey, appUserID: userId });
-      configured = true;
       sdkUserId = userId;
       return;
     }
 
-    configured = true;
     const nativeUserId = await sdk.getAppUserID();
     sdkUserId = nativeUserId;
     if (nativeUserId !== userId) {

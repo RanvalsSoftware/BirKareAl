@@ -6,7 +6,32 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { buildMobileEnvironment } from './mobile-env.mjs';
 
 const mobileRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const privateRoot = resolve(mobileRoot, '../../.local-credentials/android');
+export function parseReleaseArguments(args) {
+  let check = false;
+  // Default to the same ignored credential file used by EAS. It contains the
+  // registered Play upload key, so an unrelated local keystore cannot be used
+  // accidentally when no override is supplied.
+  let credentialsFile = resolve(mobileRoot, 'credentials.json');
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index];
+    if (argument === '--check') {
+      check = true;
+      continue;
+    }
+    if (argument === '--credentials-file') {
+      const value = args[index + 1];
+      if (!value || value.startsWith('--'))
+        throw new Error(
+          'Usage: node scripts/android-release.mjs [--check] [--credentials-file path]',
+        );
+      credentialsFile = resolve(mobileRoot, value);
+      index += 1;
+      continue;
+    }
+    throw new Error('Usage: node scripts/android-release.mjs [--check] [--credentials-file path]');
+  }
+  return { check, credentialsFile };
+}
 
 export function validateCredentials(value) {
   const key = value?.android?.keystore;
@@ -78,8 +103,7 @@ async function run(command, args, env, { cwd = mobileRoot, capture = false } = {
 }
 
 export async function main(args) {
-  if (args.some((arg) => arg !== '--check'))
-    throw new Error('Usage: node scripts/android-release.mjs [--check]');
+  const options = parseReleaseArguments(args);
   // Also sanitize direct invocation; backend secrets must not reach Metro/Gradle.
   const env = buildMobileEnvironment({}, process.env, { release: true });
   env.BIRKARE_ANDROID_RELEASE = '1';
@@ -94,7 +118,7 @@ export async function main(args) {
     delete env[name];
   let key;
   try {
-    key = parseUploadCredentials(readFileSync(resolve(privateRoot, 'credentials.json'), 'utf8'));
+    key = parseUploadCredentials(readFileSync(options.credentialsFile, 'utf8'));
   } catch {
     throw new Error(
       'Cannot read private upload credentials. Run android-signing.mjs create only for a confirmed first upload.',
@@ -130,7 +154,7 @@ export async function main(args) {
     ),
   );
   console.log('Release environment and non-debug upload key validated. No secret values printed.');
-  if (args.includes('--check')) return;
+  if (options.check) return;
 
   const expo = resolve(mobileRoot, 'node_modules/expo/bin/cli');
   // No clean: preserve existing native modifications. Signing plugin is idempotent.

@@ -48,12 +48,12 @@ const GOLD = '#F7D778';
 const BLACK = '#050505';
 const assets = {
   logo: require('../../../assets/onboarding/images/brand/logo-gold-icon.png'),
-  city: require('../../../assets/paywall/reference/scene-galata.png'),
-  balloons: require('../../../assets/paywall/reference/scene-cappadocia.png'),
-  portrait: require('../../../assets/paywall/reference/scene-portrait.png'),
-  infinity: require('../../../assets/paywall/reference/icon-infinity.png'),
-  people: require('../../../assets/paywall/reference/icon-people.png'),
-  wand: require('../../../assets/paywall/reference/icon-wand.png'),
+  city: require('../../../assets/paywall/reference/scene-galata.webp'),
+  balloons: require('../../../assets/paywall/reference/scene-cappadocia.webp'),
+  portrait: require('../../../assets/paywall/reference/scene-portrait.webp'),
+  infinity: require('../../../assets/paywall/reference/icon-infinity.webp'),
+  people: require('../../../assets/paywall/reference/icon-people.webp'),
+  wand: require('../../../assets/paywall/reference/icon-wand.webp'),
 };
 
 export function ProPaywallView(props: ProPaywallViewProps) {

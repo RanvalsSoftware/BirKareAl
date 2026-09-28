@@ -52,6 +52,43 @@ describe('authenticated request account boundary', () => {
     await assertion;
   });
 
+  it('replaces native fetch internals with a stable transport error', async () => {
+    const { apiRequest, NETWORK_REQUEST_FAILED_MESSAGE } = await import('./client');
+    const nativeMessage =
+      'fetch failed: UnexpectedException: Sunucuya bağlanamadı. (at ExpoModulesCore/Promise.swift:56)';
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError(nativeMessage)));
+
+    const request = apiRequest('/v1/auth/login', {}, { authenticated: false });
+    await expect(request).rejects.toMatchObject({
+      code: 'NETWORK_REQUEST_FAILED',
+      message: NETWORK_REQUEST_FAILED_MESSAGE,
+    });
+    await expect(request).rejects.not.toThrow(nativeMessage);
+  });
+
+  it('keeps structured HTTP errors intact', async () => {
+    const { apiRequest } = await import('./client');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            success: false,
+            error: { code: 'AUTH_INVALID_CREDENTIALS', message: 'E-posta veya şifre hatalı.' },
+          }),
+          { status: 401, headers: { 'x-request-id': 'req_test' } },
+        ),
+      ),
+    );
+
+    await expect(apiRequest('/v1/auth/login', {}, { authenticated: false })).rejects.toMatchObject({
+      code: 'AUTH_INVALID_CREDENTIALS',
+      message: 'E-posta veya şifre hatalı.',
+      requestId: 'req_test',
+      status: 401,
+    });
+  });
+
   it.each(['network', 'server'])(
     'preserves the session on a temporary refresh %s failure',
     async (kind) => {
@@ -66,7 +103,12 @@ describe('authenticated request account boundary', () => {
       if (kind === 'network') fetch.mockRejectedValueOnce(new TypeError('Network request failed'));
       else fetch.mockResolvedValueOnce(response(null, 503));
       vi.stubGlobal('fetch', fetch);
-      await expect(apiRequest('/v1/billing/wallet')).rejects.toBeInstanceOf(Error);
+      const request = apiRequest('/v1/billing/wallet');
+      if (kind === 'network') {
+        await expect(request).rejects.toMatchObject({ code: 'NETWORK_REQUEST_FAILED' });
+      } else {
+        await expect(request).rejects.toBeInstanceOf(Error);
+      }
       expect(tokens.clearRefreshToken).not.toHaveBeenCalled();
       expect(clearSession).not.toHaveBeenCalled();
     },

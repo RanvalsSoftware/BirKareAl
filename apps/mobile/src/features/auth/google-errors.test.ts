@@ -43,6 +43,8 @@ describe('Google sign-in diagnosis', () => {
     });
     expect(error).toMatchObject({ code: 'GOOGLE_CLIENT_CONFIGURATION' });
     expect(error.message).not.toContain('do-not-display');
+    expect(error.message).not.toContain('SHA-1');
+    expect(error.message).toContain('E-posta ve şifrenle');
     expect(googleSignInError(new Error('Network request failed'))).toMatchObject({
       code: 'GOOGLE_NETWORK_ERROR',
     });

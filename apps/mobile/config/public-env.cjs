@@ -112,8 +112,11 @@ function resolvePublicMobileConfig(values, options = {}) {
     options.release === true ||
     storeProfile ||
     releaseEnvironments.has(explicitEnvironment) ||
+    values.NODE_ENV === 'production' ||
+    values.CONFIGURATION === 'Release' ||
     values.BIRKARE_RELEASE_BUILD === '1' ||
-    values.BIRKARE_ANDROID_RELEASE === '1';
+    values.BIRKARE_ANDROID_RELEASE === '1' ||
+    values.BIRKARE_IOS_RELEASE === '1';
   if (release && !releaseEnvironments.has(explicitEnvironment)) {
     throw new Error(
       'EXPO_PUBLIC_APP_ENV must explicitly be staging or production for store builds.',

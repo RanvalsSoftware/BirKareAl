@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   Image,
@@ -26,6 +26,12 @@ import { filters } from '@/constants/catalog';
 import { useCreateFlow } from '@/features/create/createFlow';
 import { useAuthStore } from '@/features/auth/auth-store';
 import { GeneratedSharePanel } from '@/features/sharing/GeneratedSharePanel';
+import {
+  createContentReportInput,
+  newSupportSubmissionKey,
+  submitSupportTicket,
+  type SupportTicketReceipt,
+} from '@/features/support/tickets';
 import { colors, radii, spacing, typography } from '@/theme';
 
 const variants = [
@@ -85,7 +91,10 @@ export default function GenerationResultsScreen() {
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState<string | null>(null);
   const [reportDetail, setReportDetail] = useState('');
-  const [reportPrepared, setReportPrepared] = useState(false);
+  const [reportReceipt, setReportReceipt] = useState<SupportTicketReceipt | null>(null);
+  const [reportError, setReportError] = useState<string | null>(null);
+  const [reportSending, setReportSending] = useState(false);
+  const reportAttempt = useRef<{ fingerprint: string; key: string } | null>(null);
   const localVariants = useMemo<DisplayVariant[]>(
     () => variants.map((variant) => ({ ...variant, serverOutput: false })),
     [],
@@ -141,6 +150,18 @@ export default function GenerationResultsScreen() {
   }, [generationId, requestScope]);
 
   useEffect(() => {
+    // A new account/generation must never inherit another report draft or receipt.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setReportOpen(false);
+    setReportReason(null);
+    setReportDetail('');
+    setReportReceipt(null);
+    setReportError(null);
+    setReportSending(false);
+    reportAttempt.current = null;
+  }, [requestScope]);
+
+  useEffect(() => {
     if (!generationError) return;
     const timeout = setTimeout(() => setGenerationError(null), 4_000);
     return () => clearTimeout(timeout);
@@ -177,16 +198,45 @@ export default function GenerationResultsScreen() {
     }
   };
 
-  const prepareReport = () => {
-    if (!reportReason) return;
-    setReportPrepared(true);
-    setReportOpen(false);
+  const submitReport = async () => {
+    if (!reportReason || reportSending) return;
+    if (!generationId || generationId === 'demo') {
+      setReportError('Sunucuda kayıtlı olmayan bir önizleme raporlanamaz.');
+      return;
+    }
+    const input = createContentReportInput({
+      generationId,
+      outputId: selectedVariant?.serverOutput ? selected : undefined,
+      reason: reportReason,
+      detail: reportDetail,
+    });
+    const fingerprint = JSON.stringify(input);
+    if (reportAttempt.current?.fingerprint !== fingerprint) {
+      reportAttempt.current = { fingerprint, key: newSupportSubmissionKey() };
+    }
+    setReportSending(true);
+    setReportError(null);
+    try {
+      const receipt = await submitSupportTicket(input, reportAttempt.current.key);
+      setReportReceipt(receipt);
+      setReportOpen(false);
+      setReportReason(null);
+      setReportDetail('');
+      reportAttempt.current = null;
+    } catch (error) {
+      setReportError(
+        error instanceof Error ? error.message : 'Rapor gönderilemedi. Lütfen tekrar dene.',
+      );
+    } finally {
+      setReportSending(false);
+    }
   };
 
   const closeReport = () => {
     setReportOpen(false);
     setReportReason(null);
     setReportDetail('');
+    setReportError(null);
   };
 
   return (
@@ -358,16 +408,18 @@ export default function GenerationResultsScreen() {
           <Text style={styles.secondaryText}>Kaydet ve paylaş</Text>
         </Pressable>
       </View>
-      {reportPrepared ? (
-        <Notice tone="success" title="Rapor talebin hazır">
-          Seçtiğin neden güvenli inceleme için hazırlandı. Sunucu entegrasyonu etkin olduğunda
-          talep, içerik sahibi kontrolleriyle birlikte gönderilir.
+      {reportReceipt ? (
+        <Notice tone="success" title="Raporun gönderildi">
+          İçerik güvenli inceleme için kaydedildi. Talep numaran: {reportReceipt.id}
         </Notice>
       ) : null}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Bu içeriği raporla"
-        onPress={() => setReportOpen(true)}
+        onPress={() => {
+          setReportError(null);
+          setReportOpen(true);
+        }}
         style={({ pressed }) => [styles.reportAction, pressed && styles.pressed]}
       >
         <Icon name="flag-outline" size={18} color={colors.danger} />
@@ -388,8 +440,10 @@ export default function GenerationResultsScreen() {
         onChangeDetail={setReportDetail}
         onClose={closeReport}
         onSelectReason={setReportReason}
-        onSubmit={prepareReport}
+        onSubmit={() => void submitReport()}
         reason={reportReason}
+        error={reportError}
+        sending={reportSending}
         visible={reportOpen}
       />
     </Screen>
@@ -404,6 +458,8 @@ function ReportModal({
   onChangeDetail,
   onClose,
   onSubmit,
+  error,
+  sending,
 }: {
   visible: boolean;
   reason: string | null;
@@ -412,6 +468,8 @@ function ReportModal({
   onChangeDetail: (detail: string) => void;
   onClose: () => void;
   onSubmit: () => void;
+  error: string | null;
+  sending: boolean;
 }) {
   return (
     <Modal
@@ -489,18 +547,25 @@ function ReportModal({
             value={detail}
           />
           <Text style={styles.reportCount}>{detail.length} / 500</Text>
+          {error ? (
+            <Text accessibilityLiveRegion="polite" style={styles.reportError}>
+              {error}
+            </Text>
+          ) : null}
           <Pressable
             accessibilityRole="button"
-            accessibilityState={{ disabled: !reason }}
-            disabled={!reason}
+            accessibilityState={{ disabled: !reason || sending, busy: sending }}
+            disabled={!reason || sending}
             onPress={onSubmit}
             style={({ pressed }) => [
               styles.reportSubmit,
-              !reason && styles.reportSubmitDisabled,
-              pressed && reason && styles.pressed,
+              (!reason || sending) && styles.reportSubmitDisabled,
+              pressed && reason && !sending && styles.pressed,
             ]}
           >
-            <Text style={styles.reportSubmitText}>Rapor talebini hazırla</Text>
+            <Text style={styles.reportSubmitText}>
+              {sending ? 'Rapor gönderiliyor…' : 'Raporu gönder'}
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -687,6 +752,7 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   reportCount: { ...typography.caption, color: colors.textMuted, marginTop: 5, textAlign: 'right' },
+  reportError: { ...typography.caption, color: colors.danger, lineHeight: 18, marginTop: 8 },
   reportSubmit: {
     alignItems: 'center',
     backgroundColor: colors.accentYellow,

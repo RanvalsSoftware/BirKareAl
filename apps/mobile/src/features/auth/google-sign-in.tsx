@@ -8,7 +8,6 @@ import { GoogleAuthError, googleConfigurationError, googleSignInError } from './
 
 type NativeGoogleSignIn = typeof import('@react-native-google-signin/google-signin');
 
-
 type GoogleConfigExtra = {
   googleIosClientId?: string;
   googleIosUrlScheme?: string;
@@ -39,12 +38,12 @@ export function getGoogleOAuthClientIds(): GoogleOAuthClientIds {
 
   return {
     iosClientId:
-      nonEmpty(process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID) ?? nonEmpty(extra?.googleIosClientId),
+      nonEmpty(extra?.googleIosClientId) ?? nonEmpty(process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID),
     iosUrlScheme:
-      nonEmpty(process.env.EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME) ??
-      nonEmpty(extra?.googleIosUrlScheme),
+      nonEmpty(extra?.googleIosUrlScheme) ??
+      nonEmpty(process.env.EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME),
     webClientId:
-      nonEmpty(process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID) ?? nonEmpty(extra?.googleWebClientId),
+      nonEmpty(extra?.googleWebClientId) ?? nonEmpty(process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID),
   };
 }
 

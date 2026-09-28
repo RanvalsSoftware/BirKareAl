@@ -21,7 +21,7 @@ export const beautyOptions: BeautyOption[] = [
     description: 'Işık ve beyaz dengesine doğal bir dokunuş.',
     group: 'Rötuş',
     defaultIntensity: 35,
-    source: require('../../../assets/beauty/natural.png'),
+    source: require('../../../assets/beauty/natural.webp'),
   },
   {
     id: 'blemishRemoval',
@@ -30,7 +30,7 @@ export const beautyOptions: BeautyOption[] = [
     description: 'Geçici sivilce ve kızarıklıkları azaltır.',
     group: 'Rötuş',
     defaultIntensity: 65,
-    source: require('../../../assets/beauty/blemish.png'),
+    source: require('../../../assets/beauty/blemish.webp'),
   },
   {
     id: 'skinSmoothing',
@@ -39,7 +39,7 @@ export const beautyOptions: BeautyOption[] = [
     description: 'Doğal dokuyu kaybetmeden kontrollü yumuşatma.',
     group: 'Rötuş',
     defaultIntensity: 30,
-    source: require('../../../assets/beauty/smooth.png'),
+    source: require('../../../assets/beauty/smooth.webp'),
   },
   {
     id: 'underEyeCorrection',
@@ -48,7 +48,7 @@ export const beautyOptions: BeautyOption[] = [
     description: 'Göz şeklini koruyarak yorgun görünümü hafifletir.',
     group: 'Rötuş',
     defaultIntensity: 35,
-    source: require('../../../assets/beauty/under-eye.png'),
+    source: require('../../../assets/beauty/under-eye.webp'),
   },
   {
     id: 'skinGlow',
@@ -57,7 +57,7 @@ export const beautyOptions: BeautyOption[] = [
     description: 'Cilt tonunu koruyan yumuşak, doğal aydınlık.',
     group: 'Rötuş',
     defaultIntensity: 30,
-    source: require('../../../assets/beauty/glow.png'),
+    source: require('../../../assets/beauty/glow.webp'),
   },
   {
     id: 'faceContour',
@@ -67,7 +67,7 @@ export const beautyOptions: BeautyOption[] = [
     group: 'Yüz hatları',
     defaultIntensity: 20,
     isPro: true,
-    source: require('../../../assets/beauty/contour.png'),
+    source: require('../../../assets/beauty/contour.webp'),
   },
   {
     id: 'youthfulLook',
@@ -77,7 +77,7 @@ export const beautyOptions: BeautyOption[] = [
     group: 'Yüz hatları',
     defaultIntensity: 20,
     isPro: true,
-    source: require('../../../assets/beauty/youthful.png'),
+    source: require('../../../assets/beauty/youthful.webp'),
   },
   // Ten settings, nine beauty images: the gender reference is intentionally separate.
   // Nude shares the natural portrait until its dedicated reference is supplied.
@@ -88,7 +88,7 @@ export const beautyOptions: BeautyOption[] = [
     description: 'Günlük, hafif ve doğal makyaj görünümü.',
     group: 'Makyaj',
     defaultIntensity: 40,
-    source: require('../../../assets/beauty/natural.png'),
+    source: require('../../../assets/beauty/natural.webp'),
   },
   {
     id: 'soft-glam',
@@ -98,7 +98,7 @@ export const beautyOptions: BeautyOption[] = [
     group: 'Makyaj',
     defaultIntensity: 50,
     isPro: true,
-    source: require('../../../assets/beauty/soft-glam.png'),
+    source: require('../../../assets/beauty/soft-glam.webp'),
   },
   {
     id: 'evening-glam',
@@ -108,8 +108,8 @@ export const beautyOptions: BeautyOption[] = [
     group: 'Makyaj',
     defaultIntensity: 60,
     isPro: true,
-    source: require('../../../assets/beauty/evening-glam.png'),
+    source: require('../../../assets/beauty/evening-glam.webp'),
   },
 ];
 
-export const genderPreview = require('../../../assets/beauty/gender-change.png');
+export const genderPreview = require('../../../assets/beauty/gender-change.webp');

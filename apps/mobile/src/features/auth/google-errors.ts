@@ -38,7 +38,7 @@ export function googleSignInError(error: unknown): Error {
     }
     return error as Error;
   }
-  if (code === '10' || code === 'DEVELOPER_ERROR' || /DEVELOPER_ERROR|developer console is not set up/i.test(message)) return new GoogleAuthError('GOOGLE_CLIENT_CONFIGURATION', 'Google istemci yapılandırması eşleşmiyor. Android paket adı, imza SHA-1 ve Web Client ID birlikte kontrol edilmeli.');
+  if (code === '10' || code === 'DEVELOPER_ERROR' || /DEVELOPER_ERROR|developer console is not set up/i.test(message)) return new GoogleAuthError('GOOGLE_CLIENT_CONFIGURATION', 'Google ile giriş şu anda kullanılamıyor. E-posta ve şifrenle giriş yapabilir veya daha sonra tekrar deneyebilirsin.');
   if (/URL schemes|url scheme|invalid_client|redirect_uri_mismatch/i.test(message)) return new GoogleAuthError('GOOGLE_IOS_SCHEME_MISMATCH', 'Google dönüş şeması bu kurulumla eşleşmiyor. Yeni iOS geliştirme derlemesini kurup tekrar deneyin.');
   if (code === '7' || code === 'NETWORK_ERROR' || /network|internet|connection|ağ bağlant/i.test(message)) return new GoogleAuthError('GOOGLE_NETWORK_ERROR', 'Google veya BirKare sunucusuna ulaşılamadı. İnternet bağlantısını kontrol edip tekrar deneyin.');
   if (code === 'NULL_PRESENTER') return new GoogleAuthError(code, 'Google giriş ekranı açılamadı. Açık pencereyi kapatıp yeniden deneyin.');

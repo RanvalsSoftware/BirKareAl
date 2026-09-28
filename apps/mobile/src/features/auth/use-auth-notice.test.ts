@@ -17,9 +17,18 @@ vi.mock('expo-router', async () => {
 let renderer: ReactTestRenderer | undefined;
 let feedback: ReturnType<typeof useAuthNotice<string>>;
 let routeFeedback: ReturnType<typeof useRouteAuthNotice>;
-function Probe() { feedback = useAuthNotice<string>(); return null; }
+function Probe() {
+  const current = useAuthNotice<string>();
+  useEffect(() => {
+    feedback = current;
+  }, [current]);
+  return null;
+}
 function RouteProbe({ value }: { value?: string }) {
-  routeFeedback = useRouteAuthNotice('verified', value);
+  const current = useRouteAuthNotice('verified', value);
+  useEffect(() => {
+    routeFeedback = current;
+  }, [current]);
   return null;
 }
 

@@ -1,4 +1,5 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
+import { validateGoogleOAuthClients } from './config/google-oauth.cjs';
 import { resolvePublicMobileConfig } from './config/public-env.cjs';
 import { resolveRevenueCatConfig } from './config/revenuecat.cjs';
 
@@ -34,11 +35,32 @@ const googleIosUrlScheme =
   nonEmpty(process.env.EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME) ||
   reversedGoogleClientId(googleIosClientId);
 const publicConfig = resolvePublicMobileConfig(process.env);
+const androidStoreBuild =
+  (process.env.EAS_BUILD_PLATFORM === 'android' || process.env.BIRKARE_ANDROID_RELEASE === '1') &&
+  ['staging', 'production'].includes(publicConfig.appEnv);
+
+validateGoogleOAuthClients({
+  webClientId: googleWebClientId,
+  iosClientId: googleIosClientId,
+  androidClientId: googleAndroidClientId,
+  requireAndroid: androidStoreBuild,
+});
 
 const plugins: NonNullable<ExpoConfig['plugins']> = [
   'expo-router',
   'expo-font',
+  [
+    'expo-build-properties',
+    {
+      ios: {
+        // Xcode 27 / iOS 27 requires UIKit's scene-based lifecycle. Expo SDK
+        // 57 keeps the legacy lifecycle unless this compatibility flag is set.
+        enableSceneSupport: true,
+      },
+    },
+  ],
   './plugins/with-development-url-scheme',
+  './plugins/with-android-code-optimization',
   './plugins/with-android-release-signing',
   './plugins/with-revenuecat',
   [
@@ -62,16 +84,10 @@ const plugins: NonNullable<ExpoConfig['plugins']> = [
       cameraPermission: 'BirKare AI ile yeni bir kaynak fotoğraf çekebilirsiniz.',
     },
   ],
-  [
-    'expo-camera',
-    {
-      cameraPermission: 'BirKare AI ile yeni bir kaynak fotoğraf çekebilirsiniz.',
-    },
-  ],
   'expo-secure-store',
   'expo-sharing',
   'expo-apple-authentication',
-  'expo-notifications',
+  './plugins/with-ios-release-environment',
 ];
 
 if (googleIosUrlScheme) {
@@ -95,9 +111,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     icon: './assets/onboarding/images/brand/logo-gold-icon-black.png',
     supportsTablet: true,
     bundleIdentifier: 'com.birkareai.mobile',
+    buildNumber: '10',
     usesAppleSignIn: true,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
+      UIUserInterfaceStyle: 'Dark',
       NSPhotoLibraryUsageDescription:
         'BirKare AI, seçtiğiniz fotoğrafı sahne ve filtre önizlemesi oluşturmak için kullanır.',
       NSCameraUsageDescription:
@@ -115,10 +133,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'android.permission.READ_MEDIA_IMAGES',
       'android.permission.READ_MEDIA_VIDEO',
       'android.permission.READ_MEDIA_AUDIO',
+      // BirKare captures still images only; neither microphone access nor the
+      // development client's draw-over-other-apps permission belongs in a
+      // store release.
+      'android.permission.RECORD_AUDIO',
+      'android.permission.SYSTEM_ALERT_WINDOW',
     ],
     permissions: ['com.android.vending.BILLING'],
-    // New Play upload after removing broad media permissions.
-    versionCode: 2,
+    // New Play upload with R8 code/resource optimization enabled.
+    versionCode: 5,
     adaptiveIcon: {
       foregroundImage: './assets/onboarding/images/brand/logo-gold-icon.png',
       backgroundColor: '#050505',

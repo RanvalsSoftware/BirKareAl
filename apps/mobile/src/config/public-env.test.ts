@@ -76,7 +76,10 @@ describe('mobile release configuration', () => {
       { EAS_BUILD_PROFILE: 'production' },
       { EAS_BUILD_PROFILE: 'staging' },
       { BIRKARE_ANDROID_RELEASE: '1' },
+      { BIRKARE_IOS_RELEASE: '1' },
       { BIRKARE_RELEASE_BUILD: '1' },
+      { NODE_ENV: 'production' },
+      { CONFIGURATION: 'Release' },
     ]) {
       expect(() => resolvePublicMobileConfig(settings)).toThrow('EXPO_PUBLIC_APP_ENV');
     }

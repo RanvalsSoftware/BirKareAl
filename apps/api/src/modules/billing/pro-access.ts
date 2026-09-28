@@ -34,6 +34,11 @@ export async function assertProGenerationAccess(input: {
     Boolean(style?.isPro);
 
   if (requiresPro) {
+    // Staff/promotional accounts are granted server-side access through the
+    // existing unlimited-wallet flag. This remains authoritative in the
+    // database and cannot be enabled by a client request.
+    const wallet = await input.repository.getWallet(input.userId);
+    if (wallet.unlimited) return;
     await input.revenueCatService.assertActive(input.userId);
   }
 }

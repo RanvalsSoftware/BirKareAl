@@ -199,14 +199,22 @@ test('uncertain SMTP delivery persists without a fake success or automatic retry
 test('disabled support mail fails honestly without attempting delivery', async () => {
   const f = await fixture(undefined, false);
   try {
-    assert.equal((await f.post()).status, 503);
+    const response = await f.post();
+    assert.equal(response.status, 503);
+    const payload = (await response.json()) as any;
+    assert.equal(payload.error.code, 'SUPPORT_DELIVERY_UNCONFIRMED');
+    assert.equal(
+      (await f.repository.getSupportTicket(f.owner.user.id, payload.error.details.ticketId))
+        ?.status,
+      'UNCONFIRMED',
+    );
     assert.equal(f.mails.length, 0);
   } finally {
     await f.close();
   }
 });
 
-test('support diagnostics come only from an owned generation and never include prompts/photos', async () => {
+test('content reports are stored and diagnosed only for an owned generation without prompts/photos', async () => {
   const f = await fixture();
   try {
     const id = '6d61756f-9088-427c-98a7-13fc88890a8c';
@@ -223,14 +231,24 @@ test('support diagnostics come only from an owned generation and never include p
         userInstruction: 'NEVER_EXPOSE_INSTRUCTION',
         sourceAssetId: 'NEVER_EXPOSE_PHOTO',
       }) as GenerationRecord;
-    assert.equal((await f.post({ ...body, generationId: id })).status, 201);
+    const response = await f.post({ ...body, category: 'CONTENT_REPORT', generationId: id });
+    assert.equal(response.status, 201);
+    const payload = (await response.json()) as any;
+    const ticket = await f.repository.getSupportTicket(f.owner.user.id, payload.data.ticket.id);
+    assert.ok(ticket?.message.startsWith(`Sunucu tarafından doğrulanan üretim: ${id}\n`));
     const mail = f.mails[0]!.text;
+    assert.ok(mail.includes('Kategori: CONTENT_REPORT'));
     assert.ok(mail.includes('req_safe_support_test'));
     assert.ok(mail.includes('PROVIDER_CONFIGURATION_ERROR'));
     assert.ok(!mail.includes('NEVER_EXPOSE'));
     assert.equal(
-      (await f.post({ ...body, generationId: id }, 'support-other-key-0002', f.other.accessToken))
-        .status,
+      (
+        await f.post(
+          { ...body, category: 'CONTENT_REPORT', generationId: id },
+          'support-other-key-0002',
+          f.other.accessToken,
+        )
+      ).status,
       404,
     );
     assert.equal(f.mails.length, 1);

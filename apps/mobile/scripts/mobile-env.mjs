@@ -65,6 +65,7 @@ const TOOLING_ENV_KEYS = new Set([
   'EAS_ENVIRONMENT',
   'BIRKARE_RELEASE_BUILD',
   'BIRKARE_ANDROID_RELEASE',
+  'BIRKARE_IOS_RELEASE',
   // Signing credentials are available to the native build only; app.config.ts
   // never includes these unprefixed values in its public extra config.
   'BIRKARE_ANDROID_KEYSTORE_PATH',

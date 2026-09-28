@@ -96,7 +96,7 @@ export function FilterPreview({
 }: FilterPreviewProps) {
   const imageSource = sourceUri
     ? { uri: sourceUri }
-    : (source ?? require('../../../assets/onboarding/images/filters/natural.png'));
+    : (source ?? require('../../../assets/onboarding/images/filters/natural.webp'));
   return (
     <View style={[styles.frame, { aspectRatio }, style]}>
       <View style={styles.photoCanvas}>

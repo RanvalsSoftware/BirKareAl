@@ -76,7 +76,7 @@ export function SubscriptionCard() {
         <View style={styles.crownFrame}>
           <Image
             accessibilityIgnoresInvertColors
-            source={require('../../../assets/credits/pro-crown.png')}
+            source={require('../../../assets/credits/pro-crown.webp')}
             resizeMode="contain"
             style={styles.crown}
           />

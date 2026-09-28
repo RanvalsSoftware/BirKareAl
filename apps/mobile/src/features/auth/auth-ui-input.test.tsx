@@ -44,10 +44,6 @@ vi.mock('react-native-reanimated', () => ({
   default: { View: 'AnimatedView', Image: 'AnimatedImage' },
 }));
 vi.mock('@/hooks/useReducedMotion', () => ({ useReducedMotion: () => false }));
-vi.mock('@/features/settings/appearance-store', () => ({
-  useAppearanceStore: (selector: (state: { theme: 'dark' }) => unknown) =>
-    selector({ theme: 'dark' }),
-}));
 vi.mock('@/features/settings/language-store', () => ({
   useCopy: () => (turkish: string) => turkish,
 }));

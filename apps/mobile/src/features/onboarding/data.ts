@@ -46,35 +46,35 @@ export const onboardingImages = {
 
   // First-step assets are kept separate from the decorative opening rail so
   // every selectable demo portrait is shown at its original 4:5 ratio.
-  beforePortrait: require('../../../assets/onboarding/images/demos/demo-01.png'),
-  afterCinematic: require('../../../assets/onboarding/images/categories/cinematic.png'),
+  beforePortrait: require('../../../assets/onboarding/images/demos/demo-01.webp'),
+  afterCinematic: require('../../../assets/onboarding/images/categories/cinematic.webp'),
 
   /** Selectable demo portraits for “Fotoğrafını seç”. */
   gallery: [
-    require('../../../assets/onboarding/images/demos/demo-01.png'),
-    require('../../../assets/onboarding/images/demos/demo-02.png'),
-    require('../../../assets/onboarding/images/demos/demo-03.png'),
-    require('../../../assets/onboarding/images/demos/demo-04.png'),
-    require('../../../assets/onboarding/images/demos/demo-05.png'),
+    require('../../../assets/onboarding/images/demos/demo-01.webp'),
+    require('../../../assets/onboarding/images/demos/demo-02.webp'),
+    require('../../../assets/onboarding/images/demos/demo-03.webp'),
+    require('../../../assets/onboarding/images/demos/demo-04.webp'),
+    require('../../../assets/onboarding/images/demos/demo-05.webp'),
   ] as ImageSourcePropType[],
   /**
    * Decorative material shown before the practical four-step experience.
    */
   showcase: [
-    require('../../../assets/onboarding/images/photos/showcase-01.png'),
-    require('../../../assets/onboarding/images/photos/showcase-02.png'),
-    require('../../../assets/onboarding/images/photos/showcase-03.png'),
-    require('../../../assets/onboarding/images/photos/showcase-04.png'),
-    require('../../../assets/onboarding/images/photos/showcase-05.png'),
-    require('../../../assets/onboarding/images/photos/showcase-06.png'),
-    require('../../../assets/onboarding/images/photos/showcase-07.png'),
-    require('../../../assets/onboarding/images/photos/showcase-08.png'),
-    require('../../../assets/onboarding/images/photos/showcase-09.png'),
-    require('../../../assets/onboarding/images/photos/showcase-10.png'),
-    require('../../../assets/onboarding/images/photos/showcase-11.png'),
-    require('../../../assets/onboarding/images/photos/showcase-12.png'),
-    require('../../../assets/onboarding/images/photos/showcase-13.png'),
-    require('../../../assets/onboarding/images/photos/showcase-14.png'),
+    require('../../../assets/onboarding/images/photos/showcase-01.webp'),
+    require('../../../assets/onboarding/images/photos/showcase-02.webp'),
+    require('../../../assets/onboarding/images/photos/showcase-03.webp'),
+    require('../../../assets/onboarding/images/photos/showcase-04.webp'),
+    require('../../../assets/onboarding/images/photos/showcase-05.webp'),
+    require('../../../assets/onboarding/images/photos/showcase-06.webp'),
+    require('../../../assets/onboarding/images/photos/showcase-07.webp'),
+    require('../../../assets/onboarding/images/photos/showcase-08.webp'),
+    require('../../../assets/onboarding/images/photos/showcase-09.webp'),
+    require('../../../assets/onboarding/images/photos/showcase-10.webp'),
+    require('../../../assets/onboarding/images/photos/showcase-11.webp'),
+    require('../../../assets/onboarding/images/photos/showcase-12.webp'),
+    require('../../../assets/onboarding/images/photos/showcase-13.webp'),
+    require('../../../assets/onboarding/images/photos/showcase-14.webp'),
   ] as ImageSourcePropType[],
 } as const;
 
@@ -105,79 +105,79 @@ export const filters: {
     id: 'natural',
     title: 'Doğal',
     group: 'natural',
-    source: require('../../../assets/onboarding/images/filters/natural.png'),
+    source: require('../../../assets/onboarding/images/filters/natural.webp'),
   },
   {
     id: 'warm-studio',
     title: 'Stüdyo',
     group: 'professional',
-    source: require('../../../assets/onboarding/images/filters/studio.png'),
+    source: require('../../../assets/onboarding/images/filters/studio.webp'),
   },
   {
     id: 'cinematic',
     title: 'Cinematic',
     group: 'cinematic',
-    source: require('../../../assets/onboarding/images/filters/cinematic.png'),
+    source: require('../../../assets/onboarding/images/filters/cinematic.webp'),
   },
   {
     id: 'pop-art',
     title: 'Pop Art',
     group: 'art',
-    source: require('../../../assets/onboarding/images/filters/popart.png'),
+    source: require('../../../assets/onboarding/images/filters/popart.webp'),
   },
   {
     id: 'drip-art',
     title: 'Drip Art',
     group: 'art',
-    source: require('../../../assets/onboarding/images/filters/dripart.png'),
+    source: require('../../../assets/onboarding/images/filters/dripart.webp'),
   },
   {
     id: 'hdr',
     title: 'HDR',
     group: 'natural',
-    source: require('../../../assets/onboarding/images/filters/hdr.png'),
+    source: require('../../../assets/onboarding/images/filters/hdr.webp'),
   },
   {
     id: 'black-white',
     title: 'Siyah Beyaz',
     group: 'professional',
-    source: require('../../../assets/onboarding/images/filters/siyah-beyaz.png'),
+    source: require('../../../assets/onboarding/images/filters/siyah-beyaz.webp'),
   },
   {
     id: 'vintage',
     title: 'Vintage',
     group: 'cinematic',
-    source: require('../../../assets/onboarding/images/filters/vintage.png'),
+    source: require('../../../assets/onboarding/images/filters/vintage.webp'),
   },
   {
     id: 'bokeh',
     title: 'Bokeh',
     group: 'professional',
-    source: require('../../../assets/onboarding/images/filters/bokeh.png'),
+    source: require('../../../assets/onboarding/images/filters/bokeh.webp'),
   },
   {
     id: 'cyberpunk',
     title: 'Cyberpunk',
     group: 'cinematic',
-    source: require('../../../assets/onboarding/images/filters/cyberpunk.png'),
+    source: require('../../../assets/onboarding/images/filters/cyberpunk.webp'),
   },
   {
     id: 'watercolor',
     title: 'Watercolor',
     group: 'art',
-    source: require('../../../assets/onboarding/images/filters/watercolor.png'),
+    source: require('../../../assets/onboarding/images/filters/watercolor.webp'),
   },
   {
     id: 'sketch',
     title: 'Sketch',
     group: 'art',
-    source: require('../../../assets/onboarding/images/filters/sketch.png'),
+    source: require('../../../assets/onboarding/images/filters/sketch.webp'),
   },
   {
     id: 'cartoon',
     title: 'Cartoon',
     group: 'art',
-    source: require('../../../assets/onboarding/images/filters/cartoon.png'),
+    source: require('../../../assets/onboarding/images/filters/cartoon.webp'),
   },
 ];
 
@@ -190,17 +190,17 @@ export const fanScenes: {
   {
     id: 'fan-stadium-01',
     title: 'Stadyum Selfie',
-    source: require('../../../assets/onboarding/images/scenes/stadium.png'),
+    source: require('../../../assets/onboarding/images/scenes/stadium.webp'),
   },
   {
     id: 'fan-stadium-02',
     title: 'Maç Sonrası',
-    source: require('../../../assets/onboarding/images/scenes/stadium.png'),
+    source: require('../../../assets/onboarding/images/scenes/stadium.webp'),
   },
   {
     id: 'fan-celebration',
     title: 'Kutlama Karesi',
-    source: require('../../../assets/onboarding/images/scenes/stadium.png'),
+    source: require('../../../assets/onboarding/images/scenes/stadium.webp'),
   },
 ];
 

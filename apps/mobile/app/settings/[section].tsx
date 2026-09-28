@@ -3,7 +3,7 @@ import { Alert, Linking, Share, StyleSheet, Switch, Text, View } from 'react-nat
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { AppleGlassButton, GlassSurface, Icon, Notice, TextField } from '@/components';
+import { AppleGlassButton, Notice, TextField } from '@/components';
 import { apiRequest } from '@/api/client';
 import { useAuthStore, type AuthUser } from '@/features/auth/auth-store';
 import { GoogleSignInButton } from '@/features/auth/google-sign-in';
@@ -18,7 +18,6 @@ import {
   SettingsSectionTitle,
 } from '@/features/settings/components';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { colors } from '@/theme';
 
 type Preferences = {
   pushEnabled: boolean;

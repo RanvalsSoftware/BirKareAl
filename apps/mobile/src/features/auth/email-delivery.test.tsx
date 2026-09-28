@@ -19,10 +19,21 @@ vi.mock('@/features/settings/language-store', () => ({
   useCopy: () => (turkish: string) => turkish,
 }));
 vi.mock('@/hooks/useReducedMotion', () => ({ useReducedMotion: () => false }));
-vi.mock('expo-router', () => ({
-  useLocalSearchParams: () => mocks.params,
-  router: { canGoBack: () => false, push: mocks.push, replace: mocks.replace },
-}));
+vi.mock('expo-router', async () => {
+  const React = await import('react');
+  return {
+    useFocusEffect(callback: () => void | (() => void)) {
+      React.useEffect(callback, [callback]);
+    },
+    useLocalSearchParams: () => mocks.params,
+    router: {
+      canGoBack: () => false,
+      push: mocks.push,
+      replace: mocks.replace,
+      setParams: vi.fn(),
+    },
+  };
+});
 vi.mock('@expo/vector-icons', () => ({ Ionicons: 'Icon' }));
 vi.mock('react-native', () => {
   class AnimatedValue {
@@ -117,7 +128,9 @@ describe('transactional email handoff', () => {
     await mount();
     expect(
       screen!.root.findAll(
-        (node) => typeof node.props.testID === 'string' && node.props.testID.startsWith('verification-code-cell-'),
+        (node) =>
+          typeof node.props.testID === 'string' &&
+          node.props.testID.startsWith('verification-code-cell-'),
       ),
     ).toHaveLength(6);
     expect(screen!.root.findByType('TextInput' as never).props).toMatchObject({

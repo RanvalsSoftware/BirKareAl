@@ -121,7 +121,12 @@ test('deletion requires exact confirmation and exactly one real reauthentication
   );
   assert.equal((await repository.getUserById(user.id))?.status, 'ACTIVE');
   assert.equal(
-    (await repository.listPendingAccountDeletions(new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000), 20)).length,
+    (
+      await repository.listPendingAccountDeletions(
+        new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000),
+        20,
+      )
+    ).length,
     0,
   );
 });
@@ -155,7 +160,10 @@ test('a password changed during asynchronous reauthentication cannot authorize a
   );
   assert.equal((await f.repository.getUserById(f.user.id))?.status, 'ACTIVE');
   assert.deepEqual(
-    await f.repository.listPendingAccountDeletions(new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000), 20),
+    await f.repository.listPendingAccountDeletions(
+      new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000),
+      20,
+    ),
     [],
   );
 });
@@ -255,8 +263,7 @@ test('Apple deletion accepts only a fresh token for the already-linked immutable
   );
   f.apple('own-apple-subject');
   assert.equal(
-    (await f.service.request(f.user.id, { confirmation, appleIdToken: 'token' }))
-      .deletionRequested,
+    (await f.service.request(f.user.id, { confirmation, appleIdToken: 'token' })).deletionRequested,
     true,
   );
 });
@@ -346,10 +353,10 @@ test('accepted deletion revokes sessions, delays storage cleanup and rejects new
   assert.ok(Date.parse(result.cleanupNotBefore) >= before + ACCOUNT_DELETION_RECOVERY_MS);
   assert.equal((await f.repository.getUserById(f.user.id))?.status, 'DELETION_PENDING');
   assert.ok((await f.repository.getSessionByRefreshHash(session.refreshTokenHash))?.revokedAt);
-  assert.deepEqual(
-    await f.service.cleanup(new Date(before + ACCOUNT_DELETION_RECOVERY_MS - 1)),
-    { completed: 0, failed: 0 },
-  );
+  assert.deepEqual(await f.service.cleanup(new Date(before + ACCOUNT_DELETION_RECOVERY_MS - 1)), {
+    completed: 0,
+    failed: 0,
+  });
   assert.ok(await f.repository.getAssetById(asset.id));
   await assert.rejects(
     () => f.repository.createAsset(assetInput(f.user.id, 'late')),
@@ -476,7 +483,10 @@ test('deleting and re-registering an email or linked Google subject cannot repea
     providerEmail: email,
   });
   await f.service.request(f.user.id, { confirmation, password: 'correct-password' });
-  const records = await f.repository.listPendingAccountDeletions(new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000), 20);
+  const records = await f.repository.listPendingAccountDeletions(
+    new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000),
+    20,
+  );
   assert.ok(records[0]?.identityHashes.every((value) => /^[a-f0-9]{64}$/.test(value)));
   assert.ok(!JSON.stringify(records[0]?.identityHashes).includes(email));
   await f.service.cleanup(new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000));
@@ -549,7 +559,10 @@ test('reserved work blocks deletion without changing user status or creating a m
   );
   assert.equal((await f.repository.getUserById(f.user.id))?.status, 'ACTIVE');
   assert.deepEqual(
-    await f.repository.listPendingAccountDeletions(new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000), 20),
+    await f.repository.listPendingAccountDeletions(
+      new Date(Date.now() + ACCOUNT_DELETION_RECOVERY_MS + 1_000),
+      20,
+    ),
     [],
   );
 });

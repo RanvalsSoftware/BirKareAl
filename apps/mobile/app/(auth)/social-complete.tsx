@@ -375,7 +375,13 @@ const styles = StyleSheet.create({
   // Match the native input layout used by the working login screen. Do not
   // wrap these inputs in focus-state components or animated/touch overlays.
   field: { marginTop: 16 },
-  label: { color: '#EFEFEF', fontSize: 13, fontWeight: '800', letterSpacing: 0.1, marginBottom: 8 },
+  label: {
+    color: '#EFEFEF',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.1,
+    marginBottom: 8,
+  },
   inputRow: {
     alignItems: 'center',
     borderColor: 'rgba(255,255,255,0.15)',

@@ -231,7 +231,13 @@ export default function ResetPasswordScreen() {
 
 const styles = StyleSheet.create({
   field: { marginTop: 16 },
-  label: { color: '#EFEFEF', fontSize: 13, fontWeight: '800', letterSpacing: 0.1, marginBottom: 8 },
+  label: {
+    color: '#EFEFEF',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.1,
+    marginBottom: 8,
+  },
   inputRow: {
     alignItems: 'center',
     borderColor: 'rgba(255,255,255,0.15)',
