@@ -44,7 +44,7 @@ jobs:
       - name: Run mobile regression suite
         run: pnpm --filter @birkare/mobile test
       - name: Expo doctor
-        run: pnpm --filter @birkare/mobile doctor
+        run: pnpm --filter @birkare/mobile run doctor
       - name: Validate Android native config
         env:
           EXPO_PUBLIC_APP_ENV: development
