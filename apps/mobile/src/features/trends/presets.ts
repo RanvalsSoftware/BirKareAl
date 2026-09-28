@@ -123,6 +123,13 @@ export function trendCreationSelection(
     preserveClothes: false,
     customInstruction: '',
     filterIntensity: 60,
+    ...(!supportsSecondPersonTrend(id)
+      ? {
+          secondarySourceUri: null,
+          secondarySourceName: null,
+          secondarySourceRightsConfirmed: false,
+        }
+      : {}),
     ...(source?.sourceKind === 'fictional' || source?.sourceCharacterId
       ? { sourceUri: null, sourceName: null, sourceRightsConfirmed: false }
       : {}),
