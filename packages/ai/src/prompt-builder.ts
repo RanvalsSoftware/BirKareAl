@@ -1,5 +1,5 @@
 import type { CatalogSnapshot, GenerationRecord, ProjectRecord } from '@birkare/database';
-export const GENERATION_PROMPT_VERSION = '2026-09-server-tools-v8';
+export const GENERATION_PROMPT_VERSION = '2026-09-trend-fidelity-v9';
 import { buildBeautyPrompt, buildGenderTransformationPrompt } from './beauty-prompt.js';
 import { buildTrendPrompt } from './trend-prompt.js';
 import { buildStudioPrompt } from './studio-prompt.js';
@@ -66,6 +66,7 @@ export function buildGenerationPrompt(input: {
       recipe.filterIntensity,
       input.generation.aspectRatio,
       instruction,
+      input.generation.inputs.some((entry) => entry.role === 'SECONDARY_PERSON'),
     );
   if (recipe.beauty)
     return buildBeautyPrompt(recipe.beauty, input.generation.aspectRatio, instruction);
