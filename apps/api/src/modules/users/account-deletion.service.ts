@@ -9,6 +9,7 @@ import { badRequest, forbidden, notFound } from '@birkare/shared';
 import type { GoogleIdentityVerifier } from '../auth/google-id-token.service.js';
 import type { AppleIdentityVerifier } from '../auth/apple-id-token.service.js';
 import type { PasswordService } from '../../services/password.service.js';
+import type { RevenueCatService } from '../billing/revenuecat.service.js';
 
 export class AccountDeletionService {
   constructor(
@@ -17,6 +18,7 @@ export class AccountDeletionService {
     private readonly passwordService: Pick<PasswordService, 'verify'>,
     private readonly google: GoogleIdentityVerifier,
     private readonly apple: AppleIdentityVerifier,
+    private readonly revenueCat?: Pick<RevenueCatService, 'deleteCustomer'>,
   ) {}
 
   async preview(userId: string) {
@@ -123,6 +125,7 @@ export class AccountDeletionService {
     for (const request of requests) {
       try {
         for (const key of request.storageKeys) await this.storage.deleteObject(key);
+        await this.revenueCat?.deleteCustomer(request.userId);
         await this.repository.completeAccountDeletion(request.userId);
         completed++;
       } catch {
