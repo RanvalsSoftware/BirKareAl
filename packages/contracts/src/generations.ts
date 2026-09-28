@@ -7,6 +7,7 @@ import {
   PRODUCT_SCENE_IDS,
   STUDIO_MODES,
   TREND_PRESET_IDS,
+  isDualPersonTrend,
 } from '@birkare/shared';
 import { BeautySettingsSchema, GenderTransformationSchema } from './beauty.js';
 import {
@@ -48,6 +49,8 @@ const QuoteGenerationObjectSchema = z.object({
   beauty: BeautySettingsSchema.optional(),
   transformation: GenderTransformationSchema.optional(),
   trendPreset: z.enum(TREND_PRESET_IDS).optional(),
+  /** Quote-only signal; actual generation pricing is derived from validated persisted inputs. */
+  hasSecondaryTrendPerson: z.boolean().optional().default(false),
   toolPreset: z.enum(AI_TOOL_PRESET_IDS).optional(),
   studio: StudioSelectionSchema.optional(),
 });
@@ -97,6 +100,7 @@ type ModeSelectionInput = {
   mode: z.infer<typeof ProjectModeSchema>;
   studio?: z.infer<typeof StudioSelectionSchema>;
   secondarySourceAssetId?: string;
+  hasSecondaryTrendPerson?: boolean;
   sceneTemplateId?: string | null;
   featuredPersonId?: string | null;
   stylePresetId?: string | null;
@@ -123,11 +127,24 @@ function validateStudioSelection(
         message: 'Stüdyo seçimi yalnızca ürün, kıyafet veya tırnak akışında kullanılabilir.',
       });
     }
-    if (input.secondarySourceAssetId) {
+    const dualPersonTrend =
+      input.mode === 'AI_FILTER' &&
+      typeof input.trendPreset === 'string' &&
+      isDualPersonTrend(input.trendPreset);
+    if (input.secondarySourceAssetId && !dualPersonTrend) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['secondarySourceAssetId'],
-        message: 'İkinci kaynak görsel yalnızca kıyafet denemesinde kullanılabilir.',
+        message:
+          'İkinci kişi fotoğrafı yalnızca desteklenen iki kişilik akımlarda kullanılabilir.',
+      });
+    }
+    if (input.hasSecondaryTrendPerson && !dualPersonTrend) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['hasSecondaryTrendPerson'],
+        message:
+          'İkinci kişi maliyeti yalnızca desteklenen iki kişilik akımlarda hesaplanabilir.',
       });
     }
     return false;
@@ -153,7 +170,8 @@ function validateStudioSelection(
     input.transformation ||
     input.trendPreset ||
     input.toolPreset ||
-    input.characterMode
+    input.characterMode ||
+    input.hasSecondaryTrendPerson
   ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
