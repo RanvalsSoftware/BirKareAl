@@ -3,6 +3,7 @@ export type ImageReference = {
   mimeType: 'image/jpeg' | 'image/png' | 'image/webp';
   role:
     | 'USER'
+    | 'SECONDARY_PERSON'
     | 'PRIMARY_PERSON'
     | 'PRODUCT'
     | 'GARMENT'
