@@ -201,7 +201,13 @@ export type GenerationOutputRecord = {
  * infer multi-image meaning from mutable project state or client ordering.
  */
 export type GenerationInputRole =
-  'PRIMARY_USER' | 'PRODUCT' | 'PRIMARY_PERSON' | 'GARMENT' | 'HAND' | 'REFERENCE';
+  | 'PRIMARY_USER'
+  | 'SECONDARY_PERSON'
+  | 'PRODUCT'
+  | 'PRIMARY_PERSON'
+  | 'GARMENT'
+  | 'HAND'
+  | 'REFERENCE';
 
 export type GenerationInputRecord = {
   id: string;
