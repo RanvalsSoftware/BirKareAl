@@ -369,7 +369,10 @@ describe('binary upload and generation startup', () => {
       'Connection interrupted',
     );
     await startCreateGeneration(sourceFlow(), { idempotencyKey: key });
-    expect(callsAt('/v1/uploads/asset-1/content')).toHaveLength(2);
+    const uploadContentCalls = mocks.api.mock.calls.filter(([path]) =>
+      /^\/v1\/uploads\/asset-\d+\/content$/.test(path as string),
+    );
+    expect(uploadContentCalls).toHaveLength(2);
     expect(callsAt('/v1/projects')).toHaveLength(1);
     expect(callsAt('/v1/generations')).toHaveLength(1);
   });
