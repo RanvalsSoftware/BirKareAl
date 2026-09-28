@@ -52,6 +52,10 @@ jobs:
           src/modules/billing/revenuecat.credit-packs.test.ts
           src/app.cors.test.ts
           src/middleware/auth.middleware.test.ts
+      - name: Run trend generation regression tests
+        run: |
+          pnpm --filter @birkare/api exec tsx --test             src/modules/generations/trends.test.ts             src/modules/generations/prompt-builder.test.ts
+          pnpm --filter @birkare/mobile exec vitest run             src/features/trends/presets.test.ts             src/features/create/server-selection.test.ts             src/features/create/server-upload.test.ts             src/features/create/workflow.test.ts
       - name: Run mobile auth and billing tests
         run: >-
           pnpm --filter @birkare/mobile exec vitest run
