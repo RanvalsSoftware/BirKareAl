@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DUAL_PERSON_TREND_IDS,
   EIGHTIES_TREND_IDS,
   getTrendPreset,
   isEightiesTrend,
+  supportsSecondPersonTrend,
   trendCreationSelection,
   trendPresets,
 } from './presets';
@@ -37,6 +39,9 @@ describe('curated trends', () => {
     ]);
     expect(isEightiesTrend('romantic_dinner_80s')).toBe(true);
     expect(isEightiesTrend('analog_90s')).toBe(false);
+    expect(DUAL_PERSON_TREND_IDS).toEqual(['romantic_dinner_80s', 'romantic_closeup_80s']);
+    expect(supportsSecondPersonTrend('romantic_dinner_80s')).toBe(true);
+    expect(supportsSecondPersonTrend('pop_icon_80s')).toBe(false);
   });
 
   it.each(trendPresets)(
@@ -57,6 +62,9 @@ describe('curated trends', () => {
         preserveClothes: false,
         customInstruction: '',
         filterIntensity: 60,
+        secondarySourceUri: null,
+        secondarySourceName: null,
+        secondarySourceRightsConfirmed: false,
       });
       // These display-only cards must never choose the catalogue model as the source.
       expect(trendCreationSelection(trend.id)).not.toHaveProperty('sourceUri');
