@@ -72,7 +72,6 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
         mediaTypes: ['images'],
         allowsEditing: false,
         quality: 0.9,
-        selectionLimit: 1,
       });
       if (result.canceled || !result.assets[0]) return;
       const asset = result.assets[0];
@@ -125,7 +124,7 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
       />
       <View style={styles.toolbar}>
         <Text style={styles.hint}>
-          {isEighties ? '3 özgün 80’ler görünümü' : '9 akım koleksiyonu'}
+          {isEighties ? '3 özgün 80’ler görünümü' : '11 akım koleksiyonu'}
         </Text>
         <CreditBadge credits={credits} />
       </View>
