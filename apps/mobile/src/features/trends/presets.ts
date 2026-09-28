@@ -106,13 +106,15 @@ export function getTrendPreset(id: string | null | undefined) {
 }
 export function trendCreationSelection(
   id: TrendPresetId,
-  source?: Pick<
-    CreateFlow,
-    | 'sourceKind'
-    | 'sourceCharacterId'
-    | 'secondarySourceUri'
-    | 'secondarySourceName'
-    | 'secondarySourceRightsConfirmed'
+  source?: Partial<
+    Pick<
+      CreateFlow,
+      | 'sourceKind'
+      | 'sourceCharacterId'
+      | 'secondarySourceUri'
+      | 'secondarySourceName'
+      | 'secondarySourceRightsConfirmed'
+    >
   >,
 ): Partial<CreateFlow> {
   return {
