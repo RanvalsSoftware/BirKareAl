@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   hasImageSignature,
   selectedShareOutput,
+  shareAspectRatio,
   shareDownloadRequest,
   shareFileType,
   type ShareGeneration,
@@ -88,6 +89,14 @@ describe('generated output sharing', () => {
       expect(() => shareDownloadRequest(url, 'https://api.example', 'secret')).toThrow();
     }
   });
+  it('preserves supported generated aspect ratios for uncropped previews', () => {
+    expect(shareAspectRatio('1:1')).toBe(1);
+    expect(shareAspectRatio('4:5')).toBe(4 / 5);
+    expect(shareAspectRatio('9:16')).toBe(9 / 16);
+    expect(shareAspectRatio('16:9')).toBe(16 / 9);
+    expect(shareAspectRatio('unexpected')).toBe(4 / 5);
+  });
+
   it('uses real MIME types and file extensions, never a signed URL extension', () => {
     expect(shareFileType('image/jpeg')).toEqual({ extension: 'jpg', uti: 'public.jpeg' });
     expect(shareFileType('image/png').extension).toBe('png');
