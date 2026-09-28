@@ -66,7 +66,7 @@ export function buildGenerationPrompt(input: {
       recipe.filterIntensity,
       input.generation.aspectRatio,
       instruction,
-      input.generation.inputs.some((entry) => entry.role === 'SECONDARY_PERSON'),
+      (input.generation.inputs ?? []).some((entry) => entry.role === 'SECONDARY_PERSON'),
     );
   if (recipe.beauty)
     return buildBeautyPrompt(recipe.beauty, input.generation.aspectRatio, instruction);
