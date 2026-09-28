@@ -69,3 +69,20 @@ export function hasImageSignature(bytes: Uint8Array, mimeType: string) {
     );
   return false;
 }
+
+
+/** Converts only BirKare's supported output ratios to a React Native aspect-ratio number. */
+export function shareAspectRatio(value: string | null | undefined): number {
+  switch (value) {
+    case '1:1':
+      return 1;
+    case '4:5':
+      return 4 / 5;
+    case '9:16':
+      return 9 / 16;
+    case '16:9':
+      return 16 / 9;
+    default:
+      return 4 / 5;
+  }
+}
