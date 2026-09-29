@@ -1,3 +1,4 @@
+import { displayOption } from '@/i18n/display-options';
 import { useLanguageRevision } from '@/i18n/use-language';
 import { tr as translateCopy } from '@/i18n/engine';
 import { useEffect, useRef, useState } from 'react';
@@ -262,7 +263,7 @@ function BeautyEditor() {
                 onPress={() => update(withBeautyIntensity(settings, selectedId, value))}
                 style={[styles.level, intensity === value && styles.levelSelected]}
               >
-                <Text style={styles.hint}>{['Hafif', translateCopy("Dengeli"), 'Belirgin'][index]}</Text>
+                <Text style={styles.hint}>{[translateCopy("Hafif"), translateCopy("Dengeli"), translateCopy("Belirgin")][index]}</Text>
               </Pressable>
             ))}
           </View>
@@ -319,7 +320,7 @@ function BeautyEditor() {
       >
         <Text style={styles.optionName}>{translateCopy("Görsel ayarları")}</Text>
         <Text style={styles.hint}>
-          {flow.aspectRatio} · {flow.quality}
+          {flow.aspectRatio} · {displayOption(flow.quality)}
         </Text>
         <Icon name={advanced ? 'chevron-up' : 'chevron-down'} size={17} />
       </Pressable>

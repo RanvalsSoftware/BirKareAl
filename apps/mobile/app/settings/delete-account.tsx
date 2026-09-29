@@ -159,7 +159,7 @@ export default function DeleteAccountScreen() {
         </View>
       </GlassSurface>
       <GlassSettingsPanel>
-        <SettingsSectionTitle>Neler etkilenecek</SettingsSectionTitle>
+        <SettingsSectionTitle>{translateCopy("Neler etkilenecek")}</SettingsSectionTitle>
         <GlassSettingsRow
           icon="folder-outline"
           title={translateCopy("Projeler ve görseller")}

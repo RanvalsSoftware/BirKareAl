@@ -15,7 +15,7 @@ import type { BillingResult } from './revenuecat-client';
 function notify(result: BillingResult, restoring = false) {
   if (result.kind === 'cancelled') return;
   if (result.kind === 'pending' || result.kind === 'error') {
-    Alert.alert(result.kind === 'pending' ? 'Onay bekleniyor' : 'BirKare Pro', result.message);
+    Alert.alert(result.kind === 'pending' ? translateCopy("Onay bekleniyor") : 'BirKare Pro', result.message);
     return;
   }
   Alert.alert(
@@ -113,7 +113,7 @@ export function SubscriptionCard() {
           style={({ pressed }) => [styles.primary, pressed && styles.pressed]}
           onPress={() => router.push('/pro' as never)}
         >
-          <Text style={styles.primaryText}>Pro’yu incele</Text>
+          <Text style={styles.primaryText}>{translateCopy("Pro’yu incele")}</Text>
           <Ionicons name="arrow-forward" size={22} color={colors.background} />
         </Pressable>
       ) : (

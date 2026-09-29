@@ -24,13 +24,13 @@ export default function SettingsScreen() {
         <GlassSettingsRow
           icon="color-palette-outline"
           title={translateCopy("Görünüm")}
-          detail="Koyu tema · Cam efektleri · Animasyon"
+          detail={translateCopy("Koyu tema · Cam efektleri · Animasyon")}
           onPress={() => router.push('/settings/appearance' as never)}
         />
         <GlassSettingsRow
           icon="language-outline"
           accent="purple"
-          title="Dil"
+          title={translateCopy("Dil")}
           value={language.preference === 'system' ? t('language.system') : language.language === 'tr' ? translateCopy("Türkçe") : 'English'}
           detail={t('language.subtitle')}
           onPress={() => router.push('/settings/language' as never)}
@@ -58,12 +58,12 @@ export default function SettingsScreen() {
         <GlassSettingsRow
           icon="lock-closed-outline"
           accent="purple"
-          title="Gizlilik ve verilerim"
+          title={translateCopy("Gizlilik ve verilerim")}
           onPress={() => router.push('/settings/privacy' as never)}
         />
         <GlassSettingsRow
           icon="document-text-outline"
-          title="Yasal belgeler"
+          title={translateCopy("Yasal belgeler")}
           onPress={() => router.push('/legal' as never)}
         />
         <GlassSettingsRow

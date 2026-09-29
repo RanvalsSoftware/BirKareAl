@@ -97,7 +97,7 @@ export default function CropScreen() {
         <MiniChoice label={translateCopy("Sıfırla")} selected={false} onPress={() => setRotation(0)} />
       </View>
       <View style={styles.note}>
-        <Notice tone="neutral" title="Kaynak korunur">{translateCopy("Döndürme, üretime gönderilecek kopyaya uygulanır. Çerçeve çıktı oranını gösterir; AI bu orana göre yeniden kadrajlar veya genişletir. Bu ekran elle kırpma yapmaz.")}</Notice>
+        <Notice tone="neutral" title={translateCopy("Kaynak korunur")}>{translateCopy("Döndürme, üretime gönderilecek kopyaya uygulanır. Çerçeve çıktı oranını gösterir; AI bu orana göre yeniden kadrajlar veya genişletir. Bu ekran elle kırpma yapmaz.")}</Notice>
       </View>
       {error ? (
         <Text accessibilityRole="alert" style={styles.error}>

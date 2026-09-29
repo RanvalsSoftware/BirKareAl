@@ -165,7 +165,7 @@ export function AuthLogo({ compact = false }: { compact?: boolean }) {
     <View style={[styles.logoWrap, compact && styles.logoWrapCompact]}>
       <View style={styles.logoAura}>
         <Image
-          accessibilityLabel="BirKare AI logosu"
+          accessibilityLabel={translateCopy("BirKare AI logosu")}
           source={brandLogoMark}
           style={styles.logoImage}
         />
@@ -222,7 +222,7 @@ export function AuthHero({
   return (
     <View pointerEvents="none" style={[styles.hero, isForgot && styles.heroForgot]}>
       <Animated.Image
-        accessibilityLabel="BirKare AI logosu"
+        accessibilityLabel={translateCopy("BirKare AI logosu")}
         source={brandLogoMark}
         style={[styles.heroLogo, isForgot && styles.heroLogoForgot, floatingLogo]}
       />

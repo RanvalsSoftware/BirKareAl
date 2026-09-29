@@ -75,7 +75,7 @@ export default function GalleryScreen() {
               style={StyleSheet.absoluteFill}
             />
             <View style={styles.previewTop}>
-              <PhotoChip icon="expand-outline">Orijinal oran korunur</PhotoChip>
+              <PhotoChip icon="expand-outline">{translateCopy("Orijinal oran korunur")}</PhotoChip>
               {selectedPhoto ? (
                 <View style={styles.selectedBadge}>
                   <Ionicons color={colors.background} name="checkmark" size={15} />

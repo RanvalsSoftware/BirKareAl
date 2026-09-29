@@ -1,3 +1,4 @@
+import { displayOption } from '@/i18n/display-options';
 import { useLanguageRevision } from '@/i18n/use-language';
 import { tr as translateCopy } from '@/i18n/engine';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -242,7 +243,7 @@ export default function ReviewScreen() {
         </View>
         <View style={styles.summaryDetails}>
           <Detail
-            label="Mod"
+            label={translateCopy("Mod")}
             value={
               flow.beauty
                 ? translateCopy("Güzellik Stüdyosu")
@@ -262,19 +263,19 @@ export default function ReviewScreen() {
             />
           ) : (
             <Detail
-              label="Tarz"
+              label={translateCopy("Tarz")}
               value={`${style} · %${flow.filterIntensity}`}
               icon="color-filter-outline"
             />
           )}
           <Detail
-            label="Kompozisyon"
+            label={translateCopy("Kompozisyon")}
             value={`${flow.trendPreset ? translateCopy("Akıma uygun kadraj") : flow.mode === 'filter' || flow.mode === 'background' ? translateCopy("Kaynak kadrajı") : flow.composition} · ${flow.aspectRatio}`}
             icon="scan-outline"
           />
           <Detail
             label={translateCopy("Çıktı")}
-            value={translateCopy("{{p0}} görsel · {{p1}}", { p0: flow.numberOfImages, p1: flow.quality })}
+            value={translateCopy("{{p0}} görsel · {{p1}}", { p0: flow.numberOfImages, p1: displayOption(flow.quality) })}
             icon="image-outline"
           />
         </View>
@@ -295,7 +296,7 @@ export default function ReviewScreen() {
       ) : null}
       {flow.mode === 'character' ? (
         <View style={styles.details}>
-          <Detail label="Karakter" value={person} icon="person-outline" />
+          <Detail label={translateCopy("Karakter")} value={person} icon="person-outline" />
         </View>
       ) : null}
       {flow.beauty ? (
@@ -326,14 +327,13 @@ export default function ReviewScreen() {
           <Text style={styles.costLabel}>{translateCopy("SUNUCU TARAFINDAN HESAPLANAN MALİYET")}</Text>
           <View style={styles.costRow}>
             <Text style={styles.cost}>
-              <Text style={styles.costNumber}>{isQuoting ? '…' : quote ? cost : '—'}</Text> kredi
-            </Text>
+              <Text style={styles.costNumber}>{isQuoting ? '…' : quote ? cost : '—'}</Text>{' '}{translateCopy("kredi")}</Text>
             {quote ? <CreditBadge credits={unlimitedCredits ? '∞' : availableCredits} /> : null}
           </View>
           <Text style={styles.remaining}>
             {quote ? (
               <>{translateCopy("Üretimden sonra tahmini")}{' '}
-                <Text style={styles.remainingStrong}>{remainingCredits} kredi</Text>{' '}{translateCopy("kalır.")}</>
+                <Text style={styles.remainingStrong}>{remainingCredits}{' '}{translateCopy("kredi")}</Text>{' '}{translateCopy("kalır.")}</>
             ) : quoteError ? (
               translateCopy("Kredi tutarı alınamadı; bakiye değişmedi.")
             ) : (
@@ -372,7 +372,7 @@ export default function ReviewScreen() {
           </Pressable>
         ) : null}
         {quote && !quote.canGenerate ? (
-          <Notice tone="warning" title="Yetersiz kredi">{translateCopy("Bu üretim için {{p0}} kredi gerekir; kullanılabilir bakiyen {{p1}} kredi.", { p0: cost, p1: availableCredits })}</Notice>
+          <Notice tone="warning" title={translateCopy("Yetersiz kredi")}>{translateCopy("Bu üretim için {{p0}} kredi gerekir; kullanılabilir bakiyen {{p1}} kredi.", { p0: cost, p1: availableCredits })}</Notice>
         ) : null}
         {startError ? (
           <Notice tone="warning" title={translateCopy("Üretim başlatılamadı")}>

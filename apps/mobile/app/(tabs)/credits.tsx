@@ -81,7 +81,7 @@ export default function CreditsScreen() {
     const result = await billing.purchaseCredit(product);
     if (result.kind === 'cancelled') return;
     if (result.kind === 'pending' || result.kind === 'error') {
-      Alert.alert(result.kind === 'pending' ? 'Onay bekleniyor' : translateCopy("Kredi satın alma"), result.message);
+      Alert.alert(result.kind === 'pending' ? translateCopy("Onay bekleniyor") : translateCopy("Kredi satın alma"), result.message);
       return;
     }
     try {
@@ -144,8 +144,7 @@ export default function CreditsScreen() {
             <View style={styles.balanceCopy}>
               <Text style={styles.balanceEyebrow}>{translateCopy("MEVCUT BAKİYE")}</Text>
               <Text style={styles.balance}>
-                <Text style={styles.balanceNumber}>{availableCredits}</Text> kredi
-              </Text>
+                <Text style={styles.balanceNumber}>{availableCredits}</Text>{' '}{translateCopy("kredi")}</Text>
               <Text style={styles.balanceText}>{translateCopy("Yaklaşık {{p0}} standart üretim için yeterli.", { p0: approximateStandardGenerations })}</Text>
             </View>
             <LinearGradient colors={['#21180A', '#5A3A00']} style={styles.balanceIcon}>
@@ -157,7 +156,7 @@ export default function CreditsScreen() {
 
           <View style={styles.sectionTitleRow}>
             <Text style={styles.sectionTitle}>{translateCopy("Kredi")}</Text>
-            <Text style={styles.sectionTitleGold}>paketleri</Text>
+            <Text style={styles.sectionTitleGold}>{translateCopy("paketleri")}</Text>
           </View>
           <Text style={styles.sectionSubtitle}>{translateCopy("Fiyatlar App Store / RevenueCat üzerinden canlı gelir. Kredi miktarı backend politikasıdır.")}</Text>
           {billing.testEnvironmentLabel ? (
@@ -193,7 +192,7 @@ export default function CreditsScreen() {
                   </View>
                   <View style={styles.packCopy}>
                     <Text style={styles.packTitle}>{pack.label}</Text>
-                    <Text style={styles.packCredits}>{pack.credits} kredi</Text>
+                    <Text style={styles.packCredits}>{pack.credits}{' '}{translateCopy("kredi")}</Text>
                     <Text style={styles.packNote}>{presentation.note}</Text>
                     {priceMismatch ? (
                       <Text style={styles.priceWarning}>{translateCopy("Test uyarısı: mağaza fiyatı politika ile eşleşmiyor. Beklenen TRY fiyatı ₺ {{p0}}.", { p0: pack.expectedTryPrice.toLocaleString('tr-TR', {
@@ -238,7 +237,7 @@ export default function CreditsScreen() {
           <View style={styles.historyHeading}>
             <View style={styles.sectionTitleRow}>
               <Text style={styles.sectionTitle}>{translateCopy("Hesap")}</Text>
-              <Text style={styles.sectionTitleGold}>hareketleri</Text>
+              <Text style={styles.sectionTitleGold}>{translateCopy("hareketleri")}</Text>
             </View>
             <Pressable
               accessibilityRole="button"

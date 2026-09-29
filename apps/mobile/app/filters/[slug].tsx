@@ -99,7 +99,7 @@ export default function FilterDetailScreen() {
       <View style={styles.meta}>
         <View>
           <Text style={styles.metaLabel}>{translateCopy("TÜR")}</Text>
-          <Text style={styles.metaValue}>AI filtre</Text>
+          <Text style={styles.metaValue}>{translateCopy("AI filtre")}</Text>
         </View>
         <View>
           <Text style={styles.metaLabel}>{translateCopy("KREDİ")}</Text>
@@ -109,7 +109,7 @@ export default function FilterDetailScreen() {
       <Notice tone="neutral" title={translateCopy("Önizleme ücretsizdir")}>{translateCopy("Seçimler fotoğrafını değiştirmez veya kredi harcamaz. AI üretiminde yüz özelliklerini koruyan, seçtiğin yoğunluğa özel yönergeler kullanılır.")}</Notice>
       <View style={styles.apply}>
         <AppleGlassButton
-          label="Bu filtreyle devam et"
+          label={translateCopy("Bu filtreyle devam et")}
           accessibilityHint={
             flow.sourceUri
               ? translateCopy("Seçili filtreyle görsel ayarlarına geçer.")

@@ -722,9 +722,9 @@ export function GuidedSplash({ onFinished }: GuidedSplashProps) {
               step === 0
                 ? translateCopy("Fotoğrafla devam et")
                 : step === 1
-                  ? 'Sahneyle devam et'
+                  ? translateCopy("Sahneyle devam et")
                   : step === 2
-                    ? 'Filtreyle devam et'
+                    ? translateCopy("Filtreyle devam et")
                     : translateCopy("Hesabınla devam et")
             }
             accessibilityRole="button"
@@ -759,9 +759,9 @@ export function GuidedSplash({ onFinished }: GuidedSplashProps) {
                 {step === 0
                   ? translateCopy("Fotoğrafla devam et")
                   : step === 1
-                    ? 'Sahneyle devam et'
+                    ? translateCopy("Sahneyle devam et")
                     : step === 2
-                      ? 'Filtreyle devam et'
+                      ? translateCopy("Filtreyle devam et")
                       : translateCopy("Hesabınla devam et")}
               </Text>
               <Ionicons color={colors.background} name="arrow-forward" size={25} />
@@ -815,7 +815,7 @@ function StepHeader({
               <Ionicons color={colors.textPrimary} name="arrow-back" size={20} />
             </Pressable>
           ) : null}
-          <Text style={styles.stepEyebrow}>{String(index + 1) + '. ADIM'}</Text>
+          <Text style={styles.stepEyebrow}>{String(index + 1) + translateCopy(". ADIM")}</Text>
         </View>
         <View accessibilityLabel={String(index + 1) + ' / 4'} style={styles.stepCount}>
           <Text style={styles.stepCountActive}>{String(index + 1)}</Text>
@@ -878,7 +878,7 @@ function PhotoStep({
           style={StyleSheet.absoluteFill}
         />
         <View style={styles.photoHeroTop}>
-          <MiniPill icon="expand-outline" label="Orijinal oran korunur" />
+          <MiniPill icon="expand-outline" label={translateCopy("Orijinal oran korunur")} />
         </View>
         <View style={styles.photoHeroCopy}>
           <Text style={styles.photoHeroTitle}>
@@ -1383,7 +1383,7 @@ function PreviewStep({
 
       <View style={styles.selectionPreviewRow}>
         <PreviewSelection imageSource={photoSource} label={translateCopy("FOTOĞRAF")} value={photoName} />
-        <PreviewSelection imageSource={sceneSource} label="SAHNE" value={sceneName} />
+        <PreviewSelection imageSource={sceneSource} label={translateCopy("SAHNE")} value={sceneName} />
         <PreviewSelection imageSource={filterSource} label={translateCopy("FİLTRE")} value={filterName} />
       </View>
 

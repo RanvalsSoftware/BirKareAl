@@ -77,7 +77,7 @@ export default function SupportScreen() {
           </Pressable>
         ))}
       </View>
-      <Notice tone="neutral" title="Acil olmayan talepler">{translateCopy("Hesap, ödeme ve içerik raporu talepleri için mümkün olduğunda proje veya işlem ayrıntısını ekle.")}</Notice>
+      <Notice tone="neutral" title={translateCopy("Acil olmayan talepler")}>{translateCopy("Hesap, ödeme ve içerik raporu talepleri için mümkün olduğunda proje veya işlem ayrıntısını ekle.")}</Notice>
       <Text selectable style={styles.email}>
         {supportEmail}
       </Text>

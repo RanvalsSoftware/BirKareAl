@@ -1,3 +1,4 @@
+import { tr as translateCopy } from '@/i18n/engine';
 import { useLanguageRevision } from '@/i18n/use-language';
 import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -308,7 +309,7 @@ export default function LoginScreen() {
                   onBlur={onBlur}
                   onChangeText={onChange}
                   onSubmitEditing={() => passwordInputRef.current?.focus()}
-                  placeholder="ornek@eposta.com"
+                  placeholder={translateCopy("ornek@eposta.com")}
                   placeholderTextColor={authColors.muted}
                   rejectResponderTermination={false}
                   returnKeyType="next"

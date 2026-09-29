@@ -209,11 +209,11 @@ export default function CompareScreen() {
           <View style={styles.legend}>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: colors.accentYellow }]} />
-              <Text style={styles.legendText}>AI sonucu</Text>
+              <Text style={styles.legendText}>{translateCopy("AI sonucu")}</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: colors.textMuted }]} />
-              <Text style={styles.legendText}>Orijinal kaynak</Text>
+              <Text style={styles.legendText}>{translateCopy("Orijinal kaynak")}</Text>
             </View>
           </View>
           <Notice tone="neutral" title={translateCopy("Kaydırarak karşılaştır")}>{translateCopy("Solda seçili AI sonucu, sağda yüklediğin ilk kaynak fotoğraf bulunur. Ayıracı tutup sürükleyerek ayrıntıları inceleyebilirsin.")}</Notice>

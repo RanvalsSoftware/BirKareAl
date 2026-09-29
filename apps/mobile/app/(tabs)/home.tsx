@@ -291,7 +291,7 @@ export default function HomeScreen() {
         />
         <QuickAction
           icon="people-outline"
-          title="Kurgusal karakter"
+          title={translateCopy("Kurgusal karakter")}
           onPress={() => {
             resetCreateFlow();
             setCreateFlow({ mode: 'scene', sourceKind: 'fictional' });
@@ -409,7 +409,7 @@ export default function HomeScreen() {
           <CharacterTile
             key={item.id}
             name={item.name}
-            subtitle="Kurgusal karakter"
+            subtitle={translateCopy("Kurgusal karakter")}
             initials={item.icon}
             palette={item.palette}
             imageSource={item.previewSource}
@@ -543,7 +543,7 @@ function QuickAction({
             {title === 'Fotoğraf yükle'
               ? translateCopy("Fotoğraf yükle")
               : title === 'Kurgusal karakter'
-                ? 'Kurgusal\nkarakter'
+                ? translateCopy("Kurgusal karakter")
                 : title === 'Filtre dene'
                   ? translateCopy("Filtre dene")
                   : translateCopy("AI araçları")}
@@ -590,7 +590,7 @@ function StudioHomeCard({
       />
       <View style={styles.studioCardBadge}>
         <Icon name="flash" size={13} color={colors.accentYellow} />
-        <Text style={styles.studioCardBadgeText}>{item.creditCost}+ kredi</Text>
+        <Text style={styles.studioCardBadgeText}>{item.creditCost}{translateCopy("+ kredi")}</Text>
       </View>
       <View style={styles.studioCardCopy}>
         <Text numberOfLines={1} style={styles.studioCardTitle}>

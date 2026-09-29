@@ -310,7 +310,7 @@ export default function StudioModeScreen() {
       )}
 
       <SectionLabel index={requestedMode === 'product' ? '4' : '3'} title={translateCopy("Çıktı ayarları")} />
-      <Text style={styles.fieldTitle}>Kalite</Text>
+      <Text style={styles.fieldTitle}>{translateCopy("Kalite")}</Text>
       <View style={styles.choiceRow}>
         <MiniChoice
           caption={`${previewCredits} kredi`}
@@ -395,7 +395,7 @@ export default function StudioModeScreen() {
         <GlassSurface contentStyle={styles.quote} glow={false} radius={radii.lg} tone="gold">
           <View>
             <Text style={styles.quoteOverline}>{translateCopy("SUNUCU ONAYLI MALİYET")}</Text>
-            <Text style={styles.quoteCost}>{quote.creditCost} kredi</Text>
+            <Text style={styles.quoteCost}>{quote.creditCost}{' '}{translateCopy("kredi")}</Text>
             <Text style={styles.quoteDetail}>
               {quote.modelLane === 'PREMIUM' ? translateCopy("Sunburst hassas üretim") : translateCopy("Flare hızlı üretim")} ·{' '}
               {flow.quality === 'HD' ? 'HD' : flow.quality === 'PREVIEW' ? translateCopy("Önizleme") : translateCopy("Standart")}
@@ -414,7 +414,7 @@ export default function StudioModeScreen() {
         </Pressable>
       ) : null}
       {quote && !quote.canGenerate ? (
-        <Notice title="Yetersiz kredi" tone="warning">{translateCopy("Bu seçim {{p0}} kredi gerektiriyor; hesabında {{p1}} kredi var.", { p0: quote.creditCost, p1: quote.availableCredits })}</Notice>
+        <Notice title={translateCopy("Yetersiz kredi")} tone="warning">{translateCopy("Bu seçim {{p0}} kredi gerektiriyor; hesabında {{p1}} kredi var.", { p0: quote.creditCost, p1: quote.availableCredits })}</Notice>
       ) : null}
       {startError ? (
         <Notice title={translateCopy("Üretim başlatılamadı")} tone="warning">
@@ -519,7 +519,7 @@ function HorizontalCatalog({
               />
               {showCredit ? (
                 <View style={styles.catalogCredit}>
-                  <Text style={styles.catalogCreditText}>{item.creditCost} kredi</Text>
+                  <Text style={styles.catalogCreditText}>{item.creditCost}{' '}{translateCopy("kredi")}</Text>
                 </View>
               ) : null}
               {selected ? (

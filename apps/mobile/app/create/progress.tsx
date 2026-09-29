@@ -399,9 +399,9 @@ function GlassProgressOrb({
           size={32}
           color={completed ? '#FFE89A' : '#F5EEDB'}
         />
-        <Text style={styles.percent}>{stopped ? 'Durdu' : `${Math.round(progress)}%`}</Text>
+        <Text style={styles.percent}>{stopped ? translateCopy("Durdu") : `${Math.round(progress)}%`}</Text>
         <Text style={styles.orbCaption}>
-          {completed ? 'HAZIR' : stopped ? translateCopy("İŞLEM SONLANDI") : translateCopy("BİRKARE AI")}
+          {completed ? translateCopy("HAZIR") : stopped ? translateCopy("İŞLEM SONLANDI") : translateCopy("BİRKARE AI")}
         </Text>
       </GlassSurface>
       <View pointerEvents="none" style={styles.ring}>
@@ -494,7 +494,7 @@ function ProgressPhase({
     <View
       style={styles.step}
       accessible
-      accessibilityLabel={`${label}, ${done ? translateCopy("tamamlandı") : active ? 'devam ediyor' : 'bekliyor'}`}
+      accessibilityLabel={`${label}, ${done ? translateCopy("tamamlandı") : active ? translateCopy("devam ediyor") : translateCopy("bekliyor")}`}
     >
       <View style={[styles.stepDot, active && styles.stepDotActive, done && styles.stepDotDone]}>
         <LinearGradient

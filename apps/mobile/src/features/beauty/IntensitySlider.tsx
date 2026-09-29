@@ -66,7 +66,7 @@ export function IntensitySlider({
         accessibilityValue={{ min: 0, max: 100, now: value, text: translateCopy("Yüzde {{p0}}", { p0: value }) }}
         accessibilityActions={[
           { name: 'increment', label: translateCopy("Artır") },
-          { name: 'decrement', label: 'Azalt' },
+          { name: 'decrement', label: translateCopy("Azalt") },
         ]}
         onAccessibilityAction={(event) => {
           if (!disabled)

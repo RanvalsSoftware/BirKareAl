@@ -252,7 +252,7 @@ export default function GenerationResultsScreen() {
         right={
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={favorite ? translateCopy("Favorilerden çıkar") : 'Favorilere ekle'}
+            accessibilityLabel={favorite ? translateCopy("Favorilerden çıkar") : translateCopy("Favorilere ekle")}
             onPress={() => setFavorite((value) => !value)}
             style={styles.favorite}
           >
@@ -314,7 +314,7 @@ export default function GenerationResultsScreen() {
             key={variant.id}
             size="small"
             title={variant.label}
-            subtitle={index === 0 ? translateCopy("Önerilen") : 'Alternatif'}
+            subtitle={index === 0 ? translateCopy("Önerilen") : translateCopy("Alternatif")}
             palette={variant.palette}
             icon={variant.icon}
             imageSource={
@@ -421,7 +421,7 @@ export default function GenerationResultsScreen() {
         style={({ pressed }) => [styles.reportAction, pressed && styles.pressed]}
       >
         <Icon name="flag-outline" size={18} color={colors.danger} />
-        <Text style={styles.reportActionText}>Raporla</Text>
+        <Text style={styles.reportActionText}>{translateCopy("Raporla")}</Text>
       </Pressable>
       <PrimaryButton
         accessibilityHint={translateCopy("Yeni bir üretime en baştan başlar")}
@@ -481,7 +481,7 @@ function ReportModal({
     >
       <View accessibilityViewIsModal style={styles.modalBackdrop}>
         <Pressable
-          accessibilityLabel="Rapor penceresini kapat"
+          accessibilityLabel={translateCopy("Rapor penceresini kapat")}
           accessibilityRole="button"
           onPress={onClose}
           style={StyleSheet.absoluteFill}
@@ -495,7 +495,7 @@ function ReportModal({
             </View>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Rapor penceresini kapat"
+              accessibilityLabel={translateCopy("Rapor penceresini kapat")}
               hitSlop={8}
               onPress={onClose}
               style={styles.modalClose}

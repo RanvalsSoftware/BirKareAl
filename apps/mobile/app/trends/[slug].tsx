@@ -1,3 +1,4 @@
+import { displayOption } from '@/i18n/display-options';
 import { useLanguageRevision } from '@/i18n/use-language';
 import { tr as translateCopy } from '@/i18n/engine';
 import { useEffect, useRef, useState } from 'react';
@@ -136,11 +137,11 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
         <View style={styles.collection}>
           <View style={styles.collectionHeading}>
             <View>
-              <Text style={styles.collectionTitle}>80’ler koleksiyonu</Text>
+              <Text style={styles.collectionTitle}>{translateCopy("80’ler koleksiyonu")}</Text>
               <Text style={styles.small}>{translateCopy("Görünümü seç · seçim üretimden önce değiştirilebilir")}</Text>
             </View>
             <View style={styles.collectionCount}>
-              <Text style={styles.collectionCountText}>3 stil</Text>
+              <Text style={styles.collectionCountText}>{translateCopy("3 stil")}</Text>
             </View>
           </View>
           <ScrollView
@@ -366,7 +367,7 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
           {[25, 60, 100].map((value, index) => (
             <MiniChoice
               key={value}
-              label={['Hafif', translateCopy("Dengeli"), 'Belirgin'][index]}
+              label={[translateCopy("Hafif"), translateCopy("Dengeli"), translateCopy("Belirgin")][index]}
               selected={flow.filterIntensity === value}
               onPress={() => set({ filterIntensity: value })}
             />
@@ -383,7 +384,7 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
       >
         <View>
           <Text style={styles.title}>{translateCopy("Görsel ayarları")}</Text>
-          <Text style={styles.hint}>{translateCopy("{{p0}} · {{p1}} · 1 görsel", { p0: flow.aspectRatio, p1: flow.quality })}</Text>
+          <Text style={styles.hint}>{translateCopy("{{p0}} · {{p1}} · 1 görsel", { p0: flow.aspectRatio, p1: displayOption(flow.quality) })}</Text>
         </View>
         <Icon name={advanced ? 'chevron-up' : 'chevron-down'} size={18} />
       </Pressable>
@@ -400,7 +401,7 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
               />
             ))}
           </View>
-          <FieldLabel>Kalite</FieldLabel>
+          <FieldLabel>{translateCopy("Kalite")}</FieldLabel>
           <View style={styles.row}>
             {(['Önizleme', 'Standart', 'HD'] as const).map((quality) => (
               <MiniChoice

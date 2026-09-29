@@ -318,7 +318,7 @@ export default function RegisterScreen() {
                   onBlur={onBlur}
                   onChangeText={onChange}
                   onSubmitEditing={() => birthYearInputRef.current?.focus()}
-                  placeholder="ornek@gmail.com"
+                  placeholder={translateCopy("ornek@gmail.com")}
                   placeholderTextColor={authColors.muted}
                   rejectResponderTermination={false}
                   returnKeyType="next"

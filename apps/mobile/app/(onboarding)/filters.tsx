@@ -153,7 +153,7 @@ export default function FiltersOnboardingScreen() {
                     >
                       {item.title}
                     </Text>
-                    <Text style={styles.filterMeta}>AI filtre</Text>
+                    <Text style={styles.filterMeta}>{translateCopy("AI filtre")}</Text>
                   </Pressable>
                 </Animated.View>
               );

@@ -97,7 +97,7 @@ export default function FanMomentScreen() {
 
           <View style={styles.inspirationHeader}>
             <Text style={styles.inspirationTitle}>{translateCopy("Fan Moment ilhamı")}</Text>
-            <Text style={styles.inspirationHint}>Kurgusal sahneler</Text>
+            <Text style={styles.inspirationHint}>{translateCopy("Kurgusal sahneler")}</Text>
           </View>
           <ScrollView
             contentContainerStyle={styles.sceneRow}

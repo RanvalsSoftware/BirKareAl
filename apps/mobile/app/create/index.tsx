@@ -79,7 +79,7 @@ const sections: readonly {
   },
   {
     id: 'fictional',
-    label: 'Kurgusal',
+    label: translateCopy("Kurgusal"),
     icon: 'sparkles-outline',
     modes: ['character'],
     get heading() { return translateCopy("Kurgusal bir an yarat"); },

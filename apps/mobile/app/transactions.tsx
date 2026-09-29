@@ -67,7 +67,7 @@ function TransactionRow({ item }: { item: CreditTransaction }) {
         </View>
         <View style={styles.divider} />
         <View style={styles.detailRow}>
-          <Text style={styles.detailLabel}>Durum</Text>
+          <Text style={styles.detailLabel}>{translateCopy("Durum")}</Text>
           <View style={styles.status}>
             <View style={[styles.statusDot, { backgroundColor: statusColor(item.status) }]} />
             <Text
@@ -81,13 +81,13 @@ function TransactionRow({ item }: { item: CreditTransaction }) {
         {item.availableAfter != null ? (
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>{translateCopy("İşlem sonrası bakiye")}</Text>
-            <Text style={styles.detailValue}>{item.availableAfter} kredi</Text>
+            <Text style={styles.detailValue}>{item.availableAfter}{' '}{translateCopy("kredi")}</Text>
           </View>
         ) : null}
         {item.reservedAfter != null && item.reservedAfter > 0 ? (
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>{translateCopy("Üretim için ayrılan")}</Text>
-            <Text style={styles.detailValue}>{item.reservedAfter} kredi</Text>
+            <Text style={styles.detailValue}>{item.reservedAfter}{' '}{translateCopy("kredi")}</Text>
           </View>
         ) : null}
         {item.referenceType ? (
@@ -133,7 +133,7 @@ function TransactionsContent() {
         >
           <Icon name="arrow-down-circle-outline" size={19} color="#7BE495" />
           <Text style={styles.summaryValue}>+{earned}</Text>
-          <Text style={styles.summaryLabel}>Toplam eklenen</Text>
+          <Text style={styles.summaryLabel}>{translateCopy("Toplam eklenen")}</Text>
         </GlassSurface>
         <GlassSurface
           radius={20}
@@ -165,7 +165,7 @@ function TransactionsContent() {
       </ScrollView>
       <View style={styles.heading}>
         <Text style={styles.headingTitle}>{translateCopy("İşlemler")}</Text>
-        <Text style={styles.headingCount}>{items.length} hareket</Text>
+        <Text style={styles.headingCount}>{items.length}{' '}{translateCopy("hareket")}</Text>
       </View>
       {query.isLoading ? (
         <View style={styles.state}>

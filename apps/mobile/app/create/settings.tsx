@@ -82,7 +82,7 @@ export default function GenerationSettingsScreen() {
         </Pressable>
       </View>
 
-      <FieldLabel>{translateCopy("Filtre · {{p0}}", { p0: selectedFilter?.name ?? 'Doğal Işık' })}</FieldLabel>
+      <FieldLabel>{translateCopy("Filtre · {{p0}}", { p0: selectedFilter?.name ?? translateCopy('Doğal Işık') })}</FieldLabel>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}

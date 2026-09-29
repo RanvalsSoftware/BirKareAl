@@ -172,7 +172,7 @@ function AccountProfileForm({
     <SettingsPage title={translateCopy("Profili düzenle")} subtitle={translateCopy("Hesabındaki adını güncelle")}>
       <GlassSettingsHero
         icon="person-outline"
-        title="Senin profilin."
+        title={translateCopy("Senin profilin.")}
         description={translateCopy("Kaydettiğin ad, profilinde ve ana sayfa karşılamasında kullanılır.")}
       />
       <GlassSettingsPanel>
@@ -259,11 +259,11 @@ function Appearance() {
       <GlassSettingsPanel>
         <GlassSettingsRow
           icon="layers-outline"
-          title="Cam efektleri"
+          title={translateCopy("Cam efektleri")}
           detail={translateCopy("Bulanıklık, yansıma ve yumuşak ışık")}
           trailing={
             <PreferenceSwitch
-              label="Cam efektleri"
+              label={translateCopy("Cam efektleri")}
               value={appearance.glassEffects}
               disabled={saving || !appearance.hydrated}
               onChange={(value) => {
@@ -275,11 +275,11 @@ function Appearance() {
         <GlassSettingsRow
           icon="accessibility-outline"
           accent="purple"
-          title="Animasyonu azalt"
-          detail="Dekoratif hareketleri ve basma animasyonunu azalt"
+          title={translateCopy("Animasyonu azalt")}
+          detail={translateCopy("Dekoratif hareketleri ve basma animasyonunu azalt")}
           trailing={
             <PreferenceSwitch
-              label="Animasyonu azalt"
+              label={translateCopy("Animasyonu azalt")}
               value={appearance.reducedMotion}
               disabled={saving || !appearance.hydrated}
               onChange={(value) => {
@@ -327,7 +327,7 @@ function Notifications() {
     }
   }
   return (
-    <SettingsPage title="Bildirimler" subtitle={translateCopy("İletişim tercihlerin senin elinde")}>
+    <SettingsPage title={translateCopy("Bildirimler")} subtitle={translateCopy("İletişim tercihlerin senin elinde")}>
       <GlassSettingsHero
         icon="notifications-outline"
         title={translateCopy("Yalnızca istediklerin.")}
@@ -356,7 +356,7 @@ function Notifications() {
           detail={translateCopy("Kredi ve ürün haberleri için iletişim izni")}
           trailing={
             <PreferenceSwitch
-              label="Kampanya e-posta izni"
+              label={translateCopy("Kampanya e-posta izni")}
               value={data?.preferences.marketingEmail ?? false}
               disabled={saving || isLoading || isError}
               onChange={(marketingEmail) => {
@@ -404,10 +404,10 @@ function Privacy() {
     }
   }
   return (
-    <SettingsPage title="Gizlilik ve verilerim" subtitle={translateCopy("Hesabın ve görsellerin üzerinde kontrol")}>
+    <SettingsPage title={translateCopy("Gizlilik ve verilerim")} subtitle={translateCopy("Hesabın ve görsellerin üzerinde kontrol")}>
       <GlassSettingsHero
         icon="lock-closed-outline"
-        title="Kontrol sende."
+        title={translateCopy("Kontrol sende.")}
         description={translateCopy("Hesap verilerini görüntüle, güvenliğini yönet veya silme sürecini başlat.")}
       />
       <GlassSettingsPanel>
@@ -580,12 +580,12 @@ function Security() {
                   ? undefined
                   : () =>
                       Alert.alert(
-                        'Oturumu kapat',
+                        translateCopy("Oturumu kapat"),
                         translateCopy("Seçilen cihazın yeniden giriş yapması gerekecek."),
                         [
                           { text: translateCopy("Vazgeç"), style: 'cancel' },
                           {
-                            text: 'Kapat',
+                            text: translateCopy("Kapat"),
                             style: 'destructive',
                             onPress: () => {
                               void revoke(session.id);
@@ -682,7 +682,7 @@ function History() {
               key={item.id}
               icon={item.type === 'BONUS' ? 'gift-outline' : 'receipt-outline'}
               title={transactionLabels[item.type] ?? translateCopy("Kredi hareketi")}
-              detail={`${new Date(item.createdAt).toLocaleDateString(getAppLocale())} · ${item.status === 'COMPLETED' ? translateCopy("Tamamlandı") : item.status === 'PENDING' ? 'Bekliyor' : item.status === 'REVERSED' ? translateCopy("Geri alındı") : translateCopy("Başarısız")}`}
+              detail={`${new Date(item.createdAt).toLocaleDateString(getAppLocale())} · ${item.status === 'COMPLETED' ? translateCopy("Tamamlandı") : item.status === 'PENDING' ? translateCopy("Bekliyor") : item.status === 'REVERSED' ? translateCopy("Geri alındı") : translateCopy("Başarısız")}`}
               value={`${item.amount > 0 ? '+' : ''}${item.amount}`}
               last={index === query.data.items.length - 1}
             />

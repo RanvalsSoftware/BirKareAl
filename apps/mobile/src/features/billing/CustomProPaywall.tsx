@@ -30,7 +30,7 @@ export function CustomProPaywall() {
     (result: BillingResult, restoring = false) => {
       if (result.kind === 'cancelled') return;
       if (result.kind === 'pending' || result.kind === 'error') {
-        Alert.alert(result.kind === 'pending' ? 'Onay bekleniyor' : 'BirKare Pro', result.message);
+        Alert.alert(result.kind === 'pending' ? translateCopy("Onay bekleniyor") : 'BirKare Pro', result.message);
         return;
       }
       if (result.isPro) {
@@ -173,7 +173,7 @@ export function CustomProPaywall() {
                   style={s.link}
                   accessibilityRole="button"
                 >
-                  <Text style={s.linkText}>Tekrar dene</Text>
+                  <Text style={s.linkText}>{translateCopy("Tekrar dene")}</Text>
                 </Pressable>
               ) : null}
             </View>

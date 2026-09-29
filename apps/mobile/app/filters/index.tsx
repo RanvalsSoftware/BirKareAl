@@ -100,7 +100,7 @@ export default function FiltersScreen() {
         <>
           <View style={styles.titleRow}>
             <Text style={styles.title}>{category === 'Tümü' ? translateCopy("Tüm filtreler") : category}</Text>
-            <Text style={styles.count}>{items.length} filtre</Text>
+            <Text style={styles.count}>{items.length}{' '}{translateCopy("filtre")}</Text>
           </View>
           {items.length ? (
             <View style={styles.grid}>
@@ -108,7 +108,7 @@ export default function FiltersScreen() {
                 <VisualTile
                   key={item.id}
                   title={item.name}
-                  subtitle="AI filtre"
+                  subtitle={translateCopy("AI filtre")}
                   palette={item.palette}
                   icon={item.icon}
                   imageSource={item.previewSource}

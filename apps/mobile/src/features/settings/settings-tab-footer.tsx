@@ -10,7 +10,7 @@ import { GlassSurface, Icon } from '@/components';
 import { colors } from '@/theme';
 
 const tabs = [
-  { route: '/(tabs)/home', label: 'Ana Sayfa', icon: 'home-outline' },
+  { route: '/(tabs)/home', label: translateCopy("Ana Sayfa"), icon: 'home-outline' },
   { route: '/(tabs)/explore', get label() { return translateCopy("Keşfet"); }, icon: 'compass-outline' },
   { route: '/(tabs)/projects', get label() { return translateCopy("Projeler"); }, icon: 'images-outline' },
   { route: '/(tabs)/credits', get label() { return translateCopy("Krediler"); }, icon: 'flash-outline' },

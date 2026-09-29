@@ -160,7 +160,7 @@ export default function ProjectsScreen() {
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.screen}>
       <View style={styles.headerArea}>
         <AppHeader
-          title="Projelerim"
+          title={translateCopy("Projelerim")}
           subtitle={translateCopy("Üretimlerin ve versiyonların")}
           right={<CreditBadge credits={availableCredits} />}
         />
@@ -203,8 +203,8 @@ export default function ProjectsScreen() {
         ) : visible.length ? (
           <>
             <SectionHeader
-              title={selected === 'Tümü' ? 'Son projeler' : selected}
-              accessory={<Text style={styles.count}>{visible.length} proje</Text>}
+              title={selected === 'Tümü' ? translateCopy("Son projeler") : selected}
+              accessory={<Text style={styles.count}>{visible.length}{' '}{translateCopy("proje")}</Text>}
             />
             <View style={styles.grid}>
               {visible.map((project) => (

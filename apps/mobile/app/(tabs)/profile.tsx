@@ -118,7 +118,7 @@ export default function ProfileScreen() {
           </View>
         </View>
         <View style={styles.heroFooter}>
-          <Text style={styles.heroMotto}>Her karede biraz sen.</Text>
+          <Text style={styles.heroMotto}>{translateCopy("Her karede biraz sen.")}</Text>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={translateCopy("Profili düzenle")}
@@ -159,12 +159,12 @@ export default function ProfileScreen() {
         />
       </GlassSettingsPanel>
 
-      <SettingsSectionTitle>HESABIM</SettingsSectionTitle>
+      <SettingsSectionTitle>{translateCopy("HESABIM")}</SettingsSectionTitle>
       <GlassSettingsPanel>
         <GlassSettingsRow
           icon="color-palette-outline"
           title={translateCopy("Görünüm")}
-          detail="Koyu tema, cam efektleri ve animasyon"
+          detail={translateCopy("Koyu tema, cam efektleri ve animasyon")}
           onPress={() => router.push('/settings/appearance' as never)}
         />
         <GlassSettingsRow
@@ -187,7 +187,7 @@ export default function ProfileScreen() {
         />
         <GlassSettingsRow
           icon="document-text-outline"
-          title="Yasal belgeler"
+          title={translateCopy("Yasal belgeler")}
           onPress={() => router.push('/legal' as never)}
           last
         />

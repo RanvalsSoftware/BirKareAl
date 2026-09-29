@@ -152,7 +152,7 @@ export default function UploadScreen() {
           onChange={changeSourceKind}
           options={[
             { value: 'photo', label: translateCopy("Fotoğrafım"), icon: 'camera-outline' },
-            { value: 'fictional', label: 'Kurgusal karakter', icon: 'person-outline' },
+            { value: 'fictional', label: translateCopy("Kurgusal karakter"), icon: 'person-outline' },
           ]}
         />
       ) : null}
@@ -247,7 +247,7 @@ export default function UploadScreen() {
         <View style={styles.rightsCopy}>
           <Text style={styles.rightsTitle}>
             {sourceKind === 'fictional'
-              ? 'Kurgusal karakterle devam et'
+              ? translateCopy("Kurgusal karakterle devam et")
               : translateCopy("Fotoğraf kullanım hakkım var")}
           </Text>
           <Text style={styles.rightsDetail}>

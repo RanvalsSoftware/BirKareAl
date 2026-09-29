@@ -49,13 +49,13 @@ export default function LegalScreen() {
 
   const router = useRouter();
   return (
-    <SettingsPage title="Yasal belgeler" subtitle={translateCopy("Açık, anlaşılır ve her zaman erişilebilir")}>
+    <SettingsPage title={translateCopy("Yasal belgeler")} subtitle={translateCopy("Açık, anlaşılır ve her zaman erişilebilir")}>
       <GlassSettingsHero
         icon="shield-checkmark-outline"
-        title="Kontrol sende."
+        title={translateCopy("Kontrol sende.")}
         description={translateCopy("Fotoğrafların, seçimlerin ve hakların hakkında bilmen gerekenleri tek yerde bul.")}
       />
-      <SettingsSectionTitle>BELGELER</SettingsSectionTitle>
+      <SettingsSectionTitle>{translateCopy("BELGELER")}</SettingsSectionTitle>
       <GlassSettingsPanel>
         {documents.map((document, index) => (
           <GlassSettingsRow
@@ -73,7 +73,7 @@ export default function LegalScreen() {
       <GlassSettingsPanel tone="neutral">
         <GlassSettingsRow
           icon="help-buoy-outline"
-          title="Bir sorunun mu var?"
+          title={translateCopy("Bir sorunun mu var?")}
           detail={translateCopy("Gizlilik ve kullanım hakları için destek al")}
           onPress={() => router.push('/support' as never)}
           last

@@ -61,7 +61,7 @@ export default function SceneScreen() {
           />
         ))}
       </View>
-      <Notice tone="neutral" title="AI sahnesi">{translateCopy("Seçtiğin sahne yaratıcı bir taslak olarak kullanılır; gerçek bir mekan kaydı değildir.")}</Notice>
+      <Notice tone="neutral" title={translateCopy("AI sahnesi")}>{translateCopy("Seçtiğin sahne yaratıcı bir taslak olarak kullanılır; gerçek bir mekan kaydı değildir.")}</Notice>
       <WizardFooter
         label={flow.sourceUri ? translateCopy("Görseli düzenle") : translateCopy("Kaynak seç")}
         onPress={() => {

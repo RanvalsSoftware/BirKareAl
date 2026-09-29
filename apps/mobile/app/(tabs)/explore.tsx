@@ -191,9 +191,9 @@ export default function ExploreScreen() {
                     title={item.name}
                     subtitle={
                       item.kind === 'person'
-                        ? 'Kurgusal karakter'
+                        ? translateCopy("Kurgusal karakter")
                         : item.kind === 'filter' || item.slug === 'gender-change'
-                          ? 'AI filtre'
+                          ? translateCopy("AI filtre")
                           : item.subtitle
                     }
                     palette={item.palette}

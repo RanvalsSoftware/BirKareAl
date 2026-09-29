@@ -70,7 +70,7 @@ export default function WelcomeScreen() {
               />
               <View style={styles.afterLabel}>
                 <Ionicons color={colors.background} name="sparkles" size={13} />
-                <Text style={styles.afterLabelText}>AI sahnesi</Text>
+                <Text style={styles.afterLabelText}>{translateCopy("AI sahnesi")}</Text>
               </View>
             </View>
           </Animated.View>

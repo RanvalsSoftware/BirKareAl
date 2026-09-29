@@ -64,7 +64,7 @@ function SupportTicketForm() {
           <View style={styles.successIcon}><Icon name="mail-open-outline" size={32} color={colors.background} /></View>
           <Text style={styles.successTitle}>{translateCopy("Destek talebin kaydedildi.")}</Text>
           <Text style={styles.successText}>{translateCopy("Talebin destek e-posta sunucusuna aktarıldı. Bu, gelen kutusuna teslim veya okunma onayı değildir. Yanıt için hesabındaki doğrulanmış e-posta adresini kullanacağız.")}</Text>
-          <Text selectable style={styles.email}>Talep: {receipt.id}</Text>
+          <Text selectable style={styles.email}>{translateCopy("Talep:")}{' '}{receipt.id}</Text>
           <Text selectable style={styles.email}>
             {supportEmail}
           </Text>
@@ -84,7 +84,7 @@ function SupportTicketForm() {
   return (
     <Screen contentContainerStyle={styles.content}>
       <AppHeader back title={translateCopy("Destek talebi")} subtitle={translateCopy("Bize ne olduğunu anlat")} />
-      <Text style={styles.label}>Konu</Text>
+      <Text style={styles.label}>{translateCopy("Konu")}</Text>
       <View style={styles.chips}>
         {supportTopics.map((item) => (
           <CategoryChip

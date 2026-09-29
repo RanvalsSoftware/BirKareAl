@@ -266,8 +266,7 @@ export default function ProjectDetailScreen() {
                     ) : null}
                   </View>
                   <View style={styles.versionCopy}>
-                    <Text style={styles.versionTitle}>
-                      Varyasyon {completed.length - index}
+                    <Text style={styles.versionTitle}>{translateCopy("Varyasyon")}{' '}{completed.length - index}
                     </Text>
                     <Text style={styles.versionDate}>
                       {dateLabel(generation.completedAt ?? generation.createdAt)}

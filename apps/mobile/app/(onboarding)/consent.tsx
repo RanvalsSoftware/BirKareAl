@@ -148,7 +148,7 @@ export default function ConsentScreen() {
         <View style={styles.bottom}>
           <GoldButton
             disabled={!allAccepted}
-            label="Onayla ve devam et"
+            label={translateCopy("Onayla ve devam et")}
             loading={submitting}
             onPress={continueToLogin}
           />

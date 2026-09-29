@@ -158,12 +158,12 @@ export function ProPaywallView(props: ProPaywallViewProps) {
             <View style={s.activeBox}>
               <Ionicons name="checkmark-circle" size={32} color={GOLD} />
               <View style={s.flex}>
-                <Text style={s.planTitle}>BirKare Pro aktif</Text>
+                <Text style={s.planTitle}>{translateCopy("BirKare Pro aktif")}</Text>
                 <Text style={s.planNote}>{props.activeNote}</Text>
               </View>
             </View>
           ) : (
-            <View style={s.plans} accessibilityLabel="BirKare Pro paketleri">
+            <View style={s.plans} accessibilityLabel={translateCopy("BirKare Pro paketleri")}>
               {props.plans.map((plan) => {
                 const selected = props.selected === plan.id;
                 return (
@@ -296,7 +296,7 @@ export function ProPaywallView(props: ProPaywallViewProps) {
             </Pressable>
             <Text style={s.divider}>|</Text>
             <Pressable onPress={props.onPrivacy} accessibilityRole="link" style={s.footerButton}>
-              <Text style={s.footerText}>Gizlilik</Text>
+              <Text style={s.footerText}>{translateCopy("Gizlilik")}</Text>
             </Pressable>
           </View>
           <View pointerEvents="none" style={s.bottomGlow} />

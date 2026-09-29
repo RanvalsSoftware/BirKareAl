@@ -362,7 +362,7 @@ export default function SocialCompleteScreen() {
           <View style={styles.keyboardToolbar}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Klavyeyi kapat"
+              accessibilityLabel={translateCopy("Klavyeyi kapat")}
               onPress={Keyboard.dismiss}
               style={styles.keyboardDone}
             >

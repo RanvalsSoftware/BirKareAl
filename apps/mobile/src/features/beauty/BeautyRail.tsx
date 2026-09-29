@@ -37,7 +37,7 @@ export function BeautyRail({
           <Pressable
             key={option.id}
             accessibilityRole="button"
-            accessibilityLabel={`${option.number}. ${option.name}${option.isPro ? (proUnlocked ? ', PRO' : ', PRO kilitli') : ''}${intensity ? translateCopy(", yoğunluk yüzde {{p0}}", { p0: intensity }) : ''}`}
+            accessibilityLabel={`${option.number}. ${option.name}${option.isPro ? (proUnlocked ? ', PRO' : translateCopy(", PRO kilitli")) : ''}${intensity ? translateCopy(", yoğunluk yüzde {{p0}}", { p0: intensity }) : ''}`}
             accessibilityState={{ selected }}
             accessibilityHint={
               settings && (!option.isPro || proUnlocked)
