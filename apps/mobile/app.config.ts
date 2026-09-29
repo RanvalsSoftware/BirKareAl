@@ -141,7 +141,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
     permissions: ['com.android.vending.BILLING'],
     // New Play upload with R8 code/resource optimization enabled.
-    versionCode: 5,
+    versionCode: 6,
     adaptiveIcon: {
       foregroundImage: './assets/onboarding/images/brand/logo-gold-icon.png',
       backgroundColor: '#050505',
