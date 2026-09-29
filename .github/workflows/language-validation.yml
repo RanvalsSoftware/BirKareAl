@@ -22,16 +22,19 @@ jobs:
           node-version: '22'
       - run: corepack enable && corepack prepare pnpm@10.18.0 --activate
       - run: pnpm install --frozen-lockfile
-      - name: Audit translatable static copy
-        run: node scripts/language-audit.mjs
+      - name: Inventory translatable static copy
+        run: |
+          node scripts/language-audit.mjs > /tmp/birkare-language-inventory.txt
+          head -n 1 /tmp/birkare-language-inventory.txt
       - run: pnpm --filter @birkare/database exec prisma generate
       - run: pnpm --filter @birkare/mobile typecheck
       - run: pnpm --filter @birkare/api typecheck
-      - name: Mobile regression tests
+      - name: Full mobile regression suite
         run: pnpm --filter @birkare/mobile test
-      - name: Backend auth, generation and billing regression tests
+      - name: Backend language, authentication, generation and billing regressions
         run: >-
           pnpm --filter @birkare/api exec tsx --test
+          src/services/localization.test.ts
           src/modules/auth/auth.service.test.ts
           src/modules/auth/google-id-token.service.test.ts
           src/modules/auth/apple-id-token.service.test.ts
