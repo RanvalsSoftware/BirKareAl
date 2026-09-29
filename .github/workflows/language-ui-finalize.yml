@@ -1,0 +1,47 @@
+name: Validate and finalize language presentation
+on:
+  push:
+    branches: [feature7langague_update]
+    paths: [scripts/language-ui-finalize.mjs, .github/workflows/language-ui-finalize.yml, apps/mobile/src/i18n/locales/ui-en.json]
+permissions:
+  contents: read
+concurrency:
+  group: language-ui-feature-only
+  cancel-in-progress: true
+jobs:
+  finalize:
+    if: github.repository == 'RanvalsSoftware/BirKareAl' && github.ref == 'refs/heads/feature7langague_update'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feature7langague_update
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: corepack enable && corepack prepare pnpm@10.18.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - name: Finish static UI presentation without modifying enum values
+        run: node scripts/language-ui-finalize.mjs
+      - run: pnpm --filter @birkare/database exec prisma generate
+      - name: Typecheck both workspaces
+        run: |
+          pnpm --filter @birkare/mobile typecheck
+          pnpm --filter @birkare/api typecheck
+      - name: Full mobile regression suite
+        run: pnpm --filter @birkare/mobile test
+      - name: Backend localization and authentication regressions
+        run: pnpm --filter @birkare/api exec tsx --test src/services/localization.test.ts src/services/mail.service.test.ts src/modules/auth/google-id-token.service.test.ts
+      - name: Commit tested UI source only on feature branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add apps/mobile/app apps/mobile/src
+          if ! git diff --cached --quiet; then
+            git commit -m 'fix(i18n): refresh localized catalogs and translate legacy option presentation'
+            git push origin HEAD:refs/heads/feature7langague_update
+          fi
+          echo "Validated feature commit: $(git rev-parse HEAD)"
