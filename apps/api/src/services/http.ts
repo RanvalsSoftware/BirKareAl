@@ -1,3 +1,4 @@
+import { preferredRequestLanguage } from './request-language.js';
 import type { RequestHandler, Response } from 'express';
 import { successEnvelope } from '@birkare/shared';
 
@@ -14,7 +15,8 @@ export const sendSuccess = <T>(res: Response, requestId: string, data: T, status
 export const getRequestContext = (req: {
   header: (name: string) => string | undefined;
   ip?: string;
-}): { ip?: string; userAgent?: string } => ({
+}): { ip?: string; userAgent?: string; preferredLocale?: 'tr' | 'en' } => ({
   ip: req.ip,
   userAgent: req.header('user-agent'),
+  preferredLocale: preferredRequestLanguage(req.header('accept-language')),
 });

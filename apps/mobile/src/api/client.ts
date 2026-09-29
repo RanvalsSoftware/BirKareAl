@@ -1,3 +1,4 @@
+import { localizedApiErrorMessage } from '@/i18n/errors';
 import { tr as translateCopy } from '@/i18n/engine';
 import { getLocale } from '@/i18n/engine';
 import Constants from 'expo-constants';
@@ -21,7 +22,7 @@ async function fetchWithTransportError(url: string, init: RequestInit): Promise<
   try {
     return await fetch(url, init);
   } catch {
-    const error = new Error(NETWORK_REQUEST_FAILED_MESSAGE) as ApiError;
+    const error = new Error(translateCopy(NETWORK_REQUEST_FAILED_MESSAGE)) as ApiError;
     error.code = 'NETWORK_REQUEST_FAILED';
     throw error;
   }
@@ -146,6 +147,7 @@ async function readJson<T>(response: Response): Promise<ApiEnvelope<T>> {
         translateCopy("Sunucuyla iletişim kurulamadı."),
     ) as ApiError;
     const apiError = (payload as { error?: { code?: string; details?: unknown } } | null)?.error;
+    error.message = localizedApiErrorMessage(apiError?.code, error.message);
     error.code = apiError?.code;
     error.status = response.status;
     error.details = apiError?.details;
@@ -167,7 +169,7 @@ async function refreshAccessToken(revision: number): Promise<string | null> {
       const payload = await withRequestTimeout(async (signal) => {
         const response = await fetchWithTransportError(`${apiBaseUrl}/v1/auth/refresh`, {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': 'application/json', 'accept-language': getLocale() },
           body: JSON.stringify({ refreshToken }),
           signal,
         });
@@ -216,6 +218,7 @@ export async function apiRequest<T>(
         signal,
         headers: {
           accept: 'application/json',
+          'accept-language': getLocale(),
           'content-type': 'application/json',
           'x-platform': 'mobile',
           ...(init.headers ?? {}),

@@ -1,3 +1,4 @@
+import { localizeAuthMail, localizeDeletionMail } from './mail-localization.js';
 import nodemailer from 'nodemailer';
 import type { BirKareConfig } from '@birkare/config';
 import type { Logger } from '@birkare/logger';
@@ -147,6 +148,7 @@ export function authMail(input: {
   email: string;
   token: string;
   scheme?: string;
+  locale?: string;
 }): MailMessage {
   const verification = input.kind === 'verification';
   const scheme = input.scheme ?? 'birkareai';
@@ -171,13 +173,14 @@ export function authMail(input: {
     'Bu talebi sen başlatmadıysan e-postayı yok say. Kodunu kimseyle paylaşma.',
     'BirKare AI hiçbir zaman e-postayla şifreni istemez.',
   ].join('\n');
-  return { to: input.email, subject: `BirKare AI — ${title}`, text };
+  return localizeAuthMail({ to: input.email, subject: `BirKare AI — ${title}`, text }, { ...input, link: link.toString() });
 }
 
 export function accountDeletionMail(input: {
   email: string;
   token: string;
   webUrl: string;
+  locale?: string;
 }): MailMessage {
   let link: URL;
   try {
@@ -207,9 +210,9 @@ export function accountDeletionMail(input: {
     'Bağlantıyı sen istemediysen bu e-postayı yok say; hesabında hiçbir değişiklik yapılmaz.',
     'BirKare AI hiçbir zaman bu işlem için e-postayla şifreni istemez.',
   ].join('\n');
-  return {
+  return localizeDeletionMail({
     to: input.email,
     subject: 'BirKare AI — Hesap silme bağlantın',
     text,
-  };
+  }, { locale: input.locale, link: link.toString() });
 }

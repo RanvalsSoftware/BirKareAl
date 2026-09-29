@@ -2,6 +2,8 @@ import { createInstance } from 'i18next';
 import trMessages from './locales/tr.json';
 import enMessages from './locales/en.json';
 import englishCopy from './locales/copy-en.json';
+import supplementalCopy from './locales/supplemental-en.json';
+const completeEnglishCopy = { ...englishCopy, ...supplementalCopy };
 import { formattingLocale, parseLanguagePreference, resolveLanguage, type DeviceLocale, type Language, type LanguagePreference } from './resolve-language';
 
 // This module is platform-free. API, validation and catalogue modules can import
@@ -13,8 +15,8 @@ void i18n.init({
   defaultNS: 'translation', returnEmptyString: false,
   interpolation: { escapeValue: false },
   resources: {
-    tr: { translation: trMessages, copy: Object.fromEntries(Object.keys(englishCopy).map((text) => [text, text])) },
-    en: { translation: enMessages, copy: englishCopy },
+    tr: { translation: trMessages, copy: Object.fromEntries(Object.keys(completeEnglishCopy).map((text) => [text, text])) },
+    en: { translation: enMessages, copy: completeEnglishCopy },
   },
 });
 

@@ -44,6 +44,7 @@ import { EmailSecurityService } from './email-security.service.js';
 import { assertKnownRegistrationProvider } from './email-provider-policy.js';
 
 export type AuthRequestContext = {
+  preferredLocale?: 'tr' | 'en';
   deviceId?: string;
   deviceName?: string;
   platform?: string;
@@ -208,7 +209,7 @@ export class AuthService {
       expiresAt: new Date(Date.now() + EMAIL_VERIFICATION_TTL_MS),
     });
     try {
-      await this.sendAuthEmail('verification', user.email, verificationCode);
+      await this.sendAuthEmail('verification', user.email, verificationCode, context.preferredLocale ?? user.locale);
     } catch {
       throw new ApiError({
         statusCode: 503,
@@ -297,7 +298,7 @@ export class AuthService {
       expiresAt: new Date(Date.now() + 60 * 60 * 1000),
     });
     try {
-      await this.sendAuthEmail('password-reset', user.email, resetToken);
+      await this.sendAuthEmail('password-reset', user.email, resetToken, context.preferredLocale ?? user.locale);
     } catch {
       // Public responses never disclose whether an address exists or delivery succeeded.
     }
@@ -317,6 +318,7 @@ export class AuthService {
     try {
       await this.mailService.send(accountDeletionMail({
         email: user.email,
+        locale: context.preferredLocale ?? user.locale,
         token,
         webUrl: this.config.ACCOUNT_DELETION_WEB_URL ?? 'https://ai.ranvals.com/birkare/hesap-silme/',
       }));
@@ -354,7 +356,7 @@ export class AuthService {
       expiresAt: new Date(Date.now() + EMAIL_VERIFICATION_TTL_MS),
     });
     try {
-      await this.sendAuthEmail('verification', user.email, verificationCode);
+      await this.sendAuthEmail('verification', user.email, verificationCode, context.preferredLocale ?? user.locale);
     } catch {
       // Same outward response for absent, ineligible and undeliverable accounts.
     }
@@ -581,9 +583,9 @@ export class AuthService {
     if (!this.mailService.enabled && !this.allowDevelopmentTokens()) throw mailUnavailable();
   }
 
-  private async sendAuthEmail(kind: 'verification' | 'password-reset', email: string, token: string): Promise<void> {
+  private async sendAuthEmail(kind: 'verification' | 'password-reset', email: string, token: string, locale?: string): Promise<void> {
     if (!this.mailService.enabled && this.allowDevelopmentTokens()) return;
-    await this.mailService.send(authMail({ kind, email, token, scheme: this.config.MAIL_APP_SCHEME }));
+    await this.mailService.send(authMail({ kind, email, token, locale, scheme: this.config.MAIL_APP_SCHEME }));
   }
 }
 

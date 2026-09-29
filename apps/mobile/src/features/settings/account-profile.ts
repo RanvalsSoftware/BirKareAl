@@ -6,12 +6,12 @@ import { useAuthStore, type AuthUser } from '@/features/auth/auth-store';
 const name = z
   .string()
   .trim()
-  .max(80, 'En fazla 80 karakter girebilirsin.')
-  .refine((value) => !/\p{Cc}/u.test(value), 'Geçerli bir ad gir.')
+  .max(80, { error: () => translateCopy("En fazla 80 karakter girebilirsin.") })
+  .refine((value) => !/\p{Cc}/u.test(value), { error: () => translateCopy("Geçerli bir ad gir.") })
   .transform((value) => value.replace(/\s+/g, ' '));
 
 export const profileNameSchema = z.object({
-  firstName: name.pipe(z.string().min(1, 'Adını gir.')),
+  firstName: name.pipe(z.string().min(1, { error: () => translateCopy("Adını gir.") })),
   lastName: name.transform((value) => value || null),
 });
 

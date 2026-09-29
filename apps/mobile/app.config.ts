@@ -117,6 +117,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     usesAppleSignIn: true,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
+      CFBundleAllowMixedLocalizations: true,
       UIUserInterfaceStyle: 'Dark',
       NSPhotoLibraryUsageDescription:
         'BirKare AI, seçtiğiniz fotoğrafı sahne ve filtre önizlemesi oluşturmak için kullanır.',

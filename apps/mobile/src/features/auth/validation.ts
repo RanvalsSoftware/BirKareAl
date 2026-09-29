@@ -4,50 +4,50 @@ import { z } from 'zod';
 const normalizedEmail = z
   .string()
   .trim()
-  .email('Geçerli bir e-posta adresi girin.')
-  .max(254, 'E-posta adresi çok uzun.');
+  .email({ error: () => translateCopy("Geçerli bir e-posta adresi girin.") })
+  .max(254, { error: () => translateCopy("E-posta adresi çok uzun.") });
 
 const password = z
   .string()
-  .min(10, 'Şifreniz en az 10 karakter olmalı.')
-  .max(128, 'Şifreniz en fazla 128 karakter olabilir.')
+  .min(10, { error: () => translateCopy("Şifreniz en az 10 karakter olmalı.") })
+  .max(128, { error: () => translateCopy("Şifreniz en fazla 128 karakter olabilir.") })
   .refine((value) => /[A-Za-z]/.test(value) && /\d/.test(value), {
-    message: translateCopy("Şifreniz en az bir harf ve bir rakam içermeli."),
+    error: () => translateCopy("Şifreniz en az bir harf ve bir rakam içermeli."),
   });
 
 export const loginSchema = z.object({
   email: normalizedEmail,
-  password: z.string().min(1, 'Şifrenizi girin.'),
+  password: z.string().min(1, { error: () => translateCopy("Şifrenizi girin.") }),
 });
 
 export const registerSchema = z
   .object({
-    firstName: z.string().trim().min(2, 'Adınız en az 2 karakter olmalı.').max(80),
-    lastName: z.string().trim().min(2, 'Soyadınız en az 2 karakter olmalı.').max(80),
+    firstName: z.string().trim().min(2, { error: () => translateCopy("Adınız en az 2 karakter olmalı.") }).max(80),
+    lastName: z.string().trim().min(2, { error: () => translateCopy("Soyadınız en az 2 karakter olmalı.") }).max(80),
     email: normalizedEmail,
     password,
-    passwordConfirmation: z.string().min(1, 'Şifrenizi tekrar girin.'),
+    passwordConfirmation: z.string().min(1, { error: () => translateCopy("Şifrenizi tekrar girin.") }),
     birthYear: z
-      .number({ error: 'Doğum yılınızı girin.' })
-      .int('Doğum yılı tam sayı olmalı.')
-      .min(1900, 'Geçerli bir doğum yılı girin.')
-      .max(new Date().getFullYear() - 18, 'BirKare AI için 18 yaşını doldurmuş olmalısınız.'),
+      .number({ error: () => translateCopy("Doğum yılınızı girin.") })
+      .int({ error: () => translateCopy("Doğum yılı tam sayı olmalı.") })
+      .min(1900, { error: () => translateCopy("Geçerli bir doğum yılı girin.") })
+      .max(new Date().getFullYear() - 18, { error: () => translateCopy("BirKare AI için 18 yaşını doldurmuş olmalısınız.") }),
     acceptedTerms: z
       .boolean()
-      .refine((value) => value, 'Devam etmek için koşulları kabul etmelisiniz.'),
+      .refine((value) => value, { error: () => translateCopy("Devam etmek için koşulları kabul etmelisiniz.") }),
     acceptedPrivacy: z
       .boolean()
-      .refine((value) => value, 'Devam etmek için gizlilik politikasını kabul etmelisiniz.'),
+      .refine((value) => value, { error: () => translateCopy("Devam etmek için gizlilik politikasını kabul etmelisiniz.") }),
     acceptedAiDisclosure: z
       .boolean()
-      .refine((value) => value, 'AI içerik açıklamasını kabul etmelisiniz.'),
-    acceptedAge: z.boolean().refine((value) => value, '18 yaşını doldurduğunuzu onaylamalısınız.'),
+      .refine((value) => value, { error: () => translateCopy("AI içerik açıklamasını kabul etmelisiniz.") }),
+    acceptedAge: z.boolean().refine((value) => value, { error: () => translateCopy("18 yaşını doldurduğunuzu onaylamalısınız.") }),
     acceptedImageRights: z
       .boolean()
-      .refine((value) => value, 'Fotoğraf kullanım hakkınızı onaylamalısınız.'),
+      .refine((value) => value, { error: () => translateCopy("Fotoğraf kullanım hakkınızı onaylamalısınız.") }),
   })
   .refine((values) => values.password === values.passwordConfirmation, {
-    message: translateCopy("Şifreler eşleşmiyor."),
+    error: () => translateCopy("Şifreler eşleşmiyor."),
     path: ['passwordConfirmation'],
   });
 
@@ -58,11 +58,11 @@ export const forgotPasswordSchema = z.object({
 export const resetPasswordSchema = z
   .object({
     password,
-    passwordConfirmation: z.string().min(1, 'Şifrenizi tekrar girin.'),
+    passwordConfirmation: z.string().min(1, { error: () => translateCopy("Şifrenizi tekrar girin.") }),
     signOutEverywhere: z.boolean(),
   })
   .refine((values) => values.password === values.passwordConfirmation, {
-    message: translateCopy("Şifreler eşleşmiyor."),
+    error: () => translateCopy("Şifreler eşleşmiyor."),
     path: ['passwordConfirmation'],
   });
 
@@ -72,26 +72,26 @@ export type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
 
 export const socialCompleteSchema = z.object({
-  firstName: z.string().trim().min(2, 'Adınız en az 2 karakter olmalı.').max(80),
-  lastName: z.string().trim().min(2, 'Soyadınız en az 2 karakter olmalı.').max(80),
+  firstName: z.string().trim().min(2, { error: () => translateCopy("Adınız en az 2 karakter olmalı.") }).max(80),
+  lastName: z.string().trim().min(2, { error: () => translateCopy("Soyadınız en az 2 karakter olmalı.") }).max(80),
   birthYear: z
-    .number({ error: 'Doğum yılınızı girin.' })
-    .int('Doğum yılı tam sayı olmalı.')
-    .min(1900, 'Geçerli bir doğum yılı girin.')
-    .max(new Date().getFullYear() - 18, 'BirKare AI için 18 yaşını doldurmuş olmalısınız.'),
+    .number({ error: () => translateCopy("Doğum yılınızı girin.") })
+    .int({ error: () => translateCopy("Doğum yılı tam sayı olmalı.") })
+    .min(1900, { error: () => translateCopy("Geçerli bir doğum yılı girin.") })
+    .max(new Date().getFullYear() - 18, { error: () => translateCopy("BirKare AI için 18 yaşını doldurmuş olmalısınız.") }),
   acceptedTerms: z
     .boolean()
-    .refine((value) => value, 'Devam etmek için koşulları kabul etmelisiniz.'),
+    .refine((value) => value, { error: () => translateCopy("Devam etmek için koşulları kabul etmelisiniz.") }),
   acceptedPrivacy: z
     .boolean()
-    .refine((value) => value, 'Devam etmek için gizlilik politikasını kabul etmelisiniz.'),
+    .refine((value) => value, { error: () => translateCopy("Devam etmek için gizlilik politikasını kabul etmelisiniz.") }),
   acceptedAiDisclosure: z
     .boolean()
-    .refine((value) => value, 'AI içerik açıklamasını kabul etmelisiniz.'),
-  acceptedAge: z.boolean().refine((value) => value, '18 yaşını doldurduğunuzu onaylamalısınız.'),
+    .refine((value) => value, { error: () => translateCopy("AI içerik açıklamasını kabul etmelisiniz.") }),
+  acceptedAge: z.boolean().refine((value) => value, { error: () => translateCopy("18 yaşını doldurduğunuzu onaylamalısınız.") }),
   acceptedImageRights: z
     .boolean()
-    .refine((value) => value, 'Fotoğraf kullanım hakkınızı onaylamalısınız.'),
+    .refine((value) => value, { error: () => translateCopy("Fotoğraf kullanım hakkınızı onaylamalısınız.") }),
 });
 
 export type SocialCompleteValues = z.infer<typeof socialCompleteSchema>;
@@ -100,7 +100,7 @@ export type SocialCompleteValues = z.infer<typeof socialCompleteSchema>;
 export const socialCompleteFormSchema = socialCompleteSchema.extend({
   birthYear: z
     .string()
-    .regex(/^\d{4}$/, 'Doğum yılınızı 4 haneli girin.')
+    .regex(/^\d{4}$/, { error: () => translateCopy("Doğum yılınızı 4 haneli girin.") })
     .transform(Number)
     .pipe(socialCompleteSchema.shape.birthYear),
 });
