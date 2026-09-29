@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useEffect, useRef, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import {
@@ -31,6 +33,8 @@ import { colors, radii, spacing, typography } from '@/theme';
 const MAX_TREND_SOURCE_BYTES = 15 * 1024 * 1024;
 
 export default function TrendScreen() {
+  const languageRevision = useLanguageRevision();
+
   const { slug } = useLocalSearchParams<{ slug?: string }>();
   const trend = trends.find((entry) => entry.id === slug);
   const router = useRouter();
@@ -40,12 +44,10 @@ export default function TrendScreen() {
         <TrendEditor key={trend.id} trend={trend} />
       ) : (
         <Screen>
-          <CreateHeader title="Akım bulunamadı" />
-          <Notice tone="neutral">
-            Bu akım henüz koleksiyonda değil. Ana sayfadan başka bir görünüm seçebilirsin.
-          </Notice>
+          <CreateHeader title={translateCopy("Akım bulunamadı")} />
+          <Notice tone="neutral">{translateCopy("Bu akım henüz koleksiyonda değil. Ana sayfadan başka bir görünüm seçebilirsin.")}</Notice>
           <WizardFooter
-            label="Ana sayfaya dön"
+            label={translateCopy("Ana sayfaya dön")}
             onPress={() => router.replace('/(tabs)/home' as never)}
           />
         </Screen>
@@ -55,6 +57,8 @@ export default function TrendScreen() {
 }
 
 function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const { flow, set } = useCreateFlow();
   const initialized = useRef(false);
@@ -77,13 +81,13 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
       const asset = result.assets[0];
       if (asset.fileSize && asset.fileSize > MAX_TREND_SOURCE_BYTES) {
         Alert.alert(
-          'Dosya büyük',
-          'İkinci kişi fotoğrafı en fazla 15 MB olabilir. Daha küçük bir görsel seç.',
+          translateCopy("Dosya büyük"),
+          translateCopy("İkinci kişi fotoğrafı en fazla 15 MB olabilir. Daha küçük bir görsel seç."),
         );
         return;
       }
       if (asset.uri === flow.sourceUri) {
-        Alert.alert('Farklı fotoğraf seç', 'İkinci kişi için farklı bir kaynak fotoğraf kullan.');
+        Alert.alert(translateCopy("Farklı fotoğraf seç"), translateCopy("İkinci kişi için farklı bir kaynak fotoğraf kullan."));
         return;
       }
       set({
@@ -92,7 +96,7 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
         secondarySourceRightsConfirmed: false,
       });
     } catch {
-      Alert.alert('Fotoğraf seçilemedi', 'İkinci kişi fotoğrafını tekrar seçmeyi dene.');
+      Alert.alert(translateCopy("Fotoğraf seçilemedi"), translateCopy("İkinci kişi fotoğrafını tekrar seçmeyi dene."));
     }
   }
 
@@ -118,13 +122,13 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
     <Screen contentContainerStyle={styles.content}>
       <CreateHeader
         title={trend.name}
-        subtitle="Akımlar · Yüzün sana ait kalır"
+        subtitle={translateCopy("Akımlar · Yüzün sana ait kalır")}
         step={flow.sourceUri ? 2 : undefined}
         fallback="/(tabs)/home"
       />
       <View style={styles.toolbar}>
         <Text style={styles.hint}>
-          {isEighties ? '3 özgün 80’ler görünümü' : '11 akım koleksiyonu'}
+          {isEighties ? translateCopy("3 özgün 80’ler görünümü") : translateCopy("11 akım koleksiyonu")}
         </Text>
         <CreditBadge credits={credits} />
       </View>
@@ -133,7 +137,7 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
           <View style={styles.collectionHeading}>
             <View>
               <Text style={styles.collectionTitle}>80’ler koleksiyonu</Text>
-              <Text style={styles.small}>Görünümü seç · seçim üretimden önce değiştirilebilir</Text>
+              <Text style={styles.small}>{translateCopy("Görünümü seç · seçim üretimden önce değiştirilebilir")}</Text>
             </View>
             <View style={styles.collectionCount}>
               <Text style={styles.collectionCountText}>3 stil</Text>
@@ -180,7 +184,7 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
       ) : null}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Kaynak fotoğrafı görmek için basılı tut"
+        accessibilityLabel={translateCopy("Kaynak fotoğrafı görmek için basılı tut")}
         onPressIn={() => setShowOriginal(true)}
         onPressOut={() => setShowOriginal(false)}
         style={styles.preview}
@@ -207,17 +211,17 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
           />
           <Text style={styles.previewLabelText}>
             {!flow.sourceUri
-              ? 'Temsili akım görseli'
+              ? translateCopy("Temsili akım görseli")
               : showOriginal
-                ? 'Orijinal fotoğrafın'
-                : 'Yaklaşık renk önizlemesi'}
+                ? translateCopy("Orijinal fotoğrafın")
+                : translateCopy("Yaklaşık renk önizlemesi")}
           </Text>
         </View>
         {flow.sourceUri ? (
           <Image
             source={trend.source}
             style={styles.referenceThumb}
-            accessibilityLabel="Akımın temsili stil referansı"
+            accessibilityLabel={translateCopy("Akımın temsili stil referansı")}
           />
         ) : null}
       </Pressable>
@@ -229,23 +233,20 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
         >
           <Icon name="camera-outline" size={17} color={colors.accentYellow} />
           <Text style={styles.link}>
-            {flow.sourceUri ? 'Fotoğrafı değiştir' : 'Kendi fotoğrafını seç'}
+            {flow.sourceUri ? translateCopy("Fotoğrafı değiştir") : translateCopy("Kendi fotoğrafını seç")}
           </Text>
         </Pressable>
-        <Text style={styles.small}>AI ile uygulanır</Text>
+        <Text style={styles.small}>{translateCopy("AI ile uygulanır")}</Text>
       </View>
       {supportsSecondPerson ? (
         <View style={styles.secondaryCard}>
           <View style={styles.secondaryHeading}>
             <View style={styles.secondaryHeadingCopy}>
-              <Text style={styles.title}>İkinci kişi (isteğe bağlı)</Text>
-              <Text style={styles.small}>
-                Yan yana çekilmiş fotoğraf gerekmez. İki ayrı kişiyi tek sahnede doğal biçimde
-                birleştiririz.
-              </Text>
+              <Text style={styles.title}>{translateCopy("İkinci kişi (isteğe bağlı)")}</Text>
+              <Text style={styles.small}>{translateCopy("Yan yana çekilmiş fotoğraf gerekmez. İki ayrı kişiyi tek sahnede doğal biçimde birleştiririz.")}</Text>
             </View>
             <View style={styles.secondaryCost}>
-              <Text style={styles.secondaryCostText}>+1 kredi / görsel</Text>
+              <Text style={styles.secondaryCostText}>{translateCopy("+1 kredi / görsel")}</Text>
             </View>
           </View>
           {flow.secondarySourceUri ? (
@@ -257,14 +258,14 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
                   style={styles.secondaryThumb}
                 />
                 <View style={styles.secondarySourceCopy}>
-                  <Text style={styles.secondarySourceTitle}>İkinci kişi seçildi</Text>
+                  <Text style={styles.secondarySourceTitle}>{translateCopy("İkinci kişi seçildi")}</Text>
                   <Text style={styles.small} numberOfLines={1}>
-                    {flow.secondarySourceName || 'İkinci kişi fotoğrafı'}
+                    {flow.secondarySourceName || translateCopy("İkinci kişi fotoğrafı")}
                   </Text>
                 </View>
                 <Pressable
                   accessibilityRole="button"
-                  accessibilityLabel="İkinci kişi fotoğrafını kaldır"
+                  accessibilityLabel={translateCopy("İkinci kişi fotoğrafını kaldır")}
                   onPress={() =>
                     set({
                       secondarySourceUri: null,
@@ -300,9 +301,7 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
                     <Icon name="checkmark" size={15} color="#171000" />
                   ) : null}
                 </View>
-                <Text style={styles.rightsText}>
-                  Bu ikinci fotoğrafı kullanma hakkım var ve görseldeki kişinin izni bulunuyor.
-                </Text>
+                <Text style={styles.rightsText}>{translateCopy("Bu ikinci fotoğrafı kullanma hakkım var ve görseldeki kişinin izni bulunuyor.")}</Text>
               </Pressable>
               <Pressable
                 accessibilityRole="button"
@@ -310,7 +309,7 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
                 style={styles.secondaryChange}
               >
                 <Icon name="images-outline" size={17} color={colors.accentYellow} />
-                <Text style={styles.link}>İkinci fotoğrafı değiştir</Text>
+                <Text style={styles.link}>{translateCopy("İkinci fotoğrafı değiştir")}</Text>
               </Pressable>
             </>
           ) : (
@@ -320,32 +319,23 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
               style={styles.secondaryAdd}
             >
               <Icon name="add" size={20} color="#171000" />
-              <Text style={styles.secondaryAddText}>Ayrı fotoğraftan kişi ekle</Text>
+              <Text style={styles.secondaryAddText}>{translateCopy("Ayrı fotoğraftan kişi ekle")}</Text>
             </Pressable>
           )}
-          <Text style={styles.secondaryFootnote}>
-            Kimlikler ayrı ayrı korunur; yüzler karıştırılmaz. İkinci kişi yalnızca bu iki 80’ler
-            görünümünde desteklenir.
-          </Text>
+          <Text style={styles.secondaryFootnote}>{translateCopy("Kimlikler ayrı ayrı korunur; yüzler karıştırılmaz. İkinci kişi yalnızca bu iki 80’ler görünümünde desteklenir.")}</Text>
         </View>
       ) : null}
       <Text style={styles.detail}>{trend.detail}</Text>
-      <Text style={styles.small}>
-        Örnek yüz kopyalanmaz. Önizleme yalnız renk fikri verir; kıyafet, poz ve ortam dönüşümü AI
-        üretiminde uygulanır.
-      </Text>
+      <Text style={styles.small}>{translateCopy("Örnek yüz kopyalanmaz. Önizleme yalnız renk fikri verir; kıyafet, poz ve ortam dönüşümü AI üretiminde uygulanır.")}</Text>
 
       <View style={styles.instructionCard}>
-        <Text style={styles.title}>İsteğe bağlı sahne notu</Text>
-        <Text style={styles.small}>
-          Arka planı, ortamı veya küçük stil ayrıntılarını değiştirebilirsin. Kimlik ve doğal anatomi
-          her zaman korunur.
-        </Text>
+        <Text style={styles.title}>{translateCopy("İsteğe bağlı sahne notu")}</Text>
+        <Text style={styles.small}>{translateCopy("Arka planı, ortamı veya küçük stil ayrıntılarını değiştirebilirsin. Kimlik ve doğal anatomi her zaman korunur.")}</Text>
         <TextInput
-          accessibilityLabel="Akım için özel sahne talimatı"
+          accessibilityLabel={translateCopy("Akım için özel sahne talimatı")}
           value={flow.customInstruction}
           onChangeText={(customInstruction) => set({ customInstruction })}
-          placeholder="Örn. arka planı yağmurlu İstanbul gecesi yap…"
+          placeholder={translateCopy("Örn. arka planı yağmurlu İstanbul gecesi yap…")}
           placeholderTextColor={colors.textMuted}
           multiline
           maxLength={1000}
@@ -361,11 +351,11 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
         contentStyle={styles.controlContent}
       >
         <View style={styles.controlTitle}>
-          <Text style={styles.title}>Akım yoğunluğu</Text>
+          <Text style={styles.title}>{translateCopy("Akım yoğunluğu")}</Text>
           <Text style={styles.value}>%{flow.filterIntensity}</Text>
         </View>
         <IntensitySlider
-          label="Akım yoğunluğu"
+          label={translateCopy("Akım yoğunluğu")}
           value={flow.filterIntensity}
           onChange={(filterIntensity) => {
             set({ filterIntensity });
@@ -382,16 +372,9 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
             />
           ))}
         </View>
-        <Text style={styles.small}>
-          {intensityDescription(flow.filterIntensity)} · Düşük yoğunluk kaynak görünümünü daha fazla
-          korur; yüksek yoğunluk seçilen stili daha belirgin uygular.
-        </Text>
+        <Text style={styles.small}>{translateCopy("{{p0}} · Düşük yoğunluk kaynak görünümünü daha fazla korur; yüksek yoğunluk seçilen stili daha belirgin uygular.", { p0: intensityDescription(flow.filterIntensity) })}</Text>
       </GlassSurface>
-      <Notice tone="warning" title="Bu akım neleri değiştirir?">
-        Yüz kimliğin ve doğal cilt tonun korunur. Akıma göre kıyafet, aksesuarlar, saçın
-        şekillendirilmesi, poz, makyaj ve arka plan değişebilir. Gerçek bir ünlü veya etkinlik
-        taklit edilmez.
-      </Notice>
+      <Notice tone="warning" title={translateCopy("Bu akım neleri değiştirir?")}>{translateCopy("Yüz kimliğin ve doğal cilt tonun korunur. Akıma göre kıyafet, aksesuarlar, saçın şekillendirilmesi, poz, makyaj ve arka plan değişebilir. Gerçek bir ünlü veya etkinlik taklit edilmez.")}</Notice>
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ expanded: advanced }}
@@ -399,16 +382,14 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
         style={styles.output}
       >
         <View>
-          <Text style={styles.title}>Görsel ayarları</Text>
-          <Text style={styles.hint}>
-            {flow.aspectRatio} · {flow.quality} · 1 görsel
-          </Text>
+          <Text style={styles.title}>{translateCopy("Görsel ayarları")}</Text>
+          <Text style={styles.hint}>{translateCopy("{{p0}} · {{p1}} · 1 görsel", { p0: flow.aspectRatio, p1: flow.quality })}</Text>
         </View>
         <Icon name={advanced ? 'chevron-up' : 'chevron-down'} size={18} />
       </Pressable>
       {advanced ? (
         <>
-          <FieldLabel>Çıktı oranı</FieldLabel>
+          <FieldLabel>{translateCopy("Çıktı oranı")}</FieldLabel>
           <View style={styles.row}>
             {(['1:1', '4:5', '9:16'] as const).map((aspectRatio) => (
               <MiniChoice
@@ -436,9 +417,9 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
         label={
           flow.sourceUri && flow.sourceRightsConfirmed
             ? secondaryReady
-              ? 'Üretim özetini gör'
-              : 'İkinci fotoğrafı onayla'
-            : 'Fotoğrafını seç'
+              ? translateCopy("Üretim özetini gör")
+              : translateCopy("İkinci fotoğrafı onayla")
+            : translateCopy("Fotoğrafını seç")
         }
         disabled={!canContinue || !secondaryReady}
         onPress={() =>
@@ -450,13 +431,13 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
         }
         hint={
           !secondaryReady
-            ? 'İkinci fotoğraf için kullanım hakkını onayla.'
+            ? translateCopy("İkinci fotoğraf için kullanım hakkını onayla.")
             : canContinue
-              ? 'Kaydırmak ücretsizdir. Üretim maliyetini bir sonraki ekranda onaylarsın.'
-              : 'Bir etki uygulamak için yoğunluğu artır.'
+              ? translateCopy("Kaydırmak ücretsizdir. Üretim maliyetini bir sonraki ekranda onaylarsın.")
+              : translateCopy("Bir etki uygulamak için yoğunluğu artır.")
         }
       />
-      <Text style={styles.moreTitle}>Diğer akımlar</Text>
+      <Text style={styles.moreTitle}>{translateCopy("Diğer akımlar")}</Text>
       <TrendRail selected={trend.id} onSelect={(id) => router.replace(`/trends/${id}` as never)} />
     </Screen>
   );

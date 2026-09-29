@@ -1,3 +1,4 @@
+import { tr as translateCopy } from '@/i18n/engine';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { useEffect, useSyncExternalStore } from 'react';
 import { AppState, Platform } from 'react-native';
@@ -24,13 +25,13 @@ const getUserId = () => {
 
 function unavailableReason(): string | undefined {
   if (Platform.OS !== 'ios' && Platform.OS !== 'android')
-    return 'Satın alımlar iOS veya Android uygulamasında kullanılabilir.';
+    return translateCopy("Satın alımlar iOS veya Android uygulamasında kullanılabilir.");
   if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient)
-    return 'Gerçek satın alma testi için Expo Go yerine uygulamanın yeni native derlemesini açın.';
+    return translateCopy("Gerçek satın alma testi için Expo Go yerine uygulamanın yeni native derlemesini açın.");
   if (!config || config.entitlementId !== entitlementId || !apiKey)
-    return 'RevenueCat yapılandırması eksik. Uygulamayı güncel app.config.ts ile yeniden derleyin.';
+    return translateCopy("RevenueCat yapılandırması eksik. Uygulamayı güncel app.config.ts ile yeniden derleyin.");
   if (isTestStore && appEnv !== 'development')
-    return 'Test Store anahtarı canlı ortamda kullanılamaz.';
+    return translateCopy("Test Store anahtarı canlı ortamda kullanılamaz.");
   return undefined;
 }
 
@@ -144,9 +145,9 @@ export function useRevenueCat() {
         ? ('active' as const)
         : ('lifetime' as const);
   const testEnvironmentLabel = isTestStore
-    ? 'REVENUECAT TEST STORE · GERÇEK ÜCRET ALINMAZ'
+    ? translateCopy("REVENUECAT TEST STORE · GERÇEK ÜCRET ALINMAZ")
     : appEnv !== 'production'
-      ? 'APP STORE / PLAY TEST ORTAMI · GERÇEK MAĞAZA FİYATLARI SANDBOX’TAN GELİR'
+      ? translateCopy("APP STORE / PLAY TEST ORTAMI · GERÇEK MAĞAZA FİYATLARI SANDBOX’TAN GELİR")
       : null;
   return {
     ...state,

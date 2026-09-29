@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
@@ -24,6 +26,8 @@ const compositions: Composition[] = ['Yakın', 'Orta', 'Uzak', 'Selfie'];
 const MAX_CUSTOM_INSTRUCTION_LENGTH = 1000;
 
 export default function GenerationSettingsScreen() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const { flow, set } = useCreateFlow();
   const [advanced, setAdvanced] = useState(false);
@@ -41,8 +45,8 @@ export default function GenerationSettingsScreen() {
   return (
     <Screen contentContainerStyle={styles.content}>
       <CreateHeader
-        title="Görselini düzenle"
-        subtitle="Filtre, kadraj ve ayarlar tek yerde"
+        title={translateCopy("Görselini düzenle")}
+        subtitle={translateCopy("Filtre, kadraj ve ayarlar tek yerde")}
         step={2}
       />
       <View style={styles.preview}>
@@ -57,14 +61,14 @@ export default function GenerationSettingsScreen() {
       <View style={styles.previewActions}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Orijinal fotoğrafı karşılaştır"
+          accessibilityLabel={translateCopy("Orijinal fotoğrafı karşılaştır")}
           accessibilityState={{ selected: showOriginal }}
           onPress={() => setShowOriginal((value) => !value)}
           style={styles.textAction}
         >
           <Icon name="contrast-outline" size={17} color={colors.accentYellow} />
           <Text style={styles.actionText}>
-            {showOriginal ? 'Filtreyi göster' : 'Orijinali göster'}
+            {showOriginal ? translateCopy("Filtreyi göster") : translateCopy("Orijinali göster")}
           </Text>
         </Pressable>
         <Pressable
@@ -73,11 +77,11 @@ export default function GenerationSettingsScreen() {
           style={styles.textAction}
         >
           <Icon name="crop-outline" size={17} color={colors.accentYellow} />
-          <Text style={styles.actionText}>Kadrajı düzenle</Text>
+          <Text style={styles.actionText}>{translateCopy("Kadrajı düzenle")}</Text>
         </Pressable>
       </View>
 
-      <FieldLabel>Filtre · {selectedFilter?.name ?? 'Doğal Işık'}</FieldLabel>
+      <FieldLabel>{translateCopy("Filtre · {{p0}}", { p0: selectedFilter?.name ?? 'Doğal Işık' })}</FieldLabel>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -117,7 +121,7 @@ export default function GenerationSettingsScreen() {
           );
         })}
       </ScrollView>
-      <FieldLabel>Filtre yoğunluğu · %{flow.filterIntensity}</FieldLabel>
+      <FieldLabel>{translateCopy("Filtre yoğunluğu · %{{p0}}", { p0: flow.filterIntensity })}</FieldLabel>
       <View style={styles.choiceRow} accessibilityRole="radiogroup">
         {FILTER_INTENSITIES.map((level) => (
           <MiniChoice
@@ -131,10 +135,7 @@ export default function GenerationSettingsScreen() {
           />
         ))}
       </View>
-      <Text style={styles.hint}>
-        Önizleme yaklaşık renk ve ışık etkisini gösterir. Sahne ve AI dönüşümü, oluşturduğunda
-        uygulanır.
-      </Text>
+      <Text style={styles.hint}>{translateCopy("Önizleme yaklaşık renk ve ışık etkisini gösterir. Sahne ve AI dönüşümü, oluşturduğunda uygulanır.")}</Text>
 
       {scene ? (
         <GlassSurface
@@ -148,21 +149,21 @@ export default function GenerationSettingsScreen() {
             <Image source={scene.previewSource} style={styles.sceneImage} />
           ) : null}
           <View style={styles.sceneCopy}>
-            <Text style={styles.hint}>Seçili sahne</Text>
+            <Text style={styles.hint}>{translateCopy("Seçili sahne")}</Text>
             <Text style={styles.sceneTitle}>{scene.name}</Text>
           </View>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Seçili sahneyi değiştir"
+            accessibilityLabel={translateCopy("Seçili sahneyi değiştir")}
             onPress={() => router.push('/create/scene' as never)}
             style={styles.textAction}
           >
-            <Text style={styles.actionText}>Değiştir</Text>
+            <Text style={styles.actionText}>{translateCopy("Değiştir")}</Text>
           </Pressable>
         </GlassSurface>
       ) : null}
 
-      <FieldLabel>Görsel oranı</FieldLabel>
+      <FieldLabel>{translateCopy("Görsel oranı")}</FieldLabel>
       <View style={styles.choiceRow} accessibilityRole="radiogroup">
         {ratios.map((ratio) => (
           <MiniChoice
@@ -173,10 +174,7 @@ export default function GenerationSettingsScreen() {
           />
         ))}
       </View>
-      <Text style={styles.hint}>
-        Çerçeve çıktı oranını gösterir; kaynak esnetilmez. AI, seçtiğin orana göre görüntüyü yeniden
-        düzenler.
-      </Text>
+      <Text style={styles.hint}>{translateCopy("Çerçeve çıktı oranını gösterir; kaynak esnetilmez. AI, seçtiğin orana göre görüntüyü yeniden düzenler.")}</Text>
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ expanded: advanced }}
@@ -185,13 +183,10 @@ export default function GenerationSettingsScreen() {
       >
         <Icon name="options-outline" size={20} color={colors.accentYellow} />
         <View style={styles.sceneCopy}>
-          <Text style={styles.sceneTitle}>Gelişmiş ayarlar</Text>
-          <Text style={styles.hint}>
-            {flow.quality} · {flow.numberOfImages} görsel
-            {flow.mode !== 'filter' && flow.mode !== 'background'
+          <Text style={styles.sceneTitle}>{translateCopy("Gelişmiş ayarlar")}</Text>
+          <Text style={styles.hint}>{translateCopy("{{p0}} · {{p1}} görsel {{p2}}", { p0: flow.quality, p1: flow.numberOfImages, p2: flow.mode !== 'filter' && flow.mode !== 'background'
               ? ` · ${flow.composition} kadraj`
-              : ''}
-          </Text>
+              : '' })}</Text>
         </View>
         <Icon name={advanced ? 'chevron-up' : 'chevron-down'} size={19} />
       </Pressable>
@@ -199,7 +194,7 @@ export default function GenerationSettingsScreen() {
         <>
           {flow.mode !== 'filter' && flow.mode !== 'background' ? (
             <>
-              <FieldLabel>Kadraj yakınlığı</FieldLabel>
+              <FieldLabel>{translateCopy("Kadraj yakınlığı")}</FieldLabel>
               <View style={styles.choiceRow} accessibilityRole="radiogroup">
                 {compositions.map((composition) => (
                   <MiniChoice
@@ -212,26 +207,26 @@ export default function GenerationSettingsScreen() {
               </View>
             </>
           ) : null}
-          <FieldLabel>Çıktı kalitesi</FieldLabel>
+          <FieldLabel>{translateCopy("Çıktı kalitesi")}</FieldLabel>
           <View style={styles.choiceRow} accessibilityRole="radiogroup">
             {qualityOptions.map((quality) => (
               <MiniChoice
                 key={quality}
                 label={quality}
                 caption={
-                  quality === 'HD' ? 'Ayrıntılı' : quality === 'Standart' ? 'Dengeli' : 'Hızlı'
+                  quality === 'HD' ? translateCopy("Ayrıntılı") : quality === 'Standart' ? 'Dengeli' : translateCopy("Hızlı")
                 }
                 selected={flow.quality === quality}
                 onPress={() => set({ quality })}
               />
             ))}
           </View>
-          <FieldLabel>Varyasyon sayısı</FieldLabel>
+          <FieldLabel>{translateCopy("Varyasyon sayısı")}</FieldLabel>
           <View style={styles.choiceRow} accessibilityRole="radiogroup">
             {[1, 2, 3, 4].map((number) => (
               <MiniChoice
                 key={number}
-                label={`${number} görsel`}
+                label={translateCopy("{{p0}} görsel", { p0: number })}
                 selected={flow.numberOfImages === number}
                 onPress={() => set({ numberOfImages: number })}
               />
@@ -240,21 +235,20 @@ export default function GenerationSettingsScreen() {
           <View style={styles.toggles}>
             <ToggleRow
               icon="person-outline"
-              title="Yüzü koru"
-              detail="Kaynak görseldeki yüz ayrıntılarına öncelik ver."
+              title={translateCopy("Yüzü koru")}
+              detail={translateCopy("Kaynak görseldeki yüz ayrıntılarına öncelik ver.")}
               value={flow.preserveFace}
               onValueChange={(preserveFace) => set({ preserveFace })}
             />
             <ToggleRow
               icon="shirt-outline"
-              title="Kıyafeti koru"
-              detail="Kıyafet ve ana silueti mümkün olduğunca koru."
+              title={translateCopy("Kıyafeti koru")}
+              detail={translateCopy("Kıyafet ve ana silueti mümkün olduğunca koru.")}
               value={flow.preserveClothes}
               onValueChange={(preserveClothes) => set({ preserveClothes })}
             />
           </View>
-          <FieldLabel>
-            Özel talimat <Text style={styles.hint}>opsiyonel</Text>
+          <FieldLabel>{translateCopy("Özel talimat")}{' '}<Text style={styles.hint}>opsiyonel</Text>
           </FieldLabel>
           <TextField
             value={flow.customInstruction}
@@ -265,20 +259,18 @@ export default function GenerationSettingsScreen() {
             multiline
             numberOfLines={3}
             textAlignVertical="top"
-            placeholder="Örn. Işık daha yumuşak, kamerayı biraz uzak tut."
+            placeholder={translateCopy("Örn. Işık daha yumuşak, kamerayı biraz uzak tut.")}
             style={styles.instruction}
-            accessibilityLabel="Özel üretim talimatı"
+            accessibilityLabel={translateCopy("Özel üretim talimatı")}
           />
           <Text accessibilityLiveRegion="polite" style={styles.characterCount}>
             {flow.customInstruction.length} / {MAX_CUSTOM_INSTRUCTION_LENGTH}
           </Text>
         </>
       ) : null}
-      <Notice tone="neutral" title="Kontrol sende">
-        Kredi tutarını bir sonraki ekranda göreceksin. Oluşturmayı onaylamadan kredi düşülmez.
-      </Notice>
+      <Notice tone="neutral" title="Kontrol sende">{translateCopy("Kredi tutarını bir sonraki ekranda göreceksin. Oluşturmayı onaylamadan kredi düşülmez.")}</Notice>
       <WizardFooter
-        label="Üretimi gözden geçir"
+        label={translateCopy("Üretimi gözden geçir")}
         onPress={() => router.push('/create/review' as never)}
       />
     </Screen>

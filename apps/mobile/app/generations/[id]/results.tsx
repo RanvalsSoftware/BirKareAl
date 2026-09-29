@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -73,6 +75,8 @@ const reportReasons = [
 ] as const;
 
 export default function GenerationResultsScreen() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const { id: rawGenerationId } = useLocalSearchParams<{ id?: string }>();
   const generationId = Array.isArray(rawGenerationId) ? rawGenerationId[0] : rawGenerationId;
@@ -97,7 +101,7 @@ export default function GenerationResultsScreen() {
   const reportAttempt = useRef<{ fingerprint: string; key: string } | null>(null);
   const localVariants = useMemo<DisplayVariant[]>(
     () => variants.map((variant) => ({ ...variant, serverOutput: false })),
-    [],
+    [languageRevision],
   );
   const serverVariants = useMemo<DisplayVariant[]>(
     () =>
@@ -111,7 +115,7 @@ export default function GenerationResultsScreen() {
           sourceUrl: output.asset?.accessUrl,
           serverOutput: true,
         })),
-    [generation],
+    [generation, languageRevision],
   );
   const displayVariants = serverVariants.length ? serverVariants : localVariants;
   const preferredVariantId = generation?.outputs.find((output) => output.selected)?.id;
@@ -243,12 +247,12 @@ export default function GenerationResultsScreen() {
     <Screen contentContainerStyle={styles.content}>
       <AppHeader
         back
-        title="Sonuçlar"
-        subtitle="Oluşturulan görseller"
+        title={translateCopy("Sonuçlar")}
+        subtitle={translateCopy("Oluşturulan görseller")}
         right={
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={favorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+            accessibilityLabel={favorite ? translateCopy("Favorilerden çıkar") : 'Favorilere ekle'}
             onPress={() => setFavorite((value) => !value)}
             style={styles.favorite}
           >
@@ -263,7 +267,7 @@ export default function GenerationResultsScreen() {
       <View style={styles.mainPreview}>
         {imageUri ? (
           <Image
-            accessibilityLabel={`${selectedVariant.label} AI üretim sonucu`}
+            accessibilityLabel={translateCopy("{{p0}} AI üretim sonucu", { p0: selectedVariant.label })}
             source={{ uri: imageUri, headers: imageHeaders }}
             style={styles.generatedImage}
             resizeMode="cover"
@@ -271,7 +275,7 @@ export default function GenerationResultsScreen() {
         ) : (
           <SourcePreview
             sourceUri={flow.sourceUri}
-            label={`${selectedVariant?.label ?? 'Sonuç'} önizlemesi`}
+            label={translateCopy("{{p0}} önizlemesi", { p0: selectedVariant?.label ?? 'Sonuç' })}
           />
         )}
         {!imageUri ? (
@@ -288,18 +292,16 @@ export default function GenerationResultsScreen() {
         ) : null}
         <View style={styles.aiTag}>
           <Icon name="sparkles" size={12} color={colors.accentYellow} />
-          <Text style={styles.aiTagText}>AI ile oluşturuldu</Text>
+          <Text style={styles.aiTagText}>{translateCopy("AI ile oluşturuldu")}</Text>
         </View>
       </View>
       {generationError ? (
-        <Notice tone="warning" title="Sonuçlar sunucudan alınamadı">
+        <Notice tone="warning" title={translateCopy("Sonuçlar sunucudan alınamadı")}>
           {generationError}
         </Notice>
       ) : null}
       {generation && generation.status !== 'COMPLETED' ? (
-        <Notice tone="warning" title="Üretim henüz hazır değil">
-          Güvenli sonuçlar tamamlandığında burada gösterilir.
-        </Notice>
+        <Notice tone="warning" title={translateCopy("Üretim henüz hazır değil")}>{translateCopy("Güvenli sonuçlar tamamlandığında burada gösterilir.")}</Notice>
       ) : null}
       <ScrollView
         horizontal
@@ -312,7 +314,7 @@ export default function GenerationResultsScreen() {
             key={variant.id}
             size="small"
             title={variant.label}
-            subtitle={index === 0 ? 'Önerilen' : 'Alternatif'}
+            subtitle={index === 0 ? translateCopy("Önerilen") : 'Alternatif'}
             palette={variant.palette}
             icon={variant.icon}
             imageSource={
@@ -334,20 +336,20 @@ export default function GenerationResultsScreen() {
         ))}
       </ScrollView>
       {selectionError ? (
-        <Notice tone="warning" title="Seçim kaydedilemedi">
+        <Notice tone="warning" title={translateCopy("Seçim kaydedilemedi")}>
           {selectionError}
         </Notice>
       ) : null}
       <View style={styles.actionRow}>
         <PrimaryButton
-          label="Düzenle"
+          label={translateCopy("Düzenle")}
           icon="sparkles-outline"
           onPress={() => router.push(`/generations/${routeGenerationId}/edit` as never)}
           style={styles.action}
         />
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Önce ve sonra karşılaştır"
+          accessibilityLabel={translateCopy("Önce ve sonra karşılaştır")}
           onPress={() => router.push(`/generations/${routeGenerationId}/compare` as never)}
           style={styles.iconAction}
         >
@@ -355,7 +357,7 @@ export default function GenerationResultsScreen() {
         </Pressable>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Dışa aktar ve paylaş"
+          accessibilityLabel={translateCopy("Dışa aktar ve paylaş")}
           onPress={() =>
             router.push({
               pathname: '/generations/[id]/export',
@@ -370,9 +372,7 @@ export default function GenerationResultsScreen() {
           <Icon name="share-outline" size={21} />
         </Pressable>
       </View>
-      <Notice tone="neutral" title="Seçili sonuç">
-        Seçtiğin gerçek üretimi mevcut kalitesiyle kaydedebilir ve paylaşabilirsin.
-      </Notice>
+      <Notice tone="neutral" title={translateCopy("Seçili sonuç")}>{translateCopy("Seçtiğin gerçek üretimi mevcut kalitesiyle kaydedebilir ve paylaşabilirsin.")}</Notice>
       <View style={{ marginTop: spacing.lg }}>
         <GeneratedSharePanel
           generationId={routeGenerationId}
@@ -383,16 +383,16 @@ export default function GenerationResultsScreen() {
       <View style={styles.secondaryActions}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Yeniden oluştur"
+          accessibilityLabel={translateCopy("Yeniden oluştur")}
           onPress={() => router.push('/create/review' as never)}
           style={styles.secondary}
         >
           <Icon name="refresh-outline" size={18} color={colors.textSecondary} />
-          <Text style={styles.secondaryText}>Yeniden oluştur</Text>
+          <Text style={styles.secondaryText}>{translateCopy("Yeniden oluştur")}</Text>
         </Pressable>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Seçili görseli kaydet"
+          accessibilityLabel={translateCopy("Seçili görseli kaydet")}
           onPress={() =>
             router.push({
               pathname: '/generations/[id]/export',
@@ -405,17 +405,15 @@ export default function GenerationResultsScreen() {
           style={styles.secondary}
         >
           <Icon name="download-outline" size={18} color={colors.textSecondary} />
-          <Text style={styles.secondaryText}>Kaydet ve paylaş</Text>
+          <Text style={styles.secondaryText}>{translateCopy("Kaydet ve paylaş")}</Text>
         </Pressable>
       </View>
       {reportReceipt ? (
-        <Notice tone="success" title="Raporun gönderildi">
-          İçerik güvenli inceleme için kaydedildi. Talep numaran: {reportReceipt.id}
-        </Notice>
+        <Notice tone="success" title={translateCopy("Raporun gönderildi")}>{translateCopy("İçerik güvenli inceleme için kaydedildi. Talep numaran: {{p0}}", { p0: reportReceipt.id })}</Notice>
       ) : null}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Bu içeriği raporla"
+        accessibilityLabel={translateCopy("Bu içeriği raporla")}
         onPress={() => {
           setReportError(null);
           setReportOpen(true);
@@ -426,9 +424,9 @@ export default function GenerationResultsScreen() {
         <Text style={styles.reportActionText}>Raporla</Text>
       </Pressable>
       <PrimaryButton
-        accessibilityHint="Yeni bir üretime en baştan başlar"
+        accessibilityHint={translateCopy("Yeni bir üretime en baştan başlar")}
         icon="add"
-        label="Yeni oluştur"
+        label={translateCopy("Yeni oluştur")}
         onPress={() => {
           reset();
           router.dismissTo('/create' as never);
@@ -471,6 +469,8 @@ function ReportModal({
   error: string | null;
   sending: boolean;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <Modal
       animationType="slide"
@@ -490,12 +490,8 @@ function ReportModal({
           <View style={styles.modalHandle} />
           <View style={styles.modalHeader}>
             <View>
-              <Text accessibilityRole="header" style={styles.modalTitle}>
-                İçeriği raporla
-              </Text>
-              <Text style={styles.modalIntro}>
-                Rapor nedenini seç. İnceleme için yalnızca gerekli bilgileri paylaş.
-              </Text>
+              <Text accessibilityRole="header" style={styles.modalTitle}>{translateCopy("İçeriği raporla")}</Text>
+              <Text style={styles.modalIntro}>{translateCopy("Rapor nedenini seç. İnceleme için yalnızca gerekli bilgileri paylaş.")}</Text>
             </View>
             <Pressable
               accessibilityRole="button"
@@ -531,16 +527,15 @@ function ReportModal({
               </Pressable>
             ))}
           </ScrollView>
-          <Text style={styles.reportDetailLabel}>
-            Ek açıklama <Text style={styles.reportOptional}>opsiyonel</Text>
+          <Text style={styles.reportDetailLabel}>{translateCopy("Ek açıklama")}{' '}<Text style={styles.reportOptional}>opsiyonel</Text>
           </Text>
           <TextInput
-            accessibilityLabel="Rapor için ek açıklama"
+            accessibilityLabel={translateCopy("Rapor için ek açıklama")}
             maxLength={500}
             multiline
             numberOfLines={3}
             onChangeText={onChangeDetail}
-            placeholder="İncelemeye yardımcı olabilecek kısa bir açıklama yaz."
+            placeholder={translateCopy("İncelemeye yardımcı olabilecek kısa bir açıklama yaz.")}
             placeholderTextColor={colors.textMuted}
             style={styles.reportDetailInput}
             textAlignVertical="top"
@@ -564,7 +559,7 @@ function ReportModal({
             ]}
           >
             <Text style={styles.reportSubmitText}>
-              {sending ? 'Rapor gönderiliyor…' : 'Raporu gönder'}
+              {sending ? translateCopy("Rapor gönderiliyor…") : translateCopy("Raporu gönder")}
             </Text>
           </Pressable>
         </View>

@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -9,16 +11,18 @@ import { colors } from '@/theme';
 
 const tabs = [
   { route: '/(tabs)/home', label: 'Ana Sayfa', icon: 'home-outline' },
-  { route: '/(tabs)/explore', label: 'Keşfet', icon: 'compass-outline' },
-  { route: '/(tabs)/projects', label: 'Projeler', icon: 'images-outline' },
-  { route: '/(tabs)/credits', label: 'Krediler', icon: 'flash-outline' },
-  { route: '/(tabs)/profile', label: 'Profil', icon: 'person' },
+  { route: '/(tabs)/explore', get label() { return translateCopy("Keşfet"); }, icon: 'compass-outline' },
+  { route: '/(tabs)/projects', get label() { return translateCopy("Projeler"); }, icon: 'images-outline' },
+  { route: '/(tabs)/credits', get label() { return translateCopy("Krediler"); }, icon: 'flash-outline' },
+  { route: '/(tabs)/profile', get label() { return translateCopy("Profil"); }, icon: 'person' },
 ] as const;
 
 /** Real tab destinations for profile subpages outside the tab navigator.
  * A normal-flow footer reserves its own height instead of covering form rows.
  */
 export function SettingsTabFooter() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
@@ -53,7 +57,7 @@ export function SettingsTabFooter() {
               accessibilityRole="tab"
               accessibilityLabel={tab.label}
               accessibilityState={{ selected }}
-              accessibilityHint={`${tab.label} sayfasına git`}
+              accessibilityHint={translateCopy("{{p0}} sayfasına git", { p0: tab.label })}
               onPress={() => {
                 void Haptics.selectionAsync().catch(() => undefined);
                 router.replace(tab.route);

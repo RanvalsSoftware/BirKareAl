@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useEffect } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
@@ -11,6 +13,8 @@ import { afterScenePath } from '@/features/create/workflow';
 import { colors, spacing, typography } from '@/theme';
 
 export default function SceneScreen() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const { selected } = useLocalSearchParams<{ selected?: string }>();
   const { flow, set } = useCreateFlow();
@@ -23,15 +27,13 @@ export default function SceneScreen() {
 
   return (
     <Screen contentContainerStyle={styles.content}>
-      <CreateHeader title="Sahne seç" subtitle="Seçtiğin kaynak bu sahneye taşınacak" step={2} />
-      <Text style={styles.heading}>Sahneni seç</Text>
-      <Text style={styles.intro}>
-        Pozunu koruyarak çevreyi üretim sırasında yeniden tasarlayacağız.
-      </Text>
+      <CreateHeader title={translateCopy("Sahne seç")} subtitle={translateCopy("Seçtiğin kaynak bu sahneye taşınacak")} step={2} />
+      <Text style={styles.heading}>{translateCopy("Sahneni seç")}</Text>
+      <Text style={styles.intro}>{translateCopy("Pozunu koruyarak çevreyi üretim sırasında yeniden tasarlayacağız.")}</Text>
       <View style={styles.grid} accessibilityRole="radiogroup">
         <VisualTile
-          title="Güzellik"
-          subtitle="Rötuş, cilt ve makyaj"
+          title={translateCopy("Güzellik")}
+          subtitle={translateCopy("Rötuş, cilt ve makyaj")}
           imageSource={beautySceneImage}
           icon="sparkles-outline"
           palette={['#3A2830', '#B38A5B']}
@@ -59,11 +61,9 @@ export default function SceneScreen() {
           />
         ))}
       </View>
-      <Notice tone="neutral" title="AI sahnesi">
-        Seçtiğin sahne yaratıcı bir taslak olarak kullanılır; gerçek bir mekan kaydı değildir.
-      </Notice>
+      <Notice tone="neutral" title="AI sahnesi">{translateCopy("Seçtiğin sahne yaratıcı bir taslak olarak kullanılır; gerçek bir mekan kaydı değildir.")}</Notice>
       <WizardFooter
-        label={flow.sourceUri ? 'Görseli düzenle' : 'Kaynak seç'}
+        label={flow.sourceUri ? translateCopy("Görseli düzenle") : translateCopy("Kaynak seç")}
         onPress={() => {
           set(
             standardCreationSelection({

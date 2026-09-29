@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
@@ -23,6 +25,8 @@ export function AppleGlassButton({
   label, onPress, disabled = false, loading = false, icon = 'arrow-forward',
   accessibilityHint, style, testID,
 }: AppleGlassButtonProps) {
+  const languageRevision = useLanguageRevision();
+
   const reducedMotion = useReducedMotion();
   const press = useSharedValue(0);
   const unavailable = disabled || loading;
@@ -51,7 +55,7 @@ export function AppleGlassButton({
           <View style={styles.labelWrap}>
             {loading ? <ActivityIndicator color="#FFFFFF" size="small" style={styles.loader} /> : null}
             <Text adjustsFontSizeToFit minimumFontScale={0.76} numberOfLines={1} style={styles.label}>
-              {loading ? 'Hazırlanıyor…' : label}
+              {loading ? translateCopy("Hazırlanıyor…") : label}
             </Text>
           </View>
           {!loading ? (

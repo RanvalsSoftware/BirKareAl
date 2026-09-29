@@ -1,3 +1,4 @@
+import { tr as translateCopy } from '@/i18n/engine';
 import type { ImageSourcePropType } from 'react-native';
 
 import { experienceScenes, type ExperienceSceneId } from '@/constants/experience-scenes';
@@ -88,8 +89,8 @@ export const showcasePhotos: { id: string; source: ImageSourcePropType }[] =
 export const categories = experienceScenes;
 
 export const filterGroups: { id: FilterGroup; label: string }[] = [
-  { id: 'all', label: 'Tümü' },
-  { id: 'natural', label: 'Doğal' },
+  { id: 'all', get label() { return translateCopy("Tümü"); } },
+  { id: 'natural', get label() { return translateCopy("Doğal"); } },
   { id: 'art', label: 'Sanatsal' },
   { id: 'cinematic', label: 'Sinematik' },
   { id: 'professional', label: 'Portre' },
@@ -103,13 +104,13 @@ export const filters: {
 }[] = [
   {
     id: 'natural',
-    title: 'Doğal',
+    get title() { return translateCopy("Doğal"); },
     group: 'natural',
     source: require('../../../assets/onboarding/images/filters/natural.webp'),
   },
   {
     id: 'warm-studio',
-    title: 'Stüdyo',
+    get title() { return translateCopy("Stüdyo"); },
     group: 'professional',
     source: require('../../../assets/onboarding/images/filters/studio.webp'),
   },
@@ -194,7 +195,7 @@ export const fanScenes: {
   },
   {
     id: 'fan-stadium-02',
-    title: 'Maç Sonrası',
+    get title() { return translateCopy("Maç Sonrası"); },
     source: require('../../../assets/onboarding/images/scenes/stadium.webp'),
   },
   {

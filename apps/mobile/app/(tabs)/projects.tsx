@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import {
@@ -88,14 +90,14 @@ const MODE_DISPLAY: Record<
 
 function formatProjectDate(value: string): string {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Yakın zamanda';
+  if (Number.isNaN(date.getTime())) return translateCopy("Yakın zamanda");
 
   const today = new Date();
   const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const startOfProjectDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const daysAgo = Math.round((startOfToday.getTime() - startOfProjectDay.getTime()) / 86_400_000);
-  if (daysAgo === 0) return 'Bugün';
-  if (daysAgo === 1) return 'Dün';
+  if (daysAgo === 0) return translateCopy("Bugün");
+  if (daysAgo === 1) return translateCopy("Dün");
   return new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long' }).format(date);
 }
 
@@ -109,10 +111,12 @@ function projectOutputSource(
 }
 
 function queryErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : 'Projelerin şu anda yüklenemedi.';
+  return error instanceof Error ? error.message : translateCopy("Projelerin şu anda yüklenemedi.");
 }
 
 export default function ProjectsScreen() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const availableCredits = useAvailableCredits();
   const accessToken = useAuthStore((store) => store.accessToken);
@@ -132,7 +136,7 @@ export default function ProjectsScreen() {
           source: projectOutputSource(project.outputAssetId, accessToken),
         };
       }),
-    [accessToken, projects],
+    [accessToken, projects, languageRevision],
   );
   const visible = cards.filter(
     (project) =>
@@ -157,7 +161,7 @@ export default function ProjectsScreen() {
       <View style={styles.headerArea}>
         <AppHeader
           title="Projelerim"
-          subtitle="Üretimlerin ve versiyonların"
+          subtitle={translateCopy("Üretimlerin ve versiyonların")}
           right={<CreditBadge credits={availableCredits} />}
         />
       </View>
@@ -179,20 +183,20 @@ export default function ProjectsScreen() {
         </ScrollView>
         {visibleError ? (
           <View style={styles.errorNotice}>
-            <Text style={styles.errorTitle}>Projeler yüklenemedi</Text>
+            <Text style={styles.errorTitle}>{translateCopy("Projeler yüklenemedi")}</Text>
             <Text style={styles.errorText}>{visibleError}</Text>
           </View>
         ) : null}
         {projectsQuery.isLoading ? (
           <View accessibilityRole="progressbar" style={styles.loading}>
             <ActivityIndicator color={colors.accentYellow} />
-            <Text style={styles.loadingText}>Projelerin yükleniyor…</Text>
+            <Text style={styles.loadingText}>{translateCopy("Projelerin yükleniyor…")}</Text>
           </View>
         ) : projectsQuery.isError && !(projects?.length ?? 0) ? (
           <EmptyState
             icon="cloud-offline-outline"
-            title="Projelerine ulaşılamadı"
-            detail="Bağlantını kontrol edip tekrar deneyebilirsin."
+            title={translateCopy("Projelerine ulaşılamadı")}
+            detail={translateCopy("Bağlantını kontrol edip tekrar deneyebilirsin.")}
             action="Tekrar dene"
             onAction={() => void projectsQuery.refetch()}
           />
@@ -218,7 +222,7 @@ export default function ProjectsScreen() {
                     {project.outputAssetId
                       ? project.category
                       : project.latestGenerationStatus
-                        ? 'Üretim hazırlanıyor'
+                        ? translateCopy("Üretim hazırlanıyor")
                         : project.category}
                   </Text>
                 </View>
@@ -227,8 +231,8 @@ export default function ProjectsScreen() {
           </>
         ) : (
           <EmptyState
-            title="Bu alanda henüz proje yok"
-            detail="Bir sahne ya da filtre seçerek ilk projenizi oluşturun."
+            title={translateCopy("Bu alanda henüz proje yok")}
+            detail={translateCopy("Bir sahne ya da filtre seçerek ilk projenizi oluşturun.")}
             action="Oluşturmaya başla"
             onAction={() => router.push('/create' as never)}
           />

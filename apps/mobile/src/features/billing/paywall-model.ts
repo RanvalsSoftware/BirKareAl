@@ -1,3 +1,4 @@
+import { tr as translateCopy } from '@/i18n/engine';
 import type { PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
 
 export type ProPlanId = 'monthly' | 'annual' | 'lifetime';
@@ -12,17 +13,17 @@ export type ProPlan = {
 
 const PLAN_COPY: Record<ProPlanId, Omit<ProPlan, 'id' | 'package'>> = {
   monthly: {
-    label: 'Aylık',
+    get label() { return translateCopy("Aylık"); },
     note: 'Her ay 80 kredi',
     featured: false,
   },
   annual: {
-    label: 'Yıllık',
+    get label() { return translateCopy("Yıllık"); },
     note: 'Her ay 80 kredi',
     featured: true,
   },
   lifetime: {
-    label: 'Ömür Boyu',
+    get label() { return translateCopy("Ömür Boyu"); },
     note: '200 başlangıç kredisi · Kalıcı Pro',
     featured: false,
   },

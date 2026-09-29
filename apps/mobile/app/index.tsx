@@ -1,3 +1,4 @@
+import { useLanguageRevision } from '@/i18n/use-language';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -16,6 +17,8 @@ type OnboardingStatus = 'loading' | 'new' | 'complete';
  * loaded while the logo animation is playing.
  */
 export default function LaunchScreen() {
+  const languageRevision = useLanguageRevision();
+
   const { reset } = useLocalSearchParams<{ reset?: string }>();
   const authState = useAuthStore((store) => store.state);
   const bootstrap = useAuthStore((store) => store.bootstrap);

@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
@@ -22,36 +24,36 @@ const modes: {
 }[] = [
   {
     id: 'scene',
-    title: 'Yeni sahne oluştur',
-    description: 'Fotoğrafını özgün bir ortama taşı.',
+    get title() { return translateCopy("Yeni sahne oluştur"); },
+    get description() { return translateCopy("Fotoğrafını özgün bir ortama taşı."); },
     icon: 'images-outline',
     badge: '2 kredi',
   },
   {
     id: 'background',
-    title: 'Arka plan değiştir',
-    description: 'Pozunu koru, çevreni yeniden tasarla.',
+    get title() { return translateCopy("Arka plan değiştir"); },
+    get description() { return translateCopy("Pozunu koru, çevreni yeniden tasarla."); },
     icon: 'layers-outline',
     badge: '2 kredi',
   },
   {
     id: 'character',
-    title: 'Kurgusal karakterden başla',
-    description: 'Fotoğraf yüklemek yerine bir karakter seç.',
+    get title() { return translateCopy("Kurgusal karakterden başla"); },
+    get description() { return translateCopy("Fotoğraf yüklemek yerine bir karakter seç."); },
     icon: 'sparkles-outline',
     badge: '2 kredi',
   },
   {
     id: 'filter',
     title: 'AI filtre uygula',
-    description: 'Bir fotoğrafa özgün bir stil ver.',
+    get description() { return translateCopy("Bir fotoğrafa özgün bir stil ver."); },
     icon: 'color-filter-outline',
     badge: '0–3 kredi',
   },
   {
     id: 'portrait',
     title: 'Profesyonel portre',
-    description: 'Doğal, stüdyo kalitesinde bir portre oluştur.',
+    get description() { return translateCopy("Doğal, stüdyo kalitesinde bir portre oluştur."); },
     icon: 'person-circle-outline',
     badge: '3 kredi',
   },
@@ -69,10 +71,10 @@ const sections: readonly {
 }[] = [
   {
     id: 'visual',
-    label: 'Görsel',
+    get label() { return translateCopy("Görsel"); },
     icon: 'image-outline',
     modes: ['scene', 'portrait'],
-    heading: 'Bir görünüm seç',
+    get heading() { return translateCopy("Bir görünüm seç"); },
     intro: 'Fotoğrafını yeni bir sahneye taşı ya da profesyonel bir portre oluştur.',
   },
   {
@@ -80,15 +82,15 @@ const sections: readonly {
     label: 'Kurgusal',
     icon: 'sparkles-outline',
     modes: ['character'],
-    heading: 'Kurgusal bir an yarat',
+    get heading() { return translateCopy("Kurgusal bir an yarat"); },
     intro: 'Hayal ürünü bir karakterle, güvenli biçimde özgün bir kare oluştur.',
   },
   {
     id: 'tools',
-    label: 'AI Araçları',
+    get label() { return translateCopy("AI Araçları"); },
     icon: 'construct-outline',
     modes: ['filter', 'background'],
-    heading: 'Fotoğrafını dönüştür',
+    get heading() { return translateCopy("Fotoğrafını dönüştür"); },
     intro: 'Bir filtre uygula veya arka planını AI ile yeniden tasarla.',
   },
 ];
@@ -98,6 +100,8 @@ function sectionForMode(mode: CreateMode): CreateSection {
 }
 
 export default function CreateStartScreen() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const { mode } = useLocalSearchParams<{ mode?: string }>();
   const { flow, set } = useCreateFlow();
@@ -158,7 +162,7 @@ export default function CreateStartScreen() {
 
   return (
     <Screen contentContainerStyle={styles.content}>
-      <CreateHeader title="BirKare AI" subtitle="Ne oluşturmak istersin?" />
+      <CreateHeader title="BirKare AI" subtitle={translateCopy("Ne oluşturmak istersin?")} />
       <CreateSegmentedControl
         value={section}
         onChange={selectSection}
@@ -193,19 +197,19 @@ export default function CreateStartScreen() {
           />
         ))}
       </View>
-      <Notice tone="neutral" title="Güvenli yaratıcılık">
+      <Notice tone="neutral" title={translateCopy("Güvenli yaratıcılık")}>
         {section === 'fictional'
-          ? 'Kurgusal karakterler gerçek kişileri temsil etmez. Sonuçlarda AI içeriği etiketi korunur.'
-          : 'Yalnızca paylaşma hakkına sahip olduğun fotoğrafları yükle. Kaynak görselin iznin olmadan paylaşılmaz.'}
+          ? translateCopy("Kurgusal karakterler gerçek kişileri temsil etmez. Sonuçlarda AI içeriği etiketi korunur.")
+          : translateCopy("Yalnızca paylaşma hakkına sahip olduğun fotoğrafları yükle. Kaynak görselin iznin olmadan paylaşılmaz.")}
       </Notice>
       <WizardFooter
-        label={section === 'fictional' ? 'Kurgusal karakter seç' : 'Kaynak seç'}
+        label={section === 'fictional' ? translateCopy("Kurgusal karakter seç") : translateCopy("Kaynak seç")}
         onPress={() => {
           if (flow.mode === 'character')
             set({ mode: 'scene', sourceKind: 'fictional', personId: null });
           router.push('/create/upload' as never);
         }}
-        hint="Seçimini sonraki adımda tamamlayabilirsin."
+        hint={translateCopy("Seçimini sonraki adımda tamamlayabilirsin.")}
       />
     </Screen>
   );

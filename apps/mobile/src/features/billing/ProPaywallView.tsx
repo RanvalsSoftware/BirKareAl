@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
@@ -57,19 +59,21 @@ const assets = {
 };
 
 export function ProPaywallView(props: ProPaywallViewProps) {
+  const languageRevision = useLanguageRevision();
+
   const { width, fontScale } = useWindowDimensions();
   const maxWidth = Math.min(width, 440);
   const compact = maxWidth < 360;
   const stacked = maxWidth < 360 || fontScale > 1.25;
   const heroHeight = Math.round((maxWidth - 32) * 0.48);
   const features = [
-    { image: assets.infinity, title: 'Krediyle AI', detail: 'üretimi' },
+    { image: assets.infinity, title: 'Krediyle AI', detail: translateCopy("üretimi") },
     { image: assets.people, title: 'Premium', detail: 'karakterler ve sahneler' },
-    { image: assets.wand, title: 'Pro araçlar', detail: 've daha fazlası' },
+    { image: assets.wand, title: translateCopy("Pro araçlar"), detail: translateCopy("ve daha fazlası") },
   ];
   const scenes = [
     { image: assets.city, label: 'Hayal Et', rotate: '-3deg' },
-    { image: assets.balloons, label: 'Keşfet', rotate: '0deg' },
+    { image: assets.balloons, label: translateCopy("Keşfet"), rotate: '0deg' },
     { image: assets.portrait, label: 'Yarat', rotate: '3deg' },
   ];
   return (
@@ -92,12 +96,12 @@ export function ProPaywallView(props: ProPaywallViewProps) {
               <Text style={[s.brand, compact && s.brandCompact]}>
                 BirKare <Text style={s.gold}>PRO</Text>
               </Text>
-              <Text style={s.tagline}>hayalindeki kareye adım at</Text>
+              <Text style={s.tagline}>{translateCopy("hayalindeki kareye adım at")}</Text>
             </View>
             <Pressable
               onPress={props.onClose}
               accessibilityRole="button"
-              accessibilityLabel="Pro ekranını kapat"
+              accessibilityLabel={translateCopy("Pro ekranını kapat")}
               style={s.close}
               hitSlop={4}
             >
@@ -106,11 +110,9 @@ export function ProPaywallView(props: ProPaywallViewProps) {
           </View>
 
           <Text accessibilityRole="header" style={[s.title, compact && s.titleCompact]}>
-            BirKare <Text style={s.gold}>Pro’yu aç</Text>
+            BirKare <Text style={s.gold}>{translateCopy("Pro’yu aç")}</Text>
           </Text>
-          <Text style={s.subtitle}>
-            Sahneleri, karakterleri ve premium üretim{'\n'}araçlarını keşfet.
-          </Text>
+          <Text style={s.subtitle}>{translateCopy("Sahneleri, karakterleri ve premium üretim{{p0}}araçlarını keşfet.", { p0: '\n' })}</Text>
 
           <View style={[s.scenes, { height: heroHeight + 10 }]}>
             {scenes.map((scene) => (
@@ -123,7 +125,7 @@ export function ProPaywallView(props: ProPaywallViewProps) {
                   style={s.sceneImage}
                   resizeMode="contain"
                   accessibilityIgnoresInvertColors
-                  accessibilityLabel={scene.label + ' — örnek üretim'}
+                  accessibilityLabel={scene.label + translateCopy("— örnek üretim")}
                 />
                 <Text style={s.sceneLabel}>{scene.label}</Text>
               </View>
@@ -149,9 +151,7 @@ export function ProPaywallView(props: ProPaywallViewProps) {
           </View>
 
           {props.preview ? (
-            <Text testID="paywall-preview-label" style={s.preview}>
-              TASARIM ÖNİZLEMESİ · ÖRNEK FİYATLAR · ÖDEME YAPMAZ
-            </Text>
+            <Text testID="paywall-preview-label" style={s.preview}>{translateCopy("TASARIM ÖNİZLEMESİ · ÖRNEK FİYATLAR · ÖDEME YAPMAZ")}</Text>
           ) : null}
           {!props.preview && props.banner ? <Text style={s.preview}>{props.banner}</Text> : null}
           {props.active ? (
@@ -247,10 +247,10 @@ export function ProPaywallView(props: ProPaywallViewProps) {
             accessibilityRole="button"
             accessibilityLabel={
               props.preview
-                ? 'Pro’ya geç — yalnızca tasarım önizlemesi'
+                ? translateCopy("Pro’ya geç — yalnızca tasarım önizlemesi")
                 : props.active
-                  ? 'Aboneliği yönet'
-                  : 'Pro’ya geç'
+                  ? translateCopy("Aboneliği yönet")
+                  : translateCopy("Pro’ya geç")
             }
             accessibilityState={{ disabled: Boolean(props.disabled || props.busy) }}
             disabled={props.disabled || props.busy}
@@ -271,19 +271,16 @@ export function ProPaywallView(props: ProPaywallViewProps) {
                 <ActivityIndicator color="#0A0804" />
               ) : (
                 <>
-                  <Text style={s.ctaText}>{props.active ? 'Aboneliği yönet' : 'Pro’ya geç'}</Text>
+                  <Text style={s.ctaText}>{props.active ? translateCopy("Aboneliği yönet") : translateCopy("Pro’ya geç")}</Text>
                   <Ionicons name="arrow-forward" size={26} color="#0A0804" />
                 </>
               )}
             </LinearGradient>
           </Pressable>
           <Pressable onPress={props.onClose} accessibilityRole="button" style={s.free}>
-            <Text style={s.freeText}>{props.active ? 'Uygulamaya dön' : 'Ücretsiz devam et'}</Text>
+            <Text style={s.freeText}>{props.active ? translateCopy("Uygulamaya dön") : translateCopy("Ücretsiz devam et")}</Text>
           </Pressable>
-          <Text style={s.termsNote}>
-            Aylık ve yıllık planlar iptal edilmedikçe yenilenir. Ömür Boyu tek ödemedir. AI
-            üretimleri kredi kullanır; sınırsız üretim içermez.
-          </Text>
+          <Text style={s.termsNote}>{translateCopy("Aylık ve yıllık planlar iptal edilmedikçe yenilenir. Ömür Boyu tek ödemedir. AI üretimleri kredi kullanır; sınırsız üretim içermez.")}</Text>
           <View style={s.footer}>
             <Pressable
               disabled={props.restoreDisabled || props.busy}
@@ -291,13 +288,11 @@ export function ProPaywallView(props: ProPaywallViewProps) {
               accessibilityRole="button"
               style={s.footerButton}
             >
-              <Text style={[s.footerText, (props.restoreDisabled || props.busy) && s.disabled]}>
-                Geri yükle
-              </Text>
+              <Text style={[s.footerText, (props.restoreDisabled || props.busy) && s.disabled]}>{translateCopy("Geri yükle")}</Text>
             </Pressable>
             <Text style={s.divider}>|</Text>
             <Pressable onPress={props.onTerms} accessibilityRole="link" style={s.footerButton}>
-              <Text style={s.footerText}>Şartlar</Text>
+              <Text style={s.footerText}>{translateCopy("Şartlar")}</Text>
             </Pressable>
             <Text style={s.divider}>|</Text>
             <Pressable onPress={props.onPrivacy} accessibilityRole="link" style={s.footerButton}>

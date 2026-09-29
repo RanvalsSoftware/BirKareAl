@@ -1,3 +1,4 @@
+import { tr as translateCopy } from '@/i18n/engine';
 import * as SecureStore from 'expo-secure-store';
 import { create } from 'zustand';
 import { apiRequest } from '@/api/client';
@@ -26,7 +27,7 @@ function currentOwner(): string | null {
 
 function assertOwner(owner: string | null) {
   if (owner !== currentOwner()) {
-    throw new Error('Görünüm tercihi kaydedilirken hesap değişti. Geçerli hesabında yeniden dene.');
+    throw new Error(translateCopy("Görünüm tercihi kaydedilirken hesap değişti. Geçerli hesabında yeniden dene."));
   }
 }
 
@@ -83,8 +84,8 @@ export const useAppearanceStore = create<AppearanceState>((set, get) => {
         } catch {
           throw new Error(
             owner !== null
-              ? 'Tercihin hesabına kaydedildi ancak bu cihazda saklanamadı. Sonraki girişte hesabından yeniden alınacak.'
-              : 'Tercihin bu oturum için uygulandı ancak cihazda saklanamadı. Uygulamayı yeniden açınca tekrar seçmen gerekebilir.',
+              ? translateCopy("Tercihin hesabına kaydedildi ancak bu cihazda saklanamadı. Sonraki girişte hesabından yeniden alınacak.")
+              : translateCopy("Tercihin bu oturum için uygulandı ancak cihazda saklanamadı. Uygulamayı yeniden açınca tekrar seçmen gerekebilir."),
           );
         }
         assertOwner(owner);

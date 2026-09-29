@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -27,6 +29,8 @@ import { colors, radii, shadows, spacing } from '@/theme';
 
 /** See the matching category helper: avoid iOS hot-reload cropping on absolute Images. */
 function FittedArtwork({ source }: { source: ImageSourcePropType }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View pointerEvents="none" style={styles.fittedArtworkCanvas}>
       <Image fadeDuration={0} source={source} style={styles.fittedArtwork} />
@@ -35,11 +39,13 @@ function FittedArtwork({ source }: { source: ImageSourcePropType }) {
 }
 
 export default function FiltersOnboardingScreen() {
+  const languageRevision = useLanguageRevision();
+
   const { selectedFilterId, setSelectedFilterId, selectedPhoto } = useOnboarding();
   const [group, setGroup] = useState<FilterGroup>('all');
   const visibleFilters = useMemo(
     () => (group === 'all' ? filters : filters.filter((item) => item.group === group)),
-    [group],
+    [group, languageRevision],
   );
   const selected = filters.find((item) => item.id === selectedFilterId) ?? filters[0];
 
@@ -53,17 +59,12 @@ export default function FiltersOnboardingScreen() {
           }}
           onSkip={() => router.replace('/(auth)/login')}
           step="3 / 4"
-          title="AI ile oluştur"
+          title={translateCopy("AI ile oluştur")}
         />
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <Animated.View entering={FadeInDown.duration(440)}>
-            <Text accessibilityRole="header" style={styles.title}>
-              Tarzını seç,{`\n`}AI görselleştirsin.
-            </Text>
-            <Text style={styles.subtitle}>
-              Sahnene uygun bir görünüm belirle. Bu ekran temsilî bir önizlemedir; gerçek üretim
-              için ayarların kaydedilir.
-            </Text>
+            <Text accessibilityRole="header" style={styles.title}>{translateCopy("Tarzını seç,{{p0}}AI görselleştirsin.", { p0: `\n` })}</Text>
+            <Text style={styles.subtitle}>{translateCopy("Sahnene uygun bir görünüm belirle. Bu ekran temsilî bir önizlemedir; gerçek üretim için ayarların kaydedilir.")}</Text>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(100).duration(520)} style={styles.preview}>
@@ -76,7 +77,7 @@ export default function FiltersOnboardingScreen() {
             <View style={styles.previewTop}>
               <View style={styles.aiBadge}>
                 <Ionicons color={colors.background} name="sparkles" size={14} />
-                <Text style={styles.aiBadgeText}>AI önizlemesi</Text>
+                <Text style={styles.aiBadgeText}>{translateCopy("AI önizlemesi")}</Text>
               </View>
               <View style={styles.originalThumb}>
                 <FittedArtwork source={resolveOnboardingPhoto(selectedPhoto)} />
@@ -87,9 +88,7 @@ export default function FiltersOnboardingScreen() {
             </View>
             <View style={styles.previewCopy}>
               <Text style={styles.previewTitle}>{selected.title}</Text>
-              <Text style={styles.previewSubtitle}>
-                4:5 mobil önizleme · seçim değiştirilebilir
-              </Text>
+              <Text style={styles.previewSubtitle}>{translateCopy("4:5 mobil önizleme · seçim değiştirilebilir")}</Text>
             </View>
           </Animated.View>
 
@@ -162,15 +161,12 @@ export default function FiltersOnboardingScreen() {
           </ScrollView>
           <View style={styles.notice}>
             <Ionicons color={colors.accentYellow} name="information-circle-outline" size={19} />
-            <Text style={styles.noticeText}>
-              Seçilen tarz, oluşturma ekranındaki filtre ayarına aktarılır. Sonuçlar AI ile üretildi
-              olarak etiketlenir.
-            </Text>
+            <Text style={styles.noticeText}>{translateCopy("Seçilen tarz, oluşturma ekranındaki filtre ayarına aktarılır. Sonuçlar AI ile üretildi olarak etiketlenir.")}</Text>
           </View>
         </ScrollView>
         <View style={styles.bottom}>
           <StepProgress active={2} />
-          <GoldButton label="Sonucu gör" onPress={() => router.push('/(onboarding)/fan-moment')} />
+          <GoldButton label={translateCopy("Sonucu gör")} onPress={() => router.push('/(onboarding)/fan-moment')} />
         </View>
       </View>
     </SafeAreaView>

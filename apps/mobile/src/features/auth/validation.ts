@@ -1,3 +1,4 @@
+import { tr as translateCopy } from '@/i18n/engine';
 import { z } from 'zod';
 
 const normalizedEmail = z
@@ -11,7 +12,7 @@ const password = z
   .min(10, 'Şifreniz en az 10 karakter olmalı.')
   .max(128, 'Şifreniz en fazla 128 karakter olabilir.')
   .refine((value) => /[A-Za-z]/.test(value) && /\d/.test(value), {
-    message: 'Şifreniz en az bir harf ve bir rakam içermeli.',
+    message: translateCopy("Şifreniz en az bir harf ve bir rakam içermeli."),
   });
 
 export const loginSchema = z.object({
@@ -46,7 +47,7 @@ export const registerSchema = z
       .refine((value) => value, 'Fotoğraf kullanım hakkınızı onaylamalısınız.'),
   })
   .refine((values) => values.password === values.passwordConfirmation, {
-    message: 'Şifreler eşleşmiyor.',
+    message: translateCopy("Şifreler eşleşmiyor."),
     path: ['passwordConfirmation'],
   });
 
@@ -61,7 +62,7 @@ export const resetPasswordSchema = z
     signOutEverywhere: z.boolean(),
   })
   .refine((values) => values.password === values.passwordConfirmation, {
-    message: 'Şifreler eşleşmiyor.',
+    message: translateCopy("Şifreler eşleşmiyor."),
     path: ['passwordConfirmation'],
   });
 

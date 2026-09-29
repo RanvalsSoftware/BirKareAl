@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useEffect, useRef, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -33,6 +35,8 @@ import { colors, spacing, typography } from '@/theme';
 
 const groups = ['Tümü', 'Rötuş', 'Yüz hatları', 'Makyaj'] as const;
 export default function BeautyScreen() {
+  const languageRevision = useLanguageRevision();
+
   return (
     <RequireAuthenticated>
       <BeautyEditor />
@@ -41,6 +45,8 @@ export default function BeautyScreen() {
 }
 
 function BeautyEditor() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const { selected } = useLocalSearchParams<{ selected?: string }>();
   const { flow, set } = useCreateFlow();
@@ -129,18 +135,18 @@ function BeautyEditor() {
   return (
     <Screen contentContainerStyle={styles.content}>
       <CreateHeader
-        title="Güzellik Stüdyosu"
-        subtitle="Sana ait, doğal dokunuşlar"
+        title={translateCopy("Güzellik Stüdyosu")}
+        subtitle={translateCopy("Sana ait, doğal dokunuşlar")}
         step={flow.sourceUri ? 2 : undefined}
         fallback="/(tabs)/home"
       />
       <View style={styles.toolbar}>
-        <Text style={styles.hint}>10 görünüm · Katmanlı düzenleme</Text>
+        <Text style={styles.hint}>{translateCopy("10 görünüm · Katmanlı düzenleme")}</Text>
         <CreditBadge credits={credits} />
       </View>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Orijinali görmek için basılı tut"
+        accessibilityLabel={translateCopy("Orijinali görmek için basılı tut")}
         onPressIn={() => setShowOriginal(true)}
         onPressOut={() => setShowOriginal(false)}
         style={styles.preview}
@@ -169,10 +175,10 @@ function BeautyEditor() {
           />
           <Text style={styles.previewBadgeText}>
             {!flow.sourceUri
-              ? 'Temsili görünüm'
+              ? translateCopy("Temsili görünüm")
               : showOriginal || !activeOptions.length
-                ? 'Orijinal fotoğraf'
-                : 'Yerel ışık önizlemesi'}
+                ? translateCopy("Orijinal fotoğraf")
+                : translateCopy("Yerel ışık önizlemesi")}
           </Text>
         </View>
       </Pressable>
@@ -184,18 +190,18 @@ function BeautyEditor() {
         >
           <Icon name="camera-outline" size={16} color={colors.accentYellow} />
           <Text style={styles.actionText}>
-            {flow.sourceUri ? 'Fotoğrafı değiştir' : 'Fotoğrafını seç'}
+            {flow.sourceUri ? translateCopy("Fotoğrafı değiştir") : translateCopy("Fotoğrafını seç")}
           </Text>
         </Pressable>
         <Pressable accessibilityRole="button" onPress={reset} style={styles.action}>
           <Icon name="refresh-outline" size={15} />
-          <Text style={styles.hint}>Sıfırla</Text>
+          <Text style={styles.hint}>{translateCopy("Sıfırla")}</Text>
         </Pressable>
       </View>
       <Text style={styles.previewHint}>
         {flow.sourceUri
-          ? 'Orijinali görmek için basılı tut. Cilt, kontür ve makyaj düzenlemeleri oluşturduğunda AI ile uygulanır.'
-          : 'Kartlar örnektir; üretim için kendi fotoğrafını yükle. Referansın kıyafeti ve yüzü fotoğrafına kopyalanmaz.'}
+          ? translateCopy("Orijinali görmek için basılı tut. Cilt, kontür ve makyaj düzenlemeleri oluşturduğunda AI ile uygulanır.")
+          : translateCopy("Kartlar örnektir; üretim için kendi fotoğrafını yükle. Referansın kıyafeti ve yüzü fotoğrafına kopyalanmaz.")}
       </Text>
       <ScrollView
         horizontal
@@ -239,8 +245,8 @@ function BeautyEditor() {
           {option.isPro ? (
             <Text style={styles.proHint}>
               {billing.isPro
-                ? 'Premium güzellik aktif. Bu üretimde +2 kredi olarak hesaplanır.'
-                : 'Bu premium görünümü kullanmak için BirKare Pro gerekir.'}
+                ? translateCopy("Premium güzellik aktif. Bu üretimde +2 kredi olarak hesaplanır.")
+                : translateCopy("Bu premium görünümü kullanmak için BirKare Pro gerekir.")}
             </Text>
           ) : null}
           <IntensitySlider
@@ -260,29 +266,26 @@ function BeautyEditor() {
               </Pressable>
             ))}
           </View>
-          <Text style={styles.previewHint}>
-            {intensityDescription(intensity)} · Yüzde, güvenli etki aralığındaki yoğunluğu ifade
-            eder.
-          </Text>
+          <Text style={styles.previewHint}>{translateCopy("{{p0}} · Yüzde, güvenli etki aralığındaki yoğunluğu ifade eder.", { p0: intensityDescription(intensity) })}</Text>
         </GlassSurface>
       ) : (
         <View style={styles.noSelection}>
           <Icon name="remove-circle-outline" size={20} color={colors.accentYellow} />
           <View style={styles.flex}>
             <Text style={styles.optionName}>
-              {activeOptions.length ? 'Dokunuş kaldırıldı' : 'Filtre seçili değil'}
+              {activeOptions.length ? translateCopy("Dokunuş kaldırıldı") : translateCopy("Filtre seçili değil")}
             </Text>
             <Text style={styles.hint}>
               {activeOptions.length
-                ? 'Diğer aktif dokunuşların korunuyor. Yeni bir kart seçerek devam edebilirsin.'
-                : 'Bir görünüm seç. Aktif karta tekrar dokunarak etkisini kaldırabilirsin.'}
+                ? translateCopy("Diğer aktif dokunuşların korunuyor. Yeni bir kart seçerek devam edebilirsin.")
+                : translateCopy("Bir görünüm seç. Aktif karta tekrar dokunarak etkisini kaldırabilirsin.")}
             </Text>
           </View>
         </View>
       )}
       {activeOptions.length ? (
         <View style={styles.activeSummary}>
-          <Text style={styles.hint}>{activeOptions.length} aktif dokunuş</Text>
+          <Text style={styles.hint}>{translateCopy("{{p0}} aktif dokunuş", { p0: activeOptions.length })}</Text>
           <Text style={styles.summaryText}>
             {activeOptions
               .map((entry) => `${entry.name} %${beautyIntensity(settings, entry.id)}`)
@@ -293,21 +296,19 @@ function BeautyEditor() {
       <View style={styles.preservation}>
         <ToggleRow
           icon="water-outline"
-          title="Doğal cilt dokusunu koru"
+          title={translateCopy("Doğal cilt dokusunu koru")}
           value={settings.preserveSkinTexture}
           onValueChange={(value) => update({ ...settings, preserveSkinTexture: value })}
         />
         <ToggleRow
           icon="sunny-outline"
-          title="Benleri ve çilleri koru"
+          title={translateCopy("Benleri ve çilleri koru")}
           value={settings.preserveFrecklesAndMoles}
           onValueChange={(value) => update({ ...settings, preserveFrecklesAndMoles: value })}
         />
         <View style={styles.identity}>
           <Icon name="shield-checkmark-outline" size={18} color={colors.accentYellow} />
-          <Text style={styles.hint}>
-            Yüz kimliği, cilt tonu ve temel yüz hatları her zaman korunur.
-          </Text>
+          <Text style={styles.hint}>{translateCopy("Yüz kimliği, cilt tonu ve temel yüz hatları her zaman korunur.")}</Text>
         </View>
       </View>
       <Pressable
@@ -316,7 +317,7 @@ function BeautyEditor() {
         onPress={() => setAdvanced(!advanced)}
         style={styles.output}
       >
-        <Text style={styles.optionName}>Görsel ayarları</Text>
+        <Text style={styles.optionName}>{translateCopy("Görsel ayarları")}</Text>
         <Text style={styles.hint}>
           {flow.aspectRatio} · {flow.quality}
         </Text>
@@ -324,7 +325,7 @@ function BeautyEditor() {
       </Pressable>
       {advanced ? (
         <>
-          <FieldLabel>Çıktı oranı</FieldLabel>
+          <FieldLabel>{translateCopy("Çıktı oranı")}</FieldLabel>
           <View style={styles.row}>
             {(['1:1', '4:5', '9:16'] as const).map((ratio) => (
               <MiniChoice
@@ -335,7 +336,7 @@ function BeautyEditor() {
               />
             ))}
           </View>
-          <FieldLabel>Çıktı kalitesi</FieldLabel>
+          <FieldLabel>{translateCopy("Çıktı kalitesi")}</FieldLabel>
           <View style={styles.row}>
             {(['Önizleme', 'Standart', 'HD'] as const).map((quality) => (
               <MiniChoice
@@ -348,12 +349,9 @@ function BeautyEditor() {
           </View>
         </>
       ) : null}
-      <Notice tone="neutral">
-        Seçimlerini birleştirip orijinal fotoğrafından tek AI düzenlemesi oluştururuz. Kaydırırken
-        kredi harcanmaz. Sonuçlar değişiklik gösterebilir.
-      </Notice>
+      <Notice tone="neutral">{translateCopy("Seçimlerini birleştirip orijinal fotoğrafından tek AI düzenlemesi oluştururuz. Kaydırırken kredi harcanmaz. Sonuçlar değişiklik gösterebilir.")}</Notice>
       <WizardFooter
-        label={!flow.sourceUri ? 'Fotoğrafını seç' : 'AI üretim özetini gör'}
+        label={!flow.sourceUri ? translateCopy("Fotoğrafını seç") : translateCopy("AI üretim özetini gör")}
         disabled={Boolean(option?.isPro && !billing.isPro) || !hasBeautyAdjustments(settings)}
         onPress={() => {
           if (option?.isPro && !billing.isPro) {
@@ -369,10 +367,10 @@ function BeautyEditor() {
         }}
         hint={
           option?.isPro && !billing.isPro
-            ? 'Premium görünüm için Pro erişimini aç.'
+            ? translateCopy("Premium görünüm için Pro erişimini aç.")
             : !hasBeautyAdjustments(settings)
-              ? 'Devam etmek için en az bir görünüm seç.'
-              : 'Kredi maliyeti sonraki ekranda onayına sunulur.'
+              ? translateCopy("Devam etmek için en az bir görünüm seç.")
+              : translateCopy("Kredi maliyeti sonraki ekranda onayına sunulur.")
         }
       />
     </Screen>

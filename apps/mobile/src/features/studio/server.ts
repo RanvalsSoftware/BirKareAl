@@ -1,3 +1,4 @@
+import { tr as translateCopy } from '@/i18n/engine';
 import { apiRequest, captureSessionRequestScope } from '@/api/client';
 import {
   createSubmissionKey,
@@ -36,14 +37,14 @@ export type StudioSubmissionStage =
   | 'QUEUED';
 
 export const studioSubmissionLabels: Record<StudioSubmissionStage, string> = {
-  CHECKING: 'Seçimler ve kredi kontrol ediliyor',
-  READING_PRIMARY: 'Ana görsel hazırlanıyor',
-  UPLOADING_PRIMARY: 'Ana görsel güvenle yükleniyor',
-  READING_SECONDARY: 'Kıyafet görseli hazırlanıyor',
-  UPLOADING_SECONDARY: 'Kıyafet görseli güvenle yükleniyor',
-  CREATING: 'Stüdyo projesi hazırlanıyor',
-  QUEUEING: 'Üretim başlatılıyor',
-  QUEUED: 'Üretim sıraya alındı',
+  CHECKING: translateCopy("Seçimler ve kredi kontrol ediliyor"),
+  READING_PRIMARY: translateCopy("Ana görsel hazırlanıyor"),
+  UPLOADING_PRIMARY: translateCopy("Ana görsel güvenle yükleniyor"),
+  READING_SECONDARY: translateCopy("Kıyafet görseli hazırlanıyor"),
+  UPLOADING_SECONDARY: translateCopy("Kıyafet görseli güvenle yükleniyor"),
+  CREATING: translateCopy("Stüdyo projesi hazırlanıyor"),
+  QUEUEING: translateCopy("Üretim başlatılıyor"),
+  QUEUED: translateCopy("Üretim sıraya alındı"),
 };
 
 export type StudioQuote = GenerationQuote & {
@@ -202,10 +203,10 @@ export async function startStudioGeneration(
         body: JSON.stringify({
           title:
             flow.mode === 'product'
-              ? 'Ürün çekimi'
+              ? translateCopy("Ürün çekimi")
               : flow.mode === 'fashion'
-                ? 'Kıyafet deneme'
-                : 'Tırnak önizleme',
+                ? translateCopy("Kıyafet deneme")
+                : translateCopy("Tırnak önizleme"),
           mode,
           sourceAssetId: current.primaryUpload.assetId,
           aspectRatio: flow.aspectRatio,

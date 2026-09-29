@@ -1,3 +1,6 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { getLocale as getAppLocale } from '@/i18n/engine';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useMemo } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -48,6 +51,8 @@ type RevenueCatSyncResponse = {
 };
 
 export default function CreditsScreen() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const queryClient = useQueryClient();
   const billing = useRevenueCat();
@@ -57,26 +62,26 @@ export default function CreditsScreen() {
   const approximateStandardGenerations = Math.floor(availableCredits / 4);
   const transactions = useMemo(
     () => settledCreditHistory(transactionQuery.data?.items ?? [], 4),
-    [transactionQuery.data?.items],
+    [transactionQuery.data?.items, languageRevision],
   );
   const productsById = useMemo(
     () => new Map(billing.creditProducts.map((product) => [product.identifier, product])),
-    [billing.creditProducts],
+    [billing.creditProducts, languageRevision],
   );
 
   async function purchaseCredits(productId: string, credits: number) {
     const product = productsById.get(productId);
     if (!product) {
       Alert.alert(
-        'Kredi paketi bulunamadı',
-        'Bu ürün App Store / RevenueCat kataloğundan alınamadı. Ürün ID ve mağaza durumunu kontrol edin.',
+        translateCopy("Kredi paketi bulunamadı"),
+        translateCopy("Bu ürün App Store / RevenueCat kataloğundan alınamadı. Ürün ID ve mağaza durumunu kontrol edin."),
       );
       return;
     }
     const result = await billing.purchaseCredit(product);
     if (result.kind === 'cancelled') return;
     if (result.kind === 'pending' || result.kind === 'error') {
-      Alert.alert(result.kind === 'pending' ? 'Onay bekleniyor' : 'Kredi satın alma', result.message);
+      Alert.alert(result.kind === 'pending' ? 'Onay bekleniyor' : translateCopy("Kredi satın alma"), result.message);
       return;
     }
     try {
@@ -99,15 +104,15 @@ export default function CreditsScreen() {
         transactionQuery.refetch(),
       ]);
       Alert.alert(
-        'Krediler hazır',
+        translateCopy("Krediler hazır"),
         sync.creditPackCreditsGranted && sync.creditPackCreditsGranted > 0
-          ? `${sync.creditPackCreditsGranted} kredi hesabınıza eklendi.`
-          : `${credits} kredilik satın alma doğrulandı. Bakiyeniz yenilendi.`,
+          ? translateCopy("{{p0}} kredi hesabınıza eklendi.", { p0: sync.creditPackCreditsGranted })
+          : translateCopy("{{p0}} kredilik satın alma doğrulandı. Bakiyeniz yenilendi.", { p0: credits }),
       );
     } catch {
       Alert.alert(
-        'Satın alma alındı',
-        'Mağaza işlemi tamamlandı. Sunucu doğrulaması henüz sonuçlanmadıysa tekrar satın almayın; bakiye kısa süre içinde RevenueCat üzerinden eşitlenecek.',
+        translateCopy("Satın alma alındı"),
+        translateCopy("Mağaza işlemi tamamlandı. Sunucu doğrulaması henüz sonuçlanmadıysa tekrar satın almayın; bakiye kısa süre içinde RevenueCat üzerinden eşitlenecek."),
       );
     }
   }
@@ -125,8 +130,8 @@ export default function CreditsScreen() {
       >
         <View style={styles.centered}>
           <AppHeader
-            title="Krediler"
-            subtitle="Üretim gücünüz"
+            title={translateCopy("Krediler")}
+            subtitle={translateCopy("Üretim gücünüz")}
             right={<CreditBadge credits={availableCredits} />}
           />
 
@@ -137,13 +142,11 @@ export default function CreditsScreen() {
             style={styles.balanceCard}
           >
             <View style={styles.balanceCopy}>
-              <Text style={styles.balanceEyebrow}>MEVCUT BAKİYE</Text>
+              <Text style={styles.balanceEyebrow}>{translateCopy("MEVCUT BAKİYE")}</Text>
               <Text style={styles.balance}>
                 <Text style={styles.balanceNumber}>{availableCredits}</Text> kredi
               </Text>
-              <Text style={styles.balanceText}>
-                Yaklaşık {approximateStandardGenerations} standart üretim için yeterli.
-              </Text>
+              <Text style={styles.balanceText}>{translateCopy("Yaklaşık {{p0}} standart üretim için yeterli.", { p0: approximateStandardGenerations })}</Text>
             </View>
             <LinearGradient colors={['#21180A', '#5A3A00']} style={styles.balanceIcon}>
               <Icon name="flash" size={38} color={colors.accentYellow} />
@@ -153,12 +156,10 @@ export default function CreditsScreen() {
           <SubscriptionCard />
 
           <View style={styles.sectionTitleRow}>
-            <Text style={styles.sectionTitle}>Kredi </Text>
+            <Text style={styles.sectionTitle}>{translateCopy("Kredi")}</Text>
             <Text style={styles.sectionTitleGold}>paketleri</Text>
           </View>
-          <Text style={styles.sectionSubtitle}>
-            Fiyatlar App Store / RevenueCat üzerinden canlı gelir. Kredi miktarı backend politikasıdır.
-          </Text>
+          <Text style={styles.sectionSubtitle}>{translateCopy("Fiyatlar App Store / RevenueCat üzerinden canlı gelir. Kredi miktarı backend politikasıdır.")}</Text>
           {billing.testEnvironmentLabel ? (
             <Text style={styles.testBanner}>{billing.testEnvironmentLabel}</Text>
           ) : null}
@@ -184,7 +185,7 @@ export default function CreditsScreen() {
                 >
                   {presentation.featured ? (
                     <LinearGradient colors={['#6D18D9', '#9C25E8']} style={styles.packPopular}>
-                      <Text style={styles.packPopularText}>EN ÇOK SEÇİLEN</Text>
+                      <Text style={styles.packPopularText}>{translateCopy("EN ÇOK SEÇİLEN")}</Text>
                     </LinearGradient>
                   ) : null}
                   <View style={[styles.packIcon, presentation.featured && styles.packIconFeatured]}>
@@ -195,13 +196,10 @@ export default function CreditsScreen() {
                     <Text style={styles.packCredits}>{pack.credits} kredi</Text>
                     <Text style={styles.packNote}>{presentation.note}</Text>
                     {priceMismatch ? (
-                      <Text style={styles.priceWarning}>
-                        Test uyarısı: mağaza fiyatı politika ile eşleşmiyor. Beklenen TRY fiyatı ₺
-                        {pack.expectedTryPrice.toLocaleString('tr-TR', {
+                      <Text style={styles.priceWarning}>{translateCopy("Test uyarısı: mağaza fiyatı politika ile eşleşmiyor. Beklenen TRY fiyatı ₺ {{p0}}.", { p0: pack.expectedTryPrice.toLocaleString('tr-TR', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
-                        })}.
-                      </Text>
+                        }) })}</Text>
                     ) : null}
                   </View>
                   <View style={styles.packAction}>
@@ -224,7 +222,7 @@ export default function CreditsScreen() {
                         end={{ x: 1, y: 1 }}
                         style={styles.selectFill}
                       >
-                        <Text style={styles.selectText}>{billing.busy ? 'İşleniyor' : 'Satın al'}</Text>
+                        <Text style={styles.selectText}>{billing.busy ? translateCopy("İşleniyor") : translateCopy("Satın al")}</Text>
                       </LinearGradient>
                     </Pressable>
                   </View>
@@ -234,24 +232,21 @@ export default function CreditsScreen() {
           </View>
 
           {billing.ready && billing.creditProducts.length !== MOBILE_CREDIT_PRODUCTS.length ? (
-            <Text accessibilityRole="alert" style={styles.catalogWarning}>
-              Kredi ürünlerinin tamamı mağazadan gelmedi. RevenueCat / App Store Connect içinde
-              com.birkareai.credits.20, .60 ve .150 ürünlerini kontrol edin.
-            </Text>
+            <Text accessibilityRole="alert" style={styles.catalogWarning}>{translateCopy("Kredi ürünlerinin tamamı mağazadan gelmedi. RevenueCat / App Store Connect içinde com.birkareai.credits.20, .60 ve .150 ürünlerini kontrol edin.")}</Text>
           ) : null}
 
           <View style={styles.historyHeading}>
             <View style={styles.sectionTitleRow}>
-              <Text style={styles.sectionTitle}>Hesap </Text>
+              <Text style={styles.sectionTitle}>{translateCopy("Hesap")}</Text>
               <Text style={styles.sectionTitleGold}>hareketleri</Text>
             </View>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Tüm hesap hareketlerini gör"
+              accessibilityLabel={translateCopy("Tüm hesap hareketlerini gör")}
               onPress={() => router.push('/transactions' as never)}
               style={({ pressed }) => [styles.historyAll, pressed && styles.pressed]}
             >
-              <Text style={styles.historyAllText}>Tümünü gör</Text>
+              <Text style={styles.historyAllText}>{translateCopy("Tümünü gör")}</Text>
               <Icon name="chevron-forward" size={15} color={colors.accentYellow} />
             </Pressable>
           </View>
@@ -268,7 +263,7 @@ export default function CreditsScreen() {
                   <View style={styles.historyCopy}>
                     <Text style={styles.historyTitle}>{transactionTitle(item)}</Text>
                     <Text style={styles.historyDetail}>
-                      {new Date(item.createdAt).toLocaleDateString('tr-TR')} ·{' '}
+                      {new Date(item.createdAt).toLocaleDateString(getAppLocale())} ·{' '}
                       {transactionStatus(item.status)}
                     </Text>
                   </View>
@@ -287,10 +282,10 @@ export default function CreditsScreen() {
                 <Icon name="receipt-outline" size={24} color={colors.accentYellow} />
                 <Text style={styles.historyTitle}>
                   {transactionQuery.isLoading
-                    ? 'Hareketler yükleniyor…'
+                    ? translateCopy("Hareketler yükleniyor…")
                     : transactionQuery.isError
-                      ? 'Hareketler alınamadı · Yeniden dene'
-                      : 'Henüz kredi hareketi yok'}
+                      ? translateCopy("Hareketler alınamadı · Yeniden dene")
+                      : translateCopy("Henüz kredi hareketi yok")}
                 </Text>
               </Pressable>
             )}

@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useEffect, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -21,6 +23,8 @@ const stages: StudioSubmissionStage[] = [
 ];
 
 export function StudioSubmissionProgress({ stage }: { stage: StudioSubmissionStage }) {
+  const languageRevision = useLanguageRevision();
+
   const reducedMotion = useReducedMotion();
   const [fill] = useState(() => new Animated.Value(0));
   const index = Math.max(0, stages.indexOf(stage));
@@ -63,7 +67,7 @@ export function StudioSubmissionProgress({ stage }: { stage: StudioSubmissionSta
           />
         </Animated.View>
       </View>
-      <Text style={styles.detail}>Her görsel bir kez yüklenir; aynı isteğe tekrar dokunma.</Text>
+      <Text style={styles.detail}>{translateCopy("Her görsel bir kez yüklenir; aynı isteğe tekrar dokunma.")}</Text>
     </GlassSurface>
   );
 }

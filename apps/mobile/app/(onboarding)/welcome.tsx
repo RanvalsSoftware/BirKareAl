@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -16,6 +18,8 @@ import { useOnboarding } from '@/features/onboarding/context';
 import { colors, radii, shadows, spacing } from '@/theme';
 
 export default function WelcomeScreen() {
+  const languageRevision = useLanguageRevision();
+
   const { selectedPhoto } = useOnboarding();
 
   return (
@@ -28,7 +32,7 @@ export default function WelcomeScreen() {
           }}
           onSkip={() => router.replace('/(auth)/login')}
           step="1 / 4"
-          title="Fotoğrafını yükle"
+          title={translateCopy("Fotoğrafını yükle")}
         />
         <View style={styles.hero}>
           <LinearGradient
@@ -48,7 +52,7 @@ export default function WelcomeScreen() {
                 style={StyleSheet.absoluteFill}
               />
               <View style={styles.beforeLabel}>
-                <Text style={styles.beforeLabelText}>Seçtiğin fotoğraf</Text>
+                <Text style={styles.beforeLabelText}>{translateCopy("Seçtiğin fotoğraf")}</Text>
               </View>
             </View>
           </Animated.View>
@@ -75,22 +79,17 @@ export default function WelcomeScreen() {
           </Animated.View>
         </View>
         <Animated.View entering={FadeInDown.delay(330).duration(540)} style={styles.copy}>
-          <Text accessibilityRole="header" style={styles.title}>
-            Fotoğrafını sahneye{`\n`}taşımaya hazırız.
-          </Text>
-          <Text style={styles.description}>
-            BirKare AI, seçtiğin fotoğrafı referans alır. Sen sahneyi ve tarzı belirlersin; sistem
-            yeni bir kareyi oluşturmak için seçimini hazırlar.
-          </Text>
+          <Text accessibilityRole="header" style={styles.title}>{translateCopy("Fotoğrafını sahneye{{p0}}taşımaya hazırız.", { p0: `\n` })}</Text>
+          <Text style={styles.description}>{translateCopy("BirKare AI, seçtiğin fotoğrafı referans alır. Sen sahneyi ve tarzı belirlersin; sistem yeni bir kareyi oluşturmak için seçimini hazırlar.")}</Text>
           <View style={styles.featureRow}>
-            <PhotoChip icon="person-outline">Yüz odağı</PhotoChip>
-            <PhotoChip icon="layers-outline">Sahne seçimi</PhotoChip>
-            <PhotoChip icon="sparkles-outline">AI üretim</PhotoChip>
+            <PhotoChip icon="person-outline">{translateCopy("Yüz odağı")}</PhotoChip>
+            <PhotoChip icon="layers-outline">{translateCopy("Sahne seçimi")}</PhotoChip>
+            <PhotoChip icon="sparkles-outline">{translateCopy("AI üretim")}</PhotoChip>
           </View>
         </Animated.View>
         <View style={styles.bottom}>
           <StepProgress active={0} />
-          <GoldButton label="Sahne seç" onPress={() => router.push('/(onboarding)/categories')} />
+          <GoldButton label={translateCopy("Sahne seç")} onPress={() => router.push('/(onboarding)/categories')} />
         </View>
       </View>
     </SafeAreaView>

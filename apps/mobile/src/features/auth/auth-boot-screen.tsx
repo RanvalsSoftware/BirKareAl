@@ -1,12 +1,16 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 /** A visible, lightweight gate while authentication is restored on cold links. */
 export function AuthBootScreen() {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View style={styles.screen} accessibilityLiveRegion="polite">
-      <ActivityIndicator color="#FFC400" size="large" accessibilityLabel="Oturum yükleniyor" />
+      <ActivityIndicator color="#FFC400" size="large" accessibilityLabel={translateCopy("Oturum yükleniyor")} />
       <Text style={styles.title}>BirKare AI</Text>
-      <Text style={styles.detail}>Oturumun hazırlanıyor…</Text>
+      <Text style={styles.detail}>{translateCopy("Oturumun hazırlanıyor…")}</Text>
     </View>
   );
 }

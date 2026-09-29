@@ -1,3 +1,6 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { getLocale as getAppLocale } from '@/i18n/engine';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useEffect, useState } from 'react';
 import { Alert, Linking, Share, StyleSheet, Switch, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -44,13 +47,15 @@ function useFeedback() {
     success: (text: string) => setMessage({ text }),
     error: (error: unknown) =>
       setMessage({
-        text: error instanceof Error ? error.message : 'İşlem tamamlanamadı. Lütfen tekrar dene.',
+        text: error instanceof Error ? error.message : translateCopy("İşlem tamamlanamadı. Lütfen tekrar dene."),
         error: true,
       }),
   };
 }
 
 function Feedback({ message }: { message: Message }) {
+  const languageRevision = useLanguageRevision();
+
   return message ? (
     <View accessibilityLiveRegion="polite">
       <Notice tone={message.error ? 'warning' : 'success'}>{message.text}</Notice>
@@ -69,6 +74,8 @@ function PreferenceSwitch({
   onChange: (value: boolean) => void;
   disabled?: boolean;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <Switch
       accessibilityLabel={label}
@@ -83,6 +90,8 @@ function PreferenceSwitch({
 }
 
 export default function SettingsSectionScreen() {
+  const languageRevision = useLanguageRevision();
+
   const { section } = useLocalSearchParams<{ section: string }>();
   if (section === 'notifications') return <Notifications />;
   if (section === 'privacy') return <Privacy />;
@@ -93,6 +102,8 @@ export default function SettingsSectionScreen() {
 }
 
 function AccountProfile() {
+  const languageRevision = useLanguageRevision();
+
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
   // A keyed form prevents unsaved name fields from leaking to another account.
@@ -128,6 +139,8 @@ function AccountProfileForm({
   email?: string;
   onSaved: (user: AuthUser) => void;
 }) {
+  const languageRevision = useLanguageRevision();
+
   const [firstName, setFirstName] = useState(initialFirstName);
   const [lastName, setLastName] = useState(initialLastName);
   const [errors, setErrors] = useState<{ firstName?: string; lastName?: string }>({});
@@ -148,7 +161,7 @@ function AccountProfileForm({
       setFirstName(updated.firstName ?? '');
       setLastName(updated.lastName ?? '');
       onSaved(updated);
-      feedback.success('Profilin başarıyla güncellendi.');
+      feedback.success(translateCopy("Profilin başarıyla güncellendi."));
     } catch (error) {
       feedback.error(error);
     } finally {
@@ -156,22 +169,22 @@ function AccountProfileForm({
     }
   }
   return (
-    <SettingsPage title="Profili düzenle" subtitle="Hesabındaki adını güncelle">
+    <SettingsPage title={translateCopy("Profili düzenle")} subtitle={translateCopy("Hesabındaki adını güncelle")}>
       <GlassSettingsHero
         icon="person-outline"
         title="Senin profilin."
-        description="Kaydettiğin ad, profilinde ve ana sayfa karşılamasında kullanılır."
+        description={translateCopy("Kaydettiğin ad, profilinde ve ana sayfa karşılamasında kullanılır.")}
       />
       <GlassSettingsPanel>
         <View style={styles.nameForm}>
           <TextField
-            label="Adın"
+            label={translateCopy("Adın")}
             value={firstName}
             onChangeText={(value) => {
               setFirstName(value);
               setErrors((previous) => ({ ...previous, firstName: undefined }));
             }}
-            placeholder="Adını gir"
+            placeholder={translateCopy("Adını gir")}
             autoCapitalize="words"
             autoComplete="given-name"
             maxLength={80}
@@ -179,13 +192,13 @@ function AccountProfileForm({
             error={errors.firstName}
           />
           <TextField
-            label="Soyadın (isteğe bağlı)"
+            label={translateCopy("Soyadın (isteğe bağlı)")}
             value={lastName}
             onChangeText={(value) => {
               setLastName(value);
               setErrors((previous) => ({ ...previous, lastName: undefined }));
             }}
-            placeholder="Soyadını gir"
+            placeholder={translateCopy("Soyadını gir")}
             autoCapitalize="words"
             autoComplete="family-name"
             maxLength={80}
@@ -196,17 +209,14 @@ function AccountProfileForm({
         <GlassSettingsRow
           icon="mail-outline"
           title="E-posta"
-          detail={email ?? 'Oturum bilgisi yok'}
+          detail={email ?? translateCopy("Oturum bilgisi yok")}
           last
         />
       </GlassSettingsPanel>
-      <SettingsNote>
-        Bu işlem yalnızca ad ve soyadını değiştirir. Giriş e-postan, kredilerin ve projelerin
-        korunur.
-      </SettingsNote>
+      <SettingsNote>{translateCopy("Bu işlem yalnızca ad ve soyadını değiştirir. Giriş e-postan, kredilerin ve projelerin korunur.")}</SettingsNote>
       <Feedback message={feedback.message} />
       <AppleGlassButton
-        label="Değişiklikleri kaydet"
+        label={translateCopy("Değişiklikleri kaydet")}
         icon="checkmark"
         loading={saving}
         disabled={!userId}
@@ -217,6 +227,8 @@ function AccountProfileForm({
 }
 
 function Appearance() {
+  const languageRevision = useLanguageRevision();
+
   const appearance = useAppearanceStore();
   const reducedMotion = useReducedMotion();
   const feedback = useFeedback();
@@ -228,7 +240,7 @@ function Appearance() {
       await (kind === 'glass'
         ? appearance.setGlassEffects(value)
         : appearance.setReducedMotion(value));
-      feedback.success('Görünüm tercihin kaydedildi.');
+      feedback.success(translateCopy("Görünüm tercihin kaydedildi."));
     } catch (error) {
       feedback.error(error);
     } finally {
@@ -236,19 +248,19 @@ function Appearance() {
     }
   }
   return (
-    <SettingsPage title="Görünüm" subtitle="BirKare’yi kendine göre ayarla">
+    <SettingsPage title={translateCopy("Görünüm")} subtitle={translateCopy("BirKare’yi kendine göre ayarla")}>
       <GlassSettingsHero
         icon="color-palette-outline"
-        title="Işığı görseline bırak."
-        description="Fotoğraflarını öne çıkaran siyah arka plan ve yumuşak cam yansımaları."
+        title={translateCopy("Işığı görseline bırak.")}
+        description={translateCopy("Fotoğraflarını öne çıkaran siyah arka plan ve yumuşak cam yansımaları.")}
         tone="iridescent"
       />
-      <SettingsSectionTitle>EFEKTLER VE ERİŞİLEBİLİRLİK</SettingsSectionTitle>
+      <SettingsSectionTitle>{translateCopy("EFEKTLER VE ERİŞİLEBİLİRLİK")}</SettingsSectionTitle>
       <GlassSettingsPanel>
         <GlassSettingsRow
           icon="layers-outline"
           title="Cam efektleri"
-          detail="Bulanıklık, yansıma ve yumuşak ışık"
+          detail={translateCopy("Bulanıklık, yansıma ve yumuşak ışık")}
           trailing={
             <PreferenceSwitch
               label="Cam efektleri"
@@ -280,14 +292,16 @@ function Appearance() {
       <Feedback message={feedback.message} />
       <SettingsNote>
         {reducedMotion
-          ? 'Animasyon azaltma şu anda etkin. Sistem erişilebilirlik tercihi her zaman önceliklidir.'
-          : 'Sistemin Hareketi Azalt ve Saydamlığı Azalt tercihleri her zaman korunur.'}
+          ? translateCopy("Animasyon azaltma şu anda etkin. Sistem erişilebilirlik tercihi her zaman önceliklidir.")
+          : translateCopy("Sistemin Hareketi Azalt ve Saydamlığı Azalt tercihleri her zaman korunur.")}
       </SettingsNote>
     </SettingsPage>
   );
 }
 
 function Notifications() {
+  const languageRevision = useLanguageRevision();
+
   const userId = useAuthStore((state) => state.user?.id);
   const queryClient = useQueryClient();
   const { data, isLoading, isError } = useQuery({
@@ -305,7 +319,7 @@ function Notifications() {
         body: JSON.stringify(patch),
       });
       queryClient.setQueryData(['settings-preferences', userId], result);
-      feedback.success('İletişim tercihin hesabına kaydedildi.');
+      feedback.success(translateCopy("İletişim tercihin hesabına kaydedildi."));
     } catch (error) {
       feedback.error(error);
     } finally {
@@ -313,20 +327,20 @@ function Notifications() {
     }
   }
   return (
-    <SettingsPage title="Bildirimler" subtitle="İletişim tercihlerin senin elinde">
+    <SettingsPage title="Bildirimler" subtitle={translateCopy("İletişim tercihlerin senin elinde")}>
       <GlassSettingsHero
         icon="notifications-outline"
-        title="Yalnızca istediklerin."
-        description="Tercihlerin hesabında saklanır; cihaz izinleri ayrıca yönetilir."
+        title={translateCopy("Yalnızca istediklerin.")}
+        description={translateCopy("Tercihlerin hesabında saklanır; cihaz izinleri ayrıca yönetilir.")}
       />
       <GlassSettingsPanel>
         <GlassSettingsRow
           icon="sparkles-outline"
-          title="Üretim bildirimleri"
-          detail="Sonuç hazır olduğunda bildirim alma tercihi"
+          title={translateCopy("Üretim bildirimleri")}
+          detail={translateCopy("Sonuç hazır olduğunda bildirim alma tercihi")}
           trailing={
             <PreferenceSwitch
-              label="Üretim bildirimi tercihi"
+              label={translateCopy("Üretim bildirimi tercihi")}
               value={data?.preferences.pushEnabled ?? false}
               disabled={saving || isLoading || isError}
               onChange={(pushEnabled) => {
@@ -338,8 +352,8 @@ function Notifications() {
         <GlassSettingsRow
           icon="mail-outline"
           accent="purple"
-          title="Kampanya e-postaları"
-          detail="Kredi ve ürün haberleri için iletişim izni"
+          title={translateCopy("Kampanya e-postaları")}
+          detail={translateCopy("Kredi ve ürün haberleri için iletişim izni")}
           trailing={
             <PreferenceSwitch
               label="Kampanya e-posta izni"
@@ -353,7 +367,7 @@ function Notifications() {
         />
         <GlassSettingsRow
           icon="phone-portrait-outline"
-          title="Cihaz izinlerini aç"
+          title={translateCopy("Cihaz izinlerini aç")}
           onPress={() => {
             void Linking.openSettings().catch(feedback.error);
           }}
@@ -361,20 +375,17 @@ function Notifications() {
         />
       </GlassSettingsPanel>
       {isError ? (
-        <SettingsNote warning>
-          Hesap tercihlerin alınamadı. İnternet bağlantını kontrol edip yeniden aç.
-        </SettingsNote>
+        <SettingsNote warning>{translateCopy("Hesap tercihlerin alınamadı. İnternet bağlantını kontrol edip yeniden aç.")}</SettingsNote>
       ) : null}
       <Feedback message={feedback.message} />
-      <SettingsNote>
-        Bu sürümde cihazlara anlık bildirim gönderimi henüz etkin değil. Tercihlerini
-        kaydedebilirsin; gönderim sistemi etkinleşmeden bildirim ulaşmaz.
-      </SettingsNote>
+      <SettingsNote>{translateCopy("Bu sürümde cihazlara anlık bildirim gönderimi henüz etkin değil. Tercihlerini kaydedebilirsin; gönderim sistemi etkinleşmeden bildirim ulaşmaz.")}</SettingsNote>
     </SettingsPage>
   );
 }
 
 function Privacy() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const feedback = useFeedback();
   const [exporting, setExporting] = useState(false);
@@ -393,23 +404,23 @@ function Privacy() {
     }
   }
   return (
-    <SettingsPage title="Gizlilik ve verilerim" subtitle="Hesabın ve görsellerin üzerinde kontrol">
+    <SettingsPage title="Gizlilik ve verilerim" subtitle={translateCopy("Hesabın ve görsellerin üzerinde kontrol")}>
       <GlassSettingsHero
         icon="lock-closed-outline"
         title="Kontrol sende."
-        description="Hesap verilerini görüntüle, güvenliğini yönet veya silme sürecini başlat."
+        description={translateCopy("Hesap verilerini görüntüle, güvenliğini yönet veya silme sürecini başlat.")}
       />
       <GlassSettingsPanel>
         <GlassSettingsRow
           icon="images-outline"
-          title="Kaynak fotoğrafları"
-          detail="Saklama seçimini her üretimin kaynak ekranında ayrı yönetebilirsin."
+          title={translateCopy("Kaynak fotoğrafları")}
+          detail={translateCopy("Saklama seçimini her üretimin kaynak ekranında ayrı yönetebilirsin.")}
         />
         <GlassSettingsRow
           icon="download-outline"
           accent="purple"
-          title={exporting ? 'Veriler hazırlanıyor…' : 'Verilerimi dışa aktar'}
-          detail="Hesap, kredi hareketleri ve proje bilgileri (JSON)"
+          title={exporting ? translateCopy("Veriler hazırlanıyor…") : translateCopy("Verilerimi dışa aktar")}
+          detail={translateCopy("Hesap, kredi hareketleri ve proje bilgileri (JSON)")}
           disabled={exporting}
           onPress={() => {
             void exportData();
@@ -417,26 +428,23 @@ function Privacy() {
         />
         <GlassSettingsRow
           icon="shield-checkmark-outline"
-          title="Güvenlik ve oturumlar"
+          title={translateCopy("Güvenlik ve oturumlar")}
           onPress={() => router.push('/settings/security' as never)}
         />
         <GlassSettingsRow
           icon="document-text-outline"
           accent="purple"
-          title="Gizlilik politikası"
+          title={translateCopy("Gizlilik politikası")}
           onPress={() => router.push('/legal/privacy' as never)}
           last
         />
       </GlassSettingsPanel>
-      <SettingsNote>
-        Dışa aktarma şu an hesap bilgilerini, kredi hareketlerini ve en fazla 50 projeyi içerir.
-        Görsel dosyaları dahil değildir; görsellerini Projeler bölümünden kaydedebilirsin.
-      </SettingsNote>
+      <SettingsNote>{translateCopy("Dışa aktarma şu an hesap bilgilerini, kredi hareketlerini ve en fazla 50 projeyi içerir. Görsel dosyaları dahil değildir; görsellerini Projeler bölümünden kaydedebilirsin.")}</SettingsNote>
       <GlassSettingsPanel tone="neutral">
         <GlassSettingsRow
           icon="trash-outline"
-          title="Hesabı sil"
-          detail="Kapsamı incele ve hesabın için silme talebi oluştur"
+          title={translateCopy("Hesabı sil")}
+          detail={translateCopy("Kapsamı incele ve hesabın için silme talebi oluştur")}
           danger
           last
           onPress={() => router.push('/settings/delete-account' as never)}
@@ -458,6 +466,8 @@ type Session = {
 };
 
 function Security() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.user?.id);
@@ -485,7 +495,7 @@ function Security() {
     try {
       await apiRequest(`/v1/auth/sessions/${encodeURIComponent(id)}`, { method: 'DELETE' });
       await query.refetch();
-      feedback.success('Seçilen oturum kapatıldı.');
+      feedback.success(translateCopy("Seçilen oturum kapatıldı."));
     } catch (error) {
       feedback.error(error);
     } finally {
@@ -506,41 +516,41 @@ function Security() {
     }
   }
   return (
-    <SettingsPage title="Güvenlik" subtitle="Hesabına erişimi yönet">
+    <SettingsPage title={translateCopy("Güvenlik")} subtitle={translateCopy("Hesabına erişimi yönet")}>
       <GlassSettingsHero
         icon="shield-checkmark-outline"
-        title="Hesabın güvende kalsın."
-        description="Giriş yöntemlerini bağla ve sunucuda kayıtlı oturumlarını kontrol et."
+        title={translateCopy("Hesabın güvende kalsın.")}
+        description={translateCopy("Giriş yöntemlerini bağla ve sunucuda kayıtlı oturumlarını kontrol et.")}
       />
       <GlassSettingsPanel>
         <GlassSettingsRow
           icon="key-outline"
-          title="Şifremi yenile"
-          detail="E-posta ile güvenli yenileme bağlantısı al"
+          title={translateCopy("Şifremi yenile")}
+          detail={translateCopy("E-posta ile güvenli yenileme bağlantısı al")}
           onPress={() => router.push('/(auth)/forgot-password' as never)}
           last
         />
       </GlassSettingsPanel>
-      <SettingsSectionTitle>GOOGLE İLE GİRİŞ</SettingsSectionTitle>
+      <SettingsSectionTitle>{translateCopy("GOOGLE İLE GİRİŞ")}</SettingsSectionTitle>
       <View style={styles.googleButton}>
         {googleLinked ? (
           <GlassSettingsPanel tone="neutral">
             <GlassSettingsRow
               icon="checkmark-circle"
-              title="Google hesabı bağlı"
-              detail="Bu giriş yöntemi hesabında etkin"
+              title={translateCopy("Google hesabı bağlı")}
+              detail={translateCopy("Bu giriş yöntemi hesabında etkin")}
               value="Bağlı"
               last
             />
           </GlassSettingsPanel>
         ) : (
           <GoogleSignInButton
-            label={accountQuery.isLoading ? 'Bağlantı kontrol ediliyor…' : 'Google hesabını bağla'}
+            label={accountQuery.isLoading ? translateCopy("Bağlantı kontrol ediliyor…") : translateCopy("Google hesabını bağla")}
             disabled={working || accountQuery.isLoading}
             onSuccess={async (token) => {
               await useAuthStore.getState().linkGoogleAccount(token);
               await accountQuery.refetch();
-              feedback.success('Google hesabın başarıyla bağlandı.');
+              feedback.success(translateCopy("Google hesabın başarıyla bağlandı."));
             }}
             onError={feedback.error}
           />
@@ -548,20 +558,20 @@ function Security() {
       </View>
       <Text style={styles.helper}>
         {googleLinked
-          ? 'Google hesabın doğrulandı; sonraki girişlerinde bu yöntemi kullanabilirsin.'
-          : 'Mevcut hesabınla aynı e-posta adresine sahip Google hesabını doğrulayarak sonraki girişlerinde kullanabilirsin.'}
+          ? translateCopy("Google hesabın doğrulandı; sonraki girişlerinde bu yöntemi kullanabilirsin.")
+          : translateCopy("Mevcut hesabınla aynı e-posta adresine sahip Google hesabını doğrulayarak sonraki girişlerinde kullanabilirsin.")}
       </Text>
-      <SettingsSectionTitle>AKTİF OTURUMLAR</SettingsSectionTitle>
+      <SettingsSectionTitle>{translateCopy("AKTİF OTURUMLAR")}</SettingsSectionTitle>
       <GlassSettingsPanel>
         {query.isLoading ? (
-          <GlassSettingsRow icon="time-outline" title="Oturumlar yükleniyor…" last />
+          <GlassSettingsRow icon="time-outline" title={translateCopy("Oturumlar yükleniyor…")} last />
         ) : active.length ? (
           active.map((session, index) => (
             <GlassSettingsRow
               key={session.id}
               icon="phone-portrait-outline"
-              title={session.deviceName || session.platform || 'Kayıtlı cihaz'}
-              detail={`${session.current ? 'Bu oturum · ' : ''}Son kullanım: ${new Date(session.lastUsedAt).toLocaleDateString('tr-TR')}`}
+              title={session.deviceName || session.platform || translateCopy("Kayıtlı cihaz")}
+              detail={translateCopy("{{p0}}Son kullanım: {{p1}}", { p0: session.current ? 'Bu oturum · ' : '', p1: new Date(session.lastUsedAt).toLocaleDateString('tr-TR') })}
               value={session.current ? 'Aktif' : 'Kapat'}
               last={index === active.length - 1}
               disabled={working}
@@ -571,9 +581,9 @@ function Security() {
                   : () =>
                       Alert.alert(
                         'Oturumu kapat',
-                        'Seçilen cihazın yeniden giriş yapması gerekecek.',
+                        translateCopy("Seçilen cihazın yeniden giriş yapması gerekecek."),
                         [
-                          { text: 'Vazgeç', style: 'cancel' },
+                          { text: translateCopy("Vazgeç"), style: 'cancel' },
                           {
                             text: 'Kapat',
                             style: 'destructive',
@@ -589,8 +599,8 @@ function Security() {
         ) : (
           <GlassSettingsRow
             icon="information-circle-outline"
-            title={query.isError ? 'Oturumlar alınamadı' : 'Aktif oturum bulunamadı'}
-            detail={query.isError ? 'Yeniden denemek için dokun' : undefined}
+            title={query.isError ? translateCopy("Oturumlar alınamadı") : translateCopy("Aktif oturum bulunamadı")}
+            detail={query.isError ? translateCopy("Yeniden denemek için dokun") : undefined}
             onPress={
               query.isError
                 ? () => {
@@ -605,19 +615,19 @@ function Security() {
       <GlassSettingsPanel tone="neutral">
         <GlassSettingsRow
           icon="log-out-outline"
-          title="Tüm cihazlardan çıkış yap"
-          detail="Bu cihaz dahil tüm kayıtlı oturumlar kapanır"
+          title={translateCopy("Tüm cihazlardan çıkış yap")}
+          detail={translateCopy("Bu cihaz dahil tüm kayıtlı oturumlar kapanır")}
           danger
           disabled={working}
           last
           onPress={() =>
             Alert.alert(
-              'Tüm oturumları kapat',
-              'Bu cihaz dahil tüm cihazlarda yeniden giriş yapman gerekecek.',
+              translateCopy("Tüm oturumları kapat"),
+              translateCopy("Bu cihaz dahil tüm cihazlarda yeniden giriş yapman gerekecek."),
               [
-                { text: 'Vazgeç', style: 'cancel' },
+                { text: translateCopy("Vazgeç"), style: 'cancel' },
                 {
-                  text: 'Çıkış yap',
+                  text: translateCopy("Çıkış yap"),
                   style: 'destructive',
                   onPress: () => {
                     void logoutAll();
@@ -642,18 +652,20 @@ type Transaction = {
   availableAfter: number | null;
 };
 const transactionLabels: Record<string, string> = {
-  PURCHASE: 'Kredi satın alımı',
-  SUBSCRIPTION_GRANT: 'Üyelik kredisi',
-  GENERATION_RESERVATION: 'Üretim için ayrıldı',
-  GENERATION_CAPTURE: 'Görsel üretimi',
-  GENERATION_RELEASE: 'Ayrılan kredi serbest bırakıldı',
-  REFUND: 'Kredi iadesi',
+  PURCHASE: translateCopy("Kredi satın alımı"),
+  SUBSCRIPTION_GRANT: translateCopy("Üyelik kredisi"),
+  GENERATION_RESERVATION: translateCopy("Üretim için ayrıldı"),
+  GENERATION_CAPTURE: translateCopy("Görsel üretimi"),
+  GENERATION_RELEASE: translateCopy("Ayrılan kredi serbest bırakıldı"),
+  REFUND: translateCopy("Kredi iadesi"),
   BONUS: 'Hediye kredi',
-  ADMIN_ADJUSTMENT: 'Bakiye düzenlemesi',
-  CHARGEBACK: 'Ödeme iptali',
+  ADMIN_ADJUSTMENT: translateCopy("Bakiye düzenlemesi"),
+  CHARGEBACK: translateCopy("Ödeme iptali"),
 };
 
 function History() {
+  const languageRevision = useLanguageRevision();
+
   const userId = useAuthStore((state) => state.user?.id);
   const query = useQuery({
     queryKey: ['credit-history', userId],
@@ -661,19 +673,16 @@ function History() {
     enabled: Boolean(userId),
   });
   return (
-    <SettingsPage title="İşlem geçmişi" subtitle="Hesabına ait kredi hareketleri">
-      <SettingsNote>
-        Bu liste sunucu kayıtlarından gelir. Rezervasyon, harcama ve iade ayrı işlemlerdir;
-        rezervasyon ikinci kez ücretlendirme değildir.
-      </SettingsNote>
+    <SettingsPage title={translateCopy("İşlem geçmişi")} subtitle={translateCopy("Hesabına ait kredi hareketleri")}>
+      <SettingsNote>{translateCopy("Bu liste sunucu kayıtlarından gelir. Rezervasyon, harcama ve iade ayrı işlemlerdir; rezervasyon ikinci kez ücretlendirme değildir.")}</SettingsNote>
       <GlassSettingsPanel>
         {query.data?.items.length ? (
           query.data.items.map((item, index) => (
             <GlassSettingsRow
               key={item.id}
               icon={item.type === 'BONUS' ? 'gift-outline' : 'receipt-outline'}
-              title={transactionLabels[item.type] ?? 'Kredi hareketi'}
-              detail={`${new Date(item.createdAt).toLocaleDateString('tr-TR')} · ${item.status === 'COMPLETED' ? 'Tamamlandı' : item.status === 'PENDING' ? 'Bekliyor' : item.status === 'REVERSED' ? 'Geri alındı' : 'Başarısız'}`}
+              title={transactionLabels[item.type] ?? translateCopy("Kredi hareketi")}
+              detail={`${new Date(item.createdAt).toLocaleDateString(getAppLocale())} · ${item.status === 'COMPLETED' ? translateCopy("Tamamlandı") : item.status === 'PENDING' ? 'Bekliyor' : item.status === 'REVERSED' ? translateCopy("Geri alındı") : translateCopy("Başarısız")}`}
               value={`${item.amount > 0 ? '+' : ''}${item.amount}`}
               last={index === query.data.items.length - 1}
             />
@@ -683,10 +692,10 @@ function History() {
             icon="receipt-outline"
             title={
               query.isLoading
-                ? 'Hareketler yükleniyor…'
+                ? translateCopy("Hareketler yükleniyor…")
                 : query.isError
-                  ? 'Hareketler alınamadı'
-                  : 'Henüz kredi hareketi yok'
+                  ? translateCopy("Hareketler alınamadı")
+                  : translateCopy("Henüz kredi hareketi yok")
             }
             onPress={
               query.isError

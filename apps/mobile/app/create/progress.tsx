@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -38,6 +40,8 @@ const RING_WIDTH = 5;
 const INNER_SIZE = 172;
 
 export default function ProgressScreen() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const queryClient = useQueryClient();
   const { flow } = useCreateFlow();
@@ -139,16 +143,14 @@ export default function ProgressScreen() {
         edges={['top', 'left', 'right', 'bottom']}
       >
         <Icon name="alert-circle-outline" size={38} color={colors.warning} />
-        <Text style={styles.phaseTitle}>Üretim bulunamadı</Text>
-        <Text style={styles.phaseDetail}>
-          Güvenli durum takibi için bir üretim kimliği gerekli.
-        </Text>
+        <Text style={styles.phaseTitle}>{translateCopy("Üretim bulunamadı")}</Text>
+        <Text style={styles.phaseDetail}>{translateCopy("Güvenli durum takibi için bir üretim kimliği gerekli.")}</Text>
         <Pressable
           accessibilityRole="button"
           onPress={() => router.replace('/create' as never)}
           style={styles.restart}
         >
-          <Text style={styles.restartText}>Yeni üretim başlat</Text>
+          <Text style={styles.restartText}>{translateCopy("Yeni üretim başlat")}</Text>
         </Pressable>
       </Screen>
     );
@@ -156,18 +158,18 @@ export default function ProgressScreen() {
 
   const isCancelled = status === 'CANCELLED';
   const phaseTitle = isCancelled
-    ? 'Üretim iptal edildi'
+    ? translateCopy("Üretim iptal edildi")
     : stopped
       ? status === 'BLOCKED'
-        ? 'Talep güvenlik nedeniyle durduruldu'
-        : 'Üretim tamamlanamadı'
+        ? translateCopy("Talep güvenlik nedeniyle durduruldu")
+        : translateCopy("Üretim tamamlanamadı")
       : completed
-        ? 'Görselin hazır'
+        ? translateCopy("Görselin hazır")
         : requestError
-          ? 'Bağlantı bekleniyor'
+          ? translateCopy("Bağlantı bekleniyor")
           : visibleGeneration
-            ? 'Görselin hazırlanıyor'
-            : 'Üretimine bağlanılıyor';
+            ? translateCopy("Görselin hazırlanıyor")
+            : translateCopy("Üretimine bağlanılıyor");
   const phaseDetail = isCancelled
     ? 'Bu işlem durduruldu. Yeni bir üretim başlatabilirsin.'
     : stopped
@@ -182,7 +184,7 @@ export default function ProgressScreen() {
       <View style={styles.top}>
         <BackButton fallback="/create/review" />
         <Text style={styles.topTitle}>
-          {completed ? 'Tamamlandı' : stopped ? 'Üretim durumu' : 'Oluşturuluyor'}
+          {completed ? translateCopy("Tamamlandı") : stopped ? translateCopy("Üretim durumu") : translateCopy("Oluşturuluyor")}
         </Text>
         <View style={styles.topSpacer} />
       </View>
@@ -199,7 +201,7 @@ export default function ProgressScreen() {
         <Text style={styles.phaseDetail}>{phaseDetail}</Text>
         {creditNotice ? <Text style={styles.progressHint}>{creditNotice}</Text> : null}
         {!isTerminal && visibleGeneration ? (
-          <Text style={styles.progressHint}>İlerleme, üretim aşamalarına göre güncellenir.</Text>
+          <Text style={styles.progressHint}>{translateCopy("İlerleme, üretim aşamalarına göre güncellenir.")}</Text>
         ) : null}
         <GlassSurface
           radius={24}
@@ -224,7 +226,7 @@ export default function ProgressScreen() {
         {requestError ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Üretim durumunu yeniden dene"
+            accessibilityLabel={translateCopy("Üretim durumunu yeniden dene")}
             onPress={() => {
               pollErrorShown.current = false;
               setRefreshAttempt((value) => value + 1);
@@ -233,8 +235,8 @@ export default function ProgressScreen() {
             <GlassSurface radius={22} tone="gold" glow={false} contentStyle={styles.noticeContent}>
               <Icon name="alert-circle-outline" size={23} color={colors.accentYellow} />
               <View style={styles.noticeCopy}>
-                <Text style={styles.noticeTitle}>Durum alınamadı</Text>
-                <Text style={styles.noticeText}>{requestError} Yeniden denemek için dokun.</Text>
+                <Text style={styles.noticeTitle}>{translateCopy("Durum alınamadı")}</Text>
+                <Text style={styles.noticeText}>{translateCopy("{{p0}} Yeniden denemek için dokun.", { p0: requestError })}</Text>
               </View>
             </GlassSurface>
           </Pressable>
@@ -242,41 +244,34 @@ export default function ProgressScreen() {
           <GlassSurface radius={22} tone="gold" glow={false} contentStyle={styles.noticeContent}>
             <Icon name="time-outline" size={23} color={colors.accentYellow} />
             <View style={styles.noticeCopy}>
-              <Text style={styles.noticeTitle}>Sıra bekleme uzadı</Text>
-              <Text style={styles.noticeText}>
-                Üretim henüz başlayamadı. Bekleyebilir veya aşağıdan iptal ederek ayrılan kredini
-                geri alabilirsin. Otomatik yeni üretim başlatılmaz.
-              </Text>
+              <Text style={styles.noticeTitle}>{translateCopy("Sıra bekleme uzadı")}</Text>
+              <Text style={styles.noticeText}>{translateCopy("Üretim henüz başlayamadı. Bekleyebilir veya aşağıdan iptal ederek ayrılan kredini geri alabilirsin. Otomatik yeni üretim başlatılmaz.")}</Text>
             </View>
           </GlassSurface>
         ) : !isTerminal ? (
           <GlassSurface radius={22} tone="neutral" glow={false} contentStyle={styles.noticeContent}>
             <Icon name="shield-checkmark-outline" size={23} color="#EEDBA2" />
-            <Text style={styles.noticeText}>
-              Ekrandan ayrılabilirsin. İşlem tamamlandığında görselin Projeler bölümüne kaydedilir.
-            </Text>
+            <Text style={styles.noticeText}>{translateCopy("Ekrandan ayrılabilirsin. İşlem tamamlandığında görselin Projeler bölümüne kaydedilir.")}</Text>
           </GlassSurface>
         ) : null}
         {!isTerminal ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Üretimi iptal et"
+            accessibilityLabel={translateCopy("Üretimi iptal et")}
             accessibilityState={{ busy: isCancelling }}
             disabled={isCancelling}
             onPress={() => void cancelGeneration()}
             style={[styles.cancel, isCancelling && styles.cancelDisabled]}
           >
             <Text style={styles.cancelText}>
-              {isCancelling ? 'İptal ediliyor…' : 'Üretimi iptal et'}
+              {isCancelling ? translateCopy("İptal ediliyor…") : translateCopy("Üretimi iptal et")}
             </Text>
           </Pressable>
         ) : null}
         {stopped ? (
           <View style={styles.recoveryActions}>
-            <Text style={styles.noticeText}>
-              İşlem sonlandı. Seçimlerini değiştirmeden otomatik tekrar gönderilmez.
-            </Text>
-            <Text selectable style={styles.progressHint}>İşlem kodu: {generationId}</Text>
+            <Text style={styles.noticeText}>{translateCopy("İşlem sonlandı. Seçimlerini değiştirmeden otomatik tekrar gönderilmez.")}</Text>
+            <Text selectable style={styles.progressHint}>{translateCopy("İşlem kodu: {{p0}}", { p0: generationId })}</Text>
             <Pressable
               accessibilityRole="button"
               onPress={() =>
@@ -284,14 +279,14 @@ export default function ProgressScreen() {
               }
               style={styles.restart}
             >
-              <Text style={styles.restartText}>Bu işlem için destek iste</Text>
+              <Text style={styles.restartText}>{translateCopy("Bu işlem için destek iste")}</Text>
             </Pressable>
             <Pressable
               accessibilityRole="button"
               onPress={() => router.replace('/create/upload' as never)}
               style={styles.restart}
             >
-              <Text style={styles.restartText}>Fotoğrafı değiştir</Text>
+              <Text style={styles.restartText}>{translateCopy("Fotoğrafı değiştir")}</Text>
             </Pressable>
             {flow.sourceUri ? (
               <Pressable
@@ -299,7 +294,7 @@ export default function ProgressScreen() {
                 onPress={() => router.replace(afterSourcePath(flow) as never)}
                 style={styles.cancel}
               >
-                <Text style={styles.cancelText}>Düzenleme ayarlarına dön</Text>
+                <Text style={styles.cancelText}>{translateCopy("Düzenleme ayarlarına dön")}</Text>
               </Pressable>
             ) : null}
             <Pressable
@@ -307,7 +302,7 @@ export default function ProgressScreen() {
               onPress={() => router.replace('/(tabs)/projects' as never)}
               style={styles.cancel}
             >
-              <Text style={styles.cancelText}>Projelerime dön</Text>
+              <Text style={styles.cancelText}>{translateCopy("Projelerime dön")}</Text>
             </Pressable>
           </View>
         ) : null}
@@ -327,6 +322,8 @@ function GlassProgressOrb({
   stopped: boolean;
   reducedMotion: boolean;
 }) {
+  const languageRevision = useLanguageRevision();
+
   const fill = useSharedValue(0);
   const shimmer = useSharedValue(0);
   useEffect(() => {
@@ -371,7 +368,7 @@ function GlassProgressOrb({
       accessible
       accessibilityRole="progressbar"
       accessibilityLabel={
-        stopped ? 'Üretim durduruldu' : `Üretim ilerlemesi yüzde ${Math.round(progress)}`
+        stopped ? translateCopy("Üretim durduruldu") : translateCopy("Üretim ilerlemesi yüzde {{p0}}", { p0: Math.round(progress) })
       }
       accessibilityValue={{ min: 0, max: 100, now: progress }}
     >
@@ -404,7 +401,7 @@ function GlassProgressOrb({
         />
         <Text style={styles.percent}>{stopped ? 'Durdu' : `${Math.round(progress)}%`}</Text>
         <Text style={styles.orbCaption}>
-          {completed ? 'HAZIR' : stopped ? 'İŞLEM SONLANDI' : 'BİRKARE AI'}
+          {completed ? 'HAZIR' : stopped ? translateCopy("İŞLEM SONLANDI") : translateCopy("BİRKARE AI")}
         </Text>
       </GlassSurface>
       <View pointerEvents="none" style={styles.ring}>
@@ -429,6 +426,8 @@ function ProgressRingHalf({
   side: 'right' | 'left';
   progress: SharedValue<number>;
 }) {
+  const languageRevision = useLanguageRevision();
+
   const isRight = side === 'right';
   const rotation = useAnimatedStyle(() => ({
     transform: [
@@ -459,6 +458,8 @@ function ProgressPhase({
   label: string;
   reducedMotion: boolean;
 }) {
+  const languageRevision = useLanguageRevision();
+
   const fill = useSharedValue(done ? 1 : 0);
   const pulse = useSharedValue(0);
   useEffect(() => {
@@ -493,7 +494,7 @@ function ProgressPhase({
     <View
       style={styles.step}
       accessible
-      accessibilityLabel={`${label}, ${done ? 'tamamlandı' : active ? 'devam ediyor' : 'bekliyor'}`}
+      accessibilityLabel={`${label}, ${done ? translateCopy("tamamlandı") : active ? 'devam ediyor' : 'bekliyor'}`}
     >
       <View style={[styles.stepDot, active && styles.stepDotActive, done && styles.stepDotDone]}>
         <LinearGradient

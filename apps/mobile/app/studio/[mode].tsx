@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Image,
@@ -47,20 +49,20 @@ const modeCopy: Record<
   { title: string; subtitle: string; primaryLabel: string; primaryHint: string }
 > = {
   product: {
-    title: 'Ürün & katalog çekimi',
-    subtitle: 'Ürünün kimliği ve tasarımı korunur',
+    get title() { return translateCopy("Ürün & katalog çekimi"); },
+    get subtitle() { return translateCopy("Ürünün kimliği ve tasarımı korunur"); },
     primaryLabel: 'Ürün fotoğrafını seç',
     primaryHint: 'Ürün net, tek ve mümkünse sade zeminde görünmeli.',
   },
   fashion: {
-    title: 'Kıyafet deneme',
-    subtitle: 'Kişi ve kıyafet iki ayrı kaynak olarak işlenir',
+    get title() { return translateCopy("Kıyafet deneme"); },
+    get subtitle() { return translateCopy("Kişi ve kıyafet iki ayrı kaynak olarak işlenir"); },
     primaryLabel: 'Kişi fotoğrafını seç',
     primaryHint: 'Yüzün ve vücut duruşunun net göründüğü bir fotoğraf seç.',
   },
   nails: {
-    title: 'Tırnak & manikür',
-    subtitle: 'Yalnızca tırnak görünümü değiştirilir',
+    get title() { return translateCopy("Tırnak & manikür"); },
+    get subtitle() { return translateCopy("Yalnızca tırnak görünümü değiştirilir"); },
     primaryLabel: 'El fotoğrafını seç',
     primaryHint: 'Parmakların tamamı net ve birbirinden ayrılmış görünmeli.',
   },
@@ -78,6 +80,8 @@ function hasSelection(mode: StudioMode, flow: ReturnType<typeof useStudioFlow>['
 }
 
 export default function StudioModeScreen() {
+  const languageRevision = useLanguageRevision();
+
   const params = useLocalSearchParams<{ entry?: string; mode?: string }>();
   const requestedMode = parseMode(params.mode);
   const entry = Array.isArray(params.entry) ? params.entry[0] : params.entry;
@@ -140,14 +144,14 @@ export default function StudioModeScreen() {
       rightsConfirmed: false,
       userNotes: '',
     }),
-    [flow.categoryId, flow.mode, flow.presetId, flow.quality, flow.sceneId],
+    [flow.categoryId, flow.mode, flow.presetId, flow.quality, flow.sceneId, languageRevision],
   );
   const quoteRequestKey = useMemo(
     () =>
       requestedMode && quoteFlow.mode === requestedMode && selectionReady
         ? JSON.stringify([quoteFlow, quoteRevision])
         : null,
-    [quoteFlow, quoteRevision, requestedMode, selectionReady],
+    [quoteFlow, quoteRevision, requestedMode, selectionReady, languageRevision],
   );
   const quote = quoteState.requestKey === quoteRequestKey ? quoteState.quote : null;
   const quoteError = quoteState.requestKey === quoteRequestKey ? quoteState.error : null;
@@ -224,7 +228,7 @@ export default function StudioModeScreen() {
 
       {requestedMode === 'product' && !isCatalogEntry ? (
         <>
-          <SectionLabel index="1" title="Ürün kategorisi" />
+          <SectionLabel index="1" title={translateCopy("Ürün kategorisi")} />
           <HorizontalCatalog
             items={productCategories}
             onSelect={(id) => set({ categoryId: id })}
@@ -236,7 +240,7 @@ export default function StudioModeScreen() {
 
       {isCatalogEntry ? (
         <>
-          <SectionLabel index="1" title="Çekim sahnesi" />
+          <SectionLabel index="1" title={translateCopy("Çekim sahnesi")} />
           <HorizontalCatalog
             items={productScenes}
             onSelect={(id) => set({ sceneId: id })}
@@ -245,21 +249,19 @@ export default function StudioModeScreen() {
         </>
       ) : null}
 
-      <SectionLabel index={requestedMode === 'product' ? '2' : '1'} title="Kaynak görseller" />
+      <SectionLabel index={requestedMode === 'product' ? '2' : '1'} title={translateCopy("Kaynak görseller")} />
       <Text style={styles.sectionHint}>{copy.primaryHint}</Text>
       <UploadTile
-        label={primaryPicker.busy ? 'Galeri açılıyor…' : copy.primaryLabel}
+        label={primaryPicker.busy ? translateCopy("Galeri açılıyor…") : copy.primaryLabel}
         onPress={() => void primaryPicker.open()}
         sourceUri={flow.primaryUri}
       />
       {requestedMode === 'fashion' ? (
         <View style={styles.secondaryUpload}>
-          <Text style={styles.secondaryTitle}>Kıyafet görseli</Text>
-          <Text style={styles.sectionHint}>
-            Desen, renk, kesim, düğme, cep ve kumaş dokusu net görünmeli.
-          </Text>
+          <Text style={styles.secondaryTitle}>{translateCopy("Kıyafet görseli")}</Text>
+          <Text style={styles.sectionHint}>{translateCopy("Desen, renk, kesim, düğme, cep ve kumaş dokusu net görünmeli.")}</Text>
           <UploadTile
-            label={secondaryPicker.busy ? 'Galeri açılıyor…' : 'Kıyafet fotoğrafını seç'}
+            label={secondaryPicker.busy ? translateCopy("Galeri açılıyor…") : translateCopy("Kıyafet fotoğrafını seç")}
             onPress={() => void secondaryPicker.open()}
             sourceUri={flow.secondaryUri}
           />
@@ -268,7 +270,7 @@ export default function StudioModeScreen() {
 
       {requestedMode === 'product' && !isCatalogEntry ? (
         <>
-          <SectionLabel index="3" title="Çekim sahnesi" />
+          <SectionLabel index="3" title={translateCopy("Çekim sahnesi")} />
           <HorizontalCatalog
             items={productScenes}
             onSelect={(id) => set({ sceneId: id })}
@@ -277,10 +279,8 @@ export default function StudioModeScreen() {
         </>
       ) : isCatalogEntry ? (
         <>
-          <SectionLabel index="3" title="Ürün kategorisi" />
-          <Text style={styles.sectionHint}>
-            Yüklediğin ürüne uygun kategoriyi seçerek malzeme ve geometri korumasını güçlendir.
-          </Text>
+          <SectionLabel index="3" title={translateCopy("Ürün kategorisi")} />
+          <Text style={styles.sectionHint}>{translateCopy("Yüklediğin ürüne uygun kategoriyi seçerek malzeme ve geometri korumasını güçlendir.")}</Text>
           <HorizontalCatalog
             items={productCategories}
             onSelect={(id) => set({ categoryId: id })}
@@ -290,7 +290,7 @@ export default function StudioModeScreen() {
         </>
       ) : requestedMode === 'fashion' ? (
         <>
-          <SectionLabel index="2" title="Kıyafet sahnesi" />
+          <SectionLabel index="2" title={translateCopy("Kıyafet sahnesi")} />
           <HorizontalCatalog
             imageFit="contain"
             items={fashionScenes}
@@ -300,7 +300,7 @@ export default function StudioModeScreen() {
         </>
       ) : (
         <>
-          <SectionLabel index="2" title="Manikür görünümü" />
+          <SectionLabel index="2" title={translateCopy("Manikür görünümü")} />
           <HorizontalCatalog
             items={nailPresets}
             onSelect={(id) => set({ presetId: id })}
@@ -309,17 +309,17 @@ export default function StudioModeScreen() {
         </>
       )}
 
-      <SectionLabel index={requestedMode === 'product' ? '4' : '3'} title="Çıktı ayarları" />
+      <SectionLabel index={requestedMode === 'product' ? '4' : '3'} title={translateCopy("Çıktı ayarları")} />
       <Text style={styles.fieldTitle}>Kalite</Text>
       <View style={styles.choiceRow}>
         <MiniChoice
           caption={`${previewCredits} kredi`}
-          label="Önizleme"
+          label={translateCopy("Önizleme")}
           onPress={() => set({ quality: 'PREVIEW' })}
           selected={flow.quality === 'PREVIEW'}
         />
         <MiniChoice
-          caption="Seçime göre"
+          caption={translateCopy("Seçime göre")}
           label="Standart"
           onPress={() => set({ quality: 'STANDARD' })}
           selected={flow.quality === 'STANDARD'}
@@ -332,7 +332,7 @@ export default function StudioModeScreen() {
         />
       </View>
 
-      <Text style={styles.fieldTitle}>Kare oranı</Text>
+      <Text style={styles.fieldTitle}>{translateCopy("Kare oranı")}</Text>
       <View style={styles.choiceRow}>
         {(['1:1', '4:5', '9:16', '16:9'] as const).map((ratio) => (
           <MiniChoice
@@ -344,18 +344,18 @@ export default function StudioModeScreen() {
         ))}
       </View>
 
-      <Text style={styles.fieldTitle}>Ek not (isteğe bağlı)</Text>
+      <Text style={styles.fieldTitle}>{translateCopy("Ek not (isteğe bağlı)")}</Text>
       <TextInput
-        accessibilityLabel="Üretim için ek not"
+        accessibilityLabel={translateCopy("Üretim için ek not")}
         maxLength={500}
         multiline
         onChangeText={(userNotes) => set({ userNotes })}
         placeholder={
           requestedMode === 'product'
-            ? 'Örn. ürün kameranın soluna hafif dönük olsun'
+            ? translateCopy("Örn. ürün kameranın soluna hafif dönük olsun")
             : requestedMode === 'fashion'
-              ? 'Örn. doğal, dik bir duruş kullan'
-              : 'Örn. mevcut tırnak uzunluğunu koru'
+              ? translateCopy("Örn. doğal, dik bir duruş kullan")
+              : translateCopy("Örn. mevcut tırnak uzunluğunu koru")
         }
         placeholderTextColor={colors.textMuted}
         style={styles.notes}
@@ -382,11 +382,11 @@ export default function StudioModeScreen() {
           ) : null}
         </View>
         <View style={styles.rightsCopy}>
-          <Text style={styles.rightsTitle}>Bu görselleri kullanma hakkım var</Text>
+          <Text style={styles.rightsTitle}>{translateCopy("Bu görselleri kullanma hakkım var")}</Text>
           <Text style={styles.rightsText}>
             {requestedMode === 'fashion'
-              ? 'Kişi ve kıyafet görsellerinin işlenmesi için gerekli izinlere sahibim.'
-              : 'Yüklediğim görselin AI ile işlenmesine izin veriyorum.'}
+              ? translateCopy("Kişi ve kıyafet görsellerinin işlenmesi için gerekli izinlere sahibim.")
+              : translateCopy("Yüklediğim görselin AI ile işlenmesine izin veriyorum.")}
           </Text>
         </View>
       </Pressable>
@@ -394,11 +394,11 @@ export default function StudioModeScreen() {
       {quote ? (
         <GlassSurface contentStyle={styles.quote} glow={false} radius={radii.lg} tone="gold">
           <View>
-            <Text style={styles.quoteOverline}>SUNUCU ONAYLI MALİYET</Text>
+            <Text style={styles.quoteOverline}>{translateCopy("SUNUCU ONAYLI MALİYET")}</Text>
             <Text style={styles.quoteCost}>{quote.creditCost} kredi</Text>
             <Text style={styles.quoteDetail}>
-              {quote.modelLane === 'PREMIUM' ? 'Sunburst hassas üretim' : 'Flare hızlı üretim'} ·{' '}
-              {flow.quality === 'HD' ? 'HD' : flow.quality === 'PREVIEW' ? 'Önizleme' : 'Standart'}
+              {quote.modelLane === 'PREMIUM' ? translateCopy("Sunburst hassas üretim") : translateCopy("Flare hızlı üretim")} ·{' '}
+              {flow.quality === 'HD' ? 'HD' : flow.quality === 'PREVIEW' ? translateCopy("Önizleme") : 'Standart'}
             </Text>
           </View>
           <View style={styles.balance}>
@@ -410,46 +410,38 @@ export default function StudioModeScreen() {
 
       {quoteError ? (
         <Pressable onPress={() => setQuoteRevision((value) => value + 1)}>
-          <Notice title="Kredi özeti alınamadı" tone="warning">
-            {quoteError} Yeniden denemek için dokun.
-          </Notice>
+          <Notice title={translateCopy("Kredi özeti alınamadı")} tone="warning">{translateCopy("{{p0}} Yeniden denemek için dokun.", { p0: quoteError })}</Notice>
         </Pressable>
       ) : null}
       {quote && !quote.canGenerate ? (
-        <Notice title="Yetersiz kredi" tone="warning">
-          Bu seçim {quote.creditCost} kredi gerektiriyor; hesabında {quote.availableCredits} kredi
-          var.
-        </Notice>
+        <Notice title="Yetersiz kredi" tone="warning">{translateCopy("Bu seçim {{p0}} kredi gerektiriyor; hesabında {{p1}} kredi var.", { p0: quote.creditCost, p1: quote.availableCredits })}</Notice>
       ) : null}
       {startError ? (
-        <Notice title="Üretim başlatılamadı" tone="warning">
+        <Notice title={translateCopy("Üretim başlatılamadı")} tone="warning">
           {startError}
         </Notice>
       ) : null}
-      <Notice title="Gerçeğine sadık üretim" tone="neutral">
-        Model, prompt ve kredi tutarı yalnızca sunucudaki doğrulanmış seçime göre belirlenir.
-        Serbest notun ürün kimliği, anatomi veya güvenlik kurallarını değiştiremez.
-      </Notice>
+      <Notice title={translateCopy("Gerçeğine sadık üretim")} tone="neutral">{translateCopy("Model, prompt ve kredi tutarı yalnızca sunucudaki doğrulanmış seçime göre belirlenir. Serbest notun ürün kimliği, anatomi veya güvenlik kurallarını değiştiremez.")}</Notice>
       {starting ? <StudioSubmissionProgress stage={stage} /> : null}
       <WizardFooter
         disabled={!canStart}
         hint={
           !sourceReady
             ? requestedMode === 'fashion'
-              ? 'Kişi ve kıyafet görselini seç.'
-              : 'Kaynak görselini seç.'
+              ? translateCopy("Kişi ve kıyafet görselini seç.")
+              : translateCopy("Kaynak görselini seç.")
             : !selectionReady
-              ? 'Kategori ve görünüm seçimini tamamla.'
+              ? translateCopy("Kategori ve görünüm seçimini tamamla.")
               : !flow.rightsConfirmed
-                ? 'Görsel kullanım hakkını onayla.'
-                : 'Kredi rezervasyonu API tarafından son kez doğrulanır.'
+                ? translateCopy("Görsel kullanım hakkını onayla.")
+                : translateCopy("Kredi rezervasyonu API tarafından son kez doğrulanır.")
         }
         label={
           starting
             ? `${studioSubmissionLabels[stage]}…`
             : quote
-              ? `Oluştur · ${quote.creditCost} kredi`
-              : 'Kredi özeti bekleniyor…'
+              ? translateCopy("Oluştur · {{p0}} kredi", { p0: quote.creditCost })
+              : translateCopy("Kredi özeti bekleniyor…")
         }
         loading={starting}
         onPress={() => void create()}
@@ -459,6 +451,8 @@ export default function StudioModeScreen() {
 }
 
 function SectionLabel({ index, title }: { index: string; title: string }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View style={styles.sectionLabel}>
       <View style={styles.sectionIndex}>
@@ -482,6 +476,8 @@ function HorizontalCatalog({
   imageFit?: 'contain' | 'cover';
   showCredit?: boolean;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <ScrollView
       contentContainerStyle={styles.rail}
@@ -495,7 +491,7 @@ function HorizontalCatalog({
             accessibilityLabel={
               showCredit
                 ? `${item.name}, ${item.creditCost} kredi`
-                : `${item.name}, ürün kategorisi`
+                : translateCopy("{{p0}}, ürün kategorisi", { p0: item.name })
             }
             accessibilityRole="radio"
             accessibilityState={{ selected }}

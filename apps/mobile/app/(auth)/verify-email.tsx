@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -21,6 +23,8 @@ import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useCopy } from '@/features/settings/language-store';
 
 export default function VerifyEmailScreen() {
+  const languageRevision = useLanguageRevision();
+
   const copy = useCopy();
   const reducedMotion = useReducedMotion();
   const {
@@ -168,11 +172,11 @@ export default function VerifyEmailScreen() {
     if (operation.current || verified) return;
     const normalized = emailVerificationCode(code);
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('Kodu doğrulamak için kayıt ekranındaki e-posta adresin gerekli.');
+      setError(translateCopy("Kodu doğrulamak için kayıt ekranındaki e-posta adresin gerekli."));
       return;
     }
     if (!/^\d{6}$/.test(normalized)) {
-      setError('E-postandaki 6 haneli doğrulama kodunu gir.');
+      setError(translateCopy("E-postandaki 6 haneli doğrulama kodunu gir."));
       inputRef.current?.focus();
       return;
     }
@@ -194,7 +198,7 @@ export default function VerifyEmailScreen() {
       if (revision === screenRevision.current) showVerificationSuccess();
     } catch (reason) {
       if (revision === screenRevision.current)
-        setError(reason instanceof Error ? reason.message : 'Kod doğrulanamadı.');
+        setError(reason instanceof Error ? reason.message : translateCopy("Kod doğrulanamadı."));
     } finally {
       operation.current = false;
       setBusy(false);
@@ -203,7 +207,7 @@ export default function VerifyEmailScreen() {
   const resend = async () => {
     if (operation.current || verified) return;
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('Tekrar göndermek için kayıt ekranındaki e-posta adresin gerekli.');
+      setError(translateCopy("Tekrar göndermek için kayıt ekranındaki e-posta adresin gerekli."));
       return;
     }
     operation.current = true;
@@ -227,7 +231,7 @@ export default function VerifyEmailScreen() {
       if (delivery === 'failed') router.setParams({ delivery: '0' });
     } catch (reason) {
       if (revision === screenRevision.current)
-        setError(reason instanceof Error ? reason.message : 'E-posta gönderilemedi.');
+        setError(reason instanceof Error ? reason.message : translateCopy("E-posta gönderilemedi."));
     } finally {
       operation.current = false;
       setResending(false);
@@ -269,10 +273,7 @@ export default function VerifyEmailScreen() {
             />
           ) : null}
           {delivery === 'failed' ? (
-            <AuthNote icon="alert-circle-outline" tone="warning">
-              Hesabın oluşturuldu ancak doğrulama e-postası gönderilemedi. Yeniden kayıt olman
-              gerekmiyor; aşağıdan e-postayı tekrar göndermeyi deneyebilirsin.
-            </AuthNote>
+            <AuthNote icon="alert-circle-outline" tone="warning">{translateCopy("Hesabın oluşturuldu ancak doğrulama e-postası gönderilemedi. Yeniden kayıt olman gerekmiyor; aşağıdan e-postayı tekrar göndermeyi deneyebilirsin.")}</AuthNote>
           ) : null}
           <View style={styles.field}>
             <Text style={styles.label}>{copy('Doğrulama kodu', 'Verification code')}</Text>

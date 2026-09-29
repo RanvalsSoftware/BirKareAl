@@ -1,3 +1,4 @@
+import { tr as translateCopy } from '@/i18n/engine';
 import { File, FileMode, Paths } from 'expo-file-system';
 import { Asset, requestPermissionsAsync } from 'expo-media-library';
 import * as Sharing from 'expo-sharing';
@@ -22,11 +23,11 @@ export async function exportGeneratedImage(
   destination: ShareDestination,
 ) {
   if (Platform.OS === 'web')
-    throw new Error('Görsel paylaşımı için iOS veya Android uygulamasını kullan.');
+    throw new Error(translateCopy("Görsel paylaşımı için iOS veya Android uygulamasını kullan."));
   const scope = captureSessionRequestScope();
   if (destination !== 'save' && !(await Sharing.isAvailableAsync())) {
     throw new Error(
-      'Bu cihazda paylaşım menüsü kullanılamıyor. Görseli Fotoğraflara kaydedebilirsin.',
+      translateCopy("Bu cihazda paylaşım menüsü kullanılamıyor. Görseli Fotoğraflara kaydedebilirsin."),
     );
   }
   scope.assertCurrent();
@@ -35,7 +36,7 @@ export async function exportGeneratedImage(
     scope.assertCurrent();
     if (!permission.granted)
       throw new Error(
-        'Kaydetmek için Fotoğraflara ekleme izni gerekiyor. İzni cihaz ayarlarından açabilirsin.',
+        translateCopy("Kaydetmek için Fotoğraflara ekleme izni gerekiyor. İzni cihaz ayarlarından açabilirsin."),
       );
   }
   const generation = await apiRequest<ShareGeneration>(
@@ -68,11 +69,11 @@ export async function exportGeneratedImage(
     clearTimeout(timeout);
     scope.assertCurrent();
     if (!file.exists || !file.size || file.size > 32 * 1024 * 1024)
-      throw new Error('Görsel dosyası indirilemedi veya çok büyük.');
+      throw new Error(translateCopy("Görsel dosyası indirilemedi veya çok büyük."));
     const handle = file.open(FileMode.ReadOnly);
     try {
       if (!hasImageSignature(handle.readBytes(12), output.asset.mimeType))
-        throw new Error('İndirilen dosya geçerli bir görsel değil.');
+        throw new Error(translateCopy("İndirilen dosya geçerli bir görsel değil."));
     } finally {
       handle.close();
     }

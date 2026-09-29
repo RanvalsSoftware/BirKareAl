@@ -1,3 +1,6 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { getLocale as getAppLocale } from '@/i18n/engine';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -19,6 +22,8 @@ import { BeautyRail } from '@/features/beauty/BeautyRail';
 import { beautyOptions, genderPreview } from '@/features/beauty/catalog';
 
 export default function FiltersScreen() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const availableCredits = useAvailableCredits();
   const [query, setQuery] = useState('');
@@ -29,23 +34,23 @@ export default function FiltersScreen() {
         const queryMatch =
           !query ||
           `${item.name} ${item.subtitle}`
-            .toLocaleLowerCase('tr-TR')
-            .includes(query.toLocaleLowerCase('tr-TR'));
+            .toLocaleLowerCase(getAppLocale())
+            .includes(query.toLocaleLowerCase(getAppLocale()));
         const categoryMatch =
           category === 'Tümü' || category === 'Popüler' || item.category === category;
         return queryMatch && categoryMatch;
       }),
-    [category, query],
+    [category, query, languageRevision],
   );
   return (
     <Screen contentContainerStyle={styles.content}>
       <AppHeader
         back
-        title="Filtreler"
-        subtitle="Görseline uygun atmosferi bul"
+        title={translateCopy("Filtreler")}
+        subtitle={translateCopy("Görseline uygun atmosferi bul")}
         right={<CreditBadge credits={availableCredits} />}
       />
-      <SearchBar value={query} onChangeText={setQuery} placeholder="Filtre ara…" />
+      <SearchBar value={query} onChangeText={setQuery} placeholder={translateCopy("Filtre ara…")} />
       <ScrollView
         horizontal
         style={styles.chipScroll}
@@ -56,7 +61,7 @@ export default function FiltersScreen() {
         {[...filterCategories, 'Güzellik', 'Dönüşüm'].map((item) => (
           <CategoryChip
             key={item}
-            label={item}
+            label={translateCopy(item)}
             selected={category === item}
             onPress={() => setCategory(item)}
           />
@@ -67,7 +72,7 @@ export default function FiltersScreen() {
           options={beautyOptions.filter(
             (option) =>
               !query ||
-              option.name.toLocaleLowerCase('tr-TR').includes(query.toLocaleLowerCase('tr-TR')),
+              option.name.toLocaleLowerCase(getAppLocale()).includes(query.toLocaleLowerCase(getAppLocale())),
           )}
           onSelect={(option) => {
             resetCreateFlow();
@@ -78,8 +83,8 @@ export default function FiltersScreen() {
       {category === 'Tümü' || category === 'Dönüşüm' ? (
         <View style={styles.grid}>
           <VisualTile
-            title="Cinsiyet değiştirme"
-            subtitle="Yaratıcı AI görünüm dönüşümü"
+            title={translateCopy("Cinsiyet değiştirme")}
+            subtitle={translateCopy("Yaratıcı AI görünüm dönüşümü")}
             imageSource={genderPreview}
             icon="✧"
             palette={['#18151D', '#BBA476']}
@@ -94,7 +99,7 @@ export default function FiltersScreen() {
       {category !== 'Güzellik' && category !== 'Dönüşüm' ? (
         <>
           <View style={styles.titleRow}>
-            <Text style={styles.title}>{category === 'Tümü' ? 'Tüm filtreler' : category}</Text>
+            <Text style={styles.title}>{category === 'Tümü' ? translateCopy("Tüm filtreler") : category}</Text>
             <Text style={styles.count}>{items.length} filtre</Text>
           </View>
           {items.length ? (
@@ -115,8 +120,8 @@ export default function FiltersScreen() {
           ) : (
             <EmptyState
               icon="search-outline"
-              title="Filtre bulunamadı"
-              detail="Farklı bir arama veya kategori seçmeyi dene."
+              title={translateCopy("Filtre bulunamadı")}
+              detail={translateCopy("Farklı bir arama veya kategori seçmeyi dene.")}
               action="Tüm filtreleri gör"
               onAction={() => {
                 setQuery('');

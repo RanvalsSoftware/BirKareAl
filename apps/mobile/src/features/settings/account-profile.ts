@@ -1,3 +1,4 @@
+import { tr as translateCopy } from '@/i18n/engine';
 import { z } from 'zod';
 import { apiRequest } from '@/api/client';
 import { useAuthStore, type AuthUser } from '@/features/auth/auth-store';
@@ -23,7 +24,7 @@ export async function updateAccountProfile(
   const assertCurrentAccount = () => {
     const auth = useAuthStore.getState();
     if (auth.state !== 'authenticated' || auth.user?.id !== expectedUserId) {
-      throw new Error('Hesabın değişti. Profilini geçerli hesabında yeniden düzenle.');
+      throw new Error(translateCopy("Hesabın değişti. Profilini geçerli hesabında yeniden düzenle."));
     }
   };
   assertCurrentAccount();
@@ -32,7 +33,7 @@ export async function updateAccountProfile(
     body: JSON.stringify(names),
   });
   assertCurrentAccount();
-  if (user.id !== expectedUserId) throw new Error('Sunucu profil yanıtı doğrulanamadı.');
+  if (user.id !== expectedUserId) throw new Error(translateCopy("Sunucu profil yanıtı doğrulanamadı."));
   useAuthStore.setState({ user });
   return user;
 }

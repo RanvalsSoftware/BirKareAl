@@ -1,3 +1,4 @@
+import { useLanguageRevision } from '@/i18n/use-language';
 import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router, useFocusEffect } from 'expo-router';
@@ -22,6 +23,8 @@ import { useAuthNotice } from '@/features/auth/use-auth-notice';
 import { useCopy } from '@/features/settings/language-store';
 
 export default function ForgotPasswordScreen() {
+  const languageRevision = useLanguageRevision();
+
   const copy = useCopy();
   const { notice, setNotice, dismissNotice } = useAuthNotice<string>();
   const screenRevision = useRef(0);

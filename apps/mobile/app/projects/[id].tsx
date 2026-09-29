@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -47,9 +49,9 @@ type ProjectDetail = {
 };
 
 function dateLabel(value: string | null): string {
-  if (!value) return 'Yakın zamanda';
+  if (!value) return translateCopy("Yakın zamanda");
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Yakın zamanda';
+  if (Number.isNaN(date.getTime())) return translateCopy("Yakın zamanda");
   return new Intl.DateTimeFormat('tr-TR', {
     day: 'numeric',
     month: 'long',
@@ -63,6 +65,8 @@ function preferredOutput(generation: ProjectGeneration): ProjectOutput | null {
 }
 
 export default function ProjectDetailScreen() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const { id: rawId } = useLocalSearchParams<{ id?: string }>();
   const projectId = Array.isArray(rawId) ? rawId[0] : rawId;
@@ -82,7 +86,7 @@ export default function ProjectDetailScreen() {
       })
       .catch((reason) => {
         if (!active) return;
-        setError(reason instanceof Error ? reason.message : 'Proje yüklenemedi.');
+        setError(reason instanceof Error ? reason.message : translateCopy("Proje yüklenemedi."));
       });
     return () => {
       active = false;
@@ -94,7 +98,7 @@ export default function ProjectDetailScreen() {
       [...(detail?.generations ?? [])]
         .filter((generation) => generation.status === 'COMPLETED' && generation.outputs.length)
         .sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt)),
-    [detail?.generations],
+    [detail?.generations, languageRevision],
   );
   const activeGeneration = completed[0] ?? null;
   const activeOutput = activeGeneration ? preferredOutput(activeGeneration) : null;
@@ -119,8 +123,8 @@ export default function ProjectDetailScreen() {
   if (!projectId) {
     return (
       <Screen>
-        <AppHeader back title="Proje" />
-        <Notice tone="warning">Proje kimliği bulunamadı.</Notice>
+        <AppHeader back title={translateCopy("Proje")} />
+        <Notice tone="warning">{translateCopy("Proje kimliği bulunamadı.")}</Notice>
       </Screen>
     );
   }
@@ -129,12 +133,12 @@ export default function ProjectDetailScreen() {
     <Screen contentContainerStyle={styles.content}>
       <AppHeader
         back
-        title={detail?.project.title?.trim() || 'Proje ayrıntısı'}
-        subtitle={detail ? dateLabel(detail.project.updatedAt) : 'Yükleniyor…'}
+        title={detail?.project.title?.trim() || translateCopy("Proje ayrıntısı")}
+        subtitle={detail ? dateLabel(detail.project.updatedAt) : translateCopy("Yükleniyor…")}
         right={
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Proje paylaşım seçenekleri"
+            accessibilityLabel={translateCopy("Proje paylaşım seçenekleri")}
             disabled={!activeOutput}
             onPress={openShare}
             style={({ pressed }) => [
@@ -150,11 +154,11 @@ export default function ProjectDetailScreen() {
       {!detail && !error ? (
         <View style={styles.loading}>
           <ActivityIndicator color={colors.accentYellow} />
-          <Text style={styles.loadingText}>Projen hazırlanıyor…</Text>
+          <Text style={styles.loadingText}>{translateCopy("Projen hazırlanıyor…")}</Text>
         </View>
       ) : null}
       {error ? (
-        <Notice tone="warning" title="Proje açılamadı">
+        <Notice tone="warning" title={translateCopy("Proje açılamadı")}>
           {error}
         </Notice>
       ) : null}
@@ -172,7 +176,7 @@ export default function ProjectDetailScreen() {
             />
             <View style={styles.aiBadge}>
               <Icon name="sparkles" size={13} color={colors.accentYellow} />
-              <Text style={styles.aiBadgeText}>AI ile oluşturuldu</Text>
+              <Text style={styles.aiBadgeText}>{translateCopy("AI ile oluşturuldu")}</Text>
             </View>
           </View>
           <View style={styles.actions}>
@@ -182,11 +186,11 @@ export default function ProjectDetailScreen() {
               style={({ pressed }) => [styles.editAction, pressed && styles.pressed]}
             >
               <Icon name="sparkles" size={23} color="#050505" />
-              <Text style={styles.editActionText}>Düzenle</Text>
+              <Text style={styles.editActionText}>{translateCopy("Düzenle")}</Text>
             </Pressable>
             <IconAction
               name="git-compare-outline"
-              label="Önce ve sonra karşılaştır"
+              label={translateCopy("Önce ve sonra karşılaştır")}
               onPress={() =>
                 router.push({
                   pathname: '/generations/[id]/compare',
@@ -198,7 +202,7 @@ export default function ProjectDetailScreen() {
                 } as never)
               }
             />
-            <IconAction name="share-outline" label="Paylaş" onPress={openShare} />
+            <IconAction name="share-outline" label={translateCopy("Paylaş")} onPress={openShare} />
           </View>
           <Pressable
             accessibilityRole="button"
@@ -210,23 +214,21 @@ export default function ProjectDetailScreen() {
                 <Icon name="sparkles" size={25} color={colors.accentPurpleSoft} />
               </View>
               <View style={styles.aiEditCopy}>
-                <Text style={styles.aiEditTitle}>AI ile düzenle</Text>
-                <Text style={styles.aiEditDetail}>
-                  Doğal dilde değişiklik iste veya referans ekle
-                </Text>
+                <Text style={styles.aiEditTitle}>{translateCopy("AI ile düzenle")}</Text>
+                <Text style={styles.aiEditDetail}>{translateCopy("Doğal dilde değişiklik iste veya referans ekle")}</Text>
               </View>
               <Icon name="chevron-forward" size={22} color={colors.textSecondary} />
             </GlassSurface>
           </Pressable>
           <View style={styles.sectionHeading}>
-            <Text style={styles.sectionTitle}>Sürüm geçmişi</Text>
+            <Text style={styles.sectionTitle}>{translateCopy("Sürüm geçmişi")}</Text>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Tüm sürümleri gör"
+              accessibilityLabel={translateCopy("Tüm sürümleri gör")}
               onPress={() => router.push(`/generations/${activeGeneration.id}/results` as never)}
               style={({ pressed }) => [styles.seeAll, pressed && styles.pressed]}
             >
-              <Text style={styles.seeAllText}>Tümünü gör</Text>
+              <Text style={styles.seeAllText}>{translateCopy("Tümünü gör")}</Text>
               <Icon name="chevron-forward" size={18} color={colors.textSecondary} />
             </Pressable>
           </View>
@@ -259,7 +261,7 @@ export default function ProjectDetailScreen() {
                     )}
                     {index === 0 ? (
                       <View style={styles.activePill}>
-                        <Text style={styles.activePillText}>AKTİF</Text>
+                        <Text style={styles.activePillText}>{translateCopy("AKTİF")}</Text>
                       </View>
                     ) : null}
                   </View>
@@ -276,14 +278,10 @@ export default function ProjectDetailScreen() {
               );
             })}
           </View>
-          <Notice tone="neutral" title="Seçili sonuç">
-            Bu sonuç kaydedilebilir ve paylaşılabilir. Her düzenleme ayrı bir sürüm olarak korunur.
-          </Notice>
+          <Notice tone="neutral" title={translateCopy("Seçili sonuç")}>{translateCopy("Bu sonuç kaydedilebilir ve paylaşılabilir. Her düzenleme ayrı bir sürüm olarak korunur.")}</Notice>
         </>
       ) : detail ? (
-        <Notice tone="neutral" title="Üretim hazırlanıyor">
-          Tamamlanan ilk sonuç burada görünecek.
-        </Notice>
+        <Notice tone="neutral" title={translateCopy("Üretim hazırlanıyor")}>{translateCopy("Tamamlanan ilk sonuç burada görünecek.")}</Notice>
       ) : null}
     </Screen>
   );
@@ -298,6 +296,8 @@ function IconAction({
   label: string;
   onPress: () => void;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <Pressable
       accessibilityRole="button"

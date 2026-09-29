@@ -1,14 +1,18 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { Link } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function NotFoundScreen() {
+  const languageRevision = useLanguageRevision();
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.content}>
-        <Text style={styles.title}>Bu kare bulunamadı.</Text>
-        <Text style={styles.copy}>Aradığınız sayfa taşınmış veya kaldırılmış olabilir.</Text>
-        <Link href="/(tabs)/home" style={styles.link}>Ana sayfaya dön</Link>
+        <Text style={styles.title}>{translateCopy("Bu kare bulunamadı.")}</Text>
+        <Text style={styles.copy}>{translateCopy("Aradığınız sayfa taşınmış veya kaldırılmış olabilir.")}</Text>
+        <Link href="/(tabs)/home" style={styles.link}>{translateCopy("Ana sayfaya dön")}</Link>
       </View>
     </SafeAreaView>
   );

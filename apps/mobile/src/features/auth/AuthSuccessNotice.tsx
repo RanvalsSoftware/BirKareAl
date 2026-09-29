@@ -1,3 +1,4 @@
+import { useLanguageRevision } from '@/i18n/use-language';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useCopy } from '@/features/settings/language-store';
@@ -6,6 +7,8 @@ type Props = { title: string; message: string; onDismiss: () => void };
 
 /** Inline and dismissible: never place a touch-blocking overlay above the form. */
 export function AuthSuccessNotice({ title, message, onDismiss }: Props) {
+  const languageRevision = useLanguageRevision();
+
   const copy = useCopy();
   return (
     <View testID="auth-success-notice" accessibilityLiveRegion="polite" style={styles.banner}>

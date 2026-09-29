@@ -1,3 +1,4 @@
+import { tr as translateCopy } from '@/i18n/engine';
 import type { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
 import type { ImageSourcePropType } from 'react-native';
@@ -46,8 +47,8 @@ export type StudioModeCard = StudioCardBase & {
 export const productCategories = [
   {
     id: 'handbag',
-    name: 'Çanta',
-    description: 'Deri, dikiş ve metal detaylarını koruyan premium ürün çekimi.',
+    get name() { return translateCopy("Çanta"); },
+    get description() { return translateCopy("Deri, dikiş ve metal detaylarını koruyan premium ürün çekimi."); },
     creditCost: 0,
     modelLane: null,
     imageSource: require('../../../assets/products/ui/categories/handbag.webp'),
@@ -58,8 +59,8 @@ export const productCategories = [
   },
   {
     id: 'shoes',
-    name: 'Ayakkabı',
-    description: 'Taban, bağcık ve çift simetrisini koruyan katalog karesi.',
+    get name() { return translateCopy("Ayakkabı"); },
+    get description() { return translateCopy("Taban, bağcık ve çift simetrisini koruyan katalog karesi."); },
     creditCost: 0,
     modelLane: null,
     imageSource: require('../../../assets/products/ui/categories/shoes.webp'),
@@ -70,8 +71,8 @@ export const productCategories = [
   },
   {
     id: 'food',
-    name: 'Yiyecek & İçecek',
-    description: 'İştah açıcı ama gerçeğe sadık yiyecek ve içecek fotoğrafı.',
+    get name() { return translateCopy("Yiyecek & İçecek"); },
+    get description() { return translateCopy("İştah açıcı ama gerçeğe sadık yiyecek ve içecek fotoğrafı."); },
     creditCost: 0,
     modelLane: null,
     imageSource: require('../../../assets/products/ui/categories/food.webp'),
@@ -83,7 +84,7 @@ export const productCategories = [
   {
     id: 'cosmetics',
     name: 'Kozmetik',
-    description: 'Ambalaj, kapak ve etiketi koruyan temiz beauty çekimi.',
+    get description() { return translateCopy("Ambalaj, kapak ve etiketi koruyan temiz beauty çekimi."); },
     creditCost: 0,
     modelLane: null,
     imageSource: require('../../../assets/products/ui/categories/cosmetics.webp'),
@@ -95,7 +96,7 @@ export const productCategories = [
   {
     id: 'furniture',
     name: 'Mobilya & Dekor',
-    description: 'Ölçek, malzeme ve perspektifi koruyan iç mekân sunumu.',
+    get description() { return translateCopy("Ölçek, malzeme ve perspektifi koruyan iç mekân sunumu."); },
     creditCost: 0,
     modelLane: null,
     imageSource: require('../../../assets/products/ui/categories/furniture.webp'),
@@ -106,8 +107,8 @@ export const productCategories = [
   },
   {
     id: 'jewelry',
-    name: 'Takı',
-    description: 'Taş sayısı, kesim ve metal rengini koruyan makro çekim.',
+    get name() { return translateCopy("Takı"); },
+    get description() { return translateCopy("Taş sayısı, kesim ve metal rengini koruyan makro çekim."); },
     creditCost: 0,
     modelLane: null,
     imageSource: require('../../../assets/products/ui/categories/jewelry.webp'),
@@ -119,7 +120,7 @@ export const productCategories = [
   {
     id: 'electronics',
     name: 'Telefon & Elektronik',
-    description: 'Kamera, port ve kasa geometrisini koruyan teknoloji çekimi.',
+    get description() { return translateCopy("Kamera, port ve kasa geometrisini koruyan teknoloji çekimi."); },
     creditCost: 0,
     modelLane: null,
     imageSource: require('../../../assets/products/ui/categories/electronics.webp'),
@@ -133,8 +134,8 @@ export const productCategories = [
 export const productScenes = [
   {
     id: 'white-studio',
-    name: 'Beyaz Stüdyo',
-    description: 'Temiz e-ticaret kataloğu.',
+    get name() { return translateCopy("Beyaz Stüdyo"); },
+    get description() { return translateCopy("Temiz e-ticaret kataloğu."); },
     creditCost: 5,
     modelLane: 'FAST',
     imageSource: require('../../../assets/products/ui/scenes/white-studio.webp'),
@@ -147,7 +148,7 @@ export const productScenes = [
   {
     id: 'gray-catalog',
     name: 'Gri Katalog',
-    description: 'Nötr gri fonda dengeli ışık.',
+    get description() { return translateCopy("Nötr gri fonda dengeli ışık."); },
     creditCost: 5,
     modelLane: 'FAST',
     imageSource: require('../../../assets/products/ui/scenes/gray-catalog.webp'),
@@ -160,7 +161,7 @@ export const productScenes = [
   {
     id: 'beige-premium',
     name: 'Bej Premium',
-    description: 'Sıcak taş tonlarında rafine sunum.',
+    get description() { return translateCopy("Sıcak taş tonlarında rafine sunum."); },
     creditCost: 5,
     modelLane: 'FAST',
     imageSource: require('../../../assets/products/ui/scenes/beige-premium.webp'),
@@ -173,7 +174,7 @@ export const productScenes = [
   {
     id: 'black-premium',
     name: 'Siyah Premium',
-    description: 'Siyah ve altın detaylı lüks sahne.',
+    get description() { return translateCopy("Siyah ve altın detaylı lüks sahne."); },
     creditCost: 7,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/scenes/black-premium.webp'),
@@ -186,7 +187,7 @@ export const productScenes = [
   {
     id: 'marble',
     name: 'Mermer',
-    description: 'Gerçekçi mermer yüzey ve yumuşak gölge.',
+    get description() { return translateCopy("Gerçekçi mermer yüzey ve yumuşak gölge."); },
     creditCost: 5,
     modelLane: 'FAST',
     imageSource: require('../../../assets/products/ui/scenes/marble.webp'),
@@ -198,8 +199,8 @@ export const productScenes = [
   },
   {
     id: 'glass-surface',
-    name: 'Cam Yüzey',
-    description: 'Kontrollü yansımalı modern vitrin.',
+    get name() { return translateCopy("Cam Yüzey"); },
+    get description() { return translateCopy("Kontrollü yansımalı modern vitrin."); },
     creditCost: 7,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/scenes/glass-surface.webp'),
@@ -212,7 +213,7 @@ export const productScenes = [
   {
     id: 'floating',
     name: 'Floating',
-    description: 'Dengeli, gerçekçi yüzen ürün kompozisyonu.',
+    get description() { return translateCopy("Dengeli, gerçekçi yüzen ürün kompozisyonu."); },
     creditCost: 7,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/scenes/floating.webp'),
@@ -225,7 +226,7 @@ export const productScenes = [
   {
     id: 'luxury-gold',
     name: 'Luxury Gold',
-    description: 'Altın vurgulu premium reklam karesi.',
+    get description() { return translateCopy("Altın vurgulu premium reklam karesi."); },
     creditCost: 7,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/scenes/luxury-gold.webp'),
@@ -238,7 +239,7 @@ export const productScenes = [
   {
     id: 'neon-tech',
     name: 'Neon Tech',
-    description: 'Teknoloji ürünleri için neon gece ışığı.',
+    get description() { return translateCopy("Teknoloji ürünleri için neon gece ışığı."); },
     creditCost: 7,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/scenes/neon-tech.webp'),
@@ -251,7 +252,7 @@ export const productScenes = [
   {
     id: 'spotlight',
     name: 'Spotlight',
-    description: 'Karanlık fonda kontrollü kahraman ışığı.',
+    get description() { return translateCopy("Karanlık fonda kontrollü kahraman ışığı."); },
     creditCost: 7,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/scenes/spotlight.webp'),
@@ -264,7 +265,7 @@ export const productScenes = [
   {
     id: 'spa-beauty',
     name: 'Spa Beauty',
-    description: 'Kozmetik için doğal ve hijyenik spa düzeni.',
+    get description() { return translateCopy("Kozmetik için doğal ve hijyenik spa düzeni."); },
     creditCost: 5,
     modelLane: 'FAST',
     imageSource: require('../../../assets/products/ui/scenes/spa-beauty.webp'),
@@ -276,8 +277,8 @@ export const productScenes = [
   },
   {
     id: 'desktop',
-    name: 'Masa Üstü',
-    description: 'Gün ışıklı gerçekçi çalışma masası.',
+    get name() { return translateCopy("Masa Üstü"); },
+    get description() { return translateCopy("Gün ışıklı gerçekçi çalışma masası."); },
     creditCost: 5,
     modelLane: 'FAST',
     imageSource: require('../../../assets/products/ui/scenes/desktop.webp'),
@@ -290,7 +291,7 @@ export const productScenes = [
   {
     id: 'boutique',
     name: 'Butik',
-    description: 'Moda ürünleri için sıcak lüks mağaza.',
+    get description() { return translateCopy("Moda ürünleri için sıcak lüks mağaza."); },
     creditCost: 7,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/scenes/boutique.webp'),
@@ -303,7 +304,7 @@ export const productScenes = [
   {
     id: 'flat-lay',
     name: 'Flat Lay',
-    description: 'Üstten bakışlı düzenli katalog kompozisyonu.',
+    get description() { return translateCopy("Üstten bakışlı düzenli katalog kompozisyonu."); },
     creditCost: 5,
     modelLane: 'FAST',
     imageSource: require('../../../assets/products/ui/scenes/flat-lay.webp'),
@@ -316,7 +317,7 @@ export const productScenes = [
   {
     id: 'ad-poster',
     name: 'Reklam Poster',
-    description: 'Kampanya kullanımı için güçlü hero sahnesi.',
+    get description() { return translateCopy("Kampanya kullanımı için güçlü hero sahnesi."); },
     creditCost: 7,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/scenes/ad-poster.webp'),
@@ -331,8 +332,8 @@ export const productScenes = [
 export const fashionScenes = [
   {
     id: 'fashion-white-studio',
-    name: 'Beyaz Moda Stüdyosu',
-    description: 'Tam kıyafeti gösteren temiz katalog ışığı.',
+    get name() { return translateCopy("Beyaz Moda Stüdyosu"); },
+    get description() { return translateCopy("Tam kıyafeti gösteren temiz katalog ışığı."); },
     creditCost: 8,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/fashion/white-studio.webp'),
@@ -345,8 +346,8 @@ export const fashionScenes = [
   },
   {
     id: 'fashion-beige-editorial',
-    name: 'Bej Editorial Stüdyo',
-    description: 'Mimari kıvrımlar ve sıcak gün ışığı.',
+    get name() { return translateCopy("Bej Editorial Stüdyo"); },
+    get description() { return translateCopy("Mimari kıvrımlar ve sıcak gün ışığı."); },
     creditCost: 8,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/fashion/beige-editorial.webp'),
@@ -359,8 +360,8 @@ export const fashionScenes = [
   },
   {
     id: 'fashion-luxury-boutique',
-    name: 'Lüks Butik',
-    description: 'Sıcak raf ışıklı premium moda kampanyası.',
+    get name() { return translateCopy("Lüks Butik"); },
+    get description() { return translateCopy("Sıcak raf ışıklı premium moda kampanyası."); },
     creditCost: 10,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/fashion/luxury-boutique.webp'),
@@ -373,8 +374,8 @@ export const fashionScenes = [
   },
   {
     id: 'fashion-minimal-interior',
-    name: 'Minimal İç Mekân',
-    description: 'Aydınlık ve sade lifestyle moda karesi.',
+    get name() { return translateCopy("Minimal İç Mekân"); },
+    get description() { return translateCopy("Aydınlık ve sade lifestyle moda karesi."); },
     creditCost: 8,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/fashion/minimal-interior.webp'),
@@ -387,8 +388,8 @@ export const fashionScenes = [
   },
   {
     id: 'fashion-street-day',
-    name: 'Sokak Stili Gündüz',
-    description: 'Gün ışığında modern şehir stili.',
+    get name() { return translateCopy("Sokak Stili Gündüz"); },
+    get description() { return translateCopy("Gün ışığında modern şehir stili."); },
     creditCost: 9,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/fashion/street-day.webp'),
@@ -401,8 +402,8 @@ export const fashionScenes = [
   },
   {
     id: 'fashion-city-night',
-    name: 'Gece Şehir',
-    description: 'Islak zemin ve kontrollü neon bokeh.',
+    get name() { return translateCopy("Gece Şehir"); },
+    get description() { return translateCopy("Islak zemin ve kontrollü neon bokeh."); },
     creditCost: 10,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/fashion/city-night.webp'),
@@ -416,7 +417,7 @@ export const fashionScenes = [
   {
     id: 'fashion-golden-hour',
     name: 'Golden Hour',
-    description: 'Sıcak arka ışıklı açık hava çekimi.',
+    get description() { return translateCopy("Sıcak arka ışıklı açık hava çekimi."); },
     creditCost: 9,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/fashion/golden-hour.webp'),
@@ -430,7 +431,7 @@ export const fashionScenes = [
   {
     id: 'fashion-hotel-lobby',
     name: 'Otel Lobisi',
-    description: 'Taş ve pirinç detaylı lüks editorial.',
+    get description() { return translateCopy("Taş ve pirinç detaylı lüks editorial."); },
     creditCost: 10,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/fashion/hotel-lobby.webp'),
@@ -444,7 +445,7 @@ export const fashionScenes = [
   {
     id: 'fashion-runway',
     name: 'Runway',
-    description: 'Odaklı podyum ışığında tam görünüm.',
+    get description() { return translateCopy("Odaklı podyum ışığında tam görünüm."); },
     creditCost: 10,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/fashion/runway.webp'),
@@ -458,7 +459,7 @@ export const fashionScenes = [
   {
     id: 'fashion-magazine-editorial',
     name: 'Dergi Editorial',
-    description: 'Güçlü kompozisyonlu yüksek moda çekimi.',
+    get description() { return translateCopy("Güçlü kompozisyonlu yüksek moda çekimi."); },
     creditCost: 10,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/fashion/magazine-editorial.webp'),
@@ -472,7 +473,7 @@ export const fashionScenes = [
   {
     id: 'fashion-red-carpet',
     name: 'Red Carpet',
-    description: 'Kurgusal gala ve yumuşak flaş fotoğrafı.',
+    get description() { return translateCopy("Kurgusal gala ve yumuşak flaş fotoğrafı."); },
     creditCost: 10,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/fashion/red-carpet.webp'),
@@ -486,7 +487,7 @@ export const fashionScenes = [
   {
     id: 'fashion-cafe',
     name: 'Kafe Lifestyle',
-    description: 'Rahat pozlu sıcak pencere ışığı.',
+    get description() { return translateCopy("Rahat pozlu sıcak pencere ışığı."); },
     creditCost: 9,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/fashion/cafe.webp'),
@@ -499,8 +500,8 @@ export const fashionScenes = [
   },
   {
     id: 'fashion-istanbul-street',
-    name: 'İstanbul Sokak',
-    description: 'Tarihi taş dokulu özgün şehir atmosferi.',
+    get name() { return translateCopy("İstanbul Sokak"); },
+    get description() { return translateCopy("Tarihi taş dokulu özgün şehir atmosferi."); },
     creditCost: 9,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/fashion/istanbul-street.webp'),
@@ -527,8 +528,8 @@ export const fashionScenes = [
   },
   {
     id: 'fashion-event',
-    name: 'Düğün / Özel Gün',
-    description: 'Yumuşak dekorlu resmi etkinlik çekimi.',
+    get name() { return translateCopy("Düğün / Özel Gün"); },
+    get description() { return translateCopy("Yumuşak dekorlu resmi etkinlik çekimi."); },
     creditCost: 10,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/fashion/event.webp'),
@@ -545,7 +546,7 @@ export const nailPresets = [
   {
     id: 'nail-nude-clean',
     name: 'Nude Clean',
-    description: 'Doğal uzunluğu koruyan parlak nude görünüm.',
+    get description() { return translateCopy("Doğal uzunluğu koruyan parlak nude görünüm."); },
     creditCost: 4,
     modelLane: 'FAST',
     imageSource: require('../../../assets/products/ui/nails/nude-clean.webp'),
@@ -560,7 +561,7 @@ export const nailPresets = [
   {
     id: 'nail-classic-red',
     name: 'Classic Red',
-    description: 'Derin ve eşit parlak kırmızı.',
+    get description() { return translateCopy("Derin ve eşit parlak kırmızı."); },
     creditCost: 4,
     modelLane: 'FAST',
     imageSource: require('../../../assets/products/ui/nails/classic-red.webp'),
@@ -575,7 +576,7 @@ export const nailPresets = [
   {
     id: 'nail-french',
     name: 'French Manicure',
-    description: 'İnce beyaz uçlu klasik salon görünümü.',
+    get description() { return translateCopy("İnce beyaz uçlu klasik salon görünümü."); },
     creditCost: 5,
     modelLane: 'FAST',
     imageSource: require('../../../assets/products/ui/nails/french-manicure.webp'),
@@ -590,7 +591,7 @@ export const nailPresets = [
   {
     id: 'nail-milky-white',
     name: 'Milky White',
-    description: 'Yarı saydam süt beyazı parlaklık.',
+    get description() { return translateCopy("Yarı saydam süt beyazı parlaklık."); },
     creditCost: 4,
     modelLane: 'FAST',
     imageSource: require('../../../assets/products/ui/nails/milky-white.webp'),
@@ -605,7 +606,7 @@ export const nailPresets = [
   {
     id: 'nail-burgundy',
     name: 'Burgundy Gloss',
-    description: 'Sofistike koyu bordo parlaklık.',
+    get description() { return translateCopy("Sofistike koyu bordo parlaklık."); },
     creditCost: 4,
     modelLane: 'FAST',
     imageSource: require('../../../assets/products/ui/nails/burgundy-gloss.webp'),
@@ -620,7 +621,7 @@ export const nailPresets = [
   {
     id: 'nail-emerald',
     name: 'Emerald Green',
-    description: 'Derin zümrüt yeşili salon parlaklığı.',
+    get description() { return translateCopy("Derin zümrüt yeşili salon parlaklığı."); },
     creditCost: 4,
     modelLane: 'FAST',
     imageSource: require('../../../assets/products/ui/nails/emerald.webp'),
@@ -635,7 +636,7 @@ export const nailPresets = [
   {
     id: 'nail-black',
     name: 'Black Gloss',
-    description: 'Kenar ayrıntısını koruyan parlak siyah.',
+    get description() { return translateCopy("Kenar ayrıntısını koruyan parlak siyah."); },
     creditCost: 4,
     modelLane: 'FAST',
     imageSource: require('../../../assets/products/ui/nails/black-gloss.webp'),
@@ -650,7 +651,7 @@ export const nailPresets = [
   {
     id: 'nail-champagne-chrome',
     name: 'Champagne Chrome',
-    description: 'Tırnak eğrisini izleyen metalik yansıma.',
+    get description() { return translateCopy("Tırnak eğrisini izleyen metalik yansıma."); },
     creditCost: 6,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/nails/champagne-chrome.webp'),
@@ -665,7 +666,7 @@ export const nailPresets = [
   {
     id: 'nail-soft-pink',
     name: 'Soft Pink',
-    description: 'Yumuşak allık pembesi doğal görünüm.',
+    get description() { return translateCopy("Yumuşak allık pembesi doğal görünüm."); },
     creditCost: 4,
     modelLane: 'FAST',
     imageSource: require('../../../assets/products/ui/nails/soft-pink.webp'),
@@ -680,7 +681,7 @@ export const nailPresets = [
   {
     id: 'nail-lavender',
     name: 'Lavender Pastel',
-    description: 'Yumuşak pastel lavanta rengi.',
+    get description() { return translateCopy("Yumuşak pastel lavanta rengi."); },
     creditCost: 4,
     modelLane: 'FAST',
     imageSource: require('../../../assets/products/ui/nails/lavender-pastel.webp'),
@@ -695,7 +696,7 @@ export const nailPresets = [
   {
     id: 'nail-baby-blue',
     name: 'Baby Blue',
-    description: 'Nazik ve dengeli açık mavi.',
+    get description() { return translateCopy("Nazik ve dengeli açık mavi."); },
     creditCost: 4,
     modelLane: 'FAST',
     imageSource: require('../../../assets/products/ui/nails/baby-blue.webp'),
@@ -710,7 +711,7 @@ export const nailPresets = [
   {
     id: 'nail-gold-line',
     name: 'Minimal Gold Line',
-    description: 'Nude zemin üzerinde ince metalik çizgi.',
+    get description() { return translateCopy("Nude zemin üzerinde ince metalik çizgi."); },
     creditCost: 5,
     modelLane: 'FAST',
     imageSource: require('../../../assets/products/ui/nails/minimal-gold-line.webp'),
@@ -725,7 +726,7 @@ export const nailPresets = [
   {
     id: 'nail-pearl-glazed',
     name: 'Pearl / Glazed',
-    description: 'Yarı saydam inci ışıltısı.',
+    get description() { return translateCopy("Yarı saydam inci ışıltısı."); },
     creditCost: 6,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/nails/pearl-glazed.webp'),
@@ -740,7 +741,7 @@ export const nailPresets = [
   {
     id: 'nail-cat-eye',
     name: 'Dark Cat Eye',
-    description: 'Kontrollü manyetik ışık şeritli koyu görünüm.',
+    get description() { return translateCopy("Kontrollü manyetik ışık şeritli koyu görünüm."); },
     creditCost: 6,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/nails/dark-cat-eye.webp'),
@@ -755,7 +756,7 @@ export const nailPresets = [
   {
     id: 'nail-editorial-gem',
     name: 'Editorial Gem',
-    description: 'Az sayıda gerçekçi kristal vurgu.',
+    get description() { return translateCopy("Az sayıda gerçekçi kristal vurgu."); },
     creditCost: 6,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/nails/editorial-gem.webp'),
@@ -773,8 +774,8 @@ export const studioModeCards = [
   {
     id: 'product-shoot',
     mode: 'product',
-    name: 'Ürün Çekimi',
-    description: 'Reklam ve lifestyle sahnelerinde ürününü öne çıkar.',
+    get name() { return translateCopy("Ürün Çekimi"); },
+    get description() { return translateCopy("Reklam ve lifestyle sahnelerinde ürününü öne çıkar."); },
     creditCost: 5,
     modelLane: 'FAST',
     imageSource: require('../../../assets/products/ui/product-shoot.webp'),
@@ -785,8 +786,8 @@ export const studioModeCards = [
   {
     id: 'product-catalog',
     mode: 'product',
-    name: 'Katalog Çekimi',
-    description: 'Cam yüzeyde kontrollü yansımayla modern katalog karesi hazırla.',
+    get name() { return translateCopy("Katalog Çekimi"); },
+    get description() { return translateCopy("Cam yüzeyde kontrollü yansımayla modern katalog karesi hazırla."); },
     creditCost: 7,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/catalog-shoot.webp'),
@@ -797,8 +798,8 @@ export const studioModeCards = [
   {
     id: 'virtual-try-on',
     mode: 'fashion',
-    name: 'Kıyafet & Stil',
-    description: 'Kıyafeti kendi fotoğrafında gerçekçi biçimde dene.',
+    get name() { return translateCopy("Kıyafet & Stil"); },
+    get description() { return translateCopy("Kıyafeti kendi fotoğrafında gerçekçi biçimde dene."); },
     creditCost: 8,
     modelLane: 'PREMIUM',
     imageSource: require('../../../assets/products/ui/fashion-cover.webp'),
@@ -809,8 +810,8 @@ export const studioModeCards = [
   {
     id: 'nail-preview',
     mode: 'nails',
-    name: 'Tırnak & Manikür',
-    description: 'El anatomini koruyarak manikürünü önceden gör.',
+    get name() { return translateCopy("Tırnak & Manikür"); },
+    get description() { return translateCopy("El anatomini koruyarak manikürünü önceden gör."); },
     creditCost: 4,
     modelLane: 'FAST',
     imageSource: require('../../../assets/products/ui/nails-cover.webp'),

@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useEffect } from 'react';
 import {
   Image,
@@ -19,6 +21,8 @@ type ToneProps = { filterId: string | null; intensity: number; showOriginal?: bo
 
 /** Local lighting/color approximation only. It does not synthesize AI details or replace the person. */
 export function FilterToneLayers({ filterId, intensity, showOriginal = false }: ToneProps) {
+  const languageRevision = useLanguageRevision();
+
   const reducedMotion = useReducedMotion();
   const profile = getFilterPreviewProfile(filterId);
   const canBlend = Platform.OS !== 'android' || Number(Platform.Version) >= 29;
@@ -94,6 +98,8 @@ export function FilterPreview({
   showOriginal = false,
   showLabel = true,
 }: FilterPreviewProps) {
+  const languageRevision = useLanguageRevision();
+
   const imageSource = sourceUri
     ? { uri: sourceUri }
     : (source ?? require('../../../assets/onboarding/images/filters/natural.webp'));
@@ -106,7 +112,7 @@ export function FilterPreview({
           resizeMode="contain"
           fadeDuration={0}
           accessibilityLabel={
-            showOriginal ? 'Kaynak fotoğraf' : 'Seçili fotoğrafta yaklaşık filtre tonu'
+            showOriginal ? translateCopy("Kaynak fotoğraf") : translateCopy("Seçili fotoğrafta yaklaşık filtre tonu")
           }
         />
         <FilterToneLayers filterId={filterId} intensity={intensity} showOriginal={showOriginal} />
@@ -116,7 +122,7 @@ export function FilterPreview({
           <Text style={styles.labelText}>
             {showOriginal
               ? 'Orijinal'
-              : `${!sourceUri && !source ? 'Demo · ' : ''}Yaklaşık ton önizlemesi · %${clampFilterIntensity(intensity)}`}
+              : translateCopy("{{p0}}Yaklaşık ton önizlemesi · %{{p1}}", { p0: !sourceUri && !source ? 'Demo · ' : '', p1: clampFilterIntensity(intensity) })}
           </Text>
         </View>
       ) : null}

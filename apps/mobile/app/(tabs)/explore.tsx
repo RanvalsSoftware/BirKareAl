@@ -1,3 +1,6 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { getLocale as getAppLocale } from '@/i18n/engine';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -32,6 +35,8 @@ import { beautySceneImage } from '@/features/trends/catalog';
 const categories = ['Tümü', 'Sahneler', 'Güzellik', 'Filtreler', 'Kurgusal', 'AI Araçları'];
 
 export default function ExploreScreen() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const availableCredits = useAvailableCredits();
   const [query, setQuery] = useState('');
@@ -49,19 +54,19 @@ export default function ExploreScreen() {
               : selectedCategory === 'Güzellik'
                 ? []
                 : aiTools;
-    const normalized = query.trim().toLocaleLowerCase('tr-TR');
+    const normalized = query.trim().toLocaleLowerCase(getAppLocale());
     return normalized
       ? byCategory.filter((item) =>
           `${item.name} ${item.subtitle} ${item.category}`
-            .toLocaleLowerCase('tr-TR')
+            .toLocaleLowerCase(getAppLocale())
             .includes(normalized),
         )
       : byCategory;
-  }, [query, selectedCategory]);
+  }, [query, selectedCategory, languageRevision]);
   const showBeautyScene =
     ['Sahneler', 'Tümü'].includes(selectedCategory) &&
     (!query.trim() ||
-      'güzellik rötuş cilt makyaj'.includes(query.trim().toLocaleLowerCase('tr-TR')));
+      'güzellik rötuş cilt makyaj'.includes(query.trim().toLocaleLowerCase(getAppLocale())));
 
   function open(item: CatalogItem) {
     if (item.slug === 'gender-change') {
@@ -90,8 +95,8 @@ export default function ExploreScreen() {
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.screen}>
       <View style={styles.headerArea}>
         <AppHeader
-          title="Keşfet"
-          subtitle="Sahneler, güzellik ve AI araçları"
+          title={translateCopy("Keşfet")}
+          subtitle={translateCopy("Sahneler, güzellik ve AI araçları")}
           right={<CreditBadge credits={availableCredits} />}
         />
       </View>
@@ -99,7 +104,7 @@ export default function ExploreScreen() {
         <SearchBar
           value={query}
           onChangeText={setQuery}
-          placeholder="Sahne, güzellik, filtre veya araç ara"
+          placeholder={translateCopy("Sahne, güzellik, filtre veya araç ara")}
         />
         <ScrollView
           horizontal
@@ -120,23 +125,21 @@ export default function ExploreScreen() {
         {selectedCategory === 'Güzellik' || selectedCategory === 'Tümü' ? (
           <>
             <SectionHeader
-              title="Güzellik Stüdyosu"
+              title={translateCopy("Güzellik Stüdyosu")}
               action="Aç"
               onActionPress={() => {
                 resetCreateFlow();
                 router.push('/beauty' as never);
               }}
             />
-            <Text style={styles.filterHintText}>
-              Rötuş, yüz hatları ve makyaj · Yoğunluğu sen ayarla
-            </Text>
+            <Text style={styles.filterHintText}>{translateCopy("Rötuş, yüz hatları ve makyaj · Yoğunluğu sen ayarla")}</Text>
             <BeautyRail
               options={beautyOptions.filter(
                 (option) =>
                   !query ||
                   `${option.name} ${option.description}`
-                    .toLocaleLowerCase('tr-TR')
-                    .includes(query.toLocaleLowerCase('tr-TR')),
+                    .toLocaleLowerCase(getAppLocale())
+                    .includes(query.toLocaleLowerCase(getAppLocale())),
               )}
               onSelect={(option) => {
                 resetCreateFlow();
@@ -148,7 +151,7 @@ export default function ExploreScreen() {
 
         {selectedCategory === 'Filtreler' ? (
           <View style={styles.filterHint}>
-            <Text style={styles.filterHintTitle}>Filtre koleksiyonu</Text>
+            <Text style={styles.filterHintTitle}>{translateCopy("Filtre koleksiyonu")}</Text>
             <Text style={styles.filterHintText}>{filterCategories.slice(1, 5).join(' · ')}</Text>
           </View>
         ) : null}
@@ -157,23 +160,21 @@ export default function ExploreScreen() {
             <SectionHeader
               title={
                 query
-                  ? 'Arama sonuçları'
+                  ? translateCopy("Arama sonuçları")
                   : selectedCategory === 'Tümü'
-                    ? 'Öne çıkanlar'
+                    ? translateCopy("Öne çıkanlar")
                     : selectedCategory
               }
               accessory={
-                <Text style={styles.resultCount}>
-                  {items.length + Number(showBeautyScene)} seçenek
-                </Text>
+                <Text style={styles.resultCount}>{translateCopy("{{p0}} seçenek", { p0: items.length + Number(showBeautyScene) })}</Text>
               }
             />
             {items.length || showBeautyScene ? (
               <View style={styles.grid}>
                 {showBeautyScene ? (
                   <VisualTile
-                    title="Güzellik"
-                    subtitle="Rötuş, cilt ve makyaj"
+                    title={translateCopy("Güzellik")}
+                    subtitle={translateCopy("Rötuş, cilt ve makyaj")}
                     imageSource={beautySceneImage}
                     palette={['#3A2830', '#B38A5B']}
                     icon="sparkles-outline"
@@ -205,7 +206,7 @@ export default function ExploreScreen() {
                           ? 'AI'
                           : item.creditCost
                             ? `+${item.creditCost} kredi`
-                            : 'Ücretsiz'
+                            : translateCopy("Ücretsiz")
                     }
                     onPress={() => open(item)}
                   />
@@ -214,8 +215,8 @@ export default function ExploreScreen() {
             ) : (
               <EmptyState
                 icon="search-outline"
-                title="Sonuç bulunamadı"
-                detail="Başka bir kelime deneyin veya tüm koleksiyonu keşfedin."
+                title={translateCopy("Sonuç bulunamadı")}
+                detail={translateCopy("Başka bir kelime deneyin veya tüm koleksiyonu keşfedin.")}
                 action="Tümünü göster"
                 onAction={() => {
                   setQuery('');

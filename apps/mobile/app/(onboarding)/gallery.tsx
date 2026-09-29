@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -26,6 +28,8 @@ import { colors, radii, shadows } from '@/theme';
  * makes `contain` deterministic and preserves every selected photo's ratio.
  */
 function FittedPhotoImage({ source }: { source: ImageSourcePropType }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View pointerEvents="none" style={styles.fittedPhotoCanvas}>
       <Image fadeDuration={0} source={source} style={styles.fittedPhotoImage} />
@@ -34,6 +38,8 @@ function FittedPhotoImage({ source }: { source: ImageSourcePropType }) {
 }
 
 export default function GalleryScreen() {
+  const languageRevision = useLanguageRevision();
+
   const { selectedPhoto, setSelectedPhoto } = useOnboarding();
   const handleSelected = useCallback(
     (photo: Parameters<typeof setSelectedPhoto>[0]) => setSelectedPhoto(photo),
@@ -53,17 +59,12 @@ export default function GalleryScreen() {
           }}
           onSkip={() => router.replace('/(auth)/login')}
           step="FOTOĞRAF SEÇİMİ"
-          title="Bir fotoğraf seç"
+          title={translateCopy("Bir fotoğraf seç")}
         />
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <Animated.View entering={FadeInDown.duration(440)}>
-            <Text accessibilityRole="header" style={styles.title}>
-              Bir fotoğrafla{`\n`}başlayalım.
-            </Text>
-            <Text style={styles.subtitle}>
-              Galerinden net bir selfie veya portre seç. Dilersen kamerayla yeni bir kare de
-              oluşturabilirsin.
-            </Text>
+            <Text accessibilityRole="header" style={styles.title}>{translateCopy("Bir fotoğrafla{{p0}}başlayalım.", { p0: `\n` })}</Text>
+            <Text style={styles.subtitle}>{translateCopy("Galerinden net bir selfie veya portre seç. Dilersen kamerayla yeni bir kare de oluşturabilirsin.")}</Text>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(100).duration(520)} style={styles.previewCard}>
@@ -78,20 +79,20 @@ export default function GalleryScreen() {
               {selectedPhoto ? (
                 <View style={styles.selectedBadge}>
                   <Ionicons color={colors.background} name="checkmark" size={15} />
-                  <Text style={styles.selectedText}>Seçildi</Text>
+                  <Text style={styles.selectedText}>{translateCopy("Seçildi")}</Text>
                 </View>
               ) : null}
             </View>
             <View style={styles.previewBottom}>
               <Text style={styles.previewTitle}>
-                {selectedPhoto ? 'Fotoğrafın hazır' : 'İlk kareni seç'}
+                {selectedPhoto ? translateCopy("Fotoğrafın hazır") : translateCopy("İlk kareni seç")}
               </Text>
               <Text style={styles.previewSubtitle}>
                 {selectedPhoto?.kind === 'device'
-                  ? (selectedPhoto.fileName ?? 'Galeriden seçilen fotoğraf')
+                  ? (selectedPhoto.fileName ?? translateCopy("Galeriden seçilen fotoğraf"))
                   : selectedPhoto
-                    ? 'Demo portre seçildi'
-                    : 'Seçtiğin fotoğraf cihazında kalır; üretim için sonra yüklenir.'}
+                    ? translateCopy("Demo portre seçildi")
+                    : translateCopy("Seçtiğin fotoğraf cihazında kalır; üretim için sonra yüklenir.")}
               </Text>
             </View>
           </Animated.View>
@@ -106,7 +107,7 @@ export default function GalleryScreen() {
               <View style={styles.actionIcon}>
                 <Ionicons color={colors.accentYellow} name="images-outline" size={24} />
               </View>
-              <Text style={styles.actionText}>Galeriden seç</Text>
+              <Text style={styles.actionText}>{translateCopy("Galeriden seç")}</Text>
             </Pressable>
             <Pressable
               accessibilityRole="button"
@@ -117,13 +118,13 @@ export default function GalleryScreen() {
               <View style={styles.actionIcon}>
                 <Ionicons color={colors.accentYellow} name="camera-outline" size={24} />
               </View>
-              <Text style={styles.actionText}>Fotoğraf çek</Text>
+              <Text style={styles.actionText}>{translateCopy("Fotoğraf çek")}</Text>
             </Pressable>
           </View>
 
           <View style={styles.demoHeader}>
-            <Text style={styles.sectionTitle}>Demo fotoğrafları</Text>
-            <Text style={styles.sectionHint}>Akışı denemek için seç</Text>
+            <Text style={styles.sectionTitle}>{translateCopy("Demo fotoğrafları")}</Text>
+            <Text style={styles.sectionHint}>{translateCopy("Akışı denemek için seç")}</Text>
           </View>
           <ScrollView
             contentContainerStyle={styles.demoRow}
@@ -159,16 +160,13 @@ export default function GalleryScreen() {
 
           <View style={styles.notice}>
             <Ionicons color={colors.accentYellow} name="lock-closed-outline" size={18} />
-            <Text style={styles.noticeText}>
-              Sadece kendi fotoğrafını veya kullanma iznine sahip olduğun bir görseli seç. AI
-              önizlemeleri açıkça etiketlenir.
-            </Text>
+            <Text style={styles.noticeText}>{translateCopy("Sadece kendi fotoğrafını veya kullanma iznine sahip olduğun bir görseli seç. AI önizlemeleri açıkça etiketlenir.")}</Text>
           </View>
         </ScrollView>
         <View style={styles.bottom}>
           <GoldButton
             disabled={!selectedPhoto}
-            label="Fotoğrafla devam et"
+            label={translateCopy("Fotoğrafla devam et")}
             loading={busy}
             onPress={() => router.push('/(onboarding)/welcome')}
           />

@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useRouter } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -6,20 +8,20 @@ import { AppHeader, Icon, PrimaryButton, Screen } from '@/components';
 import { colors, gradients, radii, spacing, typography } from '@/theme';
 
 export default function GenerationDetailScreen() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   return (
     <Screen contentContainerStyle={styles.content}>
-      <AppHeader back title="Üretim" subtitle="Sonuçlar hazır" />
+      <AppHeader back title={translateCopy("Üretim")} subtitle={translateCopy("Sonuçlar hazır")} />
       <LinearGradient colors={gradients.midnight} style={styles.card}>
         <View style={styles.icon}>
           <Icon name="checkmark" size={31} color={colors.background} />
         </View>
-        <Text style={styles.title}>Karelerin hazır.</Text>
-        <Text style={styles.text}>
-          2 varyasyon oluşturuldu ve projen olarak güvenle kaydedildi.
-        </Text>
+        <Text style={styles.title}>{translateCopy("Karelerin hazır.")}</Text>
+        <Text style={styles.text}>{translateCopy("2 varyasyon oluşturuldu ve projen olarak güvenle kaydedildi.")}</Text>
         <PrimaryButton
-          label="Sonuçları görüntüle"
+          label={translateCopy("Sonuçları görüntüle")}
           icon="images-outline"
           onPress={() => router.replace('/generations/demo/results' as never)}
           style={styles.button}

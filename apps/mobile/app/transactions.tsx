@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -19,15 +21,15 @@ import {
 import { colors, spacing, typography } from '@/theme';
 
 const filters: { id: TransactionFilter; label: string }[] = [
-  { id: 'all', label: 'Tümü' },
+  { id: 'all', get label() { return translateCopy("Tümü"); } },
   { id: 'earned', label: 'Eklenen' },
   { id: 'spent', label: 'Harcanan' },
-  { id: 'returned', label: 'İadeler' },
+  { id: 'returned', get label() { return translateCopy("İadeler"); } },
 ];
 
 function dateTime(value: string) {
   const date = new Date(value);
-  if (!Number.isFinite(date.getTime())) return 'Tarih bilgisi yok';
+  if (!Number.isFinite(date.getTime())) return translateCopy("Tarih bilgisi yok");
   return new Intl.DateTimeFormat('tr-TR', {
     day: '2-digit',
     month: 'long',
@@ -44,6 +46,8 @@ function statusColor(status: string) {
 }
 
 function TransactionRow({ item }: { item: CreditTransaction }) {
+  const languageRevision = useLanguageRevision();
+
   const positive = item.amount > 0;
   return (
     <GlassSurface tone={positive ? 'gold' : 'iridescent'} glow={false} radius={22}>
@@ -76,38 +80,38 @@ function TransactionRow({ item }: { item: CreditTransaction }) {
         </View>
         {item.availableAfter != null ? (
           <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>İşlem sonrası bakiye</Text>
+            <Text style={styles.detailLabel}>{translateCopy("İşlem sonrası bakiye")}</Text>
             <Text style={styles.detailValue}>{item.availableAfter} kredi</Text>
           </View>
         ) : null}
         {item.reservedAfter != null && item.reservedAfter > 0 ? (
           <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Üretim için ayrılan</Text>
+            <Text style={styles.detailLabel}>{translateCopy("Üretim için ayrılan")}</Text>
             <Text style={styles.detailValue}>{item.reservedAfter} kredi</Text>
           </View>
         ) : null}
         {item.referenceType ? (
           <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>İşlem türü</Text>
+            <Text style={styles.detailLabel}>{translateCopy("İşlem türü")}</Text>
             <Text numberOfLines={1} style={styles.detailValue}>
               {item.referenceType}
             </Text>
           </View>
         ) : null}
-        <Text selectable style={styles.transactionId}>
-          İşlem no: {item.id}
-        </Text>
+        <Text selectable style={styles.transactionId}>{translateCopy("İşlem no: {{p0}}", { p0: item.id })}</Text>
       </View>
     </GlassSurface>
   );
 }
 
 function TransactionsContent() {
+  const languageRevision = useLanguageRevision();
+
   const credits = useAvailableCredits();
   const query = useCreditTransactions();
   const [filter, setFilter] = useState<TransactionFilter>('all');
-  const all = useMemo(() => settledCreditHistory(query.data?.items ?? []), [query.data?.items]);
-  const items = useMemo(() => filterTransactions(all, filter), [all, filter]);
+  const all = useMemo(() => settledCreditHistory(query.data?.items ?? []), [query.data?.items, languageRevision]);
+  const items = useMemo(() => filterTransactions(all, filter), [all, filter, languageRevision]);
   const earned = all.reduce((sum, item) => sum + Math.max(item.amount, 0), 0);
   const spent = all.reduce((sum, item) => sum + Math.abs(Math.min(item.amount, 0)), 0);
 
@@ -115,8 +119,8 @@ function TransactionsContent() {
     <Screen contentContainerStyle={styles.content}>
       <AppHeader
         back
-        title="Hesap hareketleri"
-        subtitle="Kredi geçmişin ve işlem ayrıntıları"
+        title={translateCopy("Hesap hareketleri")}
+        subtitle={translateCopy("Kredi geçmişin ve işlem ayrıntıları")}
         right={<CreditBadge credits={credits} />}
       />
       <View style={styles.summaryRow}>
@@ -140,7 +144,7 @@ function TransactionsContent() {
         >
           <Icon name="flash-outline" size={19} color="#C5A5EF" />
           <Text style={styles.summaryValue}>−{spent}</Text>
-          <Text style={styles.summaryLabel}>Toplam kullanılan</Text>
+          <Text style={styles.summaryLabel}>{translateCopy("Toplam kullanılan")}</Text>
         </GlassSurface>
       </View>
       <ScrollView
@@ -160,18 +164,18 @@ function TransactionsContent() {
         ))}
       </ScrollView>
       <View style={styles.heading}>
-        <Text style={styles.headingTitle}>İşlemler</Text>
+        <Text style={styles.headingTitle}>{translateCopy("İşlemler")}</Text>
         <Text style={styles.headingCount}>{items.length} hareket</Text>
       </View>
       {query.isLoading ? (
         <View style={styles.state}>
           <Icon name="hourglass-outline" size={25} color={colors.accentYellow} />
-          <Text style={styles.stateText}>Hesap hareketleri yükleniyor…</Text>
+          <Text style={styles.stateText}>{translateCopy("Hesap hareketleri yükleniyor…")}</Text>
         </View>
       ) : query.isError ? (
         <Pressable onPress={() => void query.refetch()} style={styles.state}>
           <Icon name="refresh-outline" size={25} color={colors.accentYellow} />
-          <Text style={styles.stateText}>Hareketler alınamadı. Yeniden dene.</Text>
+          <Text style={styles.stateText}>{translateCopy("Hareketler alınamadı. Yeniden dene.")}</Text>
         </Pressable>
       ) : items.length ? (
         <View style={styles.list}>
@@ -182,7 +186,7 @@ function TransactionsContent() {
       ) : (
         <View style={styles.state}>
           <Icon name="receipt-outline" size={25} color={colors.accentYellow} />
-          <Text style={styles.stateText}>Bu kategoride henüz hesap hareketi yok.</Text>
+          <Text style={styles.stateText}>{translateCopy("Bu kategoride henüz hesap hareketi yok.")}</Text>
         </View>
       )}
     </Screen>
@@ -190,6 +194,8 @@ function TransactionsContent() {
 }
 
 export default function TransactionsScreen() {
+  const languageRevision = useLanguageRevision();
+
   return (
     <RequireAuthenticated>
       <TransactionsContent />

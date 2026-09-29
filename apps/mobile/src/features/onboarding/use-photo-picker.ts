@@ -1,3 +1,4 @@
+import { tr as translateCopy } from '@/i18n/engine';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { Alert, Platform } from 'react-native';
@@ -48,7 +49,7 @@ export function useOnboardingPhotoPicker({ onSelected }: Options) {
         void Haptics.selectionAsync();
       }
     } catch {
-      Alert.alert('Fotoğraf açılamadı', 'Galeriyi açarken bir sorun oldu. Lütfen tekrar dene.');
+      Alert.alert(translateCopy("Fotoğraf açılamadı"), translateCopy("Galeriyi açarken bir sorun oldu. Lütfen tekrar dene."));
     } finally {
       setBusy(false);
     }
@@ -60,7 +61,7 @@ export function useOnboardingPhotoPicker({ onSelected }: Options) {
     try {
       const permission = await ImagePicker.requestCameraPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert('Kamera izni gerekli', 'Yeni bir fotoğraf çekmek için BirKare AI’ye kamera erişimi ver.');
+        Alert.alert('Kamera izni gerekli', translateCopy("Yeni bir fotoğraf çekmek için BirKare AI’ye kamera erişimi ver."));
         return;
       }
       const result = await ImagePicker.launchCameraAsync({
@@ -75,7 +76,7 @@ export function useOnboardingPhotoPicker({ onSelected }: Options) {
         void Haptics.selectionAsync();
       }
     } catch {
-      Alert.alert('Kamera açılamadı', 'Kamerayı açarken bir sorun oldu. Lütfen tekrar dene.');
+      Alert.alert(translateCopy("Kamera açılamadı"), translateCopy("Kamerayı açarken bir sorun oldu. Lütfen tekrar dene."));
     } finally {
       setBusy(false);
     }

@@ -1,3 +1,6 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { getLocale as getAppLocale } from '@/i18n/engine';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useCallback, useMemo, useState } from 'react';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -10,10 +13,12 @@ import { planById, plansFromOffering, preferredPlanId, type ProPlanId } from './
 
 /** Real purchase controller. Never falls back to screenshot/demo packages. */
 export function CustomProPaywall() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const billing = useRevenueCat();
-  const plans = useMemo(() => plansFromOffering(billing.offering), [billing.offering]);
-  const displayPlans = useMemo(() => toDisplayPlans(plans), [plans]);
+  const plans = useMemo(() => plansFromOffering(billing.offering), [billing.offering, languageRevision]);
+  const displayPlans = useMemo(() => toDisplayPlans(plans), [plans, languageRevision]);
   const [selected, setSelected] = useState<ProPlanId | null>(null);
   const selectedPlan = planById(plans, selected) ?? planById(plans, preferredPlanId(plans));
   const resolvedSelected = selectedPlan?.id ?? null;
@@ -31,15 +36,15 @@ export function CustomProPaywall() {
       if (result.isPro) {
         Alert.alert(
           'BirKare Pro',
-          restoring ? 'Pro erişiminiz geri yüklendi.' : 'Pro erişiminiz aktif.',
-          [{ text: 'Tamam', onPress: close }],
+          restoring ? translateCopy("Pro erişiminiz geri yüklendi.") : translateCopy("Pro erişiminiz aktif."),
+          [{ text: translateCopy("Tamam"), onPress: close }],
         );
       } else {
         Alert.alert(
           'BirKare Pro',
           restoring
-            ? 'Bu hesapta aktif Pro hakkı bulunamadı. Satın aldığınız hesapla giriş yaptığınızdan emin olun.'
-            : 'İşlem tamamlandı ancak Pro hakkı henüz doğrulanamadı. Tekrar satın almayın; durumu yenileyin.',
+            ? translateCopy("Bu hesapta aktif Pro hakkı bulunamadı. Satın aldığınız hesapla giriş yaptığınızdan emin olun.")
+            : translateCopy("İşlem tamamlandı ancak Pro hakkı henüz doğrulanamadı. Tekrar satın almayın; durumu yenileyin."),
         );
       }
     },
@@ -72,7 +77,7 @@ export function CustomProPaywall() {
   const expiredAt = billing.entitlement?.expirationDate;
   const date =
     expiredAt && Number.isFinite(Date.parse(expiredAt))
-      ? new Date(expiredAt).toLocaleDateString('tr-TR')
+      ? new Date(expiredAt).toLocaleDateString(getAppLocale())
       : null;
   const activeNote = billing.subscriptionCancelled
     ? date
@@ -99,7 +104,7 @@ export function CustomProPaywall() {
       ? `${priceMismatch.label} mağazadan ${priceMismatch.package.product.currencyCode} olarak geliyor. Türkiye fiyatını test etmek için Apple Sandbox / Google Play test hesabının mağaza bölgesini Türkiye yapın. BirKare fiyatı dönüştürmez; mağazanın gerçek priceString değeri gösterilir.`
       : `${priceMismatch.label} mağaza fiyatı politika ile eşleşmiyor. Beklenen TRY fiyatı ₺${MOBILE_PRO_PRICE_POLICY[
           priceMismatch.id
-        ].toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. App Store Connect / Google Play Console fiyatını kontrol edin.`
+        ].toLocaleString(getAppLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. App Store Connect / Google Play Console fiyatını kontrol edin.`
     : null;
 
   const cancellationStatus = billing.subscriptionCancelled
@@ -124,7 +129,7 @@ export function CustomProPaywall() {
       <Pressable
         testID="pro-sheet-backdrop"
         accessibilityRole="button"
-        accessibilityLabel="Pro ekranını kapat"
+        accessibilityLabel={translateCopy("Pro ekranını kapat")}
         onPress={close}
         style={s.backdrop}
       />

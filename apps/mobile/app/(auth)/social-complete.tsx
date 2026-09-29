@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
@@ -39,6 +41,8 @@ import {
 import { useCopy } from '@/features/settings/language-store';
 
 export default function SocialCompleteScreen() {
+  const languageRevision = useLanguageRevision();
+
   const copy = useCopy();
   const completeSocialRegistration = useAuthStore((store) => store.completeSocialRegistration);
   const [pendingRegistration] = useState(getPendingSocialRegistration);
@@ -83,7 +87,7 @@ export default function SocialCompleteScreen() {
     if (!pendingRegistration) {
       setError('root', {
         message:
-          'Bu sosyal kayıt oturumu bulunamadı veya süresi doldu. Lütfen yeniden sosyal giriş yap.',
+          translateCopy("Bu sosyal kayıt oturumu bulunamadı veya süresi doldu. Lütfen yeniden sosyal giriş yap."),
       });
       return;
     }
@@ -114,7 +118,7 @@ export default function SocialCompleteScreen() {
         message:
           error instanceof Error
             ? error.message
-            : 'Sosyal kayıt tamamlanamadı. Lütfen tekrar deneyin.',
+            : translateCopy("Sosyal kayıt tamamlanamadı. Lütfen tekrar deneyin."),
       });
     }
   });
@@ -137,8 +141,8 @@ export default function SocialCompleteScreen() {
           tone={pendingRegistration ? 'neutral' : 'warning'}
         >
           {pendingRegistration
-            ? `${pendingRegistration.provider ?? 'Sosyal giriş'} ile doğrulanan hesap: ${pendingRegistration.profile.email}`
-            : 'Sosyal kayıt oturumun bulunamadı. Giriş ekranından yeniden devam et.'}
+            ? translateCopy("{{p0}} ile doğrulanan hesap: {{p1}}", { p0: pendingRegistration.provider ?? 'Sosyal giriş', p1: pendingRegistration.profile.email })
+            : translateCopy("Sosyal kayıt oturumun bulunamadı. Giriş ekranından yeniden devam et.")}
         </AuthNote>
         <Controller
           control={control}
@@ -228,7 +232,7 @@ export default function SocialCompleteScreen() {
                     birthYearInput.current = input;
                     ref(input);
                   }}
-                  accessibilityLabel="Doğum yılı"
+                  accessibilityLabel={translateCopy("Doğum yılı")}
                   blurOnSubmit={false}
                   cursorColor={authColors.yellow}
                   inputAccessoryViewID={

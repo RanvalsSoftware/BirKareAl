@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useEffect, useRef } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -10,6 +12,8 @@ import { CreateHeader, MiniChoice, WizardFooter } from '@/features/create/compon
 import { colors, typography } from '@/theme';
 
 export default function GenderChangeScreen() {
+  const languageRevision = useLanguageRevision();
+
   return (
     <RequireAuthenticated>
       <GenderChangeEditor />
@@ -17,6 +21,8 @@ export default function GenderChangeScreen() {
   );
 }
 function GenderChangeEditor() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const credits = useAvailableCredits();
   const { flow, set } = useCreateFlow();
@@ -50,12 +56,12 @@ function GenderChangeEditor() {
   return (
     <Screen contentContainerStyle={styles.content}>
       <CreateHeader
-        title="Cinsiyet değiştirme"
-        subtitle="Yaratıcı AI görünüm dönüşümü"
+        title={translateCopy("Cinsiyet değiştirme")}
+        subtitle={translateCopy("Yaratıcı AI görünüm dönüşümü")}
         fallback="/(tabs)/explore"
       />
       <View style={styles.credit}>
-        <Text style={styles.hint}>Güzellik rötuşundan ayrı bir AI araçtır.</Text>
+        <Text style={styles.hint}>{translateCopy("Güzellik rötuşundan ayrı bir AI araçtır.")}</Text>
         <CreditBadge credits={credits} />
       </View>
       <View style={styles.preview}>
@@ -67,28 +73,24 @@ function GenderChangeEditor() {
       </View>
       <Text style={styles.hint}>
         {flow.sourceUri
-          ? 'Kaynak fotoğrafın · Dönüşüm oluşturduğunda uygulanır.'
-          : 'Temsili dönüşüm görseli · Kendi fotoğrafını yükle.'}
+          ? translateCopy("Kaynak fotoğrafın · Dönüşüm oluşturduğunda uygulanır.")
+          : translateCopy("Temsili dönüşüm görseli · Kendi fotoğrafını yükle.")}
       </Text>
-      <Text style={styles.title}>Nasıl bir görünüm istersin?</Text>
+      <Text style={styles.title}>{translateCopy("Nasıl bir görünüm istersin?")}</Text>
       <View style={styles.row}>
         {(['feminine', 'masculine'] as const).map((presentation) => (
           <MiniChoice
             key={presentation}
-            label={presentation === 'feminine' ? 'Kadınsı görünüm' : 'Erkeksi görünüm'}
+            label={presentation === 'feminine' ? translateCopy("Kadınsı görünüm") : translateCopy("Erkeksi görünüm")}
             selected={flow.transformation?.presentation === presentation}
             onPress={() => set({ transformation: { kind: 'gender-swap', presentation } })}
           />
         ))}
       </View>
-      <Notice tone="neutral" title="Sen seçersin">
-        Fotoğraftan cinsiyetin veya kimliğin tahmin edilmez. Seçtiğin sunuma göre yetişkin yüz
-        görünümü yaratıcı biçimde düzenlenir; kıyafet, poz ve arka plan korunur. Sonuç kimliğin
-        hakkında bir çıkarım değildir.
-      </Notice>
+      <Notice tone="neutral" title={translateCopy("Sen seçersin")}>{translateCopy("Fotoğraftan cinsiyetin veya kimliğin tahmin edilmez. Seçtiğin sunuma göre yetişkin yüz görünümü yaratıcı biçimde düzenlenir; kıyafet, poz ve arka plan korunur. Sonuç kimliğin hakkında bir çıkarım değildir.")}</Notice>
       <WizardFooter
         label={
-          flow.sourceUri && flow.sourceRightsConfirmed ? 'Üretim özetini gör' : 'Fotoğrafını seç'
+          flow.sourceUri && flow.sourceRightsConfirmed ? translateCopy("Üretim özetini gör") : translateCopy("Fotoğrafını seç")
         }
         disabled={!flow.transformation}
         onPress={() =>
@@ -100,8 +102,8 @@ function GenderChangeEditor() {
         }
         hint={
           flow.transformation
-            ? 'Kredi maliyetini üretimden önce görüp onaylarsın.'
-            : 'Devam etmek için istediğin görünümü seç.'
+            ? translateCopy("Kredi maliyetini üretimden önce görüp onaylarsın.")
+            : translateCopy("Devam etmek için istediğin görünümü seç.")
         }
       />
     </Screen>

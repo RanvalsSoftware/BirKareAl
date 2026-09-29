@@ -1,3 +1,4 @@
+import { tr as translateCopy } from '@/i18n/engine';
 export type ShareOutput = {
   id: string;
   selected: boolean;
@@ -18,7 +19,7 @@ export const AI_DISCLOSURE =
 
 export function selectedShareOutput(generation: ShareGeneration, outputId?: string) {
   if (generation.status !== 'COMPLETED')
-    throw new Error('Üretim tamamlanmadan paylaşım yapılamaz.');
+    throw new Error(translateCopy("Üretim tamamlanmadan paylaşım yapılamaz."));
   const outputs = generation.outputs.filter(
     (output) => output.asset?.status === 'READY' && output.asset.accessUrl,
   );
@@ -27,7 +28,7 @@ export function selectedShareOutput(generation: ShareGeneration, outputId?: stri
     ? outputs.find((item) => item.id === outputId)
     : (outputs.find((item) => item.selected) ?? outputs[0]);
   if (!output?.asset)
-    throw new Error('Seçili görsel kullanılamıyor. Sonuçları yenileyip tekrar dene.');
+    throw new Error(translateCopy("Seçili görsel kullanılamıyor. Sonuçları yenileyip tekrar dene."));
   return { ...output, asset: output.asset };
 }
 
@@ -38,7 +39,7 @@ export function shareFileType(mimeType: string) {
     'image/webp': { extension: 'webp', uti: 'org.webmproject.webp' },
   };
   const result = types[mimeType as keyof typeof types];
-  if (!result) throw new Error('Bu görsel biçimi dışa aktarma için desteklenmiyor.');
+  if (!result) throw new Error(translateCopy("Bu görsel biçimi dışa aktarma için desteklenmiyor."));
   return result;
 }
 
@@ -46,12 +47,12 @@ export function shareDownloadRequest(sourceUrl: string, baseUrl: string, token: 
   const base = new URL(baseUrl);
   const url = new URL(sourceUrl, `${baseUrl}/`);
   if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) {
-    throw new Error('Görsel bağlantısı güvenli değil.');
+    throw new Error(translateCopy("Görsel bağlantısı güvenli değil."));
   }
   // A private, signed storage URL never receives the application's bearer token.
   const sameOrigin = url.origin === base.origin;
   if (!sameOrigin && url.protocol !== 'https:')
-    throw new Error('Görsel bağlantısı HTTPS olmalıdır.');
+    throw new Error(translateCopy("Görsel bağlantısı HTTPS olmalıdır."));
   return {
     url: url.href,
     headers: sameOrigin && token ? { Authorization: `Bearer ${token}` } : undefined,

@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
@@ -39,6 +41,8 @@ type QuoteState = {
 };
 
 export default function ReviewScreen() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const queryClient = useQueryClient();
   const { autoStart: rawAutoStart } = useLocalSearchParams<{ autoStart?: string }>();
@@ -57,7 +61,7 @@ export default function ReviewScreen() {
   const attemptRef = useRef<{ fingerprint: string; key: string } | null>(null);
   const [retryFingerprint, setRetryFingerprint] = useState<string | null>(null);
   const [submissionStage, setSubmissionStage] = useState<SubmissionStage>('CHECKING');
-  const flowFingerprint = useMemo(() => JSON.stringify(flow), [flow]);
+  const flowFingerprint = useMemo(() => JSON.stringify(flow), [flow, languageRevision]);
   const retryingSameSubmission = retryFingerprint === flowFingerprint;
   const [startError, setStartError] = useState<string | null>(null);
   const [quoteErrorVisible, setQuoteErrorVisible] = useState(true);
@@ -86,7 +90,7 @@ export default function ReviewScreen() {
       flow.transformation,
       flow.trendPreset,
       flow.secondarySourceUri,
-    ],
+    , languageRevision],
   );
   const quoteRequestKey = `${quoteInputKey}:${quoteRefresh}`;
   const quote = quoteState.requestKey === quoteRequestKey ? quoteState.quote : null;
@@ -210,20 +214,20 @@ export default function ReviewScreen() {
   return (
     <Screen contentContainerStyle={styles.content}>
       <CreateHeader
-        title="Üretim özeti"
-        subtitle="Oluşturmadan önce son kontrol"
+        title={translateCopy("Üretim özeti")}
+        subtitle={translateCopy("Oluşturmadan önce son kontrol")}
         step={3}
         right={
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Yeni oluştur"
+            accessibilityLabel={translateCopy("Yeni oluştur")}
             onPress={() => {
               reset();
               router.dismissTo('/create' as never);
             }}
             style={styles.newCreate}
           >
-            <Text style={styles.newCreateText}>Yeni oluştur</Text>
+            <Text style={styles.newCreateText}>{translateCopy("Yeni oluştur")}</Text>
             <Icon name="add" size={18} color={colors.textPrimary} />
           </Pressable>
         }
@@ -241,19 +245,19 @@ export default function ReviewScreen() {
             label="Mod"
             value={
               flow.beauty
-                ? 'Güzellik Stüdyosu'
+                ? translateCopy("Güzellik Stüdyosu")
                 : flow.transformation
-                  ? 'Cinsiyet değiştirme'
+                  ? translateCopy("Cinsiyet değiştirme")
                   : flow.trendPreset
-                    ? 'Akımlar'
+                    ? translateCopy("Akımlar")
                     : modeName(flow.mode)
             }
             icon="sparkles-outline"
           />
           {flow.trendPreset ? (
             <Detail
-              label="Akım"
-              value={`${getTrendPreset(flow.trendPreset)?.name ?? 'Akım'} · %${flow.filterIntensity}`}
+              label={translateCopy("Akım")}
+              value={`${getTrendPreset(flow.trendPreset)?.name ?? translateCopy("Akım")} · %${flow.filterIntensity}`}
               icon="sparkles-outline"
             />
           ) : (
@@ -265,12 +269,12 @@ export default function ReviewScreen() {
           )}
           <Detail
             label="Kompozisyon"
-            value={`${flow.trendPreset ? 'Akıma uygun kadraj' : flow.mode === 'filter' || flow.mode === 'background' ? 'Kaynak kadrajı' : flow.composition} · ${flow.aspectRatio}`}
+            value={`${flow.trendPreset ? translateCopy("Akıma uygun kadraj") : flow.mode === 'filter' || flow.mode === 'background' ? translateCopy("Kaynak kadrajı") : flow.composition} · ${flow.aspectRatio}`}
             icon="scan-outline"
           />
           <Detail
-            label="Çıktı"
-            value={`${flow.numberOfImages} görsel · ${flow.quality}`}
+            label={translateCopy("Çıktı")}
+            value={translateCopy("{{p0}} görsel · {{p1}}", { p0: flow.numberOfImages, p1: flow.quality })}
             icon="image-outline"
           />
         </View>
@@ -283,10 +287,8 @@ export default function ReviewScreen() {
             style={styles.secondarySummaryImage}
           />
           <View style={styles.secondarySummaryCopy}>
-            <Text style={styles.secondarySummaryTitle}>İkinci kişi kaynağı</Text>
-            <Text style={styles.secondarySummaryText}>
-              Ayrı fotoğraftaki kişinin kimliği korunarak aynı sahneye eklenir.
-            </Text>
+            <Text style={styles.secondarySummaryTitle}>{translateCopy("İkinci kişi kaynağı")}</Text>
+            <Text style={styles.secondarySummaryText}>{translateCopy("Ayrı fotoğraftaki kişinin kimliği korunarak aynı sahneye eklenir.")}</Text>
           </View>
           <Icon name="people-outline" size={20} color={colors.accentYellow} />
         </View>
@@ -311,20 +313,17 @@ export default function ReviewScreen() {
         </View>
       ) : null}
       {flow.trendPreset ? (
-        <Notice tone="neutral" title="Akım dönüşümü">
-          Yukarıdaki görsel kaynak fotoğrafındır, oluşturulmuş sonuç değildir. Yüz kimliğin
-          korunarak kıyafet, poz, saçın şekillendirilmesi, makyaj ve ortam akıma göre değişebilir.
-        </Notice>
+        <Notice tone="neutral" title={translateCopy("Akım dönüşümü")}>{translateCopy("Yukarıdaki görsel kaynak fotoğrafındır, oluşturulmuş sonuç değildir. Yüz kimliğin korunarak kıyafet, poz, saçın şekillendirilmesi, makyaj ve ortam akıma göre değişebilir.")}</Notice>
       ) : null}
       {flow.customInstruction ? (
         <View style={styles.instruction}>
-          <Text style={styles.instructionLabel}>ÖZEL TALİMAT</Text>
+          <Text style={styles.instructionLabel}>{translateCopy("ÖZEL TALİMAT")}</Text>
           <Text style={styles.instructionText}>{flow.customInstruction}</Text>
         </View>
       ) : null}
       <View style={styles.reviewStack}>
         <View style={styles.costCard}>
-          <Text style={styles.costLabel}>SUNUCU TARAFINDAN HESAPLANAN MALİYET</Text>
+          <Text style={styles.costLabel}>{translateCopy("SUNUCU TARAFINDAN HESAPLANAN MALİYET")}</Text>
           <View style={styles.costRow}>
             <Text style={styles.cost}>
               <Text style={styles.costNumber}>{isQuoting ? '…' : quote ? cost : '—'}</Text> kredi
@@ -333,14 +332,12 @@ export default function ReviewScreen() {
           </View>
           <Text style={styles.remaining}>
             {quote ? (
-              <>
-                Üretimden sonra tahmini{' '}
-                <Text style={styles.remainingStrong}>{remainingCredits} kredi</Text> kalır.
-              </>
+              <>{translateCopy("Üretimden sonra tahmini")}{' '}
+                <Text style={styles.remainingStrong}>{remainingCredits} kredi</Text>{' '}{translateCopy("kalır.")}</>
             ) : quoteError ? (
-              'Kredi tutarı alınamadı; bakiye değişmedi.'
+              translateCopy("Kredi tutarı alınamadı; bakiye değişmedi.")
             ) : (
-              'Kredi özeti güvenle doğrulanıyor.'
+              translateCopy("Kredi özeti güvenle doğrulanıyor.")
             )}
           </Text>
           {quote ? (
@@ -357,39 +354,32 @@ export default function ReviewScreen() {
         {quoteError && quoteErrorVisible ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Kredi özetini yeniden dene"
+            accessibilityLabel={translateCopy("Kredi özetini yeniden dene")}
             onPress={() => setQuoteRefresh((value) => value + 1)}
           >
-            <Notice tone="warning" title="Kredi özeti alınamadı">
-              {quoteError} Yeniden denemek için dokun.
-            </Notice>
+            <Notice tone="warning" title={translateCopy("Kredi özeti alınamadı")}>{translateCopy("{{p0}} Yeniden denemek için dokun.", { p0: quoteError })}</Notice>
           </Pressable>
         ) : null}
         {quoteError && !quoteErrorVisible ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Kredi özetini yeniden dene"
+            accessibilityLabel={translateCopy("Kredi özetini yeniden dene")}
             onPress={() => setQuoteRefresh((value) => value + 1)}
             style={styles.retryQuote}
           >
             <Icon name="refresh" size={18} color={colors.accentYellow} />
-            <Text style={styles.retryQuoteText}>Kredi özetini yeniden dene</Text>
+            <Text style={styles.retryQuoteText}>{translateCopy("Kredi özetini yeniden dene")}</Text>
           </Pressable>
         ) : null}
         {quote && !quote.canGenerate ? (
-          <Notice tone="warning" title="Yetersiz kredi">
-            Bu üretim için {cost} kredi gerekir; kullanılabilir bakiyen {availableCredits} kredi.
-          </Notice>
+          <Notice tone="warning" title="Yetersiz kredi">{translateCopy("Bu üretim için {{p0}} kredi gerekir; kullanılabilir bakiyen {{p1}} kredi.", { p0: cost, p1: availableCredits })}</Notice>
         ) : null}
         {startError ? (
-          <Notice tone="warning" title="Üretim başlatılamadı">
+          <Notice tone="warning" title={translateCopy("Üretim başlatılamadı")}>
             {startError}
           </Notice>
         ) : null}
-        <Notice tone="neutral" title="Başlatmadan önce">
-          Üretim, gönderdiğin kaynak fotoğrafı ve seçimlerini kullanır. Sonuçlar AI içeriği olarak
-          işaretlenir.
-        </Notice>
+        <Notice tone="neutral" title={translateCopy("Başlatmadan önce")}>{translateCopy("Üretim, gönderdiğin kaynak fotoğrafı ve seçimlerini kullanır. Sonuçlar AI içeriği olarak işaretlenir.")}</Notice>
         {isStarting ? <SubmissionProgress stage={submissionStage} /> : null}
       </View>
       <WizardFooter
@@ -397,20 +387,20 @@ export default function ReviewScreen() {
           isStarting
             ? `${submissionStageLabels[submissionStage]}…`
             : retryingSameSubmission
-              ? 'Aynı işlemi yeniden dene'
+              ? translateCopy("Aynı işlemi yeniden dene")
               : isQuoting
-                ? 'Kredi özeti hazırlanıyor…'
+                ? translateCopy("Kredi özeti hazırlanıyor…")
                 : !quote
-                  ? 'Kredi özeti gerekli'
-                  : `${cost} krediyle oluştur`
+                  ? translateCopy("Kredi özeti gerekli")
+                  : translateCopy("{{p0}} krediyle oluştur", { p0: cost })
         }
         disabled={!readyToStart}
         loading={isStarting}
         onPress={() => void startGeneration()}
         hint={
           flow.sourceRightsConfirmed
-            ? 'Fiyat, yükleme ve kredi rezervasyonu API tarafından doğrulanır.'
-            : 'Devam etmek için kaynak fotoğraf kullanım hakkını onayla.'
+            ? translateCopy("Fiyat, yükleme ve kredi rezervasyonu API tarafından doğrulanır.")
+            : translateCopy("Devam etmek için kaynak fotoğraf kullanım hakkını onayla.")
         }
       />
     </Screen>
@@ -426,6 +416,8 @@ function Detail({
   value: string;
   icon: React.ComponentProps<typeof Icon>['name'];
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View style={styles.detail}>
       <View style={styles.detailIcon}>

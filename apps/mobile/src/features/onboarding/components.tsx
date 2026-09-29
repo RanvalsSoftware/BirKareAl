@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -24,6 +26,8 @@ import { onboardingImages, type OnboardingPhoto, resolveOnboardingPhoto } from '
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
 export function BrandWordmark({ compact = false }: { compact?: boolean }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View accessibilityLabel="BirKare AI" style={[styles.brand, compact && styles.brandCompact]}>
       <Image source={onboardingImages.brandMark} style={[styles.brandMark, compact && styles.brandMarkCompact]} />
@@ -43,11 +47,13 @@ export function OnboardingHeader({
   onBack?: () => void;
   onSkip?: () => void;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View style={styles.header}>
       <View style={styles.headerSide}>
         {onBack ? (
-          <Pressable accessibilityLabel="Geri" accessibilityRole="button" hitSlop={10} onPress={onBack} style={styles.backButton}>
+          <Pressable accessibilityLabel={translateCopy("Geri")} accessibilityRole="button" hitSlop={10} onPress={onBack} style={styles.backButton}>
             <Ionicons color={colors.textPrimary} name="arrow-back" size={21} />
           </Pressable>
         ) : null}
@@ -59,7 +65,7 @@ export function OnboardingHeader({
       <View style={[styles.headerSide, styles.headerRight]}>
         {onSkip ? (
           <Pressable accessibilityRole="button" hitSlop={10} onPress={onSkip} style={styles.skipButton}>
-            <Text style={styles.skipText}>Geç</Text>
+            <Text style={styles.skipText}>{translateCopy("Geç")}</Text>
           </Pressable>
         ) : null}
       </View>
@@ -68,6 +74,8 @@ export function OnboardingHeader({
 }
 
 export function StepProgress({ active, total = 4 }: { active: number; total?: number }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View accessibilityLabel={`Onboarding ${active + 1} / ${total}`} style={styles.stepProgress}>
       {Array.from({ length: total }, (_, index) => (
@@ -90,6 +98,8 @@ export function GoldButton({
   loading?: boolean;
   icon?: IconName;
 }) {
+  const languageRevision = useLanguageRevision();
+
   const unavailable = disabled || loading;
   return (
     <Pressable
@@ -105,7 +115,7 @@ export function GoldButton({
     >
       <LinearGradient colors={['#FFE274', '#FFC400', '#E6A900']} end={{ x: 1, y: 1 }} start={{ x: 0, y: 0 }} style={styles.goldGradient}>
         {loading ? <Ionicons color={colors.background} name="ellipsis-horizontal" size={20} /> : null}
-        {!loading ? <Text style={styles.goldLabel}>{label}</Text> : <Text style={styles.goldLabel}>Hazırlanıyor</Text>}
+        {!loading ? <Text style={styles.goldLabel}>{label}</Text> : <Text style={styles.goldLabel}>{translateCopy("Hazırlanıyor")}</Text>}
         {!loading && icon ? <Ionicons color={colors.background} name={icon} size={19} /> : null}
       </LinearGradient>
     </Pressable>
@@ -113,6 +123,8 @@ export function GoldButton({
 }
 
 export function PhotoChip({ icon, children }: { icon: IconName; children: ReactNode }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View style={styles.photoChip}>
       <Ionicons color={colors.accentYellow} name={icon} size={13} />
@@ -138,6 +150,8 @@ type FloatPhotoProps = {
  * transform motion, avoiding Reanimated's transform/layout-animation warning.
  */
 function FloatPhoto({ source, left, top, width, height, rotate, driftX, driftY, delay }: FloatPhotoProps) {
+  const languageRevision = useLanguageRevision();
+
   const reducedMotion = useReducedMotion();
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
@@ -211,6 +225,8 @@ function FloatPhoto({ source, left, top, width, height, rotate, driftX, driftY, 
 }
 
 export function AnimatedPhotoCloud() {
+  const languageRevision = useLanguageRevision();
+
   const { width } = useWindowDimensions();
   const reducedMotion = useReducedMotion();
   const canvasWidth = Math.min(width - 32, 420);
@@ -262,7 +278,7 @@ export function AnimatedPhotoCloud() {
         <Animated.View style={[styles.centerCard, centerMotion]}>
           <Image source={surrounding[3]} style={StyleSheet.absoluteFill} />
           <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.16)', 'rgba(0,0,0,0.72)']} style={StyleSheet.absoluteFill} />
-          <View style={styles.centerCaption}><Text style={styles.centerCaptionText}>Bir kare, yeni bir hikâye</Text></View>
+          <View style={styles.centerCaption}><Text style={styles.centerCaptionText}>{translateCopy("Bir kare, yeni bir hikâye")}</Text></View>
         </Animated.View>
       </Animated.View>
     </View>
@@ -270,6 +286,8 @@ export function AnimatedPhotoCloud() {
 }
 
 export function SourceImage({ photo, style }: { photo: OnboardingPhoto | null; style?: object }) {
+  const languageRevision = useLanguageRevision();
+
   return <Image source={resolveOnboardingPhoto(photo)} style={style} />;
 }
 

@@ -1,7 +1,10 @@
+import { useLanguageRevision } from '@/i18n/use-language';
 import { Stack } from 'expo-router';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 export default function AuthLayout() {
+  const languageRevision = useLanguageRevision();
+
   const reducedMotion = useReducedMotion();
   return (
     <Stack

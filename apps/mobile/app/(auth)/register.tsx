@@ -1,3 +1,6 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { getLocale as getAppLocale } from '@/i18n/engine';
+import { tr as translateCopy } from '@/i18n/engine';
 import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router, useFocusEffect } from 'expo-router';
@@ -30,6 +33,8 @@ import { verificationRecoveryParams } from '@/features/auth/email-delivery';
 import { useCopy } from '@/features/settings/language-store';
 
 export default function RegisterScreen() {
+  const languageRevision = useLanguageRevision();
+
   const copy = useCopy();
   const signInWithGoogle = useAuthStore((store) => store.signInWithGoogle);
   const lastNameInputRef = useRef<TextInput>(null);
@@ -157,7 +162,7 @@ export default function RegisterScreen() {
             email: values.email.trim().toLowerCase(),
             password: values.password,
             dateOfBirth: `${values.birthYear}-01-01`,
-            locale: 'tr-TR',
+            locale: getAppLocale(),
             consent: {
               termsAccepted: values.acceptedTerms,
               privacyAccepted: values.acceptedPrivacy,
@@ -190,7 +195,7 @@ export default function RegisterScreen() {
         return;
       }
       setError('root', {
-        message: error instanceof Error ? error.message : 'Kayıt oluşturulamadı.',
+        message: error instanceof Error ? error.message : translateCopy("Kayıt oluşturulamadı."),
       });
     } finally {
       registering.current = false;
@@ -345,7 +350,7 @@ export default function RegisterScreen() {
                 <Ionicons color={authColors.yellow} name="calendar-outline" size={17} />
                 <TextInput
                   ref={birthYearInputRef}
-                  accessibilityLabel="Doğum yılı"
+                  accessibilityLabel={translateCopy("Doğum yılı")}
                   blurOnSubmit={false}
                   cursorColor={authColors.yellow}
                   keyboardType="number-pad"
@@ -379,7 +384,7 @@ export default function RegisterScreen() {
                 <Ionicons color={authColors.yellow} name="lock-closed-outline" size={17} />
                 <TextInput
                   ref={passwordInputRef}
-                  accessibilityLabel="Şifre"
+                  accessibilityLabel={translateCopy("Şifre")}
                   autoComplete="new-password"
                   blurOnSubmit={false}
                   cursorColor={authColors.yellow}
@@ -397,7 +402,7 @@ export default function RegisterScreen() {
                   value={value ?? ''}
                 />
                 <Pressable
-                  accessibilityLabel={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                  accessibilityLabel={showPassword ? translateCopy("Şifreyi gizle") : translateCopy("Şifreyi göster")}
                   accessibilityRole="button"
                   hitSlop={10}
                   onPress={() => setShowPassword((current) => !current)}
@@ -426,7 +431,7 @@ export default function RegisterScreen() {
                 <Ionicons color={authColors.yellow} name="shield-checkmark-outline" size={17} />
                 <TextInput
                   ref={confirmationInputRef}
-                  accessibilityLabel="Şifre tekrar"
+                  accessibilityLabel={translateCopy("Şifre tekrar")}
                   autoComplete="new-password"
                   blurOnSubmit={false}
                   cursorColor={authColors.yellow}
@@ -443,7 +448,7 @@ export default function RegisterScreen() {
                   value={value ?? ''}
                 />
                 <Pressable
-                  accessibilityLabel={showConfirmation ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                  accessibilityLabel={showConfirmation ? translateCopy("Şifreyi gizle") : translateCopy("Şifreyi göster")}
                   accessibilityRole="button"
                   hitSlop={10}
                   onPress={() => setShowConfirmation((current) => !current)}

@@ -1,3 +1,4 @@
+import { tr as translateCopy } from '@/i18n/engine';
 import { useRef, useState } from 'react';
 import { Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -26,12 +27,12 @@ export function useStudioImagePicker(onSelected: (image: PickedStudioImage) => v
       const asset = result.canceled ? null : result.assets[0];
       if (!asset) return;
       if (asset.fileSize && asset.fileSize > MAX_BYTES) {
-        Alert.alert('Dosya büyük', 'Lütfen 15 MB altındaki bir JPEG, PNG, WebP veya HEIC seç.');
+        Alert.alert(translateCopy("Dosya büyük"), translateCopy("Lütfen 15 MB altındaki bir JPEG, PNG, WebP veya HEIC seç."));
         return;
       }
       onSelected({ uri: asset.uri, name: asset.fileName ?? 'studio-source' });
     } catch {
-      Alert.alert('Görsel seçilemedi', 'Galeriyi yeniden açıp başka bir görsel deneyebilirsin.');
+      Alert.alert(translateCopy("Görsel seçilemedi"), translateCopy("Galeriyi yeniden açıp başka bir görsel deneyebilirsin."));
     } finally {
       lock.current = false;
       setBusy(false);

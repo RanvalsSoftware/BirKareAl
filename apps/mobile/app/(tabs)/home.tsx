@@ -1,3 +1,6 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { getLocale as getAppLocale } from '@/i18n/engine';
+import { tr as translateCopy } from '@/i18n/engine';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -74,8 +77,8 @@ const homeSlides: HomeSlide[] = [
   {
     id: 'football-scene',
     eyebrow: 'KURGUSAL SAHNE',
-    title: 'Stadyumda futbol anı',
-    description: 'Işıklar altında, futbol enerjisini taşıyan özgün bir sahne oluştur.',
+    get title() { return translateCopy("Stadyumda futbol anı"); },
+    get description() { return translateCopy("Işıklar altında, futbol enerjisini taşıyan özgün bir sahne oluştur."); },
     action: 'Sahneyi seç',
     icon: 'football',
     palette: ['#0B2939', '#52731D'],
@@ -91,8 +94,8 @@ const homeSlides: HomeSlide[] = [
   {
     id: 'beauty-filter',
     eyebrow: 'GÜZELLİK STÜDYOSU',
-    title: 'Işıltını öne çıkar',
-    description: '10 görünüm, sana özel yoğunluk. Doğal rötuş ve makyajı birlikte seç.',
+    get title() { return translateCopy("Işıltını öne çıkar"); },
+    get description() { return translateCopy("10 görünüm, sana özel yoğunluk. Doğal rötuş ve makyajı birlikte seç."); },
     action: 'Güzelliği keşfet',
     icon: 'color-filter',
     palette: ['#6B3240', '#D28A75'],
@@ -102,8 +105,8 @@ const homeSlides: HomeSlide[] = [
   {
     id: 'background-transform',
     eyebrow: 'ARKA PLAN DÖNÜŞÜMÜ',
-    title: 'Manzaranı yeniden kur',
-    description: 'Pozunu korurken fotoğrafını yeni bir şehir atmosferine taşı.',
+    get title() { return translateCopy("Manzaranı yeniden kur"); },
+    get description() { return translateCopy("Pozunu korurken fotoğrafını yeni bir şehir atmosferine taşı."); },
     action: 'Arka planı seç',
     icon: 'layers',
     palette: ['#3A251F', '#D88835'],
@@ -141,11 +144,13 @@ function displayFirstName(user: AuthUser | null): string | null {
     ?.replace(/[._-]+/g, ' ')
     .trim();
   return emailPrefix
-    ? emailPrefix.charAt(0).toLocaleUpperCase('tr-TR') + emailPrefix.slice(1)
+    ? emailPrefix.charAt(0).toLocaleUpperCase(getAppLocale()) + emailPrefix.slice(1)
     : null;
 }
 
 export default function HomeScreen() {
+  const languageRevision = useLanguageRevision();
+
   const copy = useCopy();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -278,7 +283,7 @@ export default function HomeScreen() {
       <View style={styles.quickActions}>
         <QuickAction
           icon="camera-outline"
-          title="Fotoğraf yükle"
+          title={translateCopy("Fotoğraf yükle")}
           onPress={() => {
             resetCreateFlow();
             router.push('/create/upload' as never);
@@ -295,12 +300,12 @@ export default function HomeScreen() {
         />
         <QuickAction
           icon="color-filter-outline"
-          title="Filtre dene"
+          title={translateCopy("Filtre dene")}
           onPress={() => router.push('/filters' as never)}
         />
         <QuickAction
           icon="sparkles-outline"
-          title="AI araçları"
+          title={translateCopy("AI araçları")}
           onPress={() => router.push('/(tabs)/explore' as never)}
         />
       </View>
@@ -314,13 +319,13 @@ export default function HomeScreen() {
         {popularSceneCards.map((item) => (
           <PopularSceneCard
             key={item.id}
-            title={item.id === 'face' ? 'Güzellik' : item.title}
+            title={item.id === 'face' ? translateCopy("Güzellik") : item.title}
             subtitle={
-              item.id === 'face' ? 'Doğal rötuş, makyaj ve sana özel yoğunluk' : item.description
+              item.id === 'face' ? translateCopy("Doğal rötuş, makyaj ve sana özel yoğunluk") : item.description
             }
             source={item.id === 'face' ? beautySceneImage : item.source}
             palette={item.palette}
-            badge={item.id === 'face' ? '10 görünüm' : `${item.creditCost} kredi`}
+            badge={item.id === 'face' ? translateCopy("10 görünüm") : `${item.creditCost} kredi`}
             onPress={() => {
               if (item.id === 'face') {
                 resetCreateFlow();
@@ -380,7 +385,7 @@ export default function HomeScreen() {
           <VisualTile
             key={item.id}
             title={item.name}
-            subtitle="AI ile uygulanır"
+            subtitle={translateCopy("AI ile uygulanır")}
             palette={item.palette}
             icon={item.icon}
             imageSource={item.previewSource}
@@ -420,10 +425,8 @@ export default function HomeScreen() {
           <Icon name="shield-checkmark-outline" size={23} color={colors.accentYellow} />
         </View>
         <View style={styles.bottomCardCopy}>
-          <Text style={styles.bottomCardTitle}>Senin fotoğrafın, senin kontrolün.</Text>
-          <Text style={styles.bottomCardText}>
-            Her üretim AI etiketiyle ve izin odaklı hazırlanır.
-          </Text>
+          <Text style={styles.bottomCardTitle}>{translateCopy("Senin fotoğrafın, senin kontrolün.")}</Text>
+          <Text style={styles.bottomCardText}>{translateCopy("Her üretim AI etiketiyle ve izin odaklı hazırlanır.")}</Text>
         </View>
       </LinearGradient>
     </ScrollView>
@@ -439,6 +442,8 @@ function HomeSlideCard({
   width: number;
   onPress: () => void;
 }) {
+  const languageRevision = useLanguageRevision();
+
   // iOS can resolve a percentage-based absolute image before an aspect-ratio
   // only parent has settled. Give campaign cards an explicit 3:2 canvas so
   // the supplied artwork is present on the first render as well as after HMR.
@@ -479,6 +484,8 @@ function HomeSlideCard({
  * A regular 100% × 100% child keeps campaign and popular-scene artwork visible.
  */
 function FittedCoverImage({ source }: { source: ImageSourcePropType }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View pointerEvents="none" style={styles.coverImageCanvas}>
       <Image fadeDuration={0} source={source} style={styles.coverImage} />
@@ -495,6 +502,8 @@ function QuickAction({
   title: string;
   onPress: () => void;
 }) {
+  const languageRevision = useLanguageRevision();
+
   const { fontScale } = useWindowDimensions();
   const reducedMotion = useReducedMotion();
   const scale = useSharedValue(1);
@@ -532,12 +541,12 @@ function QuickAction({
           </GlassSurface>
           <Text numberOfLines={2} style={styles.quickActionText}>
             {title === 'Fotoğraf yükle'
-              ? 'Fotoğraf\nyükle'
+              ? translateCopy("Fotoğraf yükle")
               : title === 'Kurgusal karakter'
                 ? 'Kurgusal\nkarakter'
                 : title === 'Filtre dene'
-                  ? 'Filtre\ndene'
-                  : 'AI\naraçları'}
+                  ? translateCopy("Filtre dene")
+                  : translateCopy("AI araçları")}
           </Text>
           <LinearGradient
             colors={['#8146D9', '#B15DC0', '#E78D3D']}
@@ -560,9 +569,11 @@ function StudioHomeCard({
   imageSource: ImageSourcePropType;
   onPress: () => void;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <Pressable
-      accessibilityLabel={`${item.name}, ${item.creditCost} krediden başlayan`}
+      accessibilityLabel={translateCopy("{{p0}}, {{p1}} krediden başlayan", { p0: item.name, p1: item.creditCost })}
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => [styles.studioCard, pressed && styles.pressed]}
@@ -608,6 +619,8 @@ function PopularSceneCard({
   badge: string;
   onPress: () => void;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <Pressable
       accessibilityRole="button"

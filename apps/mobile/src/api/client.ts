@@ -1,3 +1,5 @@
+import { tr as translateCopy } from '@/i18n/engine';
+import { getLocale } from '@/i18n/engine';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { getRefreshToken, saveRefreshToken, clearRefreshToken } from '../features/auth/token-store';
@@ -12,7 +14,7 @@ export type ApiError = Error & {
 
 export const API_REQUEST_TIMEOUT_MS = 30_000;
 export const NETWORK_REQUEST_FAILED_MESSAGE =
-  'Sunucuya şu anda ulaşılamıyor. İnternet bağlantını kontrol edip tekrar dene.';
+  translateCopy("Sunucuya şu anda ulaşılamıyor. İnternet bağlantını kontrol edip tekrar dene.");
 
 /** Never expose native URLSession/Expo fetch internals to application screens. */
 async function fetchWithTransportError(url: string, init: RequestInit): Promise<Response> {
@@ -44,7 +46,7 @@ function withRequestTimeout<T>(
     };
     const cancel = () => {
       controller.abort();
-      const error = new Error('İstek iptal edildi.') as ApiError;
+      const error = new Error(translateCopy("İstek iptal edildi.")) as ApiError;
       error.code = 'NETWORK_REQUEST_CANCELLED';
       finish({ error });
     };
@@ -56,7 +58,7 @@ function withRequestTimeout<T>(
     timer = setTimeout(() => {
       controller.abort();
       const error = new Error(
-        'Sunucu zamanında yanıt vermedi. Bağlantını kontrol edip yeniden deneyebilirsin.',
+        translateCopy("Sunucu zamanında yanıt vermedi. Bağlantını kontrol edip yeniden deneyebilirsin."),
       ) as ApiError;
       error.code = 'NETWORK_REQUEST_TIMEOUT';
       finish({ error });
@@ -91,7 +93,7 @@ export function invalidateSessionRequests(): void {
 
 function assertCurrentSession(revision: number): void {
   if (revision === sessionRevision) return;
-  const error = new Error('Oturum değişti. Lütfen bu işlemi yeniden başlat.') as ApiError;
+  const error = new Error(translateCopy("Oturum değişti. Lütfen bu işlemi yeniden başlat.")) as ApiError;
   error.code = 'AUTH_SESSION_CHANGED';
   throw error;
 }
@@ -141,7 +143,7 @@ async function readJson<T>(response: Response): Promise<ApiEnvelope<T>> {
   if (!response.ok || !payload?.success) {
     const error = new Error(
       (payload as { error?: { message?: string } } | null)?.error?.message ??
-        'Sunucuyla iletişim kurulamadı.',
+        translateCopy("Sunucuyla iletişim kurulamadı."),
     ) as ApiError;
     const apiError = (payload as { error?: { code?: string; details?: unknown } } | null)?.error;
     error.code = apiError?.code;

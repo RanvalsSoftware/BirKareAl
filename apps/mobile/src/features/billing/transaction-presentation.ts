@@ -1,3 +1,4 @@
+import { tr as translateCopy } from '@/i18n/engine';
 import type { ComponentProps } from 'react';
 import type { Icon } from '@/components';
 import type { CreditTransaction } from './use-wallet';
@@ -5,27 +6,27 @@ import type { CreditTransaction } from './use-wallet';
 export type TransactionFilter = 'all' | 'earned' | 'spent' | 'returned';
 
 export const transactionLabels: Record<string, string> = {
-  PURCHASE: 'Kredi satın alımı',
-  SUBSCRIPTION_GRANT: 'Pro üyelik kredisi',
-  GENERATION_RESERVATION: 'Üretim için ayrıldı',
-  GENERATION_CAPTURE: 'AI görsel üretimi',
-  GENERATION_RELEASE: 'Üretim kredisi iade edildi',
-  REFUND: 'Kredi iadesi',
-  BONUS: 'Hoş geldin kredisi',
-  ADMIN_ADJUSTMENT: 'Bakiye düzenlemesi',
-  CHARGEBACK: 'Ödeme iptali',
+  PURCHASE: translateCopy("Kredi satın alımı"),
+  SUBSCRIPTION_GRANT: translateCopy("Pro üyelik kredisi"),
+  GENERATION_RESERVATION: translateCopy("Üretim için ayrıldı"),
+  GENERATION_CAPTURE: translateCopy("AI görsel üretimi"),
+  GENERATION_RELEASE: translateCopy("Üretim kredisi iade edildi"),
+  REFUND: translateCopy("Kredi iadesi"),
+  BONUS: translateCopy("Hoş geldin kredisi"),
+  ADMIN_ADJUSTMENT: translateCopy("Bakiye düzenlemesi"),
+  CHARGEBACK: translateCopy("Ödeme iptali"),
 };
 
 export function transactionTitle(item: CreditTransaction): string {
   const description = item.description?.trim();
   const technicalDescriptions: Record<string, string> = {
-    MODERATION_BLOCKED: 'Güvenlik kontrolü iadesi',
-    PROVIDER_REJECTED: 'Sağlayıcı reddi sonrası iade',
-    GENERATION_FAILED: 'Başarısız üretim iadesi',
+    MODERATION_BLOCKED: translateCopy("Güvenlik kontrolü iadesi"),
+    PROVIDER_REJECTED: translateCopy("Sağlayıcı reddi sonrası iade"),
+    GENERATION_FAILED: translateCopy("Başarısız üretim iadesi"),
   };
   if (description && technicalDescriptions[description]) return technicalDescriptions[description];
   if (description && !/^[A-Z0-9_:-]+$/.test(description)) return description;
-  return transactionLabels[item.type] || 'Kredi hareketi';
+  return transactionLabels[item.type] || translateCopy("Kredi hareketi");
 }
 
 export function transactionIcon(type: string): ComponentProps<typeof Icon>['name'] {
@@ -37,10 +38,10 @@ export function transactionIcon(type: string): ComponentProps<typeof Icon>['name
 }
 
 export function transactionStatus(status: string): string {
-  if (status === 'COMPLETED') return 'Tamamlandı';
+  if (status === 'COMPLETED') return translateCopy("Tamamlandı");
   if (status === 'PENDING') return 'Bekliyor';
-  if (status === 'REVERSED') return 'Geri alındı';
-  if (status === 'FAILED') return 'Başarısız';
+  if (status === 'REVERSED') return translateCopy("Geri alındı");
+  if (status === 'FAILED') return translateCopy("Başarısız");
   return status;
 }
 

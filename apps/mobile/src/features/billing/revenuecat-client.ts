@@ -1,3 +1,4 @@
+import { tr as translateCopy } from '@/i18n/engine';
 import type { CustomerInfo, PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
 
 type SdkModule = typeof import('react-native-purchases');
@@ -105,11 +106,11 @@ export function createRevenueCatClient(options: ClientOptions) {
     const code = String((error as { code?: unknown } | null)?.code ?? '');
     const codes = sdkModule?.PURCHASES_ERROR_CODE;
     if (codes && code === String(codes.NETWORK_ERROR))
-      return 'Mağazaya bağlanılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.';
+      return translateCopy("Mağazaya bağlanılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.");
     if (codes && code === String(codes.CONFIGURATION_ERROR))
-      return 'Mağaza ürünleri hazır değil. RevenueCat ürün, entitlement ve offering bağlantılarını kontrol edin.';
+      return translateCopy("Mağaza ürünleri hazır değil. RevenueCat ürün, entitlement ve offering bağlantılarını kontrol edin.");
     if (error instanceof Error && error.name === 'BirKareBillingError') return error.message;
-    return 'Satın alma servisine ulaşılamadı. Tekrar deneyin; yeni SDK eklendiyse uygulamayı yeniden derleyin.';
+    return translateCopy("Satın alma servisine ulaşılamadı. Tekrar deneyin; yeni SDK eklendiyse uygulamayı yeniden derleyin.");
   };
 
   const fail = (message: string): never => {
@@ -267,14 +268,14 @@ export function createRevenueCatClient(options: ClientOptions) {
   async function action(
     task: (version: number, userId: string) => Promise<BillingResult>,
   ): Promise<BillingResult> {
-    if (interactive) return { kind: 'error', message: 'Bir mağaza işlemi zaten devam ediyor.' };
+    if (interactive) return { kind: 'error', message: translateCopy("Bir mağaza işlemi zaten devam ediyor.") };
     const userId = targetUserId;
     const version = epoch;
     if (!userId || userId !== options.getUserId() || snapshot.status !== 'ready')
       return {
         kind: 'error',
         message:
-          snapshot.error || 'Satın alma için giriş yapın ve mağazanın hazırlanmasını bekleyin.',
+          snapshot.error || translateCopy("Satın alma için giriş yapın ve mağazanın hazırlanmasını bekleyin."),
       };
     interactive = true;
     publish({ busy: true, error: null });
@@ -297,7 +298,7 @@ export function createRevenueCatClient(options: ClientOptions) {
             return {
               kind: 'pending' as const,
               message:
-                'Ödeme onay bekliyor. Onaylanana kadar satın alma tamamlanmaz; tekrar satın almayın.',
+                translateCopy("Ödeme onay bekliyor. Onaylanana kadar satın alma tamamlanmaz; tekrar satın almayın."),
             };
           const message = messageFor(error);
           publish({ error: message });

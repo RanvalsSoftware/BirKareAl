@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useEffect, useRef, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -15,6 +17,8 @@ import { colors, radii, spacing, typography } from '@/theme';
 const MAX_SOURCE_PHOTO_BYTES = 15 * 1024 * 1024;
 
 export default function UploadScreen() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const { flow, set } = useCreateFlow();
   const picking = useRef(false);
@@ -63,8 +67,8 @@ export default function UploadScreen() {
     const asset = result.assets[0];
     if (asset.fileSize && asset.fileSize > MAX_SOURCE_PHOTO_BYTES) {
       Alert.alert(
-        'Dosya büyük',
-        'Lütfen 15 MB altındaki bir JPEG, PNG, WebP veya HEIC fotoğrafı seç.',
+        translateCopy("Dosya büyük"),
+        translateCopy("Lütfen 15 MB altındaki bir JPEG, PNG, WebP veya HEIC fotoğrafı seç."),
       );
       return;
     }
@@ -95,7 +99,7 @@ export default function UploadScreen() {
         }),
       );
     } catch {
-      Alert.alert('Fotoğraf seçilemedi', 'Lütfen tekrar dene.');
+      Alert.alert(translateCopy("Fotoğraf seçilemedi"), translateCopy("Lütfen tekrar dene."));
     } finally {
       picking.current = false;
       setIsPicking(false);
@@ -110,8 +114,8 @@ export default function UploadScreen() {
       const permission = await ImagePicker.requestCameraPermissionsAsync();
       if (!permission.granted) {
         Alert.alert(
-          'Kamera erişimi gerekli',
-          'Yeni bir kaynak fotoğraf çekmek için kamera izni ver.',
+          translateCopy("Kamera erişimi gerekli"),
+          translateCopy("Yeni bir kaynak fotoğraf çekmek için kamera izni ver."),
         );
         return;
       }
@@ -124,7 +128,7 @@ export default function UploadScreen() {
         }),
       );
     } catch {
-      Alert.alert('Kamera açılamadı', 'Lütfen tekrar dene veya galerinden fotoğraf seç.');
+      Alert.alert(translateCopy("Kamera açılamadı"), translateCopy("Lütfen tekrar dene veya galerinden fotoğraf seç."));
     } finally {
       picking.current = false;
       setIsPicking(false);
@@ -134,11 +138,11 @@ export default function UploadScreen() {
   return (
     <Screen contentContainerStyle={styles.content}>
       <CreateHeader
-        title="Kaynağını seç"
+        title={translateCopy("Kaynağını seç")}
         subtitle={
           portraitOnly
-            ? 'Yüzün net görünen bir portre seç'
-            : 'Kendi fotoğrafın veya kurgusal karakter'
+            ? translateCopy("Yüzün net görünen bir portre seç")
+            : translateCopy("Kendi fotoğrafın veya kurgusal karakter")
         }
         step={1}
       />
@@ -147,23 +151,23 @@ export default function UploadScreen() {
           value={sourceKind}
           onChange={changeSourceKind}
           options={[
-            { value: 'photo', label: 'Fotoğrafım', icon: 'camera-outline' },
+            { value: 'photo', label: translateCopy("Fotoğrafım"), icon: 'camera-outline' },
             { value: 'fictional', label: 'Kurgusal karakter', icon: 'person-outline' },
           ]}
         />
       ) : null}
       <Text style={styles.heading}>
-        {sourceKind === 'fictional' ? 'Kurgusal karakter seç' : 'Kaynak fotoğrafın'}
+        {sourceKind === 'fictional' ? translateCopy("Kurgusal karakter seç") : translateCopy("Kaynak fotoğrafın")}
       </Text>
       <Text style={styles.intro}>
         {sourceKind === 'fictional'
-          ? 'Fotoğraf yüklemek yerine bu karakterlerden biriyle başla. Seçtiğin karakter sahnenin ana kişisi olacak.'
-          : 'Kendine ait veya kullanım iznine sahip olduğun, net bir fotoğraf seç.'}
+          ? translateCopy("Fotoğraf yüklemek yerine bu karakterlerden biriyle başla. Seçtiğin karakter sahnenin ana kişisi olacak.")
+          : translateCopy("Kendine ait veya kullanım iznine sahip olduğun, net bir fotoğraf seç.")}
       </Text>
       {sourceKind === 'fictional' ? (
         <>
           {flow.sourceUri ? (
-            <SourcePreview sourceUri={flow.sourceUri} label="Seçilen kurgusal karakter" />
+            <SourcePreview sourceUri={flow.sourceUri} label={translateCopy("Seçilen kurgusal karakter")} />
           ) : null}
           <ScrollView
             horizontal
@@ -192,22 +196,19 @@ export default function UploadScreen() {
               </Pressable>
             ))}
           </ScrollView>
-          <Notice tone="neutral">
-            Karakterler uygulamanın kurgusal örnekleridir. Oluşturulan kareler gerçek bir kişiyle
-            buluşma anlamına gelmez.
-          </Notice>
+          <Notice tone="neutral">{translateCopy("Karakterler uygulamanın kurgusal örnekleridir. Oluşturulan kareler gerçek bir kişiyle buluşma anlamına gelmez.")}</Notice>
         </>
       ) : (
         <>
           <UploadTile
             sourceUri={flow.sourceUri}
             onPress={selectFromLibrary}
-            label={isPicking ? 'Fotoğraf seçici açılıyor…' : 'Galeriden fotoğraf seç'}
+            label={isPicking ? translateCopy("Fotoğraf seçici açılıyor…") : translateCopy("Galeriden fotoğraf seç")}
           />
           <View style={styles.actions}>
             <Pressable accessibilityRole="button" onPress={takePhoto} style={styles.cameraAction}>
               <Icon name="camera-outline" size={20} />
-              <Text style={styles.cameraText}>Kamerayla çek</Text>
+              <Text style={styles.cameraText}>{translateCopy("Kamerayla çek")}</Text>
             </Pressable>
             <Pressable
               accessibilityRole="button"
@@ -215,20 +216,18 @@ export default function UploadScreen() {
               style={styles.cameraAction}
             >
               <Icon name="images-outline" size={20} />
-              <Text style={styles.cameraText}>Galeriyi aç</Text>
+              <Text style={styles.cameraText}>{translateCopy("Galeriyi aç")}</Text>
             </Pressable>
           </View>
         </>
       )}
-      <Text style={styles.storageHint}>
-        Üretimi onayladığında kaynak görsel işlenmek üzere yüklenir ve projenle ilişkilendirilir.
-      </Text>
+      <Text style={styles.storageHint}>{translateCopy("Üretimi onayladığında kaynak görsel işlenmek üzere yüklenir ve projenle ilişkilendirilir.")}</Text>
       <Pressable
         accessibilityRole="checkbox"
         accessibilityLabel={
           sourceKind === 'fictional'
-            ? 'Kurgusal karakterin AI üretiminde kullanılmasını onaylıyorum'
-            : 'Bu fotoğrafı kullanma hakkına sahip olduğumu onaylıyorum'
+            ? translateCopy("Kurgusal karakterin AI üretiminde kullanılmasını onaylıyorum")
+            : translateCopy("Bu fotoğrafı kullanma hakkına sahip olduğumu onaylıyorum")
         }
         accessibilityState={{ checked: flow.sourceRightsConfirmed, disabled: !flow.sourceUri }}
         disabled={!flow.sourceUri}
@@ -249,29 +248,26 @@ export default function UploadScreen() {
           <Text style={styles.rightsTitle}>
             {sourceKind === 'fictional'
               ? 'Kurgusal karakterle devam et'
-              : 'Fotoğraf kullanım hakkım var'}
+              : translateCopy("Fotoğraf kullanım hakkım var")}
           </Text>
           <Text style={styles.rightsDetail}>
             {sourceKind === 'fictional'
-              ? 'Seçtiğim örneğin AI ile işlenmesini ve sonucun kurgusal olduğunu kabul ediyorum.'
-              : 'Bu fotoğrafı kullanma hakkına sahip olduğumu ve görseldeki kişilerin gerekli izinlerini aldığımı onaylıyorum.'}
+              ? translateCopy("Seçtiğim örneğin AI ile işlenmesini ve sonucun kurgusal olduğunu kabul ediyorum.")
+              : translateCopy("Bu fotoğrafı kullanma hakkına sahip olduğumu ve görseldeki kişilerin gerekli izinlerini aldığımı onaylıyorum.")}
           </Text>
         </View>
       </Pressable>
-      <Notice tone="warning" title="Daha iyi sonuç için">
-        Karanlık, bulanık veya birden fazla kişinin göründüğü fotoğraflarda sonuç kalitesi
-        düşebilir.
-      </Notice>
+      <Notice tone="warning" title={translateCopy("Daha iyi sonuç için")}>{translateCopy("Karanlık, bulanık veya birden fazla kişinin göründüğü fotoğraflarda sonuç kalitesi düşebilir.")}</Notice>
       <WizardFooter
-        label={needsSceneSelection(flow) ? 'Sahne seç' : 'Görseli düzenle'}
+        label={needsSceneSelection(flow) ? translateCopy("Sahne seç") : translateCopy("Görseli düzenle")}
         disabled={isPicking || !flow.sourceUri || !flow.sourceRightsConfirmed}
         onPress={() => router.push(afterSourcePath(flow))}
         hint={
           !flow.sourceUri
-            ? 'Devam etmek için fotoğraf veya kurgusal karakter seç.'
+            ? translateCopy("Devam etmek için fotoğraf veya kurgusal karakter seç.")
             : !flow.sourceRightsConfirmed
-              ? 'Devam etmek için kaynak görselin kullanımını onayla.'
-              : 'Kaynak seçildi. Yükleme üretimi başlatınca yapılır.'
+              ? translateCopy("Devam etmek için kaynak görselin kullanımını onayla.")
+              : translateCopy("Kaynak seçildi. Yükleme üretimi başlatınca yapılır.")
         }
       />
     </Screen>

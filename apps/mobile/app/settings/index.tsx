@@ -1,3 +1,7 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
+import { useLanguage } from '@/i18n/use-language';
+import { t } from '@/i18n/engine';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { StyleSheet, Text } from 'react-native';
@@ -9,14 +13,17 @@ import {
 } from '@/features/settings/components';
 
 export default function SettingsScreen() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
+  const language = useLanguage();
   return (
-    <SettingsPage title="Ayarlar" subtitle="Uygulamayı sana göre düzenle">
-      <SettingsSectionTitle>TERCİHLER</SettingsSectionTitle>
+    <SettingsPage title={translateCopy("Ayarlar")} subtitle={translateCopy("Uygulamayı sana göre düzenle")}>
+      <SettingsSectionTitle>{translateCopy("TERCİHLER")}</SettingsSectionTitle>
       <GlassSettingsPanel>
         <GlassSettingsRow
           icon="color-palette-outline"
-          title="Görünüm"
+          title={translateCopy("Görünüm")}
           detail="Koyu tema · Cam efektleri · Animasyon"
           onPress={() => router.push('/settings/appearance' as never)}
         />
@@ -24,27 +31,28 @@ export default function SettingsScreen() {
           icon="language-outline"
           accent="purple"
           title="Dil"
-          value="Türkçe"
-          detail="Bu sürüm Türkçe olarak sunuluyor"
+          value={language.preference === 'system' ? t('language.system') : language.language === 'tr' ? translateCopy("Türkçe") : 'English'}
+          detail={t('language.subtitle')}
+          onPress={() => router.push('/settings/language' as never)}
         />
         <GlassSettingsRow
           icon="notifications-outline"
-          title="Bildirim ve iletişim tercihleri"
+          title={translateCopy("Bildirim ve iletişim tercihleri")}
           onPress={() => router.push('/settings/notifications' as never)}
           last
         />
       </GlassSettingsPanel>
-      <SettingsSectionTitle>HESAP VE VERİLER</SettingsSectionTitle>
+      <SettingsSectionTitle>{translateCopy("HESAP VE VERİLER")}</SettingsSectionTitle>
       <GlassSettingsPanel>
         <GlassSettingsRow
           icon="person-outline"
-          title="Profili düzenle"
-          detail="Ad ve soyadını güncelle"
+          title={translateCopy("Profili düzenle")}
+          detail={translateCopy("Ad ve soyadını güncelle")}
           onPress={() => router.push('/settings/account' as never)}
         />
         <GlassSettingsRow
           icon="shield-checkmark-outline"
-          title="Güvenlik ve oturumlar"
+          title={translateCopy("Güvenlik ve oturumlar")}
           onPress={() => router.push('/settings/security' as never)}
         />
         <GlassSettingsRow
@@ -60,13 +68,13 @@ export default function SettingsScreen() {
         />
         <GlassSettingsRow
           icon="trash-outline"
-          title="Hesabı sil"
+          title={translateCopy("Hesabı sil")}
           danger
           onPress={() => router.push('/settings/delete-account' as never)}
           last
         />
       </GlassSettingsPanel>
-      <Text style={styles.version}>BirKare AI · Sürüm {Constants.expoConfig?.version ?? '—'}</Text>
+      <Text style={styles.version}>{translateCopy("BirKare AI · Sürüm {{p0}}", { p0: Constants.expoConfig?.version ?? '—' })}</Text>
     </SettingsPage>
   );
 }

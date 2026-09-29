@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -11,6 +13,8 @@ import { useOnboarding } from '@/features/onboarding/context';
 import { colors, radii, shadows, spacing } from '@/theme';
 
 export default function FanMomentScreen() {
+  const languageRevision = useLanguageRevision();
+
   const { selectedPhoto } = useOnboarding();
 
   return (
@@ -23,7 +27,7 @@ export default function FanMomentScreen() {
           }}
           onSkip={() => router.replace('/(auth)/login')}
           step="4 / 4"
-          title="Düzenle & paylaş"
+          title={translateCopy("Düzenle & paylaş")}
         />
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <Animated.View entering={ZoomIn.duration(530)} style={styles.resultCard}>
@@ -39,7 +43,7 @@ export default function FanMomentScreen() {
                 style={StyleSheet.absoluteFill}
               />
               <View style={[styles.resultLabel, styles.beforeLabel]}>
-                <Text style={styles.resultLabelText}>Önce</Text>
+                <Text style={styles.resultLabelText}>{translateCopy("Önce")}</Text>
               </View>
             </View>
             <View style={styles.resultHalf}>
@@ -55,7 +59,7 @@ export default function FanMomentScreen() {
               />
               <View style={[styles.resultLabel, styles.afterLabel]}>
                 <Ionicons color={colors.background} name="sparkles" size={11} />
-                <Text style={styles.afterLabelText}>AI örneği</Text>
+                <Text style={styles.afterLabelText}>{translateCopy("AI örneği")}</Text>
               </View>
             </View>
             <View style={styles.divider}>
@@ -66,13 +70,8 @@ export default function FanMomentScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(180).duration(510)}>
-            <Text accessibilityRole="header" style={styles.title}>
-              Düzenle, kaydet{`\n`}ve paylaş.
-            </Text>
-            <Text style={styles.subtitle}>
-              Üretim tamamlandığında sonuçlar arasında karşılaştırma yapabilir, küçük düzenlemeler
-              isteyebilir ve paylaşmaya hazır bir çıktı alabilirsin.
-            </Text>
+            <Text accessibilityRole="header" style={styles.title}>{translateCopy("Düzenle, kaydet{{p0}}ve paylaş.", { p0: `\n` })}</Text>
+            <Text style={styles.subtitle}>{translateCopy("Üretim tamamlandığında sonuçlar arasında karşılaştırma yapabilir, küçük düzenlemeler isteyebilir ve paylaşmaya hazır bir çıktı alabilirsin.")}</Text>
           </Animated.View>
 
           <View style={styles.actionRow}>
@@ -80,24 +79,24 @@ export default function FanMomentScreen() {
               <View style={styles.actionIcon}>
                 <Ionicons color={colors.accentYellow} name="refresh-outline" size={20} />
               </View>
-              <Text style={styles.actionLabel}>Yeniden{`\n`}oluştur</Text>
+              <Text style={styles.actionLabel}>{translateCopy("Yeniden{{p0}}oluştur", { p0: `\n` })}</Text>
             </View>
             <View style={styles.action}>
               <View style={styles.actionIcon}>
                 <Ionicons color={colors.accentYellow} name="color-wand-outline" size={20} />
               </View>
-              <Text style={styles.actionLabel}>Düzenle</Text>
+              <Text style={styles.actionLabel}>{translateCopy("Düzenle")}</Text>
             </View>
             <View style={styles.action}>
               <View style={styles.actionIcon}>
                 <Ionicons color={colors.accentYellow} name="share-social-outline" size={20} />
               </View>
-              <Text style={styles.actionLabel}>Paylaş</Text>
+              <Text style={styles.actionLabel}>{translateCopy("Paylaş")}</Text>
             </View>
           </View>
 
           <View style={styles.inspirationHeader}>
-            <Text style={styles.inspirationTitle}>Fan Moment ilhamı</Text>
+            <Text style={styles.inspirationTitle}>{translateCopy("Fan Moment ilhamı")}</Text>
             <Text style={styles.inspirationHint}>Kurgusal sahneler</Text>
           </View>
           <ScrollView
@@ -126,17 +125,14 @@ export default function FanMomentScreen() {
               <Ionicons color={colors.accentYellow} name="information-circle-outline" size={20} />
             </View>
             <View style={styles.disclosureCopy}>
-              <Text style={styles.disclosureTitle}>Açık AI bildirimi</Text>
-              <Text style={styles.disclosureText}>
-                Örnek fan görselleri kurgusal kişileri temsil eder. Gerçek buluşma, onay veya
-                sponsorluk kanıtı olarak sunulamaz.
-              </Text>
+              <Text style={styles.disclosureTitle}>{translateCopy("Açık AI bildirimi")}</Text>
+              <Text style={styles.disclosureText}>{translateCopy("Örnek fan görselleri kurgusal kişileri temsil eder. Gerçek buluşma, onay veya sponsorluk kanıtı olarak sunulamaz.")}</Text>
             </View>
           </View>
         </ScrollView>
         <View style={styles.bottom}>
           <StepProgress active={3} />
-          <GoldButton label="Başlayalım" onPress={() => router.push('/(onboarding)/consent')} />
+          <GoldButton label={translateCopy("Başlayalım")} onPress={() => router.push('/(onboarding)/consent')} />
         </View>
       </View>
     </SafeAreaView>

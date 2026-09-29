@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useRef, useState } from 'react';
 import Constants from 'expo-constants';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -11,10 +13,14 @@ import { newSupportSubmissionKey, submitSupportTicket, supportTopics, validSuppo
 import type { ApiError } from '@/api/client';
 
 export default function SupportTicketScreen() {
+  const languageRevision = useLanguageRevision();
+
   return <RequireAuthenticated><SupportTicketForm /></RequireAuthenticated>;
 }
 
 function SupportTicketForm() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const { generationId } = useLocalSearchParams<{ generationId?: string }>();
   const [category, setCategory] = useState<SupportTicketInput['category']>('GENERATION');
@@ -38,12 +44,12 @@ function SupportTicketForm() {
     try {
       const next = await submitSupportTicket(input, attemptRef.current.key);
       if (next.status === 'SENT') setReceipt(next);
-      else setError(`Talep ${next.id} kaydedildi; e-postaya aktarımı henüz doğrulanmadı. Aynı talebi tekrar kontrol edebilirsin; ikinci e-posta gönderilmez.`);
+      else setError(translateCopy("Talep {{p0}} kaydedildi; e-postaya aktarımı henüz doğrulanmadı. Aynı talebi tekrar kontrol edebilirsin; ikinci e-posta gönderilmez.", { p0: next.id }));
     } catch (cause) {
       const failure = cause as ApiError;
       const details = failure?.details as { ticketId?: unknown } | undefined;
       const ticketId = typeof details?.ticketId === 'string' && /^[a-zA-Z0-9-]{1,80}$/.test(details.ticketId) ? details.ticketId : undefined;
-      setError(`${failure instanceof Error ? failure.message : 'Talep gönderilemedi. Açıklaman bu ekranda korunur.'}${ticketId ? ` Talep: ${ticketId}` : ''}${failure?.requestId ? ` İstek: ${failure.requestId}` : ''}`);
+      setError(`${failure instanceof Error ? failure.message : translateCopy("Talep gönderilemedi. Açıklaman bu ekranda korunur.")}${ticketId ? ` Talep: ${ticketId}` : ''}${failure?.requestId ? translateCopy("İstek: {{p0}}", { p0: failure.requestId }) : ''}`);
     } finally {
       sendingRef.current = false;
       setSending(false);
@@ -53,24 +59,22 @@ function SupportTicketForm() {
   if (receipt)
     return (
       <Screen contentContainerStyle={styles.content}>
-        <AppHeader back title="Destek talebi" />
+        <AppHeader back title={translateCopy("Destek talebi")} />
         <View style={styles.success}>
           <View style={styles.successIcon}><Icon name="mail-open-outline" size={32} color={colors.background} /></View>
-          <Text style={styles.successTitle}>Destek talebin kaydedildi.</Text>
-          <Text style={styles.successText}>
-            Talebin destek e-posta sunucusuna aktarıldı. Bu, gelen kutusuna teslim veya okunma onayı değildir. Yanıt için hesabındaki doğrulanmış e-posta adresini kullanacağız.
-          </Text>
+          <Text style={styles.successTitle}>{translateCopy("Destek talebin kaydedildi.")}</Text>
+          <Text style={styles.successText}>{translateCopy("Talebin destek e-posta sunucusuna aktarıldı. Bu, gelen kutusuna teslim veya okunma onayı değildir. Yanıt için hesabındaki doğrulanmış e-posta adresini kullanacağız.")}</Text>
           <Text selectable style={styles.email}>Talep: {receipt.id}</Text>
           <Text selectable style={styles.email}>
             {supportEmail}
           </Text>
           <PrimaryButton
-            label="Yeni talep oluştur"
+            label={translateCopy("Yeni talep oluştur")}
             onPress={() => { setReceipt(null); setMessage(''); setSubject(''); setError(null); attemptRef.current = null; }}
             style={styles.successButton}
           />
           <PrimaryButton
-            label="Yardıma dön"
+            label={translateCopy("Yardıma dön")}
             onPress={() => router.replace('/support' as never)}
             style={styles.successButton}
           />
@@ -79,7 +83,7 @@ function SupportTicketForm() {
     );
   return (
     <Screen contentContainerStyle={styles.content}>
-      <AppHeader back title="Destek talebi" subtitle="Bize ne olduğunu anlat" />
+      <AppHeader back title={translateCopy("Destek talebi")} subtitle={translateCopy("Bize ne olduğunu anlat")} />
       <Text style={styles.label}>Konu</Text>
       <View style={styles.chips}>
         {supportTopics.map((item) => (
@@ -91,38 +95,34 @@ function SupportTicketForm() {
           />
         ))}
       </View>
-      <TextField label="Kısa başlık" value={subject} onChangeText={setSubject} maxLength={120} editable={!sending} placeholder="Sorunu birkaç kelimeyle özetle" error={subject.length > 0 && subject.trim().length < 3 ? 'En az 3 karakterlik bir başlık yaz.' : undefined} />
+      <TextField label={translateCopy("Kısa başlık")} value={subject} onChangeText={setSubject} maxLength={120} editable={!sending} placeholder={translateCopy("Sorunu birkaç kelimeyle özetle")} error={subject.length > 0 && subject.trim().length < 3 ? translateCopy("En az 3 karakterlik bir başlık yaz.") : undefined} />
       <TextField
-        label="Açıklama"
+        label={translateCopy("Açıklama")}
         value={message}
         onChangeText={setMessage}
         maxLength={4000}
         editable={!sending}
-        placeholder="Yaşadığın sorunu, varsa proje adını ve ne beklediğini yaz."
+        placeholder={translateCopy("Yaşadığın sorunu, varsa proje adını ve ne beklediğini yaz.")}
         multiline
         numberOfLines={6}
         textAlignVertical="top"
         style={styles.message}
         error={
           message.length > 0 && message.trim().length < 12
-            ? 'Lütfen en az 12 karakterlik bir açıklama yaz.'
+            ? translateCopy("Lütfen en az 12 karakterlik bir açıklama yaz.")
             : undefined
         }
       />
-      <Notice tone="neutral">
-        Talebin hesabına bağlı olarak kaydedilir ve {supportEmail} adresine backend üzerinden iletilir. Şifre veya ödeme bilgisi ekleme.
-      </Notice>
-      {generationId ? <Notice tone="neutral">Bu üretimin hata kodu ve teknik istek numarası sunucudan eklenir. Fotoğrafın ve üretim promptun destek e-postasına eklenmez.</Notice> : null}
+      <Notice tone="neutral">{translateCopy("Talebin hesabına bağlı olarak kaydedilir ve {{p0}} adresine backend üzerinden iletilir. Şifre veya ödeme bilgisi ekleme.", { p0: supportEmail })}</Notice>
+      {generationId ? <Notice tone="neutral">{translateCopy("Bu üretimin hata kodu ve teknik istek numarası sunucudan eklenir. Fotoğrafın ve üretim promptun destek e-postasına eklenmez.")}</Notice> : null}
       {error ? (
-        <Notice tone="warning" title="Gönderim durumunu kontrol et">
-          {error} Açıklaman bu ekranda korunur.
-        </Notice>
+        <Notice tone="warning" title={translateCopy("Gönderim durumunu kontrol et")}>{translateCopy("{{p0}} Açıklaman bu ekranda korunur.", { p0: error })}</Notice>
       ) : null}
       <Text selectable style={styles.email}>
         {supportEmail}
       </Text>
       <PrimaryButton
-        label="Destek talebi gönder"
+        label={translateCopy("Destek talebi gönder")}
         icon="mail-outline"
         loading={sending}
         disabled={sending || !validSupportInput(input)}

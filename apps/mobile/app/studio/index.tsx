@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -9,6 +11,8 @@ import { useStudioCatalog } from '@/features/studio/useStudioCatalog';
 import { colors, radii, spacing, typography } from '@/theme';
 
 export default function StudioHomeScreen() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const { fontScale } = useWindowDimensions();
   const { previewCredits, studioModeCards } = useStudioCatalog();
@@ -31,8 +35,8 @@ export default function StudioHomeScreen() {
     <Screen contentContainerStyle={styles.content}>
       <CreateHeader
         fallback="/(tabs)/home"
-        title="BirKare Stüdyo"
-        subtitle="Ürününü gerçeğine sadık kalarak sun"
+        title={translateCopy("BirKare Stüdyo")}
+        subtitle={translateCopy("Ürününü gerçeğine sadık kalarak sun")}
       />
 
       <LinearGradient colors={['#2B2006', '#111114', '#221235']} style={styles.hero}>
@@ -40,14 +44,12 @@ export default function StudioHomeScreen() {
           <Icon name="camera-outline" size={29} color={colors.accentYellow} />
         </View>
         <View style={styles.heroCopy}>
-          <Text style={styles.heroTitle}>Doğru ürün. Doğru sahne. Kontrollü üretim.</Text>
-          <Text style={styles.heroBody}>
-            Prompt, model ve kredi hesabı sunucuda seçilir; yüklediğin ürün yeniden tasarlanmaz.
-          </Text>
+          <Text style={styles.heroTitle}>{translateCopy("Doğru ürün. Doğru sahne. Kontrollü üretim.")}</Text>
+          <Text style={styles.heroBody}>{translateCopy("Prompt, model ve kredi hesabı sunucuda seçilir; yüklediğin ürün yeniden tasarlanmaz.")}</Text>
         </View>
       </LinearGradient>
 
-      <Text style={styles.heading}>Ne hazırlamak istersin?</Text>
+      <Text style={styles.heading}>{translateCopy("Ne hazırlamak istersin?")}</Text>
       <View style={styles.cards}>
         {studioModeCards.map((item) => (
           <Pressable
@@ -79,7 +81,7 @@ export default function StudioHomeScreen() {
                 />
                 <View style={styles.imageBadge}>
                   <Icon name={item.icon} size={16} color={colors.accentYellow} />
-                  <Text style={styles.imageBadgeText}>{item.creditCost} krediden başlayan</Text>
+                  <Text style={styles.imageBadgeText}>{translateCopy("{{p0}} krediden başlayan", { p0: item.creditCost })}</Text>
                 </View>
               </View>
               <View style={styles.cardCopy}>
@@ -98,10 +100,7 @@ export default function StudioHomeScreen() {
 
       <View style={styles.assurance}>
         <Icon name="shield-checkmark-outline" size={22} color="#EFD57B" />
-        <Text style={styles.assuranceText}>
-          Önizleme {previewCredits} kredi. Üretim başlamazsa veya sonuç teslim edilmezse ayrılan
-          kredi iade edilir.
-        </Text>
+        <Text style={styles.assuranceText}>{translateCopy("Önizleme {{p0}} kredi. Üretim başlamazsa veya sonuç teslim edilmezse ayrılan kredi iade edilir.", { p0: previewCredits })}</Text>
       </View>
     </Screen>
   );

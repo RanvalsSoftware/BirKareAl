@@ -1,3 +1,4 @@
+import { tr as translateCopy } from '@/i18n/engine';
 import { apiBaseUrl, apiRequest, captureSessionRequestScope } from '@/api/client';
 import { sourceImageAsJpeg } from './source-image-normalizer';
 import type { BeautySettings, GenderTransformation } from '@/features/beauty/settings';
@@ -129,12 +130,12 @@ export type SubmissionStage =
   'CHECKING' | 'READING' | 'UPLOADING' | 'CREATING' | 'QUEUEING' | 'QUEUED';
 
 export const submissionStageLabels: Record<SubmissionStage, string> = {
-  CHECKING: 'Kredi ve seçimler kontrol ediliyor',
-  READING: 'Fotoğraf hazırlanıyor',
-  UPLOADING: 'Fotoğraf güvenle yükleniyor',
-  CREATING: 'Projen hazırlanıyor',
-  QUEUEING: 'Üretim başlatılıyor',
-  QUEUED: 'Üretim sıraya alındı',
+  CHECKING: translateCopy("Kredi ve seçimler kontrol ediliyor"),
+  READING: translateCopy("Fotoğraf hazırlanıyor"),
+  UPLOADING: translateCopy("Fotoğraf güvenle yükleniyor"),
+  CREATING: translateCopy("Projen hazırlanıyor"),
+  QUEUEING: translateCopy("Üretim başlatılıyor"),
+  QUEUED: translateCopy("Üretim sıraya alındı"),
 };
 
 export type CreateFlowServerErrorCode =
@@ -306,14 +307,14 @@ function assertFlowIsValid(flow: CreateFlow) {
       flow.sceneId ||
       flow.personId)
   ) {
-    flowError('FLOW_INVALID', 'Akımlar için kendi fotoğrafını ve geçerli bir akım seçmelisin.');
+    flowError('FLOW_INVALID', translateCopy("Akımlar için kendi fotoğrafını ve geçerli bir akım seçmelisin."));
   }
   if (
     !Number.isInteger(flow.numberOfImages) ||
     flow.numberOfImages < 1 ||
     flow.numberOfImages > 4
   ) {
-    flowError('FLOW_INVALID', 'Görsel sayısı 1 ile 4 arasında olmalıdır.');
+    flowError('FLOW_INVALID', translateCopy("Görsel sayısı 1 ile 4 arasında olmalıdır."));
   }
   if (
     flow.secondarySourceUri &&
@@ -321,7 +322,7 @@ function assertFlowIsValid(flow: CreateFlow) {
   ) {
     flowError(
       'FLOW_INVALID',
-      'İkinci kişi fotoğrafı yalnızca desteklenen iki kişilik akımlarda kullanılabilir.',
+      translateCopy("İkinci kişi fotoğrafı yalnızca desteklenen iki kişilik akımlarda kullanılabilir."),
     );
   }
   if (
@@ -329,17 +330,17 @@ function assertFlowIsValid(flow: CreateFlow) {
     flow.sourceUri &&
     flow.secondarySourceUri === flow.sourceUri
   ) {
-    flowError('FLOW_INVALID', 'İkinci kişi için farklı bir fotoğraf seçmelisin.');
+    flowError('FLOW_INVALID', translateCopy("İkinci kişi için farklı bir fotoğraf seçmelisin."));
   }
   if (flow.customInstruction.trim().length > 1000) {
-    flowError('FLOW_INVALID', 'Özel talimat en fazla 1000 karakter olabilir.');
+    flowError('FLOW_INVALID', translateCopy("Özel talimat en fazla 1000 karakter olabilir."));
   }
   if (
     !Number.isInteger(flow.filterIntensity) ||
     flow.filterIntensity < 0 ||
     flow.filterIntensity > 100
   ) {
-    flowError('FLOW_INVALID', 'Filtre yoğunluğu 0 ile 100 arasında tam sayı olmalıdır.');
+    flowError('FLOW_INVALID', translateCopy("Filtre yoğunluğu 0 ile 100 arasında tam sayı olmalıdır."));
   }
 }
 
@@ -357,7 +358,7 @@ export function resolveCreateFlow(flow: CreateFlow): CreateFlowServerSelection {
   const quality = QUALITY_MAP[flow.quality];
   const composition = COMPOSITION_MAP[flow.composition];
   if (!mode || !quality || !composition) {
-    flowError('FLOW_INVALID', 'Seçili üretim ayarları desteklenmiyor.');
+    flowError('FLOW_INVALID', translateCopy("Seçili üretim ayarları desteklenmiyor."));
   }
 
   const selectedScene = mappedCatalogId(
@@ -414,9 +415,9 @@ export function resolveCreateFlow(flow: CreateFlow): CreateFlowServerSelection {
   const toolPreset = serverToolPreset(flow.toolId);
   return {
     title: flow.beauty
-      ? 'Güzellik Stüdyosu'
+      ? translateCopy("Güzellik Stüdyosu")
       : flow.transformation
-        ? 'Cinsiyet değiştirme'
+        ? translateCopy("Cinsiyet değiştirme")
         : flow.trendPreset
           ? getTrendPreset(flow.trendPreset)!.name
           : TITLE_BY_MODE[flow.mode],
@@ -495,9 +496,9 @@ function imageMimeFromBytes(buffer: ArrayBuffer): SourceMimeType | 'image/heic' 
 
 function assertSourceSize(size: number) {
   if (!size)
-    flowError('SOURCE_EMPTY', 'Seçili fotoğraf boş görünüyor. Lütfen başka bir fotoğraf seç.');
+    flowError('SOURCE_EMPTY', translateCopy("Seçili fotoğraf boş görünüyor. Lütfen başka bir fotoğraf seç."));
   if (size > MAX_SOURCE_IMAGE_BYTES)
-    flowError('SOURCE_TOO_LARGE', 'Fotoğraf en fazla 15 MB olabilir. Daha küçük bir dosya seç.');
+    flowError('SOURCE_TOO_LARGE', translateCopy("Fotoğraf en fazla 15 MB olabilir. Daha küçük bir dosya seç."));
 }
 
 async function sourceBytes(uri: string): Promise<ArrayBuffer> {
@@ -547,7 +548,7 @@ async function sourceBytes(uri: string): Promise<ArrayBuffer> {
     return bytes.buffer;
   } catch (error) {
     if (error instanceof CreateFlowServerError) throw error;
-    flowError('SOURCE_UNREADABLE', 'Seçili fotoğraf okunamadı. Lütfen fotoğrafı yeniden seç.');
+    flowError('SOURCE_UNREADABLE', translateCopy("Seçili fotoğraf okunamadı. Lütfen fotoğrafı yeniden seç."));
   } finally {
     clearTimeout(timeout);
   }
@@ -582,7 +583,7 @@ async function readSourceImage(flow: LocalSourceImage): Promise<{
   mimeType: 'image/jpeg' | 'image/png' | 'image/webp';
 }> {
   if (!flow.sourceUri) {
-    flowError('SOURCE_REQUIRED', 'Önce bir kaynak fotoğraf seçmelisin.');
+    flowError('SOURCE_REQUIRED', translateCopy("Önce bir kaynak fotoğraf seçmelisin."));
   }
 
   let bytes: ArrayBuffer;
@@ -611,7 +612,7 @@ async function readSourceImage(flow: LocalSourceImage): Promise<{
       if (error instanceof CreateFlowServerError) throw error;
       flowError(
         'SOURCE_MIME_UNSUPPORTED',
-        'HEIC fotoğraf dönüştürülemedi. JPEG veya PNG olarak yeniden seç.',
+        translateCopy("HEIC fotoğraf dönüştürülemedi. JPEG veya PNG olarak yeniden seç."),
       );
     }
     mimeType = imageMimeFromBytes(bytes);
@@ -619,7 +620,7 @@ async function readSourceImage(flow: LocalSourceImage): Promise<{
   if (!mimeType || mimeType === 'image/heic')
     flowError(
       'SOURCE_MIME_UNSUPPORTED',
-      'Fotoğraf dosyası doğrulanamadı. JPEG, PNG, WebP veya HEIC bir fotoğraf seç.',
+      translateCopy("Fotoğraf dosyası doğrulanamadı. JPEG, PNG, WebP veya HEIC bir fotoğraf seç."),
     );
   return { bytes, mimeType, fileName: safeFileName(flow.sourceName, flow.sourceUri, mimeType) };
 }
@@ -642,15 +643,15 @@ function uploadTarget(uploadUrl: string): {
     target = new URL(uploadUrl, apiBaseUrl);
     api = new URL(apiBaseUrl);
   } catch {
-    flowError('UPLOAD_URL_INVALID', 'Yükleme bağlantısı doğrulanamadı. Lütfen tekrar dene.');
+    flowError('UPLOAD_URL_INVALID', translateCopy("Yükleme bağlantısı doğrulanamadı. Lütfen tekrar dene."));
   }
   if (!['https:', 'http:'].includes(target.protocol) || target.username || target.password) {
-    flowError('UPLOAD_URL_INVALID', 'Yükleme bağlantısı doğrulanamadı. Lütfen tekrar dene.');
+    flowError('UPLOAD_URL_INVALID', translateCopy("Yükleme bağlantısı doğrulanamadı. Lütfen tekrar dene."));
   }
 
   if (target.origin === api.origin) {
     if (!target.pathname.startsWith('/v1/uploads/')) {
-      flowError('UPLOAD_URL_INVALID', 'Yükleme bağlantısı doğrulanamadı. Lütfen tekrar dene.');
+      flowError('UPLOAD_URL_INVALID', translateCopy("Yükleme bağlantısı doğrulanamadı. Lütfen tekrar dene."));
     }
     return { isApiUpload: true, path: `${target.pathname}${target.search}` };
   }
@@ -664,7 +665,7 @@ async function putSourceImage(input: {
 }) {
   const method = input.initiated.method?.toUpperCase() ?? 'PUT';
   if (!input.initiated.assetId || !input.initiated.uploadUrl || method !== 'PUT') {
-    flowError('UPLOAD_RESPONSE_INVALID', 'Yükleme başlatılamadı. Lütfen tekrar dene.');
+    flowError('UPLOAD_RESPONSE_INVALID', translateCopy("Yükleme başlatılamadı. Lütfen tekrar dene."));
   }
 
   const target = uploadTarget(input.initiated.uploadUrl);
@@ -681,7 +682,7 @@ async function putSourceImage(input: {
       if (!result.uploaded || result.assetId !== input.initiated.assetId) {
         flowError(
           'UPLOAD_RESPONSE_INVALID',
-          'Fotoğraf yüklemesi doğrulanamadı. Lütfen tekrar dene.',
+          translateCopy("Fotoğraf yüklemesi doğrulanamadı. Lütfen tekrar dene."),
         );
       }
     } finally {
@@ -693,7 +694,7 @@ async function putSourceImage(input: {
   const headers = new Headers(input.initiated.headers ?? {});
   const signedMime = headers.get('content-type')?.split(';', 1)[0]?.trim().toLowerCase();
   if (signedMime && signedMime !== input.mimeType) {
-    flowError('UPLOAD_RESPONSE_INVALID', 'Yükleme türü doğrulanamadı. Lütfen tekrar dene.');
+    flowError('UPLOAD_RESPONSE_INVALID', translateCopy("Yükleme türü doğrulanamadı. Lütfen tekrar dene."));
   }
   headers.set('content-type', input.mimeType);
   let response: Response;
@@ -707,12 +708,12 @@ async function putSourceImage(input: {
       signal: controller.signal,
     });
   } catch {
-    flowError('UPLOAD_FAILED', 'Fotoğraf yüklenemedi. Bağlantını kontrol edip tekrar dene.');
+    flowError('UPLOAD_FAILED', translateCopy("Fotoğraf yüklenemedi. Bağlantını kontrol edip tekrar dene."));
   } finally {
     clearTimeout(timeout);
   }
   if (!response.ok) {
-    flowError('UPLOAD_FAILED', 'Fotoğraf yüklenemedi. Bağlantını kontrol edip tekrar dene.');
+    flowError('UPLOAD_FAILED', translateCopy("Fotoğraf yüklenemedi. Bağlantını kontrol edip tekrar dene."));
   }
 }
 
@@ -748,7 +749,7 @@ export async function uploadSourceAsset(
   );
   assertCurrentSession();
   if (completed.asset?.id !== initiated.assetId || completed.asset.status !== 'READY') {
-    flowError('UPLOAD_RESPONSE_INVALID', 'Fotoğraf yüklemesi doğrulanamadı. Lütfen tekrar dene.');
+    flowError('UPLOAD_RESPONSE_INVALID', translateCopy("Fotoğraf yüklemesi doğrulanamadı. Lütfen tekrar dene."));
   }
 
   return {
@@ -762,7 +763,7 @@ export async function uploadSourceAsset(
 export function createSubmissionKey(value?: string): string {
   if (value) {
     if (!/^[A-Za-z0-9_-]{8,128}$/.test(value)) {
-      flowError('IDEMPOTENCY_KEY_INVALID', 'Üretim anahtarı geçersiz. Lütfen tekrar dene.');
+      flowError('IDEMPOTENCY_KEY_INVALID', translateCopy("Üretim anahtarı geçersiz. Lütfen tekrar dene."));
     }
     return value;
   }
@@ -800,18 +801,18 @@ export async function startCreateGeneration(
 ): Promise<StartCreateGenerationResult> {
   const requestScope = captureSessionRequestScope();
   if (!flow.sourceUri) {
-    flowError('SOURCE_REQUIRED', 'Önce bir kaynak fotoğraf seçmelisin.');
+    flowError('SOURCE_REQUIRED', translateCopy("Önce bir kaynak fotoğraf seçmelisin."));
   }
   if (!flow.sourceRightsConfirmed) {
     flowError(
       'SOURCE_RIGHTS_REQUIRED',
-      'Devam etmek için fotoğrafı kullanma hakkına sahip olduğunu onaylamalısın.',
+      translateCopy("Devam etmek için fotoğrafı kullanma hakkına sahip olduğunu onaylamalısın."),
     );
   }
   if (flow.secondarySourceUri && !flow.secondarySourceRightsConfirmed) {
     flowError(
       'SOURCE_RIGHTS_REQUIRED',
-      'İkinci kişi fotoğrafını kullanma hakkına sahip olduğunu da onaylamalısın.',
+      translateCopy("İkinci kişi fotoğrafını kullanma hakkına sahip olduğunu da onaylamalısın."),
     );
   }
 
@@ -829,7 +830,7 @@ export async function startCreateGeneration(
   if (attempt && attempt.fingerprint !== fingerprint) {
     flowError(
       'IDEMPOTENCY_KEY_INVALID',
-      'Seçimler değişti. Üretim için yeni bir işlem anahtarı gerekli.',
+      translateCopy("Seçimler değişti. Üretim için yeni bir işlem anahtarı gerekli."),
     );
   }
   if (!attempt) {
@@ -859,7 +860,7 @@ export async function startCreateGeneration(
     requestScope.assertCurrent();
     const quote = currentAttempt.quote!;
     if (!quote?.canGenerate) {
-      flowError('INSUFFICIENT_CREDITS', 'Bu üretim için yeterli kredin bulunmuyor.');
+      flowError('INSUFFICIENT_CREDITS', translateCopy("Bu üretim için yeterli kredin bulunmuyor."));
     }
     currentAttempt.upload ??= await uploadSourceAsset(
       flow,
@@ -898,7 +899,7 @@ export async function startCreateGeneration(
       });
       requestScope.assertCurrent();
       if (!projectResponse.project?.id) {
-        flowError('FLOW_INVALID', 'Proje oluşturma yanıtı doğrulanamadı. Lütfen tekrar dene.');
+        flowError('FLOW_INVALID', translateCopy("Proje oluşturma yanıtı doğrulanamadı. Lütfen tekrar dene."));
       }
       currentAttempt.project = projectResponse.project;
     }
@@ -934,7 +935,7 @@ export async function startCreateGeneration(
     });
     requestScope.assertCurrent();
     if (!generation.generationId || generation.projectId !== currentAttempt.project.id) {
-      flowError('FLOW_INVALID', 'Üretim yanıtı doğrulanamadı. Aynı işlemi yeniden deneyebilirsin.');
+      flowError('FLOW_INVALID', translateCopy("Üretim yanıtı doğrulanamadı. Aynı işlemi yeniden deneyebilirsin."));
     }
 
     const result = {

@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useState } from 'react';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
@@ -31,28 +33,28 @@ const questions = [
 ];
 
 export default function SupportScreen() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const supportEmail = resolveSupportEmail(Constants.expoConfig?.extra);
   const [open, setOpen] = useState<string | null>(questions[0].question);
   return (
     <Screen contentContainerStyle={styles.content}>
-      <AppHeader back title="Yardım ve destek" subtitle="Buradayız" />
+      <AppHeader back title={translateCopy("Yardım ve destek")} subtitle={translateCopy("Buradayız")} />
       <View style={styles.hero}>
         <View style={styles.heroIcon}>
           <Icon name="help-buoy-outline" size={29} color={colors.accentYellow} />
         </View>
-        <Text style={styles.heroTitle}>Bir konuda takıldın mı?</Text>
-        <Text style={styles.heroText}>
-          Sık sorulanlara göz at ya da destek ekibine bir talep gönder.
-        </Text>
+        <Text style={styles.heroTitle}>{translateCopy("Bir konuda takıldın mı?")}</Text>
+        <Text style={styles.heroText}>{translateCopy("Sık sorulanlara göz at ya da destek ekibine bir talep gönder.")}</Text>
         <PrimaryButton
-          label="Destek talebi oluştur"
+          label={translateCopy("Destek talebi oluştur")}
           icon="mail-outline"
           onPress={() => router.push('/support/ticket' as never)}
           style={styles.heroButton}
         />
       </View>
-      <Text style={styles.sectionTitle}>Sık sorulanlar</Text>
+      <Text style={styles.sectionTitle}>{translateCopy("Sık sorulanlar")}</Text>
       <View style={styles.faqs}>
         {questions.map((item) => (
           <Pressable
@@ -75,10 +77,7 @@ export default function SupportScreen() {
           </Pressable>
         ))}
       </View>
-      <Notice tone="neutral" title="Acil olmayan talepler">
-        Hesap, ödeme ve içerik raporu talepleri için mümkün olduğunda proje veya işlem ayrıntısını
-        ekle.
-      </Notice>
+      <Notice tone="neutral" title="Acil olmayan talepler">{translateCopy("Hesap, ödeme ve içerik raporu talepleri için mümkün olduğunda proje veya işlem ayrıntısını ekle.")}</Notice>
       <Text selectable style={styles.email}>
         {supportEmail}
       </Text>

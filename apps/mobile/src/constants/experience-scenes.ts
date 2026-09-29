@@ -1,3 +1,4 @@
+import { tr as translateCopy } from '@/i18n/engine';
 import type { ImageSourcePropType } from 'react-native';
 
 import type { Composition, CreateMode } from '@/features/create/createFlow';
@@ -44,9 +45,9 @@ export type ExperienceScene = {
 export const experienceScenes: readonly ExperienceScene[] = [
   {
     id: 'fan-selfie',
-    title: 'Ünlü ile Selfie',
+    get title() { return translateCopy("Ünlü ile Selfie"); },
     shortTitle: 'Ünlü Selfie',
-    description: 'Kurgusal veya lisanslı karakterlerle güvenli fan karesi.',
+    get description() { return translateCopy("Kurgusal veya lisanslı karakterlerle güvenli fan karesi."); },
     badge: 'Popüler',
     icon: 'people-outline',
     source: require('../../assets/onboarding/images/categories/talent.webp'),
@@ -66,9 +67,9 @@ export const experienceScenes: readonly ExperienceScene[] = [
   },
   {
     id: 'background',
-    title: 'Arka Plan Dönüşümü',
+    get title() { return translateCopy("Arka Plan Dönüşümü"); },
     shortTitle: 'Arka Plan',
-    description: 'Fotoğrafını yeni bir atmosferle buluştur.',
+    get description() { return translateCopy("Fotoğrafını yeni bir atmosferle buluştur."); },
     icon: 'layers-outline',
     source: require('../../assets/onboarding/images/categories/background.webp'),
     palette: ['#422516', '#E39A51'],
@@ -87,9 +88,9 @@ export const experienceScenes: readonly ExperienceScene[] = [
   },
   {
     id: 'art-filter',
-    title: 'Filtre & Sanat',
+    get title() { return translateCopy("Filtre & Sanat"); },
     shortTitle: 'Sanat',
-    description: 'Pop art, çizim ve özgün AI dokuları.',
+    get description() { return translateCopy("Pop art, çizim ve özgün AI dokuları."); },
     icon: 'color-palette-outline',
     source: require('../../assets/onboarding/images/categories/sanatsal.webp'),
     palette: ['#007B96', '#ED297D'],
@@ -110,7 +111,7 @@ export const experienceScenes: readonly ExperienceScene[] = [
     id: 'professional',
     title: 'Profesyonel Portre',
     shortTitle: 'Portre',
-    description: 'Stüdyo ışığında temiz bir portre görünümü.',
+    get description() { return translateCopy("Stüdyo ışığında temiz bir portre görünümü."); },
     icon: 'person-outline',
     source: require('../../assets/onboarding/images/categories/portre.webp'),
     palette: ['#15151B', '#52647A'],
@@ -129,9 +130,9 @@ export const experienceScenes: readonly ExperienceScene[] = [
   },
   {
     id: 'cinematic',
-    title: 'Sinematik Sahne',
+    get title() { return translateCopy("Sinematik Sahne"); },
     shortTitle: 'Sinematik',
-    description: 'Gece ışıkları ve güçlü sahne atmosferi.',
+    get description() { return translateCopy("Gece ışıkları ve güçlü sahne atmosferi."); },
     icon: 'film-outline',
     source: require('../../assets/onboarding/images/categories/cinematic.webp'),
     palette: ['#101923', '#6B431F'],
@@ -150,9 +151,9 @@ export const experienceScenes: readonly ExperienceScene[] = [
   },
   {
     id: 'face',
-    title: 'Yüz Dönüşümü',
+    get title() { return translateCopy("Yüz Dönüşümü"); },
     shortTitle: 'Yüz',
-    description: 'Yüzünü koruyan, yakın plan ve dengeli bir portre görünümü.',
+    get description() { return translateCopy("Yüzünü koruyan, yakın plan ve dengeli bir portre görünümü."); },
     icon: 'sparkles-outline',
     source: require('../../assets/onboarding/images/categories/face.webp'),
     palette: ['#6A422A', '#E0B17F'],

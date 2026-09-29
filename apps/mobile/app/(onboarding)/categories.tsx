@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -24,6 +26,8 @@ import { colors, radii, spacing } from '@/theme';
  * artwork as a regular 100% × 100% child preserves every supplied 4:5 card.
  */
 function FittedArtwork({ source }: { source: ImageSourcePropType }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View pointerEvents="none" style={styles.fittedArtworkCanvas}>
       <Image fadeDuration={0} source={source} style={styles.fittedArtwork} />
@@ -32,6 +36,8 @@ function FittedArtwork({ source }: { source: ImageSourcePropType }) {
 }
 
 export default function CategoriesScreen() {
+  const languageRevision = useLanguageRevision();
+
   const { selectedCategoryId, setSelectedCategoryId } = useOnboarding();
   const selected = categories.find((item) => item.id === selectedCategoryId) ?? categories[0];
 
@@ -45,17 +51,12 @@ export default function CategoriesScreen() {
           }}
           onSkip={() => router.replace('/(auth)/login')}
           step="2 / 4"
-          title="Sahne seç"
+          title={translateCopy("Sahne seç")}
         />
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <Animated.View entering={FadeInDown.duration(450)}>
-            <Text accessibilityRole="header" style={styles.title}>
-              Sahneni seç.
-            </Text>
-            <Text style={styles.subtitle}>
-              Hayalindeki karenin havasını belirle. Seçimin daha sonra sana uygun sahne ve üretim
-              ayarlarını hazırlar.
-            </Text>
+            <Text accessibilityRole="header" style={styles.title}>{translateCopy("Sahneni seç.")}</Text>
+            <Text style={styles.subtitle}>{translateCopy("Hayalindeki karenin havasını belirle. Seçimin daha sonra sana uygun sahne ve üretim ayarlarını hazırlar.")}</Text>
           </Animated.View>
           <View style={styles.grid}>
             {categories.map((item, index) => {
@@ -111,11 +112,11 @@ export default function CategoriesScreen() {
               <Ionicons color={colors.accentYellow} name="sparkles-outline" size={20} />
             </View>
             <View style={styles.summaryCopy}>
-              <Text style={styles.summaryOverline}>SEÇİLİ SAHNE</Text>
+              <Text style={styles.summaryOverline}>{translateCopy("SEÇİLİ SAHNE")}</Text>
               <Text style={styles.summaryTitle}>{selected.shortTitle}</Text>
               <Text style={styles.summaryText}>
                 {selected.id === 'fan-selfie'
-                  ? 'Fan sahneleri yalnızca kurgusal veya lisanslı karakterler kullanır; sonuç AI etiketi taşır.'
+                  ? translateCopy("Fan sahneleri yalnızca kurgusal veya lisanslı karakterler kullanır; sonuç AI etiketi taşır.")
                   : selected.description}
               </Text>
             </View>
@@ -123,7 +124,7 @@ export default function CategoriesScreen() {
         </ScrollView>
         <View style={styles.bottom}>
           <StepProgress active={1} />
-          <GoldButton label="Tarzını seç" onPress={() => router.push('/(onboarding)/filters')} />
+          <GoldButton label={translateCopy("Tarzını seç")} onPress={() => router.push('/(onboarding)/filters')} />
         </View>
       </View>
     </SafeAreaView>

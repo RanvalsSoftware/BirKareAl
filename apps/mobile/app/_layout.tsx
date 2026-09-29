@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { LanguageProvider } from '@/i18n/LanguageProvider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -20,6 +22,8 @@ void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 SplashScreen.setOptions({ duration: 360, fade: true });
 
 function Providers({ children }: PropsWithChildren) {
+  const languageRevision = useLanguageRevision();
+
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -44,7 +48,9 @@ function Providers({ children }: PropsWithChildren) {
   );
 }
 
-export default function RootLayout() {
+function RootNavigator() {
+  const languageRevision = useLanguageRevision();
+
   useAuthBootstrap();
   const splashHidden = useRef(false);
   const reducedMotion = useReducedMotion();
@@ -139,4 +145,10 @@ export default function RootLayout() {
       </View>
     </Providers>
   );
+}
+
+export default function RootLayout() {
+  const languageRevision = useLanguageRevision();
+
+  return <LanguageProvider><RootNavigator /></LanguageProvider>;
 }

@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -37,6 +39,8 @@ type LocalReference = { uri: string; fileName: string };
 const starters = ['Daha doğal yap', 'Biraz uzaklaştır', 'Işığı düzelt'];
 
 export default function GenerationEditScreen() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const { id: rawId } = useLocalSearchParams<{ id?: string }>();
   const generationId = Array.isArray(rawId) ? rawId[0] : rawId;
@@ -65,7 +69,7 @@ export default function GenerationEditScreen() {
       })
       .catch((reason) => {
         if (!active) return;
-        setError(reason instanceof Error ? reason.message : 'Düzenleme açılamadı.');
+        setError(reason instanceof Error ? reason.message : translateCopy("Düzenleme açılamadı."));
       });
     return () => {
       active = false;
@@ -74,7 +78,7 @@ export default function GenerationEditScreen() {
 
   const sourceOutput = useMemo(
     () => generation?.outputs.find((output) => output.selected) ?? generation?.outputs[0] ?? null,
-    [generation?.outputs],
+    [generation?.outputs, languageRevision],
   );
   const sourceUrl = sourceOutput?.asset?.accessUrl;
   const imageUri = sourceUrl?.startsWith('/') ? `${apiBaseUrl}${sourceUrl}` : sourceUrl;
@@ -92,7 +96,7 @@ export default function GenerationEditScreen() {
     setError(null);
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      setError('Referans eklemek için fotoğraf arşivi izni gerekiyor.');
+      setError(translateCopy("Referans eklemek için fotoğraf arşivi izni gerekiyor."));
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -142,7 +146,7 @@ export default function GenerationEditScreen() {
         params: { generationId: result.generationId },
       });
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Düzenleme başlatılamadı.');
+      setError(reason instanceof Error ? reason.message : translateCopy("Düzenleme başlatılamadı."));
     } finally {
       setBusy(false);
     }
@@ -156,12 +160,12 @@ export default function GenerationEditScreen() {
     >
       <AppHeader
         back
-        title="AI ile düzenle"
-        subtitle="Doğal dilde değişiklik iste"
+        title={translateCopy("AI ile düzenle")}
+        subtitle={translateCopy("Doğal dilde değişiklik iste")}
         right={
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Önce ve sonra karşılaştır"
+            accessibilityLabel={translateCopy("Önce ve sonra karşılaştır")}
             disabled={!generationId}
             onPress={() => router.push(`/generations/${generationId}/compare` as never)}
             style={styles.compare}
@@ -180,7 +184,7 @@ export default function GenerationEditScreen() {
         )}
         <View style={styles.previewBadge}>
           <Icon name="sparkles" size={14} color={colors.accentYellow} />
-          <Text style={styles.previewBadgeText}>AI düzenleme</Text>
+          <Text style={styles.previewBadgeText}>{translateCopy("AI düzenleme")}</Text>
         </View>
       </View>
       <KeyboardAvoidingView
@@ -198,9 +202,7 @@ export default function GenerationEditScreen() {
           onContentSizeChange={() => messagesRef.current?.scrollToEnd({ animated: true })}
         >
           <View style={[styles.bubble, styles.aiBubble]}>
-            <Text style={styles.bubbleText}>
-              Elbette. Sonucu doğal tutarak neyi değiştirmemi istersin?
-            </Text>
+            <Text style={styles.bubbleText}>{translateCopy("Elbette. Sonucu doğal tutarak neyi değiştirmemi istersin?")}</Text>
           </View>
           {serverMessages
             .filter((item) => item.role !== 'SYSTEM')
@@ -214,7 +216,7 @@ export default function GenerationEditScreen() {
                 </Text>
               </View>
             ))}
-          <Text style={styles.suggestionLabel}>Önerilen düzenlemeler</Text>
+          <Text style={styles.suggestionLabel}>{translateCopy("Önerilen düzenlemeler")}</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -225,9 +227,7 @@ export default function GenerationEditScreen() {
               <CategoryChip key={item} label={item} onPress={() => setMessage(item)} />
             ))}
           </ScrollView>
-          <Notice tone="neutral">
-            Her AI düzenlemesi yeni bir sürüm oluşturur; önceki sonucunu her zaman geri alabilirsin.
-          </Notice>
+          <Notice tone="neutral">{translateCopy("Her AI düzenlemesi yeni bir sürüm oluşturur; önceki sonucunu her zaman geri alabilirsin.")}</Notice>
         </ScrollView>
         {error ? (
           <View style={styles.error}>
@@ -238,12 +238,12 @@ export default function GenerationEditScreen() {
           <View style={styles.referenceRow}>
             <Image source={{ uri: reference.uri }} style={styles.referenceThumb} />
             <View style={styles.referenceCopy}>
-              <Text style={styles.referenceTitle}>Görsel referansı eklendi</Text>
+              <Text style={styles.referenceTitle}>{translateCopy("Görsel referansı eklendi")}</Text>
               <Text numberOfLines={1} style={styles.referenceName}>
                 {reference.fileName}
               </Text>
             </View>
-            <Pressable accessibilityLabel="Referansı kaldır" onPress={() => setReference(null)}>
+            <Pressable accessibilityLabel={translateCopy("Referansı kaldır")} onPress={() => setReference(null)}>
               <Icon name="close-circle" size={24} color={colors.textSecondary} />
             </Pressable>
           </View>
@@ -252,7 +252,7 @@ export default function GenerationEditScreen() {
           <View style={styles.composer}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Referans fotoğraf ekle"
+              accessibilityLabel={translateCopy("Referans fotoğraf ekle")}
               disabled={busy}
               onPress={chooseReference}
               style={styles.attach}
@@ -269,15 +269,15 @@ export default function GenerationEditScreen() {
               onSubmitEditing={() => void submitRevision()}
               returnKeyType="send"
               submitBehavior="submit"
-              placeholder="İstediğin değişikliği yaz…"
+              placeholder={translateCopy("İstediğin değişikliği yaz…")}
               placeholderTextColor={colors.textMuted}
               style={styles.input}
               multiline
-              accessibilityLabel="Düzenleme isteği"
+              accessibilityLabel={translateCopy("Düzenleme isteği")}
             />
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Düzenleme isteğini gönder"
+              accessibilityLabel={translateCopy("Düzenleme isteğini gönder")}
               onPress={() => void submitRevision()}
               style={[styles.send, (!message.trim() || busy || !sourceOutput) && styles.sendDisabled]}
               disabled={!message.trim() || busy || !sourceOutput}

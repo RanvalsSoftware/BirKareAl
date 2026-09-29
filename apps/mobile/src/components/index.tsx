@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
@@ -41,6 +43,8 @@ export function Icon({
   size?: number;
   color?: ColorValue;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return <Ionicons name={name} size={size} color={color} />;
 }
 
@@ -61,6 +65,8 @@ export function Screen({
   edges = ['top', 'left', 'right'],
   testID,
 }: ScreenProps) {
+  const languageRevision = useLanguageRevision();
+
   if (!scroll) {
     return (
       <SafeAreaView edges={edges} style={[styles.safeArea, style]} testID={testID}>
@@ -89,6 +95,8 @@ export function LogoMark({
   size?: number;
   withWordmark?: boolean;
 }) {
+  const languageRevision = useLanguageRevision();
+
   const reducedMotion = useReducedMotion();
   const [pulse] = useState(() => new Animated.Value(1));
 
@@ -124,9 +132,7 @@ export function LogoMark({
           <Text numberOfLines={1} adjustsFontSizeToFit style={styles.wordmarkText}>
             BirKare <Text style={styles.wordmarkAi}>AI</Text>
           </Text>
-          <Text numberOfLines={1} adjustsFontSizeToFit style={styles.wordmarkCaption}>
-            hayalindeki kareye adım at
-          </Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit style={styles.wordmarkCaption}>{translateCopy("hayalindeki kareye adım at")}</Text>
         </View>
       ) : null}
     </View>
@@ -154,6 +160,8 @@ export function PrimaryButton({
   style,
   testID,
 }: ButtonProps) {
+  const languageRevision = useLanguageRevision();
+
   const unavailable = disabled || loading;
   return (
     <Pressable
@@ -176,7 +184,7 @@ export function PrimaryButton({
       ) : icon ? (
         <Icon name={icon} size={19} color={colors.background} />
       ) : null}
-      <Text style={styles.primaryButtonText}>{loading ? 'Hazırlanıyor…' : label}</Text>
+      <Text style={styles.primaryButtonText}>{loading ? translateCopy("Hazırlanıyor…") : label}</Text>
     </Pressable>
   );
 }
@@ -191,6 +199,8 @@ export function GradientButton({
   style,
   testID,
 }: ButtonProps) {
+  const languageRevision = useLanguageRevision();
+
   const unavailable = disabled || loading;
   return (
     <Pressable
@@ -219,7 +229,7 @@ export function GradientButton({
         ) : icon ? (
           <Icon name={icon} size={19} />
         ) : null}
-        <Text style={styles.gradientButtonText}>{loading ? 'Hazırlanıyor…' : label}</Text>
+        <Text style={styles.gradientButtonText}>{loading ? translateCopy("Hazırlanıyor…") : label}</Text>
       </LinearGradient>
     </Pressable>
   );
@@ -232,6 +242,8 @@ export function SecondaryButton({
   disabled,
   style,
 }: Omit<ButtonProps, 'loading' | 'accessibilityHint' | 'testID'>) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -272,6 +284,8 @@ export function TextField({
   accessibilityLabel,
   ...props
 }: TextFieldProps) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View style={containerStyle}>
       {label ? <Text style={styles.inputLabel}>{label}</Text> : null}
@@ -305,6 +319,8 @@ export function PasswordField({
   label = 'Şifre',
   ...props
 }: Omit<TextFieldProps, 'secureTextEntry' | 'rightAdornment'>) {
+  const languageRevision = useLanguageRevision();
+
   const [secure, setSecure] = useState(true);
   return (
     <TextField
@@ -316,7 +332,7 @@ export function PasswordField({
       rightAdornment={
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={secure ? 'Şifreyi göster' : 'Şifreyi gizle'}
+          accessibilityLabel={secure ? translateCopy("Şifreyi göster") : translateCopy("Şifreyi gizle")}
           hitSlop={10}
           onPress={() => setSecure((current) => !current)}
           style={styles.passwordToggle}
@@ -339,6 +355,8 @@ export function BackButton({
   fallback?: string;
   label?: string;
 }) {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   return (
     <Pressable
@@ -366,6 +384,8 @@ export function AppHeader({
   right?: React.ReactNode;
   compact?: boolean;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <GlassSurface
       radius={28}
@@ -398,6 +418,8 @@ export function CreditBadge({
   credits?: number | string;
   pro?: boolean;
 }) {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const reducedMotion = useReducedMotion();
   const [scale] = useState(() => new Animated.Value(1));
@@ -414,8 +436,8 @@ export function CreditBadge({
     <Animated.View style={{ alignSelf: 'flex-start', transform: [{ scale }] }}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${credits ?? 'Yükleniyor'} kredi${pro ? ', Pro üye' : ''}`}
-        accessibilityHint="Kredi bakiyeni ve paketleri görüntüle"
+        accessibilityLabel={`${credits ?? translateCopy("Yükleniyor")} kredi${pro ? translateCopy(", Pro üye") : ''}`}
+        accessibilityHint={translateCopy("Kredi bakiyeni ve paketleri görüntüle")}
         onPressIn={() => pressAnimation(true)}
         onPressOut={() => pressAnimation(false)}
         onPress={() => {
@@ -434,8 +456,10 @@ export function CreditBadge({
 }
 
 export function ProBadge({ label = 'Pro' }: { label?: string }) {
+  const languageRevision = useLanguageRevision();
+
   return (
-    <View accessible accessibilityLabel={`${label} üyelik`} style={styles.proBadge}>
+    <View accessible accessibilityLabel={translateCopy("{{p0}} üyelik", { p0: label })} style={styles.proBadge}>
       <Icon name="sparkles" size={12} color={colors.background} />
       <Text style={styles.proBadgeText}>{label}</Text>
     </View>
@@ -453,6 +477,8 @@ export function SectionHeader({
   onActionPress?: () => void;
   accessory?: React.ReactNode;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View style={styles.sectionHeader}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -482,6 +508,8 @@ export function SearchBar({
   onChangeText: (value: string) => void;
   placeholder?: string;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View style={styles.searchBar}>
       <Icon name="search" size={19} color={colors.textMuted} />
@@ -497,7 +525,7 @@ export function SearchBar({
       {value ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Aramayı temizle"
+          accessibilityLabel={translateCopy("Aramayı temizle")}
           onPress={() => onChangeText('')}
           hitSlop={8}
         >
@@ -519,6 +547,8 @@ export function CategoryChip({
   onPress?: () => void;
   icon?: IconName;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <Pressable
       accessibilityRole="tab"
@@ -568,6 +598,8 @@ export function VisualTile({
   size?: 'small' | 'regular' | 'wide';
   selected?: boolean;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <Pressable
       accessibilityRole={onPress ? 'button' : 'image'}
@@ -649,6 +681,8 @@ export function CharacterTile({
   onPress?: () => void;
   selected?: boolean;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -700,6 +734,8 @@ export function UploadTile({
   onPress: () => void;
   label?: string;
 }) {
+  const languageRevision = useLanguageRevision();
+
   const [measuredSource, setMeasuredSource] = useState<{
     uri: string;
     aspectRatio: number;
@@ -713,7 +749,7 @@ export function UploadTile({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={sourceUri ? 'Seçili kaynak fotoğrafı değiştir' : label}
+      accessibilityLabel={sourceUri ? translateCopy("Seçili kaynak fotoğrafı değiştir") : label}
       onPress={onPress}
       style={({ pressed }) => [
         styles.uploadTile,
@@ -739,13 +775,13 @@ export function UploadTile({
             <Icon name="add" size={28} color={colors.textPrimary} />
           </View>
           <Text style={styles.uploadLabel}>{label}</Text>
-          <Text style={styles.uploadHint}>JPEG, PNG veya WebP · en çok 15 MB</Text>
+          <Text style={styles.uploadHint}>{translateCopy("JPEG, PNG veya WebP · en çok 15 MB")}</Text>
         </>
       )}
       {sourceUri ? (
         <View style={styles.uploadChange}>
           <Icon name="swap-horizontal" size={15} color={colors.textPrimary} />
-          <Text style={styles.uploadChangeText}>Değiştir</Text>
+          <Text style={styles.uploadChangeText}>{translateCopy("Değiştir")}</Text>
         </View>
       ) : null}
     </Pressable>
@@ -765,6 +801,8 @@ export function EmptyState({
   action?: string;
   onAction?: () => void;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View style={styles.emptyState}>
       <View style={styles.emptyIcon}>
@@ -784,6 +822,8 @@ export function Notice({
   title,
   children,
 }: PropsWithChildren<{ tone?: 'neutral' | 'warning' | 'success'; title?: string }>) {
+  const languageRevision = useLanguageRevision();
+
   const toneColor =
     tone === 'warning' ? colors.warning : tone === 'success' ? colors.success : colors.accentPurple;
   return (
@@ -822,6 +862,8 @@ export function SettingRow({
   onPress?: () => void;
   danger?: boolean;
 }) {
+  const languageRevision = useLanguageRevision();
+
   const content = (
     <>
       <View style={[styles.settingIcon, danger && styles.settingIconDanger]}>
@@ -861,6 +903,8 @@ export function ToggleRow({
   value: boolean;
   onValueChange: (value: boolean) => void;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View style={styles.settingRow}>
       <View style={styles.settingIcon}>
@@ -882,6 +926,8 @@ export function ToggleRow({
 }
 
 export function Divider() {
+  const languageRevision = useLanguageRevision();
+
   return <View style={styles.divider} />;
 }
 
@@ -894,13 +940,15 @@ export function ProgressSteps({
   total?: number;
   labels?: string[];
 }) {
+  const languageRevision = useLanguageRevision();
+
   const reducedMotion = useReducedMotion();
   const safeTotal = Math.max(1, Math.min(12, Math.floor(total)));
   const safeCurrent = Math.max(1, Math.min(safeTotal, Math.floor(current)));
   return (
     <View
       accessible
-      accessibilityLabel={`Oluşturma adımı ${safeCurrent} / ${safeTotal}`}
+      accessibilityLabel={translateCopy("Oluşturma adımı {{p0}} / {{p1}}", { p0: safeCurrent, p1: safeTotal })}
       style={styles.progressArea}
     >
       <View style={styles.progressBars}>
@@ -915,9 +963,7 @@ export function ProgressSteps({
         ))}
       </View>
       <View style={styles.progressCaption}>
-        <Text style={styles.progressLabel}>
-          Adım {safeCurrent} / {safeTotal}
-        </Text>
+        <Text style={styles.progressLabel}>{translateCopy("Adım {{p0}} / {{p1}}", { p0: safeCurrent, p1: safeTotal })}</Text>
         {labels?.[safeCurrent - 1] ? (
           <Text style={styles.progressStepName}>{labels[safeCurrent - 1]}</Text>
         ) : null}
@@ -937,6 +983,8 @@ function AnimatedProgressSegment({
   reducedMotion: boolean;
   delay: number;
 }) {
+  const languageRevision = useLanguageRevision();
+
   const [fill] = useState(() => new Animated.Value(0));
   useEffect(() => {
     fill.stopAnimation();
@@ -980,6 +1028,8 @@ export function SourcePreview({
   sourceUri?: string | null;
   label?: string;
 }) {
+  const languageRevision = useLanguageRevision();
+
   if (sourceUri) {
     return (
       <Image

@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useMemo, useState } from 'react';
 import { PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,6 +18,8 @@ export function IntensitySlider({
   disabled?: boolean;
   label?: string;
 }) {
+  const languageRevision = useLanguageRevision();
+
   const [width, setWidth] = useState(1);
   const responder = useMemo(
     () =>
@@ -38,14 +42,14 @@ export function IntensitySlider({
             ),
           ),
       }),
-    [disabled, onChange, width],
+    [disabled, onChange, width, languageRevision],
   );
   return (
     <View style={[styles.row, disabled && styles.disabled]}>
       <Pressable
         disabled={disabled}
         accessibilityRole="button"
-        accessibilityLabel="Yoğunluğu azalt"
+        accessibilityLabel={translateCopy("Yoğunluğu azalt")}
         onPress={() => onChange(Math.max(0, value - 5))}
         style={styles.adjust}
       >
@@ -59,9 +63,9 @@ export function IntensitySlider({
         accessibilityRole="adjustable"
         accessibilityLabel={label}
         accessibilityState={{ disabled }}
-        accessibilityValue={{ min: 0, max: 100, now: value, text: `Yüzde ${value}` }}
+        accessibilityValue={{ min: 0, max: 100, now: value, text: translateCopy("Yüzde {{p0}}", { p0: value }) }}
         accessibilityActions={[
-          { name: 'increment', label: 'Artır' },
+          { name: 'increment', label: translateCopy("Artır") },
           { name: 'decrement', label: 'Azalt' },
         ]}
         onAccessibilityAction={(event) => {
@@ -93,7 +97,7 @@ export function IntensitySlider({
       <Pressable
         disabled={disabled}
         accessibilityRole="button"
-        accessibilityLabel="Yoğunluğu artır"
+        accessibilityLabel={translateCopy("Yoğunluğu artır")}
         onPress={() => onChange(Math.min(100, value + 5))}
         style={styles.adjust}
       >

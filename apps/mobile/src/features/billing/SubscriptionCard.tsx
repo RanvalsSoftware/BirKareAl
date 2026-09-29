@@ -1,3 +1,6 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { getLocale as getAppLocale } from '@/i18n/engine';
+import { tr as translateCopy } from '@/i18n/engine';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect } from 'expo-router';
@@ -19,13 +22,15 @@ function notify(result: BillingResult, restoring = false) {
     'BirKare Pro',
     result.isPro
       ? restoring
-        ? 'Pro erişiminiz geri yüklendi.'
-        : 'Pro erişiminiz aktif.'
-      : 'Bu hesap için aktif Pro hakkı bulunamadı. Yeni bir ödeme yaptıysanız tekrar satın almayın; biraz sonra durumu yenileyin.',
+        ? translateCopy("Pro erişiminiz geri yüklendi.")
+        : translateCopy("Pro erişiminiz aktif.")
+      : translateCopy("Bu hesap için aktif Pro hakkı bulunamadı. Yeni bir ödeme yaptıysanız tekrar satın almayın; biraz sonra durumu yenileyin."),
   );
 }
 
 export function SubscriptionCard() {
+  const languageRevision = useLanguageRevision();
+
   const billing = useRevenueCat();
   const { refresh } = billing;
 
@@ -38,32 +43,32 @@ export function SubscriptionCard() {
   const expiration = billing.entitlement?.expirationDate;
   const expiresText =
     expiration && Number.isFinite(Date.parse(expiration))
-      ? new Date(expiration).toLocaleDateString('tr-TR')
+      ? new Date(expiration).toLocaleDateString(getAppLocale())
       : null;
   const cancelled = billing.subscriptionCancelled;
   const disabled = billing.busy || (!billing.ready && billing.status !== 'connecting');
 
   const badgeLabel = cancelled
-    ? 'BirKare Pro · İptal edildi'
+    ? translateCopy("BirKare Pro · İptal edildi")
     : billing.isPro
       ? 'BirKare Pro · Aktif'
       : 'BirKare Pro';
 
   const title = cancelled
-    ? 'Aboneliğiniz iptal edildi.'
+    ? translateCopy("Aboneliğiniz iptal edildi.")
     : billing.isPro
-      ? 'Pro hesabınız hazır.'
-      : 'Premium sahnelerin kilidini açın.';
+      ? translateCopy("Pro hesabınız hazır.")
+      : translateCopy("Premium sahnelerin kilidini açın.");
 
   const description = cancelled
     ? expiresText
-      ? `Pro erişiminiz ${expiresText} tarihine kadar devam eder. Bu tarihten sonra otomatik yenileme yapılmaz.`
-      : 'Otomatik yenileme kapatıldı.'
+      ? translateCopy("Pro erişiminiz {{p0}} tarihine kadar devam eder. Bu tarihten sonra otomatik yenileme yapılmaz.", { p0: expiresText })
+      : translateCopy("Otomatik yenileme kapatıldı.")
     : billing.isPro
       ? expiresText
-        ? `${billing.entitlement?.willRenew ? 'Yenileme tarihi' : 'Erişim bitişi'}: ${expiresText}`
-        : 'Süresiz Pro erişimi · Otomatik yenileme yok.'
-      : 'Aylık, yıllık ve ömür boyu seçeneklerini mağazanın güncel yerel fiyatlarıyla inceleyin.';
+        ? `${billing.entitlement?.willRenew ? 'Yenileme tarihi' : translateCopy("Erişim bitişi")}: ${expiresText}`
+        : translateCopy("Süresiz Pro erişimi · Otomatik yenileme yok.")
+      : translateCopy("Aylık, yıllık ve ömür boyu seçeneklerini mağazanın güncel yerel fiyatlarıyla inceleyin.");
 
   return (
     <LinearGradient colors={['#17130A', '#111111', '#171019']} style={styles.card}>
@@ -86,9 +91,7 @@ export function SubscriptionCard() {
       {cancelled ? (
         <View accessibilityRole="alert" style={styles.cancelledBox}>
           <Ionicons name="close-circle" size={18} color="#FF8D80" />
-          <Text style={styles.cancelledText}>
-            İptal edildi{expiresText ? ` · ${expiresText} tarihine kadar kullanabilirsiniz.` : ''}
-          </Text>
+          <Text style={styles.cancelledText}>{translateCopy("İptal edildi{{p0}}", { p0: expiresText ? ` · ${expiresText} tarihine kadar kullanabilirsiniz.` : '' })}</Text>
         </View>
       ) : null}
 
@@ -96,7 +99,7 @@ export function SubscriptionCard() {
         <Text style={styles.test}>{billing.testEnvironmentLabel}</Text>
       ) : null}
       {billing.status === 'connecting' ? (
-        <Text style={styles.text}>Mağaza hazırlanıyor…</Text>
+        <Text style={styles.text}>{translateCopy("Mağaza hazırlanıyor…")}</Text>
       ) : null}
       {billing.error ? (
         <Text accessibilityRole="alert" style={styles.warning}>
@@ -134,7 +137,7 @@ export function SubscriptionCard() {
             }}
           >
             <Text style={styles.secondaryText}>
-              {billing.busy ? 'Mağaza güncelleniyor…' : 'Aboneliği yönet'}
+              {billing.busy ? translateCopy("Mağaza güncelleniyor…") : translateCopy("Aboneliği yönet")}
             </Text>
           </Pressable>
           <Pressable
@@ -147,7 +150,7 @@ export function SubscriptionCard() {
             ]}
             onPress={() => void billing.restore().then((result) => notify(result, true))}
           >
-            <Text style={styles.link}>Satın alımları geri yükle</Text>
+            <Text style={styles.link}>{translateCopy("Satın alımları geri yükle")}</Text>
           </Pressable>
         </View>
       )}

@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
@@ -14,25 +16,26 @@ const consentRows = [
   {
     id: 'rights',
     icon: 'images-outline' as const,
-    title: 'Fotoğraf kullanım hakkım var',
-    detail:
-      'Yüklediğim fotoğrafın bana ait olduğunu veya gerekli kullanım iznine sahip olduğumu onaylıyorum.',
+    get title() { return translateCopy("Fotoğraf kullanım hakkım var"); },
+    get detail() { return translateCopy("Yüklediğim fotoğrafın bana ait olduğunu veya gerekli kullanım iznine sahip olduğumu onaylıyorum."); },
   },
   {
     id: 'ai',
     icon: 'sparkles-outline' as const,
-    title: 'AI içeriği açıklamasını kabul ediyorum',
-    detail: 'Sonuçların AI ile üretildiğini ve yanıltıcı kullanımın yasak olduğunu anlıyorum.',
+    get title() { return translateCopy("AI içeriği açıklamasını kabul ediyorum"); },
+    get detail() { return translateCopy("Sonuçların AI ile üretildiğini ve yanıltıcı kullanımın yasak olduğunu anlıyorum."); },
   },
   {
     id: 'age',
     icon: 'calendar-outline' as const,
-    title: '18 yaşını doldurdum',
-    detail: 'BirKare AI şu anda 18 yaş ve üzeri kullanıcılar için tasarlanmıştır.',
+    get title() { return translateCopy("18 yaşını doldurdum"); },
+    get detail() { return translateCopy("BirKare AI şu anda 18 yaş ve üzeri kullanıcılar için tasarlanmıştır."); },
   },
 ] as const;
 
 export default function ConsentScreen() {
+  const languageRevision = useLanguageRevision();
+
   const { completed, markCompleted, ready } = useOnboarding();
   const [accepted, setAccepted] = useState<Record<string, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -83,16 +86,11 @@ export default function ConsentScreen() {
         <OnboardingHeader
           onBack={returnFromConsent}
           step="BAŞLAMADAN ÖNCE"
-          title="Güvenlik onayları"
+          title={translateCopy("Güvenlik onayları")}
         />
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <Text accessibilityRole="header" style={styles.title}>
-            Güvenli bir alan{`\n`}oluşturalım.
-          </Text>
-          <Text style={styles.subtitle}>
-            Fotoğrafların ve platformdaki herkesin haklarını korumak için aşağıdaki onayların tamamı
-            gerekli.
-          </Text>
+          <Text accessibilityRole="header" style={styles.title}>{translateCopy("Güvenli bir alan{{p0}}oluşturalım.", { p0: `\n` })}</Text>
+          <Text style={styles.subtitle}>{translateCopy("Fotoğrafların ve platformdaki herkesin haklarını korumak için aşağıdaki onayların tamamı gerekli.")}</Text>
           <View style={styles.rows}>
             {consentRows.map((row) => {
               const checked = Boolean(accepted[row.id]);
@@ -128,31 +126,23 @@ export default function ConsentScreen() {
           </View>
           <View style={styles.legalBox}>
             <Ionicons color={colors.textMuted} name="document-text-outline" size={18} />
-            <Text style={styles.legalText}>
-              Devam ederek{' '}
+            <Text style={styles.legalText}>{translateCopy("Devam ederek")}{' '}
               <Text
-                accessibilityHint="Belgeyi açar"
+                accessibilityHint={translateCopy("Belgeyi açar")}
                 accessibilityRole="link"
                 onPress={() =>
                   router.push({ pathname: '/legal/[document]', params: { document: 'terms' } })
                 }
                 style={styles.legalLink}
-              >
-                Kullanım Koşulları
-              </Text>
-              ’nı,{' '}
+              >{translateCopy("Kullanım Koşulları")}</Text>{translateCopy("’nı,")}{' '}
               <Text
-                accessibilityHint="Belgeyi açar"
+                accessibilityHint={translateCopy("Belgeyi açar")}
                 accessibilityRole="link"
                 onPress={() =>
                   router.push({ pathname: '/legal/[document]', params: { document: 'privacy' } })
                 }
                 style={styles.legalLink}
-              >
-                Gizlilik Politikası
-              </Text>
-              ’nı ve topluluk güvenliği kurallarını kabul etmiş olursun.
-            </Text>
+              >{translateCopy("Gizlilik Politikası")}</Text>{translateCopy("’nı ve topluluk güvenliği kurallarını kabul etmiş olursun.")}</Text>
           </View>
         </ScrollView>
         <View style={styles.bottom}>

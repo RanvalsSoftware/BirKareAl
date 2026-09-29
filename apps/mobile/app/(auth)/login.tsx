@@ -1,3 +1,4 @@
+import { useLanguageRevision } from '@/i18n/use-language';
 import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { BlurView } from 'expo-blur';
@@ -36,6 +37,8 @@ type DeletionRecoveryAttempt =
   { kind: 'password'; values: LoginValues; recoveryUntil: string } | SocialDeletionRecoveryAttempt;
 
 export default function LoginScreen() {
+  const languageRevision = useLanguageRevision();
+
   const copy = useCopy();
   const params = useLocalSearchParams<{ email?: string; verified?: string }>();
   const { visible: verified, dismiss: dismissVerified } = useRouteAuthNotice(

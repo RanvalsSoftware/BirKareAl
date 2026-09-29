@@ -1,11 +1,12 @@
+import { tr as translateCopy } from '@/i18n/engine';
 import { apiRequest } from '@/api/client';
 
 export const supportTopics = [
-  { category: 'GENERATION', label: 'Üretim sorunu' },
-  { category: 'PURCHASE', label: 'Satın alma' },
-  { category: 'CONTENT_REPORT', label: 'İçerik raporu' },
+  { category: 'GENERATION', get label() { return translateCopy("Üretim sorunu"); } },
+  { category: 'PURCHASE', get label() { return translateCopy("Satın alma"); } },
+  { category: 'CONTENT_REPORT', get label() { return translateCopy("İçerik raporu"); } },
   { category: 'PRIVACY', label: 'Gizlilik' },
-  { category: 'OTHER', label: 'Diğer' },
+  { category: 'OTHER', get label() { return translateCopy("Diğer"); } },
 ] as const;
 export type SupportTicketInput = {
   category: (typeof supportTopics)[number]['category'];
@@ -69,7 +70,7 @@ export async function submitSupportTicket(
   input: SupportTicketInput,
   key: string,
 ): Promise<SupportTicketReceipt> {
-  if (!validSupportInput(input)) throw new Error('Başlık ve açıklamayı kontrol et.');
+  if (!validSupportInput(input)) throw new Error(translateCopy("Başlık ve açıklamayı kontrol et."));
   const response = await apiRequest<{ ticket: SupportTicketReceipt }>('/v1/support/tickets', {
     method: 'POST',
     headers: { 'Idempotency-Key': key },
@@ -80,7 +81,7 @@ export async function submitSupportTicket(
     }),
   });
   if (!response.ticket || !['PENDING', 'SENT', 'UNCONFIRMED'].includes(response.ticket.status)) {
-    throw new Error('Destek talebi durumu doğrulanamadı. Aynı talebi tekrar kontrol edebilirsin.');
+    throw new Error(translateCopy("Destek talebi durumu doğrulanamadı. Aynı talebi tekrar kontrol edebilirsin."));
   }
   return response.ticket;
 }

@@ -1,3 +1,4 @@
+import { useLanguageRevision } from '@/i18n/use-language';
 import Constants from 'expo-constants';
 import { Redirect, useLocalSearchParams } from 'expo-router';
 import { ProPaywallPreview } from '@/features/billing/ProPaywallPreview';
@@ -5,6 +6,8 @@ import { previewAllowed, previewSelection } from '@/features/billing/paywall-dis
 
 /** Deep links cannot enable preview in a release binary or a staging build. */
 export default function ProPreviewScreen() {
+  const languageRevision = useLanguageRevision();
+
   const { plan } = useLocalSearchParams<{ plan?: string | string[] }>();
   const env = Constants.expoConfig?.extra?.revenueCat?.appEnv;
   if (!previewAllowed(__DEV__, env)) return <Redirect href="/pro" />;

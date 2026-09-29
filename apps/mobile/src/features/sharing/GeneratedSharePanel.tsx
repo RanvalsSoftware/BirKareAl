@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useRef, useState } from 'react';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -29,11 +31,11 @@ type ShareAction =
     };
 
 const actions: ShareAction[] = [
-  { destination: 'save', label: 'Fotoğrafa\nKaydet', icon: 'download-outline' },
+  { destination: 'save', get label() { return translateCopy("Fotoğrafa Kaydet"); }, icon: 'download-outline' },
   { destination: 'Instagram', label: 'Instagram', brand: 'instagram' },
   { destination: 'X / Twitter', label: 'X / Twitter', brand: 'x-twitter' },
   { destination: 'Facebook', label: 'Facebook', brand: 'facebook' },
-  { destination: 'other', label: 'Diğer', icon: 'ellipsis-horizontal' },
+  { destination: 'other', get label() { return translateCopy("Diğer"); }, icon: 'ellipsis-horizontal' },
 ];
 
 const disclosureTags = ['#BirKareAI', '#AIileOlusturuldu', '#DijitalSanat'];
@@ -47,6 +49,8 @@ export function GeneratedSharePanel({
   outputId?: string;
   ready: boolean;
 }) {
+  const languageRevision = useLanguageRevision();
+
   const inFlight = useRef(false);
   const [busy, setBusy] = useState<ShareDestination | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -59,9 +63,9 @@ export function GeneratedSharePanel({
     setFeedback(null);
     try {
       await exportGeneratedImage(generationId, outputId, destination);
-      if (destination === 'save') setFeedback('Görsel Fotoğraflara kaydedildi.');
+      if (destination === 'save') setFeedback(translateCopy("Görsel Fotoğraflara kaydedildi."));
     } catch (error) {
-      setFeedback(error instanceof Error ? error.message : 'Paylaşım hazırlanamadı. Tekrar dene.');
+      setFeedback(error instanceof Error ? error.message : translateCopy("Paylaşım hazırlanamadı. Tekrar dene."));
     } finally {
       inFlight.current = false;
       setBusy(null);
@@ -79,8 +83,8 @@ export function GeneratedSharePanel({
               accessibilityRole="button"
               accessibilityLabel={
                 action.destination === 'save'
-                  ? 'Fotoğrafı Fotoğraflara kaydet'
-                  : `${action.label.replace('\\n', ' ')} için paylaşım menüsünü aç`
+                  ? translateCopy("Fotoğrafı Fotoğraflara kaydet")
+                  : translateCopy("{{p0}} için paylaşım menüsünü aç", { p0: action.label.replace('\\n', ' ') })
               }
               accessibilityState={{ disabled: !ready || Boolean(busy), busy: active }}
               disabled={!ready || Boolean(busy)}
@@ -161,13 +165,13 @@ export function GeneratedSharePanel({
         <Pressable
           accessibilityRole="button"
           accessibilityState={{ expanded: disclosureOpen }}
-          accessibilityLabel="AI açıklamasını göster veya gizle"
+          accessibilityLabel={translateCopy("AI açıklamasını göster veya gizle")}
           onPress={() => setDisclosureOpen((value) => !value)}
           style={styles.disclosureHeader}
         >
           <View style={styles.disclosureHeading}>
             <Icon name="sparkles" size={17} color={colors.textPrimary} />
-            <Text style={styles.disclosureTitle}>AI Açıklaması</Text>
+            <Text style={styles.disclosureTitle}>{translateCopy("AI Açıklaması")}</Text>
           </View>
           <Icon
             name={disclosureOpen ? 'chevron-up' : 'chevron-down'}
@@ -192,7 +196,7 @@ export function GeneratedSharePanel({
       </View>
 
       {!ready ? (
-        <Text style={styles.unavailable}>Paylaşım, tamamlanan gerçek üretim hazır olduğunda açılır.</Text>
+        <Text style={styles.unavailable}>{translateCopy("Paylaşım, tamamlanan gerçek üretim hazır olduğunda açılır.")}</Text>
       ) : null}
     </View>
   );

@@ -1,3 +1,4 @@
+import { useLanguageRevision } from '@/i18n/use-language';
 import * as Haptics from 'expo-haptics';
 import { Redirect, Tabs } from 'expo-router';
 import { useEffect, useState, type ComponentProps } from 'react';
@@ -28,6 +29,8 @@ const tabIcons = {
 type GlassTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
 
 function GlassTabBar({ state, descriptors, navigation }: GlassTabBarProps) {
+  const languageRevision = useLanguageRevision();
+
   const insets = useSafeAreaInsets();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   useEffect(() => {
@@ -91,6 +94,8 @@ function GlassTabButton({
   accessibilityLabel?: string;
   testID?: string;
 }) {
+  const languageRevision = useLanguageRevision();
+
   const reducedMotion = useReducedMotion();
   const selection = useSharedValue(focused ? 1 : 0);
   const scale = useSharedValue(1);
@@ -149,6 +154,8 @@ function GlassTabButton({
 }
 
 export default function TabsLayout() {
+  const languageRevision = useLanguageRevision();
+
   const copy = useCopy();
   const authState = useAuthStore((store) => store.state);
   if (authState === 'booting') return <AuthBootScreen />;

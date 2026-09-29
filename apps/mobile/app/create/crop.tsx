@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
@@ -12,6 +14,8 @@ import { colors, radii, spacing } from '@/theme';
 const ratios: AspectRatio[] = ['1:1', '4:5', '9:16', '16:9'];
 
 export default function CropScreen() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const { flow, set } = useCreateFlow();
   const [rotation, setRotation] = useState(0);
@@ -41,7 +45,7 @@ export default function CropScreen() {
       set(selection);
       router.dismissTo(afterSourcePath(selection) as never);
     } catch {
-      setError('Döndürme kaydedilemedi. Kaynak görsel değişmedi; tekrar deneyebilirsin.');
+      setError(translateCopy("Döndürme kaydedilemedi. Kaynak görsel değişmedi; tekrar deneyebilirsin."));
     } finally {
       setSaving(false);
     }
@@ -49,7 +53,7 @@ export default function CropScreen() {
 
   return (
     <Screen contentContainerStyle={styles.content}>
-      <CreateHeader title="Kadrajı düzenle" subtitle="Orijinal dosyan değişmez" step={2} />
+      <CreateHeader title={translateCopy("Kadrajı düzenle")} subtitle={translateCopy("Orijinal dosyan değişmez")} step={2} />
       <View style={[styles.previewWrap, { aspectRatio: width / height }]}>
         <Image
           source={{ uri: flow.sourceUri }}
@@ -67,7 +71,7 @@ export default function CropScreen() {
           ]}
         />
       </View>
-      <FieldLabel>Çıktı oranı</FieldLabel>
+      <FieldLabel>{translateCopy("Çıktı oranı")}</FieldLabel>
       <View style={styles.choiceRow} accessibilityRole="radiogroup">
         {ratios.map((option) => (
           <MiniChoice
@@ -78,7 +82,7 @@ export default function CropScreen() {
           />
         ))}
       </View>
-      <FieldLabel>Fotoğrafı döndür</FieldLabel>
+      <FieldLabel>{translateCopy("Fotoğrafı döndür")}</FieldLabel>
       <View style={styles.choiceRow}>
         <MiniChoice
           label="↶ 90°"
@@ -90,20 +94,17 @@ export default function CropScreen() {
           selected={false}
           onPress={() => setRotation((value) => value + 90)}
         />
-        <MiniChoice label="Sıfırla" selected={false} onPress={() => setRotation(0)} />
+        <MiniChoice label={translateCopy("Sıfırla")} selected={false} onPress={() => setRotation(0)} />
       </View>
       <View style={styles.note}>
-        <Notice tone="neutral" title="Kaynak korunur">
-          Döndürme, üretime gönderilecek kopyaya uygulanır. Çerçeve çıktı oranını gösterir; AI bu
-          orana göre yeniden kadrajlar veya genişletir. Bu ekran elle kırpma yapmaz.
-        </Notice>
+        <Notice tone="neutral" title="Kaynak korunur">{translateCopy("Döndürme, üretime gönderilecek kopyaya uygulanır. Çerçeve çıktı oranını gösterir; AI bu orana göre yeniden kadrajlar veya genişletir. Bu ekran elle kırpma yapmaz.")}</Notice>
       </View>
       {error ? (
         <Text accessibilityRole="alert" style={styles.error}>
           {error}
         </Text>
       ) : null}
-      <WizardFooter label="Kadrajı uygula" onPress={save} loading={saving} />
+      <WizardFooter label={translateCopy("Kadrajı uygula")} onPress={save} loading={saving} />
     </Screen>
   );
 }

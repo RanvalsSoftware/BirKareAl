@@ -1,3 +1,4 @@
+import { useLanguageRevision } from '@/i18n/use-language';
 import { Ionicons } from '@expo/vector-icons';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { useEffect, useState } from 'react';
@@ -13,6 +14,8 @@ type AppleSignInButtonProps = {
 type AppleAuthenticationError = { code?: unknown };
 
 export function AppleSignInButton({ disabled = false, onError, onSuccess }: AppleSignInButtonProps) {
+  const languageRevision = useLanguageRevision();
+
   const copy = useCopy();
   const [available, setAvailable] = useState(false);
   const [working, setWorking] = useState(false);

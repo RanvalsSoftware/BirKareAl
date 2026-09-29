@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useEffect, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,6 +19,8 @@ const stages: SubmissionStage[] = [
 
 /** Stage-based feedback, not an invented byte-upload percentage. */
 export function SubmissionProgress({ stage }: { stage: SubmissionStage }) {
+  const languageRevision = useLanguageRevision();
+
   const reducedMotion = useReducedMotion();
   const [fill] = useState(() => new Animated.Value(0));
   const index = stages.indexOf(stage);
@@ -66,9 +70,7 @@ export function SubmissionProgress({ stage }: { stage: SubmissionStage }) {
           />
         </Animated.View>
       </View>
-      <Text style={styles.detail}>
-        Yükleme ve başlatma aşamaları tamamlandıkça ilerler. Tekrar dokunmana gerek yok.
-      </Text>
+      <Text style={styles.detail}>{translateCopy("Yükleme ve başlatma aşamaları tamamlandıkça ilerler. Tekrar dokunmana gerek yok.")}</Text>
     </GlassSurface>
   );
 }

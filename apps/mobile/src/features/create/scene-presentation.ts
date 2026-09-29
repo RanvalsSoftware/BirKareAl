@@ -1,3 +1,4 @@
+import { tr as translateCopy } from '@/i18n/engine';
 import { scenes } from '@/constants/catalog';
 import { experienceScenes } from '@/constants/experience-scenes';
 
@@ -8,7 +9,7 @@ export function getSelectedScene(id: string | null) {
   const category = experienceScenes.find((item) => id && item.preset.sceneId === id);
   if (!category) return null;
   return {
-    name: id === 'scene-sunset-terrace' ? 'Gün Batımı Terası' : category.title,
+    name: id === 'scene-sunset-terrace' ? translateCopy("Gün Batımı Terası") : category.title,
     previewSource: category.source,
   };
 }

@@ -1,3 +1,4 @@
+import { tr as translateCopy } from '@/i18n/engine';
 export const MOBILE_PRO_PRICE_POLICY = {
   monthly: 299.99,
   annual: 2499.99,
@@ -7,21 +8,21 @@ export const MOBILE_PRO_PRICE_POLICY = {
 export const MOBILE_CREDIT_PRODUCTS = [
   {
     id: 'credits.20',
-    label: 'Başlangıç',
+    get label() { return translateCopy("Başlangıç"); },
     credits: 20,
     productId: 'com.birkareai.credits.20',
     expectedTryPrice: 99.99,
   },
   {
     id: 'credits.60',
-    label: 'Yaratıcı',
+    get label() { return translateCopy("Yaratıcı"); },
     credits: 60,
     productId: 'com.birkareai.credits.60',
     expectedTryPrice: 249.99,
   },
   {
     id: 'credits.150',
-    label: 'Stüdyo',
+    get label() { return translateCopy("Stüdyo"); },
     credits: 150,
     productId: 'com.birkareai.credits.150',
     expectedTryPrice: 599.99,

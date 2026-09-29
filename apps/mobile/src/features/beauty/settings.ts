@@ -1,3 +1,4 @@
+import { tr as translateCopy } from '@/i18n/engine';
 /** Typed preset settings only. Prompts and safe effect limits are authoritative on the server. */
 export type BeautyAdjustment =
   | 'naturalBalance'
@@ -74,14 +75,14 @@ export function toggleBeautyOption(
 
 export function intensityDescription(value: number) {
   return value === 0
-    ? 'Kapalı'
+    ? translateCopy("Kapalı")
     : value <= 20
-      ? 'Çok hafif'
+      ? translateCopy("Çok hafif")
       : value <= 40
-        ? 'Doğal'
+        ? translateCopy("Doğal")
         : value <= 60
           ? 'Dengeli'
           : value <= 80
             ? 'Belirgin'
-            : 'Güçlü';
+            : translateCopy("Güçlü");
 }

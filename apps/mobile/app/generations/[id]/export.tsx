@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
@@ -23,6 +25,8 @@ import {
 import { colors, radii, spacing, typography } from '@/theme';
 
 export default function ExportScreen() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const params = useLocalSearchParams<{ id: string; outputId?: string }>();
   const generationId = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -48,7 +52,7 @@ export default function ExportScreen() {
         }
       })
       .catch((reason) => {
-        if (active) setError(reason instanceof Error ? reason.message : 'Görsel yüklenemedi.');
+        if (active) setError(reason instanceof Error ? reason.message : translateCopy("Görsel yüklenemedi."));
       });
     return () => {
       active = false;
@@ -75,7 +79,7 @@ export default function ExportScreen() {
     } catch {
       return null;
     }
-  }, [generation, outputId, token]);
+  }, [generation, outputId, token, languageRevision]);
 
   const ratio =
     actualImageRatio && Number.isFinite(actualImageRatio) && actualImageRatio > 0
@@ -87,8 +91,8 @@ export default function ExportScreen() {
       await exportGeneratedImage(generationId, selection.id, 'other');
     } catch (reason) {
       Alert.alert(
-        'Paylaşım açılamadı',
-        reason instanceof Error ? reason.message : 'Lütfen tekrar dene.',
+        translateCopy("Paylaşım açılamadı"),
+        reason instanceof Error ? reason.message : translateCopy("Lütfen tekrar dene."),
       );
     }
   };
@@ -98,19 +102,19 @@ export default function ExportScreen() {
       <View style={styles.topBar}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Geri"
+          accessibilityLabel={translateCopy("Geri")}
           onPress={() => router.back()}
           style={({ pressed }) => [styles.topButton, pressed && styles.pressed]}
         >
           <Icon name="chevron-back" size={26} color={colors.textPrimary} />
         </Pressable>
         <View style={styles.topTitleWrap}>
-          <Text style={styles.topTitle}>Paylaş</Text>
-          <Text style={styles.topSubtitle}>Görsel olduğu haliyle korunur</Text>
+          <Text style={styles.topTitle}>{translateCopy("Paylaş")}</Text>
+          <Text style={styles.topSubtitle}>{translateCopy("Görsel olduğu haliyle korunur")}</Text>
         </View>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Diğer paylaşım seçenekleri"
+          accessibilityLabel={translateCopy("Diğer paylaşım seçenekleri")}
           disabled={!selection}
           onPress={() => void shareOther()}
           style={({ pressed }) => [
@@ -126,7 +130,7 @@ export default function ExportScreen() {
       <View style={[styles.preview, { aspectRatio: ratio }]}>
         {selection ? (
           <Image
-            accessibilityLabel="Paylaşılacak seçili AI görseli"
+            accessibilityLabel={translateCopy("Paylaşılacak seçili AI görseli")}
             resizeMode="contain"
             source={selection.imageSource}
             style={styles.previewImage}
@@ -138,7 +142,7 @@ export default function ExportScreen() {
         ) : (
           <View style={styles.previewEmpty}>
             <Icon name="image-outline" size={46} color={colors.textMuted} />
-            <Text style={styles.previewEmptyText}>Görsel hazırlanıyor…</Text>
+            <Text style={styles.previewEmptyText}>{translateCopy("Görsel hazırlanıyor…")}</Text>
           </View>
         )}
         {selection ? (
@@ -149,7 +153,7 @@ export default function ExportScreen() {
       </View>
 
       {error ? (
-        <Notice tone="warning" title="Görsel açılamadı">
+        <Notice tone="warning" title={translateCopy("Görsel açılamadı")}>
           {error}
         </Notice>
       ) : null}
@@ -162,9 +166,7 @@ export default function ExportScreen() {
 
       <View style={styles.integrityNote}>
         <Icon name="resize-outline" size={17} color={colors.accentYellow} />
-        <Text style={styles.integrityText}>
-          Paylaşımda görsel yeniden kırpılmaz. Oluşturulduğu çözünürlük ve en-boy oranı aynen korunur.
-        </Text>
+        <Text style={styles.integrityText}>{translateCopy("Paylaşımda görsel yeniden kırpılmaz. Oluşturulduğu çözünürlük ve en-boy oranı aynen korunur.")}</Text>
       </View>
     </Screen>
   );

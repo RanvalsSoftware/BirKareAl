@@ -1,8 +1,9 @@
+import { tr as translateCopy } from '@/i18n/engine';
 /** Shared by the filter detail, editor and local preview. Never starts a paid generation. */
 export const FILTER_INTENSITIES = [
-  { label: 'Düşük', value: 25 },
+  { get label() { return translateCopy("Düşük"); }, value: 25 },
   { label: 'Orta', value: 60 },
-  { label: 'Yüksek', value: 100 },
+  { get label() { return translateCopy("Yüksek"); }, value: 100 },
 ] as const;
 
 export function clampFilterIntensity(value: number): number {

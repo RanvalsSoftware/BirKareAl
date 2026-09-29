@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -21,6 +23,8 @@ import { authMailToken } from '@/features/auth/email-delivery';
 import { useCopy } from '@/features/settings/language-store';
 
 export default function ResetPasswordScreen() {
+  const languageRevision = useLanguageRevision();
+
   const copy = useCopy();
   const { token } = useLocalSearchParams<{ token?: string }>();
   const [tokenValue, setTokenValue] = useState(authMailToken(token));
@@ -127,7 +131,7 @@ export default function ResetPasswordScreen() {
               <View style={styles.inputRow}>
                 <Ionicons color={authColors.muted} name="lock-closed-outline" size={17} />
                 <TextInput
-                  accessibilityLabel="Yeni şifre"
+                  accessibilityLabel={translateCopy("Yeni şifre")}
                   autoComplete="new-password"
                   blurOnSubmit={false}
                   cursorColor={authColors.yellow}
@@ -145,7 +149,7 @@ export default function ResetPasswordScreen() {
                   value={value ?? ''}
                 />
                 <Pressable
-                  accessibilityLabel={showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                  accessibilityLabel={showPassword ? translateCopy("Şifreyi gizle") : translateCopy("Şifreyi göster")}
                   accessibilityRole="button"
                   hitSlop={10}
                   onPress={() => setShowPassword((current) => !current)}
@@ -174,7 +178,7 @@ export default function ResetPasswordScreen() {
                 <Ionicons color={authColors.muted} name="shield-checkmark-outline" size={17} />
                 <TextInput
                   ref={confirmationInputRef}
-                  accessibilityLabel="Şifre tekrar"
+                  accessibilityLabel={translateCopy("Şifre tekrar")}
                   autoComplete="new-password"
                   blurOnSubmit={false}
                   cursorColor={authColors.yellow}
@@ -191,7 +195,7 @@ export default function ResetPasswordScreen() {
                   value={value ?? ''}
                 />
                 <Pressable
-                  accessibilityLabel={showConfirmation ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                  accessibilityLabel={showConfirmation ? translateCopy("Şifreyi gizle") : translateCopy("Şifreyi göster")}
                   accessibilityRole="button"
                   hitSlop={10}
                   onPress={() => setShowConfirmation((current) => !current)}

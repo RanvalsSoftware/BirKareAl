@@ -1,3 +1,6 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { getLocale as getAppLocale } from '@/i18n/engine';
+import { tr as translateCopy } from '@/i18n/engine';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -23,21 +26,23 @@ type MeResponse = {
 function fullName(user: AuthUser | null | undefined): string {
   const name = [user?.firstName?.trim(), user?.lastName?.trim()].filter(Boolean).join(' ');
   if (name) return name;
-  return user?.email.split('@')[0]?.replace(/[._-]+/g, ' ') || 'BirKare kullanıcısı';
+  return user?.email.split('@')[0]?.replace(/[._-]+/g, ' ') || translateCopy("BirKare kullanıcısı");
 }
 
 function avatarInitials(user: AuthUser | null | undefined): string {
   return (
     [user?.firstName, user?.lastName]
-      .map((name) => name?.trim().charAt(0).toLocaleUpperCase('tr-TR') ?? '')
+      .map((name) => name?.trim().charAt(0).toLocaleUpperCase(getAppLocale()) ?? '')
       .join('')
       .slice(0, 2) ||
-    user?.email.charAt(0).toLocaleUpperCase('tr-TR') ||
+    user?.email.charAt(0).toLocaleUpperCase(getAppLocale()) ||
     'BK'
   );
 }
 
 export default function ProfileScreen() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const queryClient = useQueryClient();
   const sessionUser = useAuthStore((store) => store.user);
@@ -68,8 +73,8 @@ export default function ProfileScreen() {
 
   return (
     <SettingsPage
-      title="Profil"
-      subtitle="Hesabın ve tercihlerin"
+      title={translateCopy("Profil")}
+      subtitle={translateCopy("Hesabın ve tercihlerin")}
       credits={wallet?.unlimited ? '∞' : wallet?.available}
       back={false}
     >
@@ -104,11 +109,11 @@ export default function ProfileScreen() {
                 color={verified ? '#70DC94' : '#E9BA65'}
               />
               <Text style={[styles.verifiedText, { color: verified ? '#70DC94' : '#E9BA65' }]}>
-                {verified ? 'E-posta doğrulandı' : 'Doğrulama bekleniyor'}
+                {verified ? translateCopy("E-posta doğrulandı") : translateCopy("Doğrulama bekleniyor")}
               </Text>
             </View>
             <Text numberOfLines={2} style={styles.email}>
-              {user?.email ?? 'Hesap bilgileri yükleniyor…'}
+              {user?.email ?? translateCopy("Hesap bilgileri yükleniyor…")}
             </Text>
           </View>
         </View>
@@ -116,39 +121,39 @@ export default function ProfileScreen() {
           <Text style={styles.heroMotto}>Her karede biraz sen.</Text>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Profili düzenle"
-            accessibilityHint="Hesabındaki ad ve soyadını güncelle"
+            accessibilityLabel={translateCopy("Profili düzenle")}
+            accessibilityHint={translateCopy("Hesabındaki ad ve soyadını güncelle")}
             onPress={() => router.push('/settings/account' as never)}
             style={({ pressed }) => [styles.editAction, pressed && styles.editPressed]}
           >
             <GlassSurface radius={22} tone="gold" glow={false} contentStyle={styles.editContent}>
               <Icon name="create-outline" size={16} color="#F0D481" />
-              <Text style={styles.editLabel}>Profili düzenle</Text>
+              <Text style={styles.editLabel}>{translateCopy("Profili düzenle")}</Text>
             </GlassSurface>
           </Pressable>
         </View>
       </GlassSurface>
 
       <View style={styles.stats}>
-        <Stat value={wallet ? String(wallet.available) : '—'} label="Kredi" icon="flash-outline" />
-        <Stat value={wallet ? String(wallet.reserved) : '—'} label="Ayrılmış" icon="time-outline" />
-        <Stat value={verified ? '✓' : '—'} label="Doğrulama" icon="shield-checkmark-outline" />
+        <Stat value={wallet ? String(wallet.available) : '—'} label={translateCopy("Kredi")} icon="flash-outline" />
+        <Stat value={wallet ? String(wallet.reserved) : '—'} label={translateCopy("Ayrılmış")} icon="time-outline" />
+        <Stat value={verified ? '✓' : '—'} label={translateCopy("Doğrulama")} icon="shield-checkmark-outline" />
       </View>
 
-      <SettingsSectionTitle>BAKİYE VE HAREKETLER</SettingsSectionTitle>
+      <SettingsSectionTitle>{translateCopy("BAKİYE VE HAREKETLER")}</SettingsSectionTitle>
       <GlassSettingsPanel>
         <GlassSettingsRow
           icon="flash-outline"
-          title="Kredi bakiyem"
-          detail="Kullanılabilir ve ayrılmış krediler"
-          value={wallet ? `${wallet.available} kredi` : 'Yükleniyor'}
+          title={translateCopy("Kredi bakiyem")}
+          detail={translateCopy("Kullanılabilir ve ayrılmış krediler")}
+          value={wallet ? `${wallet.available} kredi` : translateCopy("Yükleniyor")}
           onPress={() => router.push('/(tabs)/credits' as never)}
         />
         <GlassSettingsRow
           icon="receipt-outline"
           accent="purple"
-          title="İşlem geçmişi"
-          detail="Hesabına ait gerçek kredi hareketleri"
+          title={translateCopy("İşlem geçmişi")}
+          detail={translateCopy("Hesabına ait gerçek kredi hareketleri")}
           onPress={() => router.push('/settings/history' as never)}
           last
         />
@@ -158,26 +163,26 @@ export default function ProfileScreen() {
       <GlassSettingsPanel>
         <GlassSettingsRow
           icon="color-palette-outline"
-          title="Görünüm"
+          title={translateCopy("Görünüm")}
           detail="Koyu tema, cam efektleri ve animasyon"
           onPress={() => router.push('/settings/appearance' as never)}
         />
         <GlassSettingsRow
           icon="settings-outline"
           accent="purple"
-          title="Ayarlar"
-          detail="Uygulamayı sana göre düzenle"
+          title={translateCopy("Ayarlar")}
+          detail={translateCopy("Uygulamayı sana göre düzenle")}
           onPress={() => router.push('/settings' as never)}
         />
         <GlassSettingsRow
           icon="shield-checkmark-outline"
-          title="Gizlilik ve güvenlik"
+          title={translateCopy("Gizlilik ve güvenlik")}
           onPress={() => router.push('/settings/privacy' as never)}
         />
         <GlassSettingsRow
           icon="help-buoy-outline"
           accent="purple"
-          title="Yardım ve destek"
+          title={translateCopy("Yardım ve destek")}
           onPress={() => router.push('/support' as never)}
         />
         <GlassSettingsRow
@@ -190,14 +195,14 @@ export default function ProfileScreen() {
       <GlassSettingsPanel tone="neutral">
         <GlassSettingsRow
           icon="log-out-outline"
-          title="Çıkış yap"
+          title={translateCopy("Çıkış yap")}
           danger
           last
           onPress={() =>
-            Alert.alert('Çıkış yap', 'Bu cihazdaki oturumun güvenle kapatılacak.', [
-              { text: 'Vazgeç', style: 'cancel' },
+            Alert.alert(translateCopy("Çıkış yap"), translateCopy("Bu cihazdaki oturumun güvenle kapatılacak."), [
+              { text: translateCopy("Vazgeç"), style: 'cancel' },
               {
-                text: 'Çıkış yap',
+                text: translateCopy("Çıkış yap"),
                 style: 'destructive',
                 onPress: () => {
                   void logout();
@@ -220,6 +225,8 @@ function Stat({
   label: string;
   icon: React.ComponentProps<typeof Icon>['name'];
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <GlassSurface
       radius={21}

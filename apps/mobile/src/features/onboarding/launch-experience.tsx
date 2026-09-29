@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -102,6 +104,8 @@ function FittedPhotoImage({
   source: ImageSourcePropType;
   style: StyleProp<ViewStyle>;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View pointerEvents="none" style={[styles.fittedPhotoCanvas, style]}>
       <Image fadeDuration={0} source={source} style={styles.fittedPhotoImage} />
@@ -127,6 +131,8 @@ function successHaptic() {
  * trace completes around it, then the BirKare AI wordmark reveals from a mask.
  */
 export function LogoIntro({ onFinished }: { onFinished: () => void }) {
+  const languageRevision = useLanguageRevision();
+
   const reducedMotion = useReducedMotion();
   const onFinishedRef = useRef(onFinished);
   const finishedRef = useRef(false);
@@ -234,7 +240,7 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
   return (
     <SafeAreaView edges={['top', 'bottom']} style={styles.logoSafe}>
       <LinearGradient colors={['#000000', '#030200', '#000000']} style={StyleSheet.absoluteFill} />
-      <View accessibilityLabel="BirKare AI açılıyor" style={styles.logoCanvas}>
+      <View accessibilityLabel={translateCopy("BirKare AI açılıyor")} style={styles.logoCanvas}>
         <View pointerEvents="none" style={styles.logoBeamTopViewport}>
           <Animated.View style={[styles.logoBeamTopGroup, topBeamStyle]}>
             <View style={[styles.logoBeamArc, styles.logoBeamTopArc, styles.logoBeamArcHalo]} />
@@ -372,6 +378,8 @@ type PhotoPreludeProps = {
  * The selectable Step 1 demo portraits deliberately remain separate.
  */
 export function PhotoPrelude({ onFinished }: PhotoPreludeProps) {
+  const languageRevision = useLanguageRevision();
+
   const reducedMotion = useReducedMotion();
   const onFinishedRef = useRef(onFinished);
   const finishedRef = useRef(false);
@@ -400,7 +408,7 @@ export function PhotoPrelude({ onFinished }: PhotoPreludeProps) {
   return (
     <SafeAreaView edges={['top', 'bottom']} style={styles.logoSafe}>
       <LinearGradient colors={['#050505', '#0B0904', '#050505']} style={StyleSheet.absoluteFill} />
-      <View accessibilityLabel="Fotoğraflarla onboarding başlangıcı" style={styles.bridgeCanvas}>
+      <View accessibilityLabel={translateCopy("Fotoğraflarla onboarding başlangıcı")} style={styles.bridgeCanvas}>
         <View pointerEvents="none" style={styles.bridgeOrbitOne} />
         <View pointerEvents="none" style={styles.bridgeOrbitTwo} />
         <PhotoShowcaseRail
@@ -428,19 +436,17 @@ export function PhotoPrelude({ onFinished }: PhotoPreludeProps) {
           <View style={styles.bridgeMarkHalo}>
             <Image source={onboardingImages.brandMark} style={styles.bridgeMark} />
           </View>
-          <Text style={styles.bridgeEyebrow}>BİRKARE AI</Text>
-          <Text style={styles.bridgeTitle}>İlk kareni{'\n'}hazırlayalım.</Text>
-          <Text style={styles.bridgeBody}>
-            Fotoğrafın, sahnen ve tarzın birkaç dokunuşla bir araya gelir.
-          </Text>
+          <Text style={styles.bridgeEyebrow}>{translateCopy("BİRKARE AI")}</Text>
+          <Text style={styles.bridgeTitle}>{translateCopy("İlk kareni{{p0}}hazırlayalım.", { p0: '\n' })}</Text>
+          <Text style={styles.bridgeBody}>{translateCopy("Fotoğrafın, sahnen ve tarzın birkaç dokunuşla bir araya gelir.")}</Text>
         </Animated.View>
         <Pressable
-          accessibilityLabel="Onboarding'e başla"
+          accessibilityLabel={translateCopy("Onboarding'e başla")}
           accessibilityRole="button"
           onPress={finish}
           style={({ pressed }) => [styles.bridgeContinue, pressed && styles.bridgeContinuePressed]}
         >
-          <Text style={styles.bridgeContinueText}>Başlamak için dokun</Text>
+          <Text style={styles.bridgeContinueText}>{translateCopy("Başlamak için dokun")}</Text>
           <Ionicons color={colors.accentYellow} name="arrow-forward" size={19} />
         </Pressable>
       </View>
@@ -459,6 +465,8 @@ function PhotoShowcaseRail({
   reducedMotion: boolean;
   row: 'top' | 'bottom';
 }) {
+  const languageRevision = useLanguageRevision();
+
   const offset = useSharedValue(0);
   const distance = (SHOWCASE_CARD_WIDTH + SHOWCASE_CARD_GAP) * photos.length;
   const strip = [...photos, ...photos];
@@ -519,6 +527,8 @@ function PhotoShowcaseRail({
  * their exact photo and selections from one card through to the final preview.
  */
 export function GuidedSplash({ onFinished }: GuidedSplashProps) {
+  const languageRevision = useLanguageRevision();
+
   const reducedMotion = useReducedMotion();
   const { width } = useWindowDimensions();
   const contentWidth = Math.min(width - 32, 520);
@@ -542,11 +552,11 @@ export function GuidedSplash({ onFinished }: GuidedSplashProps) {
 
   const selectedScene = useMemo(
     () => categories.find((scene) => scene.id === selectedSceneId) ?? null,
-    [selectedSceneId],
+    [selectedSceneId, languageRevision],
   );
   const selectedFilter = useMemo(
     () => filters.find((filter) => filter.id === selectedFilterId) ?? null,
-    [selectedFilterId],
+    [selectedFilterId, languageRevision],
   );
   // The practical first card must never look empty. Until the user chooses a
   // photo, show one of the supplied demo portraits as a clearly labelled
@@ -612,23 +622,23 @@ export function GuidedSplash({ onFinished }: GuidedSplashProps) {
       key={step}
       body={
         step === 0
-          ? 'Selfie veya portre fotoğrafını seç; görüntü oranını koruyarak ilk kareni hazırla.'
+          ? translateCopy("Selfie veya portre fotoğrafını seç; görüntü oranını koruyarak ilk kareni hazırla.")
           : step === 1
-            ? 'Fotoğrafın hazır. Şimdi görünümünü belirle; hangi sahnede olmak istediğini seç.'
+            ? translateCopy("Fotoğrafın hazır. Şimdi görünümünü belirle; hangi sahnede olmak istediğini seç.")
             : step === 2
-              ? 'Tarzını belirle. Filtreyi seç, yoğunluğunu ayarla ve sonucu önceden gör.'
-              : 'Seçimlerini kontrol et. Gerçek AI üretimi, güvenli biçimde oturum açtıktan sonra başlar.'
+              ? translateCopy("Tarzını belirle. Filtreyi seç, yoğunluğunu ayarla ve sonucu önceden gör.")
+              : translateCopy("Seçimlerini kontrol et. Gerçek AI üretimi, güvenli biçimde oturum açtıktan sonra başlar.")
       }
       index={step}
       onBack={step > 0 ? goBack : undefined}
       title={
         step === 0
-          ? 'Fotoğrafını seç'
+          ? translateCopy("Fotoğrafını seç")
           : step === 1
-            ? 'Sahneni seç'
+            ? translateCopy("Sahneni seç")
             : step === 2
-              ? 'Filtreni seç'
-              : 'Düzenle ve önizle'
+              ? translateCopy("Filtreni seç")
+              : translateCopy("Düzenle ve önizle")
       }
     />
   );
@@ -691,14 +701,14 @@ export function GuidedSplash({ onFinished }: GuidedSplashProps) {
             <PreviewStep
               editMode={editMode}
               filterId={selectedFilterId}
-              filterName={selectedFilter?.title ?? 'Seçili filtre'}
+              filterName={selectedFilter?.title ?? translateCopy("Seçili filtre")}
               filterSource={selectedFilter?.source}
               intensity={filterIntensity}
               onEdit={() => setEditorOpen(true)}
-              photoName={selectedPhoto?.kind === 'device' ? 'Kendi fotoğrafın' : 'Demo fotoğraf'}
+              photoName={selectedPhoto?.kind === 'device' ? translateCopy("Kendi fotoğrafın") : translateCopy("Demo fotoğraf")}
               photoSource={photoSource}
               reducedMotion={reducedMotion}
-              sceneName={selectedScene?.title ?? 'Seçili sahne'}
+              sceneName={selectedScene?.title ?? translateCopy("Seçili sahne")}
               sceneSource={selectedScene?.source}
               tint={tint}
             />
@@ -710,12 +720,12 @@ export function GuidedSplash({ onFinished }: GuidedSplashProps) {
           <Pressable
             accessibilityLabel={
               step === 0
-                ? 'Fotoğrafla devam et'
+                ? translateCopy("Fotoğrafla devam et")
                 : step === 1
                   ? 'Sahneyle devam et'
                   : step === 2
                     ? 'Filtreyle devam et'
-                    : 'Hesabınla devam et'
+                    : translateCopy("Hesabınla devam et")
             }
             accessibilityRole="button"
             accessibilityState={{
@@ -747,12 +757,12 @@ export function GuidedSplash({ onFinished }: GuidedSplashProps) {
             >
               <Text style={styles.continueText}>
                 {step === 0
-                  ? 'Fotoğrafla devam et'
+                  ? translateCopy("Fotoğrafla devam et")
                   : step === 1
                     ? 'Sahneyle devam et'
                     : step === 2
                       ? 'Filtreyle devam et'
-                      : 'Hesabınla devam et'}
+                      : translateCopy("Hesabınla devam et")}
               </Text>
               <Ionicons color={colors.background} name="arrow-forward" size={25} />
             </LinearGradient>
@@ -786,6 +796,8 @@ function StepHeader({
   onBack?: () => void;
   title: string;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <Animated.View
       entering={FadeInDown.duration(motion.duration.cardEnter)}
@@ -795,7 +807,7 @@ function StepHeader({
         <View style={styles.stepEyebrowWrap}>
           {onBack ? (
             <Pressable
-              accessibilityLabel="Önceki adıma dön"
+              accessibilityLabel={translateCopy("Önceki adıma dön")}
               hitSlop={10}
               onPress={onBack}
               style={styles.backButton}
@@ -836,6 +848,8 @@ function PhotoStep({
   reducedMotion: boolean;
   source: ImageSourcePropType;
 }) {
+  const languageRevision = useLanguageRevision();
+
   // Demo assets are 4:5 while a camera photo can be portrait or landscape.
   // Derive a bounded canvas from the source metadata and let `contain` do the
   // final fit so no face or lower body area is silently cropped.
@@ -868,14 +882,14 @@ function PhotoStep({
         </View>
         <View style={styles.photoHeroCopy}>
           <Text style={styles.photoHeroTitle}>
-            {photo ? 'Fotoğrafın hazır' : 'Örnek kareyle başla'}
+            {photo ? translateCopy("Fotoğrafın hazır") : translateCopy("Örnek kareyle başla")}
           </Text>
           <Text style={styles.photoHeroBody}>
             {photo?.kind === 'device'
-              ? (photo.fileName ?? 'Cihazından seçilen fotoğraf')
+              ? (photo.fileName ?? translateCopy("Cihazından seçilen fotoğraf"))
               : photo
-                ? 'Demo fotoğraf seçildi'
-                : 'Aşağıdaki demo fotoğraflarından birini seçerek akışı hemen deneyebilirsin.'}
+                ? translateCopy("Demo fotoğraf seçildi")
+                : translateCopy("Aşağıdaki demo fotoğraflarından birini seçerek akışı hemen deneyebilirsin.")}
           </Text>
         </View>
       </Animated.View>
@@ -884,15 +898,15 @@ function PhotoStep({
         <ActionCard
           disabled={busy}
           icon="images-outline"
-          label="Galeriden seç"
+          label={translateCopy("Galeriden seç")}
           onPress={onGallery}
         />
-        <ActionCard disabled={busy} icon="camera-outline" label="Fotoğraf çek" onPress={onCamera} />
+        <ActionCard disabled={busy} icon="camera-outline" label={translateCopy("Fotoğraf çek")} onPress={onCamera} />
       </View>
 
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Demo fotoğrafları</Text>
-        <Text style={styles.sectionHint}>Akışı denemek için seç</Text>
+        <Text style={styles.sectionTitle}>{translateCopy("Demo fotoğrafları")}</Text>
+        <Text style={styles.sectionHint}>{translateCopy("Akışı denemek için seç")}</Text>
       </View>
       <ScrollView
         contentContainerStyle={styles.demoRow}
@@ -909,7 +923,7 @@ function PhotoStep({
               key={item.id}
             >
               <Pressable
-                accessibilityLabel={'Demo fotoğraf ' + String(index + 1)}
+                accessibilityLabel={translateCopy("Demo fotoğraf") + String(index + 1)}
                 accessibilityRole="radio"
                 accessibilityState={{ checked: active }}
                 onPress={() => onDemoPhoto(item)}
@@ -935,12 +949,8 @@ function PhotoStep({
         })}
       </ScrollView>
 
-      <InfoNote icon="lock-closed-outline">
-        Sadece kendi fotoğrafını veya kullanım iznine sahip olduğun bir görseli seç.
-      </InfoNote>
-      <MotionNote>
-        Animasyon: Kart yumuşakça yukarı gelir, önizleme hafif parallax ile belirir.
-      </MotionNote>
+      <InfoNote icon="lock-closed-outline">{translateCopy("Sadece kendi fotoğrafını veya kullanım iznine sahip olduğun bir görseli seç.")}</InfoNote>
+      <MotionNote>{translateCopy("Animasyon: Kart yumuşakça yukarı gelir, önizleme hafif parallax ile belirir.")}</MotionNote>
     </Animated.View>
   );
 }
@@ -956,6 +966,8 @@ function SceneStep({
   reducedMotion: boolean;
   selectedId: OnboardingCategoryId | null;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <Animated.View
       entering={reducedMotion ? FadeIn.duration(180) : FadeInRight.duration(motion.duration.screen)}
@@ -1016,18 +1028,13 @@ function SceneStep({
       <View style={styles.sceneReadyRow}>
         <FittedPhotoImage source={photoSource} style={styles.sceneReadyPhoto} />
         <View style={styles.sceneReadyCopy}>
-          <Text style={styles.sceneReadyTitle}>Fotoğrafın sahne için hazır</Text>
-          <Text style={styles.sceneReadyBody}>Seçimin final önizlemene aktarılır.</Text>
+          <Text style={styles.sceneReadyTitle}>{translateCopy("Fotoğrafın sahne için hazır")}</Text>
+          <Text style={styles.sceneReadyBody}>{translateCopy("Seçimin final önizlemene aktarılır.")}</Text>
         </View>
       </View>
 
-      <InfoNote icon="bulb-outline">
-        Uzman ipucu: Amacına en yakın sahneyi seç; filtre adımında görünümünü ayrıca
-        özelleştirebilirsin.
-      </InfoNote>
-      <MotionNote>
-        Animasyon: Kartlar hafif fade-up ile gelir, seçilen sahne yumuşak ışıkla vurgulanır.
-      </MotionNote>
+      <InfoNote icon="bulb-outline">{translateCopy("Uzman ipucu: Amacına en yakın sahneyi seç; filtre adımında görünümünü ayrıca özelleştirebilirsin.")}</InfoNote>
+      <MotionNote>{translateCopy("Animasyon: Kartlar hafif fade-up ile gelir, seçilen sahne yumuşak ışıkla vurgulanır.")}</MotionNote>
     </Animated.View>
   );
 }
@@ -1047,6 +1054,8 @@ function FilterStep({
   reducedMotion: boolean;
   selectedId: OnboardingFilterId | null;
 }) {
+  const languageRevision = useLanguageRevision();
+
   const { width } = useWindowDimensions();
   const trackWidth = Math.max(Math.min(width - 104, 420), 220);
   const sliderProgress = useSharedValue(intensity / 100);
@@ -1079,7 +1088,7 @@ function FilterStep({
         .onEnd(() => {
           runOnJS(commitIntensity)(sliderProgress.get());
         }),
-    [commitIntensity, onIntensityChange, sliderProgress, sliderStart, trackWidth],
+    [commitIntensity, onIntensityChange, sliderProgress, sliderStart, trackWidth, languageRevision],
   );
 
   const sliderFillStyle = useAnimatedStyle(() => ({
@@ -1107,9 +1116,7 @@ function FilterStep({
         />
         <View style={styles.filterAiBadge}>
           <Ionicons color={colors.background} name="sparkles" size={13} />
-          <Text style={styles.filterAiBadgeText}>
-            Yaklaşık ton önizlemesi
-          </Text>
+          <Text style={styles.filterAiBadgeText}>{translateCopy("Yaklaşık ton önizlemesi")}</Text>
         </View>
         <View style={styles.originalThumb}>
           <FittedPhotoImage source={photoSource} style={StyleSheet.absoluteFill} />
@@ -1119,8 +1126,8 @@ function FilterStep({
         </View>
         <Text style={styles.filterPreviewCopy}>
           {selectedId
-            ? (filters.find((item) => item.id === selectedId)?.title ?? 'Seçili filtre')
-            : 'Bir filtre seç'}
+            ? (filters.find((item) => item.id === selectedId)?.title ?? translateCopy("Seçili filtre"))
+            : translateCopy("Bir filtre seç")}
         </Text>
       </Animated.View>
 
@@ -1170,16 +1177,16 @@ function FilterStep({
 
       <View style={styles.intensityCard}>
         <View style={styles.intensityHeader}>
-          <Text style={styles.intensityTitle}>Filtre yoğunluğu</Text>
+          <Text style={styles.intensityTitle}>{translateCopy("Filtre yoğunluğu")}</Text>
           <Text style={styles.intensityValue}>%{String(intensity)}</Text>
         </View>
         <GestureDetector gesture={sliderGesture}>
           <Animated.View
             accessibilityActions={[
-              { name: 'increment', label: 'Yoğunluğu artır' },
-              { name: 'decrement', label: 'Yoğunluğu azalt' },
+              { name: 'increment', label: translateCopy("Yoğunluğu artır") },
+              { name: 'decrement', label: translateCopy("Yoğunluğu azalt") },
             ]}
-            accessibilityLabel="Filtre yoğunluğu kaydırıcısı"
+            accessibilityLabel={translateCopy("Filtre yoğunluğu kaydırıcısı")}
             accessibilityRole="adjustable"
             accessibilityValue={{ min: 0, max: 100, now: intensity, text: '%' + String(intensity) }}
             onAccessibilityAction={(event) => {
@@ -1197,19 +1204,15 @@ function FilterStep({
           </Animated.View>
         </GestureDetector>
         <View style={[styles.sliderLabels, { width: trackWidth }]}>
-          <Text style={styles.sliderLabel}>Düşük</Text>
+          <Text style={styles.sliderLabel}>{translateCopy("Düşük")}</Text>
           <Text style={styles.sliderLabel}>Orta</Text>
-          <Text style={styles.sliderLabel}>Yüksek</Text>
+          <Text style={styles.sliderLabel}>{translateCopy("Yüksek")}</Text>
         </View>
       </View>
 
       <InfoNote icon="sparkles-outline">
-        <Text style={styles.infoAccent}>Ücretsiz yerel önizleme: </Text>Yoğunluk burada ışık ve
-        tonu değiştirir. Filtrenin gerçek AI dokusu üretim onayından sonra oluşur.
-      </InfoNote>
-      <MotionNote>
-        Animasyon: Önizleme flu görünümden netliğe geçer, seçilen filtre hafif zoom ile öne çıkar.
-      </MotionNote>
+        <Text style={styles.infoAccent}>{translateCopy("Ücretsiz yerel önizleme:")}</Text>{translateCopy("Yoğunluk burada ışık ve tonu değiştirir. Filtrenin gerçek AI dokusu üretim onayından sonra oluşur.")}</InfoNote>
+      <MotionNote>{translateCopy("Animasyon: Önizleme flu görünümden netliğe geçer, seçilen filtre hafif zoom ile öne çıkar.")}</MotionNote>
     </Animated.View>
   );
 }
@@ -1241,6 +1244,8 @@ function PreviewStep({
   sceneSource?: ImageSourcePropType;
   tint: string;
 }) {
+  const languageRevision = useLanguageRevision();
+
   const [comparisonWidth, setComparisonWidth] = useState(0);
   const dividerProgress = useSharedValue(0.5);
   const dividerStart = useSharedValue(0.5);
@@ -1260,7 +1265,7 @@ function PreviewStep({
             );
           }
         }),
-    [comparisonWidth, dividerProgress, dividerStart],
+    [comparisonWidth, dividerProgress, dividerStart, languageRevision],
   );
 
   const afterSliceStyle = useAnimatedStyle(() => {
@@ -1288,13 +1293,13 @@ function PreviewStep({
         <GestureDetector gesture={compareGesture}>
           <Animated.View
             accessibilityActions={[
-              { name: 'increment', label: 'Sonra görünümünü genişlet' },
-              { name: 'decrement', label: 'Önce görünümünü genişlet' },
+              { name: 'increment', label: translateCopy("Sonra görünümünü genişlet") },
+              { name: 'decrement', label: translateCopy("Önce görünümünü genişlet") },
             ]}
-            accessibilityHint="Önce ve sonra görünümünü karşılaştırmak için yatay kaydır."
-            accessibilityLabel="Önce ve sonra karşılaştırması"
+            accessibilityHint={translateCopy("Önce ve sonra görünümünü karşılaştırmak için yatay kaydır.")}
+            accessibilityLabel={translateCopy("Önce ve sonra karşılaştırması")}
             accessibilityRole="adjustable"
-            accessibilityValue={{ min: 8, max: 92, text: 'Kaydırılabilir karşılaştırma' }}
+            accessibilityValue={{ min: 8, max: 92, text: translateCopy("Kaydırılabilir karşılaştırma") }}
             onAccessibilityAction={(event) => {
               const delta = event.nativeEvent.actionName === 'increment' ? 0.1 : -0.1;
               dividerProgress.set(clamp(dividerProgress.get() + delta, 0.08, 0.92));
@@ -1356,7 +1361,7 @@ function PreviewStep({
               </View>
             </Animated.View>
             <View style={styles.beforeLabel}>
-              <Text style={styles.beforeLabelText}>Önce</Text>
+              <Text style={styles.beforeLabelText}>{translateCopy("Önce")}</Text>
             </View>
             <View style={styles.afterLabel}>
               <Text style={styles.afterLabelText}>Sonra</Text>
@@ -1364,12 +1369,12 @@ function PreviewStep({
             {editMode === 'Yüz koruma' ? (
               <View style={styles.faceChip}>
                 <Ionicons color={colors.background} name="shield-checkmark" size={12} />
-                <Text style={styles.faceChipText}>Yüz koruma</Text>
+                <Text style={styles.faceChipText}>{translateCopy("Yüz koruma")}</Text>
               </View>
             ) : null}
             <View style={styles.compareTip}>
               <Ionicons color={colors.textPrimary} name="arrow-back" size={14} />
-              <Text style={styles.compareTipText}>Kaydırarak karşılaştır</Text>
+              <Text style={styles.compareTipText}>{translateCopy("Kaydırarak karşılaştır")}</Text>
               <Ionicons color={colors.textPrimary} name="arrow-forward" size={14} />
             </View>
           </Animated.View>
@@ -1377,13 +1382,13 @@ function PreviewStep({
       </Animated.View>
 
       <View style={styles.selectionPreviewRow}>
-        <PreviewSelection imageSource={photoSource} label="FOTOĞRAF" value={photoName} />
+        <PreviewSelection imageSource={photoSource} label={translateCopy("FOTOĞRAF")} value={photoName} />
         <PreviewSelection imageSource={sceneSource} label="SAHNE" value={sceneName} />
-        <PreviewSelection imageSource={filterSource} label="FİLTRE" value={filterName} />
+        <PreviewSelection imageSource={filterSource} label={translateCopy("FİLTRE")} value={filterName} />
       </View>
 
       <View style={styles.previewActions}>
-        <ActionCard icon="options-outline" label="Düzenle" onPress={onEdit} />
+        <ActionCard icon="options-outline" label={translateCopy("Düzenle")} onPress={onEdit} />
       </View>
 
       <View style={styles.generationCard}>
@@ -1391,20 +1396,12 @@ function PreviewStep({
           <Ionicons color={colors.accentYellow} name="shield-checkmark-outline" size={21} />
         </View>
         <View style={styles.generationCopy}>
-          <Text style={styles.generationTitle}>Seçimlerin gerçek üretime hazır</Text>
-          <Text style={styles.generationBody}>
-            {sceneName}, {filterName} ve %{String(intensity)} yoğunluk; onay ve girişten sonra aynı
-            ayarlarla gerçek AI üretimine aktarılacak.
-          </Text>
+          <Text style={styles.generationTitle}>{translateCopy("Seçimlerin gerçek üretime hazır")}</Text>
+          <Text style={styles.generationBody}>{translateCopy("{{p0}}, {{p1}} ve %{{p2}} yoğunluk; onay ve girişten sonra aynı ayarlarla gerçek AI üretimine aktarılacak.", { p0: sceneName, p1: filterName, p2: String(intensity) })}</Text>
         </View>
       </View>
-      <InfoNote icon="shield-checkmark-outline">
-        Uzman notu: Işık ve yüz dengesi uygunsa önizleme çok daha doğal görünür.
-      </InfoNote>
-      <MotionNote>
-        Temsilî karşılaştırmayı kaydırarak inceleyebilir, üretimi hesabınla güvenli biçimde
-        başlatabilirsin.
-      </MotionNote>
+      <InfoNote icon="shield-checkmark-outline">{translateCopy("Uzman notu: Işık ve yüz dengesi uygunsa önizleme çok daha doğal görünür.")}</InfoNote>
+      <MotionNote>{translateCopy("Temsilî karşılaştırmayı kaydırarak inceleyebilir, üretimi hesabınla güvenli biçimde başlatabilirsin.")}</MotionNote>
     </Animated.View>
   );
 }
@@ -1418,6 +1415,8 @@ function PreviewSelection({
   label: string;
   value: string;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View accessibilityLabel={`${label}: ${value}`} style={styles.selectionPreviewCard}>
       {imageSource ? (
@@ -1446,6 +1445,8 @@ function ActionCard({
   label: string;
   onPress: () => void;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <Pressable
       accessibilityLabel={label}
@@ -1481,6 +1482,8 @@ function MiniPill({
   label: string;
   strong?: boolean;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View style={[styles.miniPill, strong && styles.miniPillStrong]}>
       <Ionicons color={colors.accentYellow} name={icon} size={15} />
@@ -1496,6 +1499,8 @@ function InfoNote({
   children: React.ReactNode;
   icon: React.ComponentProps<typeof Ionicons>['name'];
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View style={styles.infoNote}>
       <Ionicons color={colors.accentYellow} name={icon} size={20} />
@@ -1505,6 +1510,8 @@ function InfoNote({
 }
 
 function MotionNote({ children }: { children: string }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View style={styles.motionNote}>
       <Ionicons color={colors.accentYellow} name="sparkles-outline" size={15} />
@@ -1514,6 +1521,8 @@ function MotionNote({ children }: { children: string }) {
 }
 
 function StepProgress({ active }: { active: StepIndex }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View
       accessibilityLabel={'Onboarding ' + String(active + 1) + ' / 4'}
@@ -1542,18 +1551,20 @@ function EditSheet({
   selected: EditMode | null;
   visible: boolean;
 }) {
+  const languageRevision = useLanguageRevision();
+
   const [chosen, setChosen] = useState<EditMode>(selected ?? 'Işık');
   const options = [
-    { label: 'Işık' as EditMode, icon: 'sunny-outline' as const },
+    { label: translateCopy("Işık") as EditMode, icon: 'sunny-outline' as const },
     { label: 'Kadraj' as EditMode, icon: 'crop-outline' as const },
-    { label: 'Yüz koruma' as EditMode, icon: 'shield-checkmark-outline' as const },
+    { label: translateCopy("Yüz koruma") as EditMode, icon: 'shield-checkmark-outline' as const },
   ];
 
   return (
     <Modal animationType="slide" onRequestClose={onClose} transparent visible={visible}>
       <View style={styles.sheetRoot}>
         <Pressable
-          accessibilityLabel="Düzenlemeyi kapat"
+          accessibilityLabel={translateCopy("Düzenlemeyi kapat")}
           onPress={onClose}
           style={styles.sheetBackdrop}
         />
@@ -1561,21 +1572,18 @@ function EditSheet({
           <View style={styles.sheetHandle} />
           <View style={styles.sheetHeader}>
             <View>
-              <Text style={styles.sheetEyebrow}>HIZLI DÜZENLEME</Text>
-              <Text style={styles.sheetTitle}>Küçük dokunuşlar</Text>
+              <Text style={styles.sheetEyebrow}>{translateCopy("HIZLI DÜZENLEME")}</Text>
+              <Text style={styles.sheetTitle}>{translateCopy("Küçük dokunuşlar")}</Text>
             </View>
             <Pressable
-              accessibilityLabel="Düzenlemeyi kapat"
+              accessibilityLabel={translateCopy("Düzenlemeyi kapat")}
               onPress={onClose}
               style={styles.sheetClose}
             >
               <Ionicons color={colors.textPrimary} name="close" size={20} />
             </Pressable>
           </View>
-          <Text style={styles.sheetBody}>
-            Seçimin yerel önizlemene anında uygulanır. Asıl AI üretimi yalnızca onayından sonra
-            başlar.
-          </Text>
+          <Text style={styles.sheetBody}>{translateCopy("Seçimin yerel önizlemene anında uygulanır. Asıl AI üretimi yalnızca onayından sonra başlar.")}</Text>
           <View style={styles.editOptionRow}>
             {options.map((option) => {
               const active = chosen === option.label;
@@ -1603,7 +1611,7 @@ function EditSheet({
             })}
           </View>
           <Pressable onPress={() => onApply(chosen)} style={styles.sheetDone}>
-            <Text style={styles.sheetDoneText}>Uygula ve dön</Text>
+            <Text style={styles.sheetDoneText}>{translateCopy("Uygula ve dön")}</Text>
           </Pressable>
         </View>
       </View>

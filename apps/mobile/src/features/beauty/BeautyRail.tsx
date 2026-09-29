@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Icon } from '@/components';
@@ -18,6 +20,8 @@ export function BeautyRail({
   proUnlocked?: boolean;
   onSelect: (option: BeautyOption) => void;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <ScrollView
       horizontal
@@ -33,13 +37,13 @@ export function BeautyRail({
           <Pressable
             key={option.id}
             accessibilityRole="button"
-            accessibilityLabel={`${option.number}. ${option.name}${option.isPro ? (proUnlocked ? ', PRO' : ', PRO kilitli') : ''}${intensity ? `, yoğunluk yüzde ${intensity}` : ''}`}
+            accessibilityLabel={`${option.number}. ${option.name}${option.isPro ? (proUnlocked ? ', PRO' : ', PRO kilitli') : ''}${intensity ? translateCopy(", yoğunluk yüzde {{p0}}", { p0: intensity }) : ''}`}
             accessibilityState={{ selected }}
             accessibilityHint={
               settings && (!option.isPro || proUnlocked)
                 ? intensity > 0
-                  ? 'Bu dokunuşu kaldırmak için dokun.'
-                  : 'Bu dokunuşu uygulamak için dokun.'
+                  ? translateCopy("Bu dokunuşu kaldırmak için dokun.")
+                  : translateCopy("Bu dokunuşu uygulamak için dokun.")
                 : undefined
             }
             onPress={() => onSelect(option)}
@@ -79,8 +83,8 @@ export function BeautyRail({
                 {intensity
                   ? `%${intensity} aktif`
                   : settings
-                    ? 'Kapalı · Dokun ve seç'
-                    : 'Temsili görünüm'}
+                    ? translateCopy("Kapalı · Dokun ve seç")
+                    : translateCopy("Temsili görünüm")}
               </Text>
             </View>
             {intensity > 0 ? (

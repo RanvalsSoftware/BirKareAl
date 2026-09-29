@@ -1,3 +1,5 @@
+import { getLocale as getAppLocale } from '@/i18n/engine';
+import { tr as translateCopy } from '@/i18n/engine';
 import { create } from 'zustand';
 import {
   apiRequest,
@@ -223,7 +225,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           firstName: input.firstName,
           lastName: input.lastName,
           dateOfBirth: `${input.birthYear}-01-01`,
-          locale: 'tr-TR',
+          locale: getAppLocale(),
           consent: {
             termsAccepted: input.acceptedTerms,
             privacyAccepted: input.acceptedPrivacy,
@@ -241,7 +243,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
   async linkGoogleAccount(idToken) {
     if (get().state !== 'authenticated')
-      throw new Error('Google hesabını bağlamak için önce giriş yapmalısın.');
+      throw new Error(translateCopy("Google hesabını bağlamak için önce giriş yapmalısın."));
     await apiRequest('/v1/auth/google/link', { method: 'POST', body: JSON.stringify({ idToken }) });
   },
   async signOut() {

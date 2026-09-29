@@ -1,3 +1,6 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
+import { LanguagePicker } from '@/i18n/LanguagePicker';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { PropsWithChildren, ReactNode, Ref } from 'react';
@@ -55,6 +58,8 @@ type BrandBarProps = {
 };
 
 function AmbientGlow() {
+  const languageRevision = useLanguageRevision();
+
   const reduceMotion = useReducedMotion();
   const pulse = useSharedValue(0.44);
 
@@ -84,6 +89,8 @@ function AmbientGlow() {
 }
 
 export function AuthLayout({ children }: PropsWithChildren) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <AmbientGlow />
@@ -97,7 +104,7 @@ export function AuthLayout({ children }: PropsWithChildren) {
           keyboardShouldPersistTaps="always"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.content}>{children}</View>
+          <View style={styles.content}>{children}<LanguagePicker compact /></View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -105,6 +112,8 @@ export function AuthLayout({ children }: PropsWithChildren) {
 }
 
 export function AuthBrandBar({ actionLabel, onAction, onBack }: BrandBarProps) {
+  const languageRevision = useLanguageRevision();
+
   const copy = useCopy();
   return (
     <View style={styles.brandBar}>
@@ -149,6 +158,8 @@ export function AuthBrandBar({ actionLabel, onAction, onBack }: BrandBarProps) {
 }
 
 export function AuthLogo({ compact = false }: { compact?: boolean }) {
+  const languageRevision = useLanguageRevision();
+
   const copy = useCopy();
   return (
     <View style={[styles.logoWrap, compact && styles.logoWrapCompact]}>
@@ -185,6 +196,8 @@ export function AuthHero({
 }: {
   variant?: 'default' | 'login' | 'register' | 'forgot';
 }) {
+  const languageRevision = useLanguageRevision();
+
   const reduceMotion = useReducedMotion();
   const isForgot = variant === 'forgot';
   const float = useSharedValue(0);
@@ -226,6 +239,8 @@ export function AuthTitle({
   subtitle: string;
   eyebrow?: string;
 }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View style={styles.titleBlock}>
       <View style={styles.eyebrowRow}>
@@ -244,6 +259,8 @@ export function AuthFormCard({
   children,
   style,
 }: PropsWithChildren<{ style?: StyleProp<ViewStyle> }>) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <View style={[styles.cardOuter, style]}>
       <View style={styles.cardContent}>{children}</View>
@@ -260,6 +277,8 @@ export function AuthNote({
   tone?: 'neutral' | 'success' | 'warning';
   icon?: keyof typeof Ionicons.glyphMap;
 }) {
+  const languageRevision = useLanguageRevision();
+
   const color =
     tone === 'success'
       ? authColors.success
@@ -301,6 +320,8 @@ export function FormField({
   icon?: ReactNode;
   inputRef?: Ref<TextInput>;
 }) {
+  const languageRevision = useLanguageRevision();
+
   const [focused, setFocused] = useState(false);
   return (
     <View style={[styles.fieldWrap, containerStyle]}>
@@ -361,6 +382,8 @@ export function PasswordFormField({
   value,
   ...inputProps
 }: Omit<TextInputProps, 'secureTextEntry'> & { label: string; error?: string; icon?: ReactNode }) {
+  const languageRevision = useLanguageRevision();
+
   const copy = useCopy();
   const [visible, setVisible] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -444,6 +467,8 @@ export function GradientAuthButton({
   accessibilityLabel?: string;
   icon?: keyof typeof Ionicons.glyphMap;
 }) {
+  const languageRevision = useLanguageRevision();
+
   const copy = useCopy();
   const unavailable = disabled || loading;
   return (
@@ -491,6 +516,8 @@ export function SocialButton({
   loading?: boolean;
   loadingLabel?: string;
 }) {
+  const languageRevision = useLanguageRevision();
+
   const copy = useCopy();
   return (
     <Pressable
@@ -523,6 +550,8 @@ export function SocialButton({
 }
 
 export function AuthLink({ children, onPress }: { children: ReactNode; onPress: () => void }) {
+  const languageRevision = useLanguageRevision();
+
   return (
     <Pressable accessibilityRole="link" hitSlop={8} onPress={onPress}>
       <Text style={styles.link}>{children}</Text>
@@ -531,6 +560,8 @@ export function AuthLink({ children, onPress }: { children: ReactNode; onPress: 
 }
 
 export function Divider({ children }: { children?: string }) {
+  const languageRevision = useLanguageRevision();
+
   const copy = useCopy();
   const label = children ?? copy('veya e-posta ile', 'or continue with email');
   return (
@@ -558,6 +589,8 @@ export function CheckRow({
     onPress: () => void;
   };
 }) {
+  const languageRevision = useLanguageRevision();
+
   const checkbox = (
     <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
       {checked ? <Ionicons name="checkmark" size={15} color="#050505" /> : null}
@@ -569,7 +602,7 @@ export function CheckRow({
       {documentLink ? (
         <View style={styles.checkRow}>
           <Pressable
-            accessibilityLabel={`${documentLink.label} kabulü`}
+            accessibilityLabel={translateCopy("{{p0}} kabulü", { p0: documentLink.label })}
             accessibilityRole="checkbox"
             accessibilityState={{ checked }}
             hitSlop={10}
@@ -580,7 +613,7 @@ export function CheckRow({
           </Pressable>
           <Text style={styles.checkText}>
             <Text
-              accessibilityHint="Belgeyi açar"
+              accessibilityHint={translateCopy("Belgeyi açar")}
               accessibilityRole="link"
               onPress={documentLink.onPress}
               style={styles.checkLink}

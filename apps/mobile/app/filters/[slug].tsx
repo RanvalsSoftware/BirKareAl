@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useMemo, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -10,10 +12,12 @@ import { FILTER_INTENSITIES, nearestIntensityValue } from '@/features/filters/in
 import { colors, radii, spacing, typography } from '@/theme';
 
 export default function FilterDetailScreen() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const { flow, set } = useCreateFlow();
-  const filter = useMemo(() => filters.find((item) => item.slug === slug) ?? filters[0], [slug]);
+  const filter = useMemo(() => filters.find((item) => item.slug === slug) ?? filters[0], [slug, languageRevision]);
   const [intensity, setIntensity] = useState(() => nearestIntensityValue(flow.filterIntensity));
   const [showAfter, setShowAfter] = useState(true);
   const apply = () => {
@@ -35,7 +39,7 @@ export default function FilterDetailScreen() {
       <View style={styles.header}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Geri"
+          accessibilityLabel={translateCopy("Geri")}
           onPress={() => {
             if (router.canGoBack()) router.back();
             else router.replace('/filters');
@@ -56,28 +60,25 @@ export default function FilterDetailScreen() {
       />
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Önce ve sonra görünümünü değiştir"
+        accessibilityLabel={translateCopy("Önce ve sonra görünümünü değiştir")}
         onPress={() => setShowAfter((value) => !value)}
         style={styles.holdButton}
       >
         <Icon name="hand-left-outline" size={18} color={colors.textSecondary} />
         <Text style={styles.holdText}>
-          {showAfter ? 'Orijinali görmek için dokun' : 'Filtreyi görmek için dokun'}
+          {showAfter ? translateCopy("Orijinali görmek için dokun") : translateCopy("Filtreyi görmek için dokun")}
         </Text>
       </Pressable>
       <Text style={styles.filterTitle}>{filter.name}</Text>
-      <Text style={styles.filterText}>
-        {filter.subtitle}. Yoğunluğu değiştirdiğinde ton ve ışık önizlemesi anında güncellenir.
-        Gerçek AI dokusu ve detayları üretim onayından sonra oluşturulur.
-      </Text>
-      <Text style={styles.label}>Yoğunluk</Text>
+      <Text style={styles.filterText}>{translateCopy("{{p0}}. Yoğunluğu değiştirdiğinde ton ve ışık önizlemesi anında güncellenir. Gerçek AI dokusu ve detayları üretim onayından sonra oluşturulur.", { p0: filter.subtitle })}</Text>
+      <Text style={styles.label}>{translateCopy("Yoğunluk")}</Text>
       <View style={styles.intensities} accessibilityRole="radiogroup">
         {FILTER_INTENSITIES.map((item) => (
           <Pressable
             key={item.value}
             accessibilityRole="radio"
             accessibilityState={{ selected: intensity === item.value }}
-            accessibilityLabel={`${item.label} yoğunluk, yüzde ${item.value}`}
+            accessibilityLabel={translateCopy("{{p0}} yoğunluk, yüzde {{p1}}", { p0: item.label, p1: item.value })}
             onPress={() => {
               setIntensity(item.value);
               setShowAfter(true);
@@ -97,25 +98,22 @@ export default function FilterDetailScreen() {
       </View>
       <View style={styles.meta}>
         <View>
-          <Text style={styles.metaLabel}>TÜR</Text>
+          <Text style={styles.metaLabel}>{translateCopy("TÜR")}</Text>
           <Text style={styles.metaValue}>AI filtre</Text>
         </View>
         <View>
-          <Text style={styles.metaLabel}>KREDİ</Text>
-          <Text style={styles.metaValue}>Onayda hesaplanır</Text>
+          <Text style={styles.metaLabel}>{translateCopy("KREDİ")}</Text>
+          <Text style={styles.metaValue}>{translateCopy("Onayda hesaplanır")}</Text>
         </View>
       </View>
-      <Notice tone="neutral" title="Önizleme ücretsizdir">
-        Seçimler fotoğrafını değiştirmez veya kredi harcamaz. AI üretiminde yüz özelliklerini
-        koruyan, seçtiğin yoğunluğa özel yönergeler kullanılır.
-      </Notice>
+      <Notice tone="neutral" title={translateCopy("Önizleme ücretsizdir")}>{translateCopy("Seçimler fotoğrafını değiştirmez veya kredi harcamaz. AI üretiminde yüz özelliklerini koruyan, seçtiğin yoğunluğa özel yönergeler kullanılır.")}</Notice>
       <View style={styles.apply}>
         <AppleGlassButton
           label="Bu filtreyle devam et"
           accessibilityHint={
             flow.sourceUri
-              ? 'Seçili filtreyle görsel ayarlarına geçer.'
-              : 'Önce kaynak fotoğrafını seçmeye yönlendirir.'
+              ? translateCopy("Seçili filtreyle görsel ayarlarına geçer.")
+              : translateCopy("Önce kaynak fotoğrafını seçmeye yönlendirir.")
           }
           onPress={apply}
         />

@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { useState } from 'react';
@@ -71,7 +73,7 @@ function loadNativeGoogleSignIn(): NativeGoogleSignIn | null {
 function nativeModuleUnavailableError(): Error {
   return new GoogleAuthError(
     'GOOGLE_NATIVE_MODULE_MISSING',
-    'Google ile giriş için yeni bir iOS/Android development build gerekir. Bu özellik Expo Go’da çalışmaz.',
+    translateCopy("Google ile giriş için yeni bir iOS/Android development build gerekir. Bu özellik Expo Go’da çalışmaz."),
   );
 }
 
@@ -94,10 +96,10 @@ export async function signOutOfNativeGoogleIfAvailable(): Promise<void> {
 function formatGoogleError(google: NativeGoogleSignIn, error: unknown): Error {
   if (google.isErrorWithCode(error)) {
     if (error.code === google.statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-      return new Error('Bu cihazda Google Play Hizmetleri kullanılamıyor veya güncel değil.');
+      return new Error(translateCopy("Bu cihazda Google Play Hizmetleri kullanılamıyor veya güncel değil."));
     }
     if (error.code === google.statusCodes.IN_PROGRESS) {
-      return new Error('Google ile giriş zaten başlatıldı. Lütfen işlemi tamamlayın.');
+      return new Error(translateCopy("Google ile giriş zaten başlatıldı. Lütfen işlemi tamamlayın."));
     }
   }
 
@@ -140,6 +142,8 @@ export function GoogleSignInButton({
   onError,
   onSuccess,
 }: GoogleSignInButtonProps) {
+  const languageRevision = useLanguageRevision();
+
   const copy = useCopy();
   const [isWorking, setIsWorking] = useState(false);
   const clientIds = getGoogleOAuthClientIds();
@@ -181,7 +185,7 @@ export function GoogleSignInButton({
         if (!idToken) {
           throw new GoogleAuthError(
             'GOOGLE_ID_TOKEN_MISSING',
-            'Google bu uygulama için kimlik belirteci vermedi. Web Client ID ile yeni native derlemenin eşleştiğini kontrol edin.',
+            translateCopy("Google bu uygulama için kimlik belirteci vermedi. Web Client ID ile yeni native derlemenin eşleştiğini kontrol edin."),
           );
         }
         await onSuccess(idToken);

@@ -1,3 +1,4 @@
+import { tr as translateCopy } from '@/i18n/engine';
 export type GenerationStatus =
   | 'DRAFT'
   | 'VALIDATING'
@@ -31,9 +32,9 @@ export function generationCreditNotice(generation: GenerationPresentation | null
   const credit = generation.credit;
   if (!credit) return null;
   if (Number.isSafeInteger(credit.refunded) && credit.refunded > 0)
-    return `${credit.refunded} kredi hesabına iade edildi.`;
-  if (credit.charged === 0 && credit.reserved === 0) return 'Bu işlem için kredi alınmadı.';
-  return 'Kredi durumunu Krediler bölümünden kontrol edebilirsin.';
+    return translateCopy("{{p0}} kredi hesabına iade edildi.", { p0: credit.refunded });
+  if (credit.charged === 0 && credit.reserved === 0) return translateCopy("Bu işlem için kredi alınmadı.");
+  return translateCopy("Kredi durumunu Krediler bölümünden kontrol edebilirsin.");
 }
 
 /** Never rerender an orphaned job automatically: cancellation is the user's choice. */
@@ -51,10 +52,10 @@ export const terminalGenerationStatuses = new Set<GenerationStatus>([
 ]);
 
 export const generationPhases = [
-  { label: 'Fotoğraf analizi', detail: 'Fotoğrafın ve üretim ayarların kontrol ediliyor.' },
-  { label: 'Sahne hazırlığı', detail: 'Seçtiğin sahne ve görünüm hazırlanıyor.' },
-  { label: 'AI ile oluşturma', detail: 'Fotoğrafın, seçtiğin görünümle yeniden işleniyor.' },
-  { label: 'Son kontroller', detail: 'Görselin işleniyor ve güvenlik kontrolünden geçiriliyor.' },
+  { get label() { return translateCopy("Fotoğraf analizi"); }, get detail() { return translateCopy("Fotoğrafın ve üretim ayarların kontrol ediliyor."); } },
+  { get label() { return translateCopy("Sahne hazırlığı"); }, get detail() { return translateCopy("Seçtiğin sahne ve görünüm hazırlanıyor."); } },
+  { get label() { return translateCopy("AI ile oluşturma"); }, get detail() { return translateCopy("Fotoğrafın, seçtiğin görünümle yeniden işleniyor."); } },
+  { label: 'Son kontroller', get detail() { return translateCopy("Görselin işleniyor ve güvenlik kontrolünden geçiriliyor."); } },
 ];
 
 function phaseForStatus(status: GenerationStatus | undefined) {
@@ -103,13 +104,13 @@ export function generationProgressView(
     completedPhases: completed ? generationPhases.length : phaseIndex,
     activePhase: generation && !stopped && !completed ? phaseIndex : -1,
     detail: !generation
-      ? 'Üretimin güncel durumu alınıyor.'
+      ? translateCopy("Üretimin güncel durumu alınıyor.")
       : status === 'QUEUED'
-        ? 'Üretimin sırada. Sıra geldiğinde hazırlık başlayacak.'
+        ? translateCopy("Üretimin sırada. Sıra geldiğinde hazırlık başlayacak.")
         : status === 'MODERATING_INPUT'
-          ? 'Fotoğrafın ve talebin güvenlik açısından inceleniyor.'
+          ? translateCopy("Fotoğrafın ve talebin güvenlik açısından inceleniyor.")
           : status === 'MODERATING_OUTPUT'
-            ? 'Oluşturulan görselin son güvenlik kontrolü yapılıyor.'
+            ? translateCopy("Oluşturulan görselin son güvenlik kontrolü yapılıyor.")
             : generationPhases[Math.min(phaseIndex, generationPhases.length - 1)]!.detail,
   };
 }

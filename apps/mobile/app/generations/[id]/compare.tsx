@@ -1,3 +1,5 @@
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
@@ -61,6 +63,8 @@ function remoteImageSource(
 }
 
 export default function CompareScreen() {
+  const languageRevision = useLanguageRevision();
+
   const router = useRouter();
   const params = useLocalSearchParams<{
     id?: string;
@@ -97,7 +101,7 @@ export default function CompareScreen() {
         if (!active) return;
         setGeneration(result);
         const projectId = result.projectId || requestedProjectId;
-        if (!projectId) throw new Error('Kaynak projenin kimliği bulunamadı.');
+        if (!projectId) throw new Error(translateCopy("Kaynak projenin kimliği bulunamadı."));
         const project = await apiRequest<CompareProject>(
           `/v1/projects/${encodeURIComponent(projectId)}`,
         );
@@ -105,7 +109,7 @@ export default function CompareScreen() {
         setSourceAssetId(project.project.sourceAssetId);
       } catch (reason) {
         if (!active) return;
-        setError(reason instanceof Error ? reason.message : 'Karşılaştırma yüklenemedi.');
+        setError(reason instanceof Error ? reason.message : translateCopy("Karşılaştırma yüklenemedi."));
       } finally {
         if (active) setLoading(false);
       }
@@ -131,7 +135,7 @@ export default function CompareScreen() {
         onPanResponderGrant: (event) => setFromX(event.nativeEvent.locationX),
         onPanResponderMove: (event) => setFromX(event.nativeEvent.locationX),
       }),
-    [setFromX],
+    [setFromX, languageRevision],
   );
 
   const selectedOutput = useMemo(
@@ -140,7 +144,7 @@ export default function CompareScreen() {
       generation?.outputs.find((output) => output.selected) ??
       generation?.outputs[0] ??
       null,
-    [generation, requestedOutputId],
+    [generation, requestedOutputId, languageRevision],
   );
   const afterSource = remoteImageSource(selectedOutput?.asset?.accessUrl, accessToken);
   const beforeSource = sourceAssetId
@@ -152,28 +156,28 @@ export default function CompareScreen() {
 
   return (
     <Screen contentContainerStyle={styles.content}>
-      <AppHeader back title="Önce / sonra" subtitle="Gerçek dönüşümü kaydırarak karşılaştır" />
+      <AppHeader back title={translateCopy("Önce / sonra")} subtitle={translateCopy("Gerçek dönüşümü kaydırarak karşılaştır")} />
       {loading ? (
         <View style={styles.loading}>
           <ActivityIndicator color={colors.accentYellow} />
-          <Text style={styles.loadingText}>Orijinal ve sonuç hazırlanıyor…</Text>
+          <Text style={styles.loadingText}>{translateCopy("Orijinal ve sonuç hazırlanıyor…")}</Text>
         </View>
       ) : null}
       {error ? (
-        <Notice tone="warning" title="Karşılaştırma açılamadı">
+        <Notice tone="warning" title={translateCopy("Karşılaştırma açılamadı")}>
           {error}
         </Notice>
       ) : null}
       {!loading && ready ? (
         <>
           <View
-            accessibilityLabel="Orijinal ve AI sonucu karşılaştırması. Ayıracı sağa veya sola sürükleyin."
+            accessibilityLabel={translateCopy("Orijinal ve AI sonucu karşılaştırması. Ayıracı sağa veya sola sürükleyin.")}
             style={[styles.frame, { aspectRatio: ratioValue(generation?.aspectRatio) }]}
             onLayout={(event) => setFrameWidth(event.nativeEvent.layout.width)}
           >
             <Image
               accessibilityIgnoresInvertColors
-              accessibilityLabel="Orijinal kaynak fotoğraf"
+              accessibilityLabel={translateCopy("Orijinal kaynak fotoğraf")}
               resizeMode="cover"
               source={beforeSource!}
               style={StyleSheet.absoluteFill}
@@ -181,7 +185,7 @@ export default function CompareScreen() {
             <View pointerEvents="none" style={[styles.afterClip, { width: `${split * 100}%` }]}>
               <Image
                 accessibilityIgnoresInvertColors
-                accessibilityLabel="AI üretim sonucu"
+                accessibilityLabel={translateCopy("AI üretim sonucu")}
                 resizeMode="cover"
                 source={afterSource!}
                 style={[styles.afterImage, { width: frameWidth }]}
@@ -196,10 +200,10 @@ export default function CompareScreen() {
             <View {...responder.panHandlers} style={StyleSheet.absoluteFill} />
             <View pointerEvents="none" style={styles.afterTag}>
               <Icon name="sparkles" size={11} color={colors.accentYellow} />
-              <Text style={styles.tagText}>AI SONUÇ</Text>
+              <Text style={styles.tagText}>{translateCopy("AI SONUÇ")}</Text>
             </View>
             <View pointerEvents="none" style={styles.beforeTag}>
-              <Text style={styles.tagText}>ORİJİNAL</Text>
+              <Text style={styles.tagText}>{translateCopy("ORİJİNAL")}</Text>
             </View>
           </View>
           <View style={styles.legend}>
@@ -212,25 +216,19 @@ export default function CompareScreen() {
               <Text style={styles.legendText}>Orijinal kaynak</Text>
             </View>
           </View>
-          <Notice tone="neutral" title="Kaydırarak karşılaştır">
-            Solda seçili AI sonucu, sağda yüklediğin ilk kaynak fotoğraf bulunur. Ayıracı tutup
-            sürükleyerek ayrıntıları inceleyebilirsin.
-          </Notice>
+          <Notice tone="neutral" title={translateCopy("Kaydırarak karşılaştır")}>{translateCopy("Solda seçili AI sonucu, sağda yüklediğin ilk kaynak fotoğraf bulunur. Ayıracı tutup sürükleyerek ayrıntıları inceleyebilirsin.")}</Notice>
         </>
       ) : null}
       {!loading && !ready && !error ? (
-        <Notice tone="warning" title="Karşılaştırma için görseller eksik">
-          Orijinal kaynak veya tamamlanmış sonuç bulunamadı. Projelerden tamamlanan bir üretimi açıp
-          yeniden deneyebilirsin.
-        </Notice>
+        <Notice tone="warning" title={translateCopy("Karşılaştırma için görseller eksik")}>{translateCopy("Orijinal kaynak veya tamamlanmış sonuç bulunamadı. Projelerden tamamlanan bir üretimi açıp yeniden deneyebilirsin.")}</Notice>
       ) : null}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Sonuca dön"
+        accessibilityLabel={translateCopy("Sonuca dön")}
         onPress={() => router.back()}
         style={({ pressed }) => [styles.done, pressed && styles.pressed]}
       >
-        <Text style={styles.doneText}>Sonuca dön</Text>
+        <Text style={styles.doneText}>{translateCopy("Sonuca dön")}</Text>
       </Pressable>
     </Screen>
   );
