@@ -719,7 +719,7 @@ export function CharacterTile({
       </Text>
       <View style={styles.aiLabel}>
         <Icon name="sparkles" size={10} color={colors.accentYellow} />
-        <Text style={styles.aiLabelText}>Kurgusal</Text>
+        <Text style={styles.aiLabelText}>{translateCopy("Kurgusal")}</Text>
       </View>
     </Pressable>
   );

@@ -3,7 +3,8 @@ import trMessages from './locales/tr.json';
 import enMessages from './locales/en.json';
 import englishCopy from './locales/copy-en.json';
 import supplementalCopy from './locales/supplemental-en.json';
-const completeEnglishCopy = { ...englishCopy, ...supplementalCopy };
+import uiCopy from './locales/ui-en.json';
+const completeEnglishCopy = { ...englishCopy, ...supplementalCopy, ...uiCopy };
 import { formattingLocale, parseLanguagePreference, resolveLanguage, type DeviceLocale, type Language, type LanguagePreference } from './resolve-language';
 
 // This module is platform-free. API, validation and catalogue modules can import
@@ -81,6 +82,9 @@ export function t(key: keyof typeof trMessages, values: TranslationValues = {}):
  * chat content, image text, custom project title or arbitrary API payload. */
 export function tr(source: string, values: TranslationValues = {}): string {
   const key = source.replace(/\s+/g, ' ').trim();
+  if ((key === '{{p0}} kredi' || key === '{{p0}} görsel') && typeof values.p0 === 'number') {
+    return String(i18n.t(key.endsWith('kredi') ? 'credits' : 'images', { lng: snapshot.language, count: values.p0 }));
+  }
   return String(i18n.t(key, { ...values, lng: snapshot.language, ns: 'copy', defaultValue: key }));
 }
 export function formatDate(value: Date | string | number, options: Intl.DateTimeFormatOptions = {}): string {

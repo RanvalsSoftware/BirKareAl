@@ -320,7 +320,7 @@ export default function StudioModeScreen() {
         />
         <MiniChoice
           caption={translateCopy("Seçime göre")}
-          label="Standart"
+          label={translateCopy("Standart")}
           onPress={() => set({ quality: 'STANDARD' })}
           selected={flow.quality === 'STANDARD'}
         />
@@ -398,7 +398,7 @@ export default function StudioModeScreen() {
             <Text style={styles.quoteCost}>{quote.creditCost} kredi</Text>
             <Text style={styles.quoteDetail}>
               {quote.modelLane === 'PREMIUM' ? translateCopy("Sunburst hassas üretim") : translateCopy("Flare hızlı üretim")} ·{' '}
-              {flow.quality === 'HD' ? 'HD' : flow.quality === 'PREVIEW' ? translateCopy("Önizleme") : 'Standart'}
+              {flow.quality === 'HD' ? 'HD' : flow.quality === 'PREVIEW' ? translateCopy("Önizleme") : translateCopy("Standart")}
             </Text>
           </View>
           <View style={styles.balance}>

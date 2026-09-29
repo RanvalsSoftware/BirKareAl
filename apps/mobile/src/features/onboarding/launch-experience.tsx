@@ -360,7 +360,7 @@ export function LogoIntro({ onFinished }: { onFinished: () => void }) {
           entering={reducedMotion ? undefined : FadeIn.delay(1_050).duration(420)}
           style={styles.logoCaption}
         >
-          <Text style={styles.logoCaptionText}>Hayalindeki kareye gir.</Text>
+          <Text style={styles.logoCaptionText}>{translateCopy("Hayalindeki kareye gir.")}</Text>
         </Animated.View>
       </View>
     </SafeAreaView>
@@ -1121,7 +1121,7 @@ function FilterStep({
         <View style={styles.originalThumb}>
           <FittedPhotoImage source={photoSource} style={StyleSheet.absoluteFill} />
           <View style={styles.originalThumbCaption}>
-            <Text style={styles.originalThumbText}>Orijinal</Text>
+            <Text style={styles.originalThumbText}>{translateCopy("Orijinal")}</Text>
           </View>
         </View>
         <Text style={styles.filterPreviewCopy}>
@@ -1205,7 +1205,7 @@ function FilterStep({
         </GestureDetector>
         <View style={[styles.sliderLabels, { width: trackWidth }]}>
           <Text style={styles.sliderLabel}>{translateCopy("Düşük")}</Text>
-          <Text style={styles.sliderLabel}>Orta</Text>
+          <Text style={styles.sliderLabel}>{translateCopy("Orta")}</Text>
           <Text style={styles.sliderLabel}>{translateCopy("Yüksek")}</Text>
         </View>
       </View>
@@ -1364,7 +1364,7 @@ function PreviewStep({
               <Text style={styles.beforeLabelText}>{translateCopy("Önce")}</Text>
             </View>
             <View style={styles.afterLabel}>
-              <Text style={styles.afterLabelText}>Sonra</Text>
+              <Text style={styles.afterLabelText}>{translateCopy("Sonra")}</Text>
             </View>
             {editMode === 'Yüz koruma' ? (
               <View style={styles.faceChip}>

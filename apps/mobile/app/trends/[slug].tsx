@@ -366,7 +366,7 @@ function TrendEditor({ trend }: { trend: (typeof trends)[number] }) {
           {[25, 60, 100].map((value, index) => (
             <MiniChoice
               key={value}
-              label={['Hafif', 'Dengeli', 'Belirgin'][index]}
+              label={['Hafif', translateCopy("Dengeli"), 'Belirgin'][index]}
               selected={flow.filterIntensity === value}
               onPress={() => set({ filterIntensity: value })}
             />

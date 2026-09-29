@@ -154,7 +154,7 @@ export default function SocialCompleteScreen() {
                 <Ionicons color={authColors.yellow} name="person-outline" size={18} />
                 <TextInput
                   ref={ref}
-                  accessibilityLabel="Ad"
+                  accessibilityLabel={translateCopy("Ad")}
                   autoCapitalize="words"
                   autoComplete="given-name"
                   autoCorrect={false}
@@ -193,7 +193,7 @@ export default function SocialCompleteScreen() {
                     lastNameInput.current = input;
                     ref(input);
                   }}
-                  accessibilityLabel="Soyad"
+                  accessibilityLabel={translateCopy("Soyad")}
                   autoCapitalize="words"
                   autoComplete="family-name"
                   autoCorrect={false}

@@ -82,7 +82,7 @@ export default function FiltersOnboardingScreen() {
               <View style={styles.originalThumb}>
                 <FittedArtwork source={resolveOnboardingPhoto(selectedPhoto)} />
                 <View style={styles.originalCaption}>
-                  <Text style={styles.originalCaptionText}>Orijinal</Text>
+                  <Text style={styles.originalCaptionText}>{translateCopy("Orijinal")}</Text>
                 </View>
               </View>
             </View>

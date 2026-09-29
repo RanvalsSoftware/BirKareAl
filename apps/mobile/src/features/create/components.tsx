@@ -1,3 +1,6 @@
+import { displayOption } from '@/i18n/display-options';
+import { tr as translateCopy } from '@/i18n/engine';
+import { useLanguageRevision } from '@/i18n/use-language';
 import * as Haptics from 'expo-haptics';
 import {
   Pressable,
@@ -41,13 +44,13 @@ export function CreateHeader({
         </View>
         {right}
       </View>
-      {step ? <ProgressSteps current={step} total={total} labels={stepLabels} /> : null}
+      {step ? <ProgressSteps current={step} total={total} labels={stepLabels.map(displayOption)} /> : null}
     </>
   );
 }
 
 export function WizardFooter({
-  label = 'Devam et',
+  label = translateCopy('Devam et'),
   onPress,
   disabled,
   loading,
@@ -221,10 +224,11 @@ export function MiniChoice({
   onPress: () => void;
   caption?: string;
 }) {
+  useLanguageRevision();
   return (
     <Pressable
       accessibilityRole="radio"
-      accessibilityLabel={label}
+      accessibilityLabel={displayOption(label)}
       accessibilityState={{ selected }}
       onPress={onPress}
       style={({ pressed }) => [
@@ -242,11 +246,11 @@ export function MiniChoice({
         style={StyleSheet.absoluteFill}
       />
       <Text style={[styles.miniChoiceLabel, selected && styles.miniChoiceLabelSelected]}>
-        {label}
+        {displayOption(label)}
       </Text>
       {caption ? (
         <Text style={[styles.miniChoiceCaption, selected && styles.miniChoiceCaptionSelected]}>
-          {caption}
+          {displayOption(caption)}
         </Text>
       ) : null}
     </Pressable>

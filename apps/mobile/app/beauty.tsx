@@ -262,7 +262,7 @@ function BeautyEditor() {
                 onPress={() => update(withBeautyIntensity(settings, selectedId, value))}
                 style={[styles.level, intensity === value && styles.levelSelected]}
               >
-                <Text style={styles.hint}>{['Hafif', 'Dengeli', 'Belirgin'][index]}</Text>
+                <Text style={styles.hint}>{['Hafif', translateCopy("Dengeli"), 'Belirgin'][index]}</Text>
               </Pressable>
             ))}
           </View>

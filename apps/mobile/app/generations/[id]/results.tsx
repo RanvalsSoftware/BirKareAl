@@ -527,7 +527,7 @@ function ReportModal({
               </Pressable>
             ))}
           </ScrollView>
-          <Text style={styles.reportDetailLabel}>{translateCopy("Ek açıklama")}{' '}<Text style={styles.reportOptional}>opsiyonel</Text>
+          <Text style={styles.reportDetailLabel}>{translateCopy("Ek açıklama")}{' '}<Text style={styles.reportOptional}>{translateCopy("opsiyonel")}</Text>
           </Text>
           <TextInput
             accessibilityLabel={translateCopy("Rapor için ek açıklama")}

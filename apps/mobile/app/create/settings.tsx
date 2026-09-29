@@ -1,3 +1,4 @@
+import { displayOption } from '@/i18n/display-options';
 import { useLanguageRevision } from '@/i18n/use-language';
 import { tr as translateCopy } from '@/i18n/engine';
 import { useState } from 'react';
@@ -184,8 +185,8 @@ export default function GenerationSettingsScreen() {
         <Icon name="options-outline" size={20} color={colors.accentYellow} />
         <View style={styles.sceneCopy}>
           <Text style={styles.sceneTitle}>{translateCopy("Gelişmiş ayarlar")}</Text>
-          <Text style={styles.hint}>{translateCopy("{{p0}} · {{p1}} görsel {{p2}}", { p0: flow.quality, p1: flow.numberOfImages, p2: flow.mode !== 'filter' && flow.mode !== 'background'
-              ? ` · ${flow.composition} kadraj`
+          <Text style={styles.hint}>{translateCopy("{{p0}} · {{p1}} görsel {{p2}}", { p0: displayOption(flow.quality), p1: flow.numberOfImages, p2: flow.mode !== 'filter' && flow.mode !== 'background'
+              ? ` · ${translateCopy('{{p0}} kadraj', { p0: displayOption(flow.composition) })}`
               : '' })}</Text>
         </View>
         <Icon name={advanced ? 'chevron-up' : 'chevron-down'} size={19} />
@@ -214,7 +215,7 @@ export default function GenerationSettingsScreen() {
                 key={quality}
                 label={quality}
                 caption={
-                  quality === 'HD' ? translateCopy("Ayrıntılı") : quality === 'Standart' ? 'Dengeli' : translateCopy("Hızlı")
+                  quality === 'HD' ? translateCopy("Ayrıntılı") : quality === 'Standart' ? translateCopy("Dengeli") : translateCopy("Hızlı")
                 }
                 selected={flow.quality === quality}
                 onPress={() => set({ quality })}
@@ -248,7 +249,7 @@ export default function GenerationSettingsScreen() {
               onValueChange={(preserveClothes) => set({ preserveClothes })}
             />
           </View>
-          <FieldLabel>{translateCopy("Özel talimat")}{' '}<Text style={styles.hint}>opsiyonel</Text>
+          <FieldLabel>{translateCopy("Özel talimat")}{' '}<Text style={styles.hint}>{translateCopy("opsiyonel")}</Text>
           </FieldLabel>
           <TextField
             value={flow.customInstruction}
@@ -268,7 +269,7 @@ export default function GenerationSettingsScreen() {
           </Text>
         </>
       ) : null}
-      <Notice tone="neutral" title="Kontrol sende">{translateCopy("Kredi tutarını bir sonraki ekranda göreceksin. Oluşturmayı onaylamadan kredi düşülmez.")}</Notice>
+      <Notice tone="neutral" title={translateCopy("Kontrol sende")}>{translateCopy("Kredi tutarını bir sonraki ekranda göreceksin. Oluşturmayı onaylamadan kredi düşülmez.")}</Notice>
       <WizardFooter
         label={translateCopy("Üretimi gözden geçir")}
         onPress={() => router.push('/create/review' as never)}

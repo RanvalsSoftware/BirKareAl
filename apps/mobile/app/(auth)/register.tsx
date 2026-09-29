@@ -241,7 +241,7 @@ export default function RegisterScreen() {
                 <View style={styles.inputRow}>
                   <Ionicons color={authColors.yellow} name="person-outline" size={16} />
                   <TextInput
-                    accessibilityLabel="Ad"
+                    accessibilityLabel={translateCopy("Ad")}
                     autoComplete="given-name"
                     blurOnSubmit={false}
                     cursorColor={authColors.yellow}
@@ -274,7 +274,7 @@ export default function RegisterScreen() {
                   <Ionicons color={authColors.yellow} name="person-outline" size={16} />
                   <TextInput
                     ref={lastNameInputRef}
-                    accessibilityLabel="Soyad"
+                    accessibilityLabel={translateCopy("Soyad")}
                     autoComplete="family-name"
                     blurOnSubmit={false}
                     cursorColor={authColors.yellow}
@@ -308,7 +308,7 @@ export default function RegisterScreen() {
                 <Ionicons color={authColors.yellow} name="mail-outline" size={18} />
                 <TextInput
                   ref={emailInputRef}
-                  accessibilityLabel="E-posta"
+                  accessibilityLabel={translateCopy("E-posta")}
                   autoCapitalize="none"
                   autoComplete="email"
                   autoCorrect={false}

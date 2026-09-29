@@ -1,3 +1,4 @@
+import { useLanguageRevision } from '@/i18n/use-language';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
@@ -156,6 +157,7 @@ export function mergeStudioModeCards(catalog: StudioPublicCatalog | undefined): 
 }
 
 export function useStudioCatalog() {
+  const languageRevision = useLanguageRevision();
   const query = useQuery({
     queryKey: ['studio-public-catalog'],
     queryFn: fetchStudioPublicCatalog,
@@ -173,7 +175,7 @@ export function useStudioCatalog() {
       previewCredits: query.data?.previewCredits ?? 1,
       hdExtraCredits: query.data?.hdExtraCredits ?? 2,
     }),
-    [query.data],
+    [query.data, languageRevision],
   );
   return { ...query, ...projection };
 }

@@ -208,7 +208,7 @@ function AccountProfileForm({
         </View>
         <GlassSettingsRow
           icon="mail-outline"
-          title="E-posta"
+          title={translateCopy("E-posta")}
           detail={email ?? translateCopy("Oturum bilgisi yok")}
           last
         />

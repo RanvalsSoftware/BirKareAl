@@ -237,7 +237,7 @@ export default function ReviewScreen() {
           <Image source={{ uri: flow.sourceUri }} resizeMode="cover" style={styles.summaryImage} />
           <View style={styles.sourceBadge}>
             <Icon name="sparkles" size={12} color={colors.accentYellow} />
-            <Text style={styles.sourceBadgeText}>Kaynak</Text>
+            <Text style={styles.sourceBadgeText}>{translateCopy("Kaynak")}</Text>
           </View>
         </View>
         <View style={styles.summaryDetails}>

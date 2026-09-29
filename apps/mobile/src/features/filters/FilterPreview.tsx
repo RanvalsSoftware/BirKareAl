@@ -121,7 +121,7 @@ export function FilterPreview({
         <View pointerEvents="none" style={styles.label}>
           <Text style={styles.labelText}>
             {showOriginal
-              ? 'Orijinal'
+              ? translateCopy("Orijinal")
               : translateCopy("{{p0}}Yaklaşık ton önizlemesi · %{{p1}}", { p0: !sourceUri && !source ? 'Demo · ' : '', p1: clampFilterIntensity(intensity) })}
           </Text>
         </View>
