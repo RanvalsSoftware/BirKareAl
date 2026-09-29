@@ -1,0 +1,43 @@
+name: Language validation
+on:
+  push:
+    branches: [feature7langague_update]
+  pull_request:
+    branches: [feat/human-photorealism-source-fidelity]
+permissions:
+  contents: read
+concurrency:
+  group: language-validation-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: corepack enable && corepack prepare pnpm@10.18.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - name: Audit translatable static copy
+        run: node scripts/language-audit.mjs
+      - run: pnpm --filter @birkare/database exec prisma generate
+      - run: pnpm --filter @birkare/mobile typecheck
+      - run: pnpm --filter @birkare/api typecheck
+      - name: Mobile regression tests
+        run: pnpm --filter @birkare/mobile test
+      - name: Backend auth, generation and billing regression tests
+        run: >-
+          pnpm --filter @birkare/api exec tsx --test
+          src/modules/auth/auth.service.test.ts
+          src/modules/auth/google-id-token.service.test.ts
+          src/modules/auth/apple-id-token.service.test.ts
+          src/modules/auth/account-security.test.ts
+          src/services/mail.service.test.ts
+          src/modules/billing/revenuecat.service.test.ts
+          src/modules/generations/trends.test.ts
+          src/modules/generations/trend-quality.test.ts
+          src/modules/generations/runtime.test.ts
