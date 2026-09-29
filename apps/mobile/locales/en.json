@@ -1,0 +1,8 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "BirKare AI uses your camera to take a source photo for an image you choose to create.",
+    "NSPhotoLibraryUsageDescription": "BirKare AI uses only the photos you select for image creation and editing.",
+    "NSPhotoLibraryAddUsageDescription": "BirKare AI can save the images you create to your photo library."
+  },
+  "android": { "app_name": "BirKare AI" }
+}

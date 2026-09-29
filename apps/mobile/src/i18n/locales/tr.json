@@ -1,0 +1,16 @@
+{
+  "language.title": "Dil",
+  "language.subtitle": "BirKare’yi tercih ettiğin dilde kullan",
+  "language.system": "Sistem dilini kullan",
+  "language.systemHint": "Cihazının dil tercihlerini takip eder. Desteklenmeyen dillerde İngilizce kullanılır.",
+  "language.saved": "Dil tercihin bu cihazda saklanır.",
+  "language.saveFailed": "Dil değişti ancak tercih saklanamadı. Kaydetmeyi tekrar dene.",
+  "language.retry": "Tekrar kaydet",
+  "language.back": "Geri",
+  "credits_one": "{{count}} kredi",
+  "credits_other": "{{count}} kredi",
+  "images_one": "{{count}} görsel",
+  "images_other": "{{count}} görsel",
+  "errors.generic": "İşlem tamamlanamadı. Lütfen tekrar dene.",
+  "errors.network": "Sunucuya ulaşılamadı. İnternet bağlantını kontrol edip tekrar dene."
+}

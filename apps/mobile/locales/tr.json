@@ -1,0 +1,8 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "BirKare AI, seçtiğin üretim için yeni bir kaynak fotoğraf çekmek üzere kameranı kullanır.",
+    "NSPhotoLibraryUsageDescription": "BirKare AI, yalnızca seçtiğin fotoğrafları görsel oluşturma ve düzenleme için kullanır.",
+    "NSPhotoLibraryAddUsageDescription": "BirKare AI, oluşturduğun görselleri Fotoğraflarına kaydedebilir."
+  },
+  "android": { "app_name": "BirKare AI" }
+}

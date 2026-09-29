@@ -1,0 +1,52 @@
+name: Apply reviewed localization migration
+on:
+  push:
+    branches: [feature7langague_update]
+    paths:
+      - scripts/language-migrate.mjs
+      - scripts/language-migrate.test.mjs
+      - .github/workflows/language-apply.yml
+permissions:
+  contents: write
+concurrency:
+  group: language-apply
+  cancel-in-progress: true
+jobs:
+  apply:
+    if: github.repository == 'RanvalsSoftware/BirKareAl' && github.ref == 'refs/heads/feature7langague_update'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feature7langague_update
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - run: corepack enable && corepack prepare pnpm@10.18.0 --activate
+      - run: pnpm install --frozen-lockfile
+      - name: Test safe source migration
+        run: node --test scripts/language-migrate.test.mjs
+      - name: Apply the reviewed source migration and resolve the SDK-compatible dependency
+        run: |
+          node scripts/language-migrate.mjs
+          pnpm install --lockfile-only
+          pnpm install --frozen-lockfile
+          pnpm --filter @birkare/database exec prisma generate
+      - name: Typecheck generated localization changes
+        run: |
+          pnpm --filter @birkare/mobile typecheck
+          pnpm --filter @birkare/api typecheck
+      - name: Commit localization sources and reproducible lockfile to the feature branch only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add apps/mobile/app apps/mobile/src apps/mobile/locales apps/mobile/app.config.ts apps/mobile/package.json pnpm-lock.yaml
+          if ! git diff --cached --quiet; then
+            git commit -m 'feat(i18n): apply reviewed static-copy migration and lock compatible dependencies'
+            git push origin HEAD:refs/heads/feature7langague_update
+          fi
+      - name: Language and preserved-flow regression tests
+        run: |
+          pnpm --filter @birkare/mobile exec vitest run src/i18n src/features/auth src/features/create src/features/trends
+          pnpm --filter @birkare/api exec tsx --test src/modules/auth/google-id-token.service.test.ts src/modules/generations/trend-quality.test.ts
