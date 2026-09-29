@@ -72,9 +72,9 @@ export function ProPaywallView(props: ProPaywallViewProps) {
     { image: assets.wand, title: translateCopy("Pro araçlar"), detail: translateCopy("ve daha fazlası") },
   ];
   const scenes = [
-    { image: assets.city, label: 'Hayal Et', rotate: '-3deg' },
+    { image: assets.city, label: translateCopy("Hayal Et"), rotate: '-3deg' },
     { image: assets.balloons, label: translateCopy("Keşfet"), rotate: '0deg' },
-    { image: assets.portrait, label: 'Yarat', rotate: '3deg' },
+    { image: assets.portrait, label: translateCopy("Yarat"), rotate: '3deg' },
   ];
   return (
     <SafeAreaView

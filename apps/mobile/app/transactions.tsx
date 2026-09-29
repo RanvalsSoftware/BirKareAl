@@ -22,8 +22,8 @@ import { colors, spacing, typography } from '@/theme';
 
 const filters: { id: TransactionFilter; label: string }[] = [
   { id: 'all', get label() { return translateCopy("Tümü"); } },
-  { id: 'earned', label: 'Eklenen' },
-  { id: 'spent', label: 'Harcanan' },
+  { id: 'earned', label: translateCopy("Eklenen") },
+  { id: 'spent', label: translateCopy("Harcanan") },
   { id: 'returned', get label() { return translateCopy("İadeler"); } },
 ];
 

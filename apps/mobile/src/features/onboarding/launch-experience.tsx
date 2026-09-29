@@ -1556,7 +1556,7 @@ function EditSheet({
   const [chosen, setChosen] = useState<EditMode>(selected ?? 'Işık');
   const options = [
     { label: translateCopy("Işık") as EditMode, icon: 'sunny-outline' as const },
-    { label: 'Kadraj' as EditMode, icon: 'crop-outline' as const },
+    { label: translateCopy("Kadraj") as EditMode, icon: 'crop-outline' as const },
     { label: translateCopy("Yüz koruma") as EditMode, icon: 'shield-checkmark-outline' as const },
   ];
 

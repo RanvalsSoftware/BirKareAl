@@ -37,10 +37,10 @@ import {
 import { colors, radii, spacing, typography } from '@/theme';
 
 const variants = [
-  { id: 'a', label: 'Varyasyon 1', palette: ['#341D68', '#CA8D24'] as const, icon: '✦' },
-  { id: 'b', label: 'Varyasyon 2', palette: ['#1A5264', '#A77535'] as const, icon: '◈' },
-  { id: 'c', label: 'Varyasyon 3', palette: ['#5C2148', '#8B81CE'] as const, icon: '◌' },
-  { id: 'd', label: 'Varyasyon 4', palette: ['#485C2D', '#213A6B'] as const, icon: '✧' },
+  { id: 'a', label: translateCopy("Varyasyon 1"), palette: ['#341D68', '#CA8D24'] as const, icon: '✦' },
+  { id: 'b', label: translateCopy("Varyasyon 2"), palette: ['#1A5264', '#A77535'] as const, icon: '◈' },
+  { id: 'c', label: translateCopy("Varyasyon 3"), palette: ['#5C2148', '#8B81CE'] as const, icon: '◌' },
+  { id: 'd', label: translateCopy("Varyasyon 4"), palette: ['#485C2D', '#213A6B'] as const, icon: '✧' },
 ];
 
 type GenerationOutput = {
