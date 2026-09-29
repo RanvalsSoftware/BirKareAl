@@ -1,3 +1,4 @@
+vi.mock('@/i18n/use-language', () => ({ useLanguageRevision: () => 'tr-TR', useLanguage: () => ({language:'tr',locale:'tr-TR',preference:'system',ready:true,saveFailed:false}) }));
 import { createElement, isValidElement, type ReactElement } from 'react';
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FormField } from './auth-ui';
