@@ -10,6 +10,29 @@ const GOOGLE_JWKS = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth
   timeoutDuration: 5_000,
 });
 
+/**
+ * Backend-only allowlist: preserve the existing single-ID setting while also
+ * accepting a bounded comma-separated list for EAS and Play signing clients.
+ * An absent setting admits no additional Android clients. Never infer trust
+ * from a project-number prefix, a SHA fingerprint, or unverified token claims.
+ */
+function androidClientIds(value: string | undefined): string[] {
+  const normalized = value?.trim() ?? '';
+  if (!normalized) return [];
+  const clients = normalized.split(',').map((client) => client.trim());
+  if (
+    normalized.length > 512 ||
+    clients.length > 6 ||
+    clients.some((client) => !/^\d+-[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$/.test(client))
+  ) {
+    // Report only the setting name, never its value or a provider token.
+    throw new Error(
+      'GOOGLE_ANDROID_CLIENT_ID tek bir Google OAuth Client ID veya virgülle ayrılmış en fazla 6 geçerli Client ID içermelidir (en fazla 512 karakter).',
+    );
+  }
+  return [...new Set(clients)];
+}
+
 export type VerifiedGoogleIdentity = {
   /** Google's immutable OIDC `sub`; this is the only provider identifier we persist. */
   subject: string;
@@ -47,12 +70,16 @@ export class GoogleIdTokenService implements GoogleIdentityVerifier {
     private readonly keyResolver: JWTVerifyGetKey = GOOGLE_JWKS,
   ) {
     this.audiences = [
-      config.GOOGLE_IOS_CLIENT_ID,
-      config.GOOGLE_ANDROID_CLIENT_ID,
-      config.GOOGLE_WEB_CLIENT_ID,
-    ]
-      .filter((value): value is string => Boolean(value?.trim()))
-      .map((value) => value.trim());
+      ...new Set(
+        [
+          config.GOOGLE_IOS_CLIENT_ID,
+          ...androidClientIds(config.GOOGLE_ANDROID_CLIENT_ID),
+          config.GOOGLE_WEB_CLIENT_ID,
+        ]
+          .filter((value): value is string => Boolean(value?.trim()))
+          .map((value) => value.trim()),
+      ),
+    ];
   }
 
   async verify(idToken: string): Promise<VerifiedGoogleIdentity> {
@@ -104,7 +131,8 @@ export class GoogleIdTokenService implements GoogleIdentityVerifier {
 
     // OIDC requires azp for a multi-audience token. When present it must be a
     // BirKare client ID too; accepting an unrelated authorized party would
-    // weaken the audience check above.
+    // weaken the audience check above. EAS and Play presenters are checked
+    // independently against exact, explicitly configured IDs.
     if (
       (Array.isArray(payload.aud) && payload.aud.length > 1 && typeof payload.azp !== 'string') ||
       (payload.azp !== undefined &&
