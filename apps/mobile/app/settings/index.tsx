@@ -17,6 +17,7 @@ export default function SettingsScreen() {
 
   const router = useRouter();
   const language = useLanguage();
+  const languageName = { tr: 'Türkçe', en: 'English', de: 'Deutsch', es: 'Español', ar: 'العربية' }[language.language];
   return (
     <SettingsPage title={translateCopy("Ayarlar")} subtitle={translateCopy("Uygulamayı sana göre düzenle")}>
       <SettingsSectionTitle>{translateCopy("TERCİHLER")}</SettingsSectionTitle>
@@ -31,7 +32,7 @@ export default function SettingsScreen() {
           icon="language-outline"
           accent="purple"
           title={translateCopy("Dil")}
-          value={language.preference === 'system' ? t('language.system') : language.language === 'tr' ? translateCopy("Türkçe") : 'English'}
+          value={language.preference === 'system' ? t('language.system') : languageName}
           detail={t('language.subtitle')}
           onPress={() => router.push('/settings/language' as never)}
         />

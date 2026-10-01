@@ -229,4 +229,4 @@ Android için service-account yetkilerini güvenli tanımla ve hedefi internal/d
 - [ ] Küçük iPhone, büyük iPhone, iPad açıksa iPad, Android; büyük font, VoiceOver/TalkBack, azaltılmış hareket, koyu mod.
 - [ ] Yayın sonrası auth başarı oranı, üretim hata/latency, kuyruk yaşı, kredi tutarlılığı, maliyet ve silme kuyruğu izlenir. Kritik regresyonda yeni üretimi durdur, sürümü incele; kullanıcı işlemlerini körlemesine tekrar çalıştırma.
 
-İlgili mevcut metin taslağı: [store-metadata.tr.json](store-metadata.tr.json). Gönderim öncesinde seçilen son metinle bu JSON’u senkronize et; eski metin ile yeni özellikler çelişmesin.
+İlgili mağaza metni taslakları: [Türkçe](store-metadata.tr.json) ve [English (U.S.)](store-metadata.en-US.json). Uygulama dili ile mağaza ülkesinin ayrımı ve iki konsoldaki alan eşlemesi için [mağaza yerelleştirme rehberini](store-localization.md) kullan. Gönderim öncesinde seçilen son metinlerle bu JSON dosyalarını senkronize et; eski metin ile yeni özellikler çelişmesin.

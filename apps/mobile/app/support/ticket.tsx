@@ -24,7 +24,7 @@ function SupportTicketForm() {
   const router = useRouter();
   const { generationId } = useLocalSearchParams<{ generationId?: string }>();
   const [category, setCategory] = useState<SupportTicketInput['category']>('GENERATION');
-  const [subject, setSubject] = useState(generationId ? 'Görsel üretimi tamamlanmadı' : '');
+  const [subject, setSubject] = useState(generationId ? translateCopy('Görsel üretimi tamamlanmadı') : '');
   const [message, setMessage] = useState('');
   const [receipt, setReceipt] = useState<SupportTicketReceipt | null>(null);
   const [sending, setSending] = useState(false);

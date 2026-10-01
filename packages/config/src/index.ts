@@ -103,6 +103,9 @@ const RawEnvSchema = z.object({
   GOOGLE_ANDROID_CLIENT_ID: OptionalEnvString(z.string().trim().min(20).max(512)),
   GOOGLE_WEB_CLIENT_ID: DefaultedGoogleClientId(DEFAULT_GOOGLE_WEB_CLIENT_ID),
   APPLE_BUNDLE_ID: OptionalEnvString(z.string().trim().min(3).max(255)),
+  APPLE_TEAM_ID: OptionalEnvString(z.string().trim().regex(/^[A-Z0-9]{10}$/)),
+  APPLE_KEY_ID: OptionalEnvString(z.string().trim().regex(/^[A-Z0-9]{10}$/)),
+  APPLE_PRIVATE_KEY_FILE: OptionalEnvString(z.string().trim().min(1).max(1024)),
 
   // RevenueCat public SDK keys stay in Expo config. The REST secret and
   // webhook authorization token below are backend-only and are used to turn a
@@ -211,6 +214,15 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): BirKareConf
     }
   }
   const isProductionLike = config.NODE_ENV === 'production' || config.NODE_ENV === 'staging';
+  if (
+    isProductionLike &&
+    config.APPLE_BUNDLE_ID &&
+    (!config.APPLE_TEAM_ID || !config.APPLE_KEY_ID || !config.APPLE_PRIVATE_KEY_FILE)
+  ) {
+    throw new Error(
+      'Apple ile giriş açıkken hesap silme token iptali için APPLE_TEAM_ID, APPLE_KEY_ID ve APPLE_PRIVATE_KEY_FILE zorunludur.',
+    );
+  }
   if (config.DATABASE_PROVIDER === 'prisma' && !config.DATABASE_URL) {
     throw new Error('DATABASE_PROVIDER=prisma iken DATABASE_URL zorunludur.');
   }

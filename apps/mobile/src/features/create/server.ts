@@ -130,12 +130,12 @@ export type SubmissionStage =
   'CHECKING' | 'READING' | 'UPLOADING' | 'CREATING' | 'QUEUEING' | 'QUEUED';
 
 export const submissionStageLabels: Record<SubmissionStage, string> = {
-  CHECKING: translateCopy("Kredi ve seçimler kontrol ediliyor"),
-  READING: translateCopy("Fotoğraf hazırlanıyor"),
-  UPLOADING: translateCopy("Fotoğraf güvenle yükleniyor"),
-  CREATING: translateCopy("Projen hazırlanıyor"),
-  QUEUEING: translateCopy("Üretim başlatılıyor"),
-  QUEUED: translateCopy("Üretim sıraya alındı"),
+  get CHECKING() { return translateCopy("Kredi ve seçimler kontrol ediliyor"); },
+  get READING() { return translateCopy("Fotoğraf hazırlanıyor"); },
+  get UPLOADING() { return translateCopy("Fotoğraf güvenle yükleniyor"); },
+  get CREATING() { return translateCopy("Projen hazırlanıyor"); },
+  get QUEUEING() { return translateCopy("Üretim başlatılıyor"); },
+  get QUEUED() { return translateCopy("Üretim sıraya alındı"); },
 };
 
 export type CreateFlowServerErrorCode =

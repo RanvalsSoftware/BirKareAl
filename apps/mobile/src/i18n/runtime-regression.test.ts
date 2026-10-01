@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { getLanguageSnapshot, getLocale, hydrateLanguagePreference, setLanguagePreference, tr, updateSystemLocales } from './engine';
+import { getLanguageSnapshot, getLocale, hydrateLanguagePreference, setLanguagePreference, t, tr, updateSystemLocales } from './engine';
 import { localizedApiErrorMessage } from './errors';
 import { loginSchema, registerSchema, socialCompleteFormSchema } from '@/features/auth/validation';
 import { getCreateFlow, updateCreateFlow, resetCreateFlow } from '@/features/create/createFlow';
@@ -33,6 +33,16 @@ describe('language updates preserve application contracts', () => {
     expect(localizedApiErrorMessage('AUTH_INVALID_CREDENTIALS','E-posta veya şifre hatalı.')).toBe('E-posta veya şifre hatalı.');
   });
 
+  it('never leaks Turkish or English protocol copy into the three added languages', async () => {
+    for (const language of ['de', 'es', 'ar'] as const) {
+      await setLanguagePreference(language);
+      const localized = localizedApiErrorMessage('AUTH_INVALID_CREDENTIALS', 'E-posta veya şifre hatalı.');
+      expect(localized).toBe(t('errors.generic'));
+      expect(localized).not.toContain('E-posta');
+      expect(localized).not.toContain('email');
+    }
+  });
+
   it('keeps photo URIs, user notes, immutable preset IDs and credit settings unchanged', async () => {
     updateCreateFlow({ sourceUri:'file:///own-photo.jpg',sourceName:'My own name',customInstruction:'Sade Lüks',quality:'HD',numberOfImages:2,trendPreset:'old_money_portrait' });
     const flowBefore = getCreateFlow();
@@ -50,11 +60,12 @@ describe('language updates preserve application contracts', () => {
   it('follows device preferences only in system mode and formats the matching locale', async () => {
     await setLanguagePreference('system');
     updateSystemLocales([{languageTag:'de-DE'},{languageTag:'en-GB'},{languageTag:'tr-TR'}]);
-    expect(getLanguageSnapshot().language).toBe('en');
-    expect(getLocale()).toBe('en-GB');
+    expect(getLanguageSnapshot().language).toBe('de');
+    expect(getLocale()).toBe('de-DE');
     await setLanguagePreference('tr');
     updateSystemLocales([{languageTag:'en-US'}]);
     expect(getLanguageSnapshot().language).toBe('tr');
     expect(tr('Şifreler eşleşmiyor.')).toBe('Şifreler eşleşmiyor.');
   });
+
 });

@@ -3,6 +3,7 @@ import { getLocale as getAppLocale } from '@/i18n/engine';
 import { tr as translateCopy } from '@/i18n/engine';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInDown, Layout } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -30,9 +31,17 @@ import { resetCreateFlow, updateCreateFlow } from '@/features/create/createFlow'
 import { getToolPreset } from '@/features/create/tool-presets';
 import { BeautyRail } from '@/features/beauty/BeautyRail';
 import { beautyOptions } from '@/features/beauty/catalog';
-import { beautySceneImage } from '@/features/trends/catalog';
+import { beautySceneImage, trends } from '@/features/trends/catalog';
 
-const categories = ['Tümü', 'Sahneler', 'Güzellik', 'Filtreler', 'Kurgusal', 'AI Araçları'];
+const categories = [
+  'Tümü',
+  'Akımlar',
+  'Sahneler',
+  'Güzellik',
+  'Filtreler',
+  'Kurgusal',
+  'AI Araçları',
+];
 
 export default function ExploreScreen() {
   const languageRevision = useLanguageRevision();
@@ -41,6 +50,11 @@ export default function ExploreScreen() {
   const availableCredits = useAvailableCredits();
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Tümü');
+  const matchingTrends = trends.filter((trend) =>
+    `${trend.name} ${trend.description}`
+      .toLocaleLowerCase(getAppLocale())
+      .includes(query.trim().toLocaleLowerCase(getAppLocale())),
+  );
   const items = useMemo(() => {
     const byCategory =
       selectedCategory === 'Tümü'
@@ -66,7 +80,7 @@ export default function ExploreScreen() {
   const showBeautyScene =
     ['Sahneler', 'Tümü'].includes(selectedCategory) &&
     (!query.trim() ||
-      'güzellik rötuş cilt makyaj'.includes(query.trim().toLocaleLowerCase(getAppLocale())));
+      translateCopy('güzellik rötuş cilt makyaj').toLocaleLowerCase(getAppLocale()).includes(query.trim().toLocaleLowerCase(getAppLocale())));
 
   function open(item: CatalogItem) {
     if (item.slug === 'gender-change') {
@@ -95,8 +109,8 @@ export default function ExploreScreen() {
     <SafeAreaView edges={['top', 'left', 'right']} style={styles.screen}>
       <View style={styles.headerArea}>
         <AppHeader
-          title={translateCopy("Keşfet")}
-          subtitle={translateCopy("Sahneler, güzellik ve AI araçları")}
+          title={translateCopy('Keşfet')}
+          subtitle={translateCopy('Sahneler, güzellik ve AI araçları')}
           right={<CreditBadge credits={availableCredits} />}
         />
       </View>
@@ -104,7 +118,7 @@ export default function ExploreScreen() {
         <SearchBar
           value={query}
           onChangeText={setQuery}
-          placeholder={translateCopy("Sahne, güzellik, filtre veya araç ara")}
+          placeholder={translateCopy('Sahne, güzellik, filtre veya araç ara')}
         />
         <ScrollView
           horizontal
@@ -115,7 +129,7 @@ export default function ExploreScreen() {
           {categories.map((category) => (
             <CategoryChip
               key={category}
-              label={category}
+              label={translateCopy(category)}
               selected={selectedCategory === category}
               onPress={() => setSelectedCategory(category)}
             />
@@ -125,22 +139,26 @@ export default function ExploreScreen() {
         {selectedCategory === 'Güzellik' || selectedCategory === 'Tümü' ? (
           <>
             <SectionHeader
-              title={translateCopy("Güzellik Stüdyosu")}
-              action="Aç"
+              title={translateCopy('Güzellik Stüdyosu')}
+              action={translateCopy('Aç')}
               onActionPress={() => {
                 resetCreateFlow();
                 router.push('/beauty' as never);
               }}
             />
-            <Text style={styles.filterHintText}>{translateCopy("Rötuş, yüz hatları ve makyaj · Yoğunluğu sen ayarla")}</Text>
+            <Text style={styles.filterHintText}>
+              {translateCopy('Rötuş, yüz hatları ve makyaj · Yoğunluğu sen ayarla')}
+            </Text>
             <BeautyRail
-              options={beautyOptions.filter(
-                (option) =>
-                  !query ||
-                  `${option.name} ${option.description}`
-                    .toLocaleLowerCase(getAppLocale())
-                    .includes(query.toLocaleLowerCase(getAppLocale())),
-              )}
+              options={beautyOptions
+                .filter(
+                  (option) =>
+                    !query ||
+                    `${option.name} ${option.description}`
+                      .toLocaleLowerCase(getAppLocale())
+                      .includes(query.toLocaleLowerCase(getAppLocale())),
+                )
+                .slice(0, selectedCategory === 'Tümü' ? 3 : undefined)}
               onSelect={(option) => {
                 resetCreateFlow();
                 router.push({ pathname: '/beauty', params: { selected: option.id } } as never);
@@ -151,34 +169,83 @@ export default function ExploreScreen() {
 
         {selectedCategory === 'Filtreler' ? (
           <View style={styles.filterHint}>
-            <Text style={styles.filterHintTitle}>{translateCopy("Filtre koleksiyonu")}</Text>
-            <Text style={styles.filterHintText}>{filterCategories.slice(1, 5).join(' · ')}</Text>
+            <Text style={styles.filterHintTitle}>{translateCopy('Filtre koleksiyonu')}</Text>
+            <Text style={styles.filterHintText}>
+              {filterCategories
+                .slice(1, 5)
+                .map((category) => translateCopy(category))
+                .join(' · ')}
+            </Text>
           </View>
         ) : null}
-        {selectedCategory !== 'Güzellik' ? (
+        {selectedCategory === 'Akımlar' ? (
+          <>
+            <SectionHeader
+              title={translateCopy('Akımlar')}
+              accessory={
+                <Text style={styles.resultCount}>
+                  {translateCopy('{{p0}} seçenek', { p0: matchingTrends.length })}
+                </Text>
+              }
+            />
+            {matchingTrends.length ? (
+              <Animated.View entering={FadeInDown.duration(300)} style={styles.grid}>
+                {matchingTrends.map((trend) => (
+                  <VisualTile
+                    key={trend.id}
+                    title={trend.name}
+                    subtitle={trend.description}
+                    imageSource={trend.source}
+                    palette={['#35233D', '#B38A5B']}
+                    icon="sparkles-outline"
+                    onPress={() => {
+                      resetCreateFlow();
+                      router.push(`/trends/${trend.id}` as never);
+                    }}
+                  />
+                ))}
+              </Animated.View>
+            ) : (
+              <EmptyState
+                icon="search-outline"
+                title={translateCopy('Sonuç bulunamadı')}
+                detail={translateCopy('Başka bir kelime deneyin veya tüm koleksiyonu keşfedin.')}
+                action={translateCopy('Tümünü göster')}
+                onAction={() => setQuery('')}
+              />
+            )}
+          </>
+        ) : null}
+        {selectedCategory !== 'Güzellik' && selectedCategory !== 'Akımlar' ? (
           <>
             <SectionHeader
               title={
                 query
-                  ? translateCopy("Arama sonuçları")
+                  ? translateCopy('Arama sonuçları')
                   : selectedCategory === 'Tümü'
-                    ? translateCopy("Öne çıkanlar")
-                    : selectedCategory
+                    ? translateCopy('Öne çıkanlar')
+                    : translateCopy(selectedCategory)
               }
               accessory={
-                <Text style={styles.resultCount}>{translateCopy("{{p0}} seçenek", { p0: items.length + Number(showBeautyScene) })}</Text>
+                <Text style={styles.resultCount}>
+                  {translateCopy('{{p0}} seçenek', { p0: items.length + Number(showBeautyScene) })}
+                </Text>
               }
             />
             {items.length || showBeautyScene ? (
-              <View style={styles.grid}>
+              <Animated.View
+                entering={FadeInDown.duration(300)}
+                layout={Layout.springify()}
+                style={styles.grid}
+              >
                 {showBeautyScene ? (
                   <VisualTile
-                    title={translateCopy("Güzellik")}
-                    subtitle={translateCopy("Rötuş, cilt ve makyaj")}
+                    title={translateCopy('Güzellik')}
+                    subtitle={translateCopy('Rötuş, cilt ve makyaj')}
                     imageSource={beautySceneImage}
                     palette={['#3A2830', '#B38A5B']}
                     icon="sparkles-outline"
-                    badge="10 görünüm"
+                    badge={translateCopy('10 görünüm')}
                     onPress={() => {
                       resetCreateFlow();
                       router.push('/beauty' as never);
@@ -191,9 +258,9 @@ export default function ExploreScreen() {
                     title={item.name}
                     subtitle={
                       item.kind === 'person'
-                        ? translateCopy("Kurgusal karakter")
+                        ? translateCopy('Kurgusal karakter')
                         : item.kind === 'filter' || item.slug === 'gender-change'
-                          ? translateCopy("AI filtre")
+                          ? translateCopy('AI filtre')
                           : item.subtitle
                     }
                     palette={item.palette}
@@ -205,24 +272,26 @@ export default function ExploreScreen() {
                         : item.kind === 'filter' || item.slug === 'gender-change'
                           ? 'AI'
                           : item.creditCost
-                            ? `+${item.creditCost} kredi`
-                            : translateCopy("Ücretsiz")
+                            ? translateCopy('+{{p0}} kredi', { p0: item.creditCost })
+                            : translateCopy('Ücretsiz')
                     }
                     onPress={() => open(item)}
                   />
                 ))}
-              </View>
+              </Animated.View>
             ) : (
-              <EmptyState
-                icon="search-outline"
-                title={translateCopy("Sonuç bulunamadı")}
-                detail={translateCopy("Başka bir kelime deneyin veya tüm koleksiyonu keşfedin.")}
-                action="Tümünü göster"
-                onAction={() => {
-                  setQuery('');
-                  setSelectedCategory('Tümü');
-                }}
-              />
+              <Animated.View entering={FadeInDown.duration(360).springify()}>
+                <EmptyState
+                  icon="search-outline"
+                  title={translateCopy('Sonuç bulunamadı')}
+                  detail={translateCopy('Başka bir kelime deneyin veya tüm koleksiyonu keşfedin.')}
+                  action={translateCopy('Tümünü göster')}
+                  onAction={() => {
+                    setQuery('');
+                    setSelectedCategory('Tümü');
+                  }}
+                />
+              </Animated.View>
             )}
           </>
         ) : null}

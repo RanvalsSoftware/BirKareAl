@@ -1,0 +1,30 @@
+{
+  "sourceLanguage": "en-US",
+  "activeLanguages": ["tr-TR", "en-US"],
+  "candidateLanguages": [
+    {
+      "locale": "de-DE",
+      "language": "de",
+      "appCopyStatus": "needs-human-review",
+      "nativeMetadataStatus": "prepared",
+      "storeMetadataStatus": "draft-prepared",
+      "direction": "ltr"
+    },
+    {
+      "locale": "es-ES",
+      "language": "es",
+      "appCopyStatus": "needs-human-review",
+      "nativeMetadataStatus": "prepared",
+      "storeMetadataStatus": "draft-prepared",
+      "direction": "ltr"
+    },
+    {
+      "locale": "ar",
+      "language": "ar",
+      "appCopyStatus": "needs-human-review",
+      "nativeMetadataStatus": "prepared",
+      "storeMetadataStatus": "draft-prepared",
+      "direction": "rtl"
+    }
+  ]
+}

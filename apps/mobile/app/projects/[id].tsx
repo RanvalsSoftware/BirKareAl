@@ -1,5 +1,5 @@
 import { useLanguageRevision } from '@/i18n/use-language';
-import { tr as translateCopy } from '@/i18n/engine';
+import { getLocale as getAppLocale, tr as translateCopy } from '@/i18n/engine';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -52,7 +52,7 @@ function dateLabel(value: string | null): string {
   if (!value) return translateCopy("Yakın zamanda");
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return translateCopy("Yakın zamanda");
-  return new Intl.DateTimeFormat('tr-TR', {
+  return new Intl.DateTimeFormat(getAppLocale(), {
     day: 'numeric',
     month: 'long',
     hour: '2-digit',

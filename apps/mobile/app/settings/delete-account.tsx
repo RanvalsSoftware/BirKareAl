@@ -55,17 +55,26 @@ export default function DeleteAccountScreen() {
   const canConfirm = acknowledged && confirmation === CONFIRMATION && !busy;
 
   async function submit(
-    credentials: { password: string } | { googleIdToken: string } | { appleIdToken: string },
+    credentials:
+      | { password: string }
+      | { googleIdToken: string }
+      | { appleIdToken: string; appleAuthorizationCode: string },
   ) {
     if (!canConfirm || busy || submitting.current) return;
     submitting.current = true;
     const confirmed = await new Promise<boolean>((resolve) =>
       Alert.alert(
-        translateCopy("Hesabın kalıcı olarak silinsin mi?"),
-        translateCopy("Hesabına erişim hemen kapanır. 30 gün içinde yeniden giriş yaparak silme isteğinden vazgeçebilirsin."),
+        translateCopy('Hesabın kalıcı olarak silinsin mi?'),
+        translateCopy(
+          'Hesabına erişim hemen kapanır. 30 gün içinde yeniden giriş yaparak silme isteğinden vazgeçebilirsin.',
+        ),
         [
-          { text: translateCopy("Vazgeç"), style: 'cancel', onPress: () => resolve(false) },
-          { text: translateCopy("Hesabımı sil"), style: 'destructive', onPress: () => resolve(true) },
+          { text: translateCopy('Vazgeç'), style: 'cancel', onPress: () => resolve(false) },
+          {
+            text: translateCopy('Hesabımı sil'),
+            style: 'destructive',
+            onPress: () => resolve(true),
+          },
         ],
         { cancelable: true, onDismiss: () => resolve(false) },
       ),
@@ -89,11 +98,17 @@ export default function DeleteAccountScreen() {
       resetCreateFlow();
       router.replace('/(auth)/login' as never);
       Alert.alert(
-        translateCopy("Silme işlemi planlandı"),
-        translateCopy("Hesabına erişim kapatıldı. 30 gün içinde yeniden giriş yaparsan hesabını geri getirebilirsin. Süre dolunca veriler kalıcı olarak silinir."),
+        translateCopy('Silme işlemi planlandı'),
+        translateCopy(
+          'Hesabına erişim kapatıldı. 30 gün içinde yeniden giriş yaparsan hesabını geri getirebilirsin. Süre dolunca veriler kalıcı olarak silinir.',
+        ),
       );
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : translateCopy("Silme başlatılamadı. Hesabın değişmedi."));
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : translateCopy('Silme başlatılamadı. Hesabın değişmedi.'),
+      );
     } finally {
       submitting.current = false;
       setBusy(false);
@@ -124,22 +139,27 @@ export default function DeleteAccountScreen() {
     setError(null);
     try {
       const credential = await AppleAuthentication.signInAsync({ requestedScopes: [] });
-      if (!credential.identityToken) {
-        setError(translateCopy("Apple kimlik belirteci alınamadı. Lütfen yeniden dene."));
+      if (!credential.identityToken || !credential.authorizationCode) {
+        setError(translateCopy('Apple kimlik belirteci alınamadı. Lütfen yeniden dene.'));
         return;
       }
-      await submit({ appleIdToken: credential.identityToken });
+      await submit({
+        appleIdToken: credential.identityToken,
+        appleAuthorizationCode: credential.authorizationCode,
+      });
     } catch (cause) {
       const code = (cause as { code?: unknown } | null)?.code;
       if (code === 'ERR_REQUEST_CANCELED') return;
-      setError(cause instanceof Error ? cause.message : translateCopy("Apple doğrulaması tamamlanamadı."));
+      setError(
+        cause instanceof Error ? cause.message : translateCopy('Apple doğrulaması tamamlanamadı.'),
+      );
     }
   }
 
   return (
     <SettingsPage
-      title={translateCopy("Hesabı sil")}
-      subtitle={translateCopy("Kalıcı işlem ve veri yönetimi")}
+      title={translateCopy('Hesabı sil')}
+      subtitle={translateCopy('Kalıcı işlem ve veri yönetimi')}
       back
       navigation={false}
     >
@@ -153,31 +173,35 @@ export default function DeleteAccountScreen() {
           <Icon name="trash-outline" size={35} color="#FF726B" />
         </View>
         <View style={styles.copy}>
-          <Text style={styles.heading}>{translateCopy("Silmeden önce")}</Text>
-          <Text style={styles.body}>{translateCopy("Projelerin, kaynak fotoğrafların, oluşturulan görsellerin ve hesap bilgilerin silinir.")}</Text>
-          <Text style={styles.dangerText}>{translateCopy("30 gün içinde geri alınabilir.")}</Text>
+          <Text style={styles.heading}>{translateCopy('Silmeden önce')}</Text>
+          <Text style={styles.body}>
+            {translateCopy(
+              'Projelerin, kaynak fotoğrafların, oluşturulan görsellerin ve hesap bilgilerin silinir.',
+            )}
+          </Text>
+          <Text style={styles.dangerText}>{translateCopy('30 gün içinde geri alınabilir.')}</Text>
         </View>
       </GlassSurface>
       <GlassSettingsPanel>
-        <SettingsSectionTitle>{translateCopy("Neler etkilenecek")}</SettingsSectionTitle>
+        <SettingsSectionTitle>{translateCopy('Neler etkilenecek')}</SettingsSectionTitle>
         <GlassSettingsRow
           icon="folder-outline"
-          title={translateCopy("Projeler ve görseller")}
-          detail={translateCopy("Taslaklar, kaynaklar ve kayıtlı üretimler kaldırılır.")}
+          title={translateCopy('Projeler ve görseller')}
+          detail={translateCopy('Taslaklar, kaynaklar ve kayıtlı üretimler kaldırılır.')}
           accent="purple"
         />
         <GlassSettingsRow
           icon="flash-outline"
-          title={translateCopy("Krediler")}
-          detail={translateCopy("Kullanılmamış bakiyene erişim sona erer.")}
+          title={translateCopy('Krediler')}
+          detail={translateCopy('Kullanılmamış bakiyene erişim sona erer.')}
         />
         <GlassSettingsRow
           icon="diamond-outline"
-          title={translateCopy("Mağaza abonelikleri")}
+          title={translateCopy('Mağaza abonelikleri')}
           detail={
             billing.subscriptionCancelled
-              ? translateCopy("Yenileme kapalı. Mevcut Pro erişimin dönem sonuna kadar devam eder.")
-              : translateCopy("Hesabı silmek mağaza aboneliğini otomatik iptal etmez.")
+              ? translateCopy('Yenileme kapalı. Mevcut Pro erişimin dönem sonuna kadar devam eder.')
+              : translateCopy('Hesabı silmek mağaza aboneliğini otomatik iptal etmez.')
           }
           accent="purple"
         />
@@ -188,31 +212,37 @@ export default function DeleteAccountScreen() {
             onPress={() => void manageSubscription()}
             style={[styles.subscriptionAction, (!billing.ready || billing.busy) && styles.disabled]}
           >
-            <GlassSurface radius={18} tone="neutral" contentStyle={styles.subscriptionActionContent}>
+            <GlassSurface
+              radius={18}
+              tone="neutral"
+              contentStyle={styles.subscriptionActionContent}
+            >
               <Icon name="card-outline" size={19} color={colors.accentYellow} />
               <Text style={styles.goldText}>
-                {billing.subscriptionCancelled ? translateCopy("Abonelik durumunu aç") : translateCopy("Aboneliği yönet / iptal et")}
+                {billing.subscriptionCancelled
+                  ? translateCopy('Abonelik durumunu aç')
+                  : translateCopy('Aboneliği yönet / iptal et')}
               </Text>
             </GlassSurface>
           </Pressable>
         ) : null}
         <GlassSettingsRow
           icon="person-outline"
-          title={translateCopy("Hesap bilgileri")}
-          detail={translateCopy("Profil, oturumlar ve kişisel tercihler kaldırılır.")}
+          title={translateCopy('Hesap bilgileri')}
+          detail={translateCopy('Profil, oturumlar ve kişisel tercihler kaldırılır.')}
           last
         />
       </GlassSettingsPanel>
       <GlassSettingsPanel tone="gold">
-        <SettingsSectionTitle>{translateCopy("Güvenli doğrulama")}</SettingsSectionTitle>
+        <SettingsSectionTitle>{translateCopy('Güvenli doğrulama')}</SettingsSectionTitle>
         <GlassSettingsRow
           icon="lock-closed-outline"
-          title={translateCopy("Hesabını yeniden doğrula")}
-          detail={translateCopy("Bu işlem için şifren veya bağlı Google/Apple hesabın gerekir.")}
+          title={translateCopy('Hesabını yeniden doğrula')}
+          detail={translateCopy('Bu işlem için şifren veya bağlı Google/Apple hesabın gerekir.')}
           last
         />
         {preview.isPending ? (
-          <Text style={styles.body}>{translateCopy("Doğrulama seçenekleri yükleniyor…")}</Text>
+          <Text style={styles.body}>{translateCopy('Doğrulama seçenekleri yükleniyor…')}</Text>
         ) : null}
         {preview.isError ? (
           <Pressable
@@ -220,10 +250,12 @@ export default function DeleteAccountScreen() {
             onPress={() => void preview.refetch()}
             style={styles.retry}
           >
-            <Text style={styles.goldText}>{translateCopy("Seçenekler alınamadı · Yeniden dene")}</Text>
+            <Text style={styles.goldText}>
+              {translateCopy('Seçenekler alınamadı · Yeniden dene')}
+            </Text>
           </Pressable>
         ) : null}
-        {preview.data?.canVerifyPassword ? (
+        {preview.data?.canVerifyPassword && !preview.data.canVerifyApple ? (
           <View style={styles.passwordRow}>
             <TextField
               value={password}
@@ -231,15 +263,17 @@ export default function DeleteAccountScreen() {
               secureTextEntry={!visible}
               autoCapitalize="none"
               autoCorrect={false}
-              placeholder={translateCopy("Şifreni gir")}
+              placeholder={translateCopy('Şifreni gir')}
               textContentType="password"
-              accessibilityLabel={translateCopy("Hesap şifren")}
+              accessibilityLabel={translateCopy('Hesap şifren')}
               containerStyle={styles.passwordContainer}
               style={styles.password}
             />
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={visible ? translateCopy("Şifreyi gizle") : translateCopy("Şifreyi göster")}
+              accessibilityLabel={
+                visible ? translateCopy('Şifreyi gizle') : translateCopy('Şifreyi göster')
+              }
               onPress={() => setVisible((value) => !value)}
               style={styles.eye}
             >
@@ -247,14 +281,16 @@ export default function DeleteAccountScreen() {
             </Pressable>
           </View>
         ) : null}
-        <Text style={styles.confirmLabel}>{translateCopy("Onaylamak için aşağıya {{p0}} yaz.", { p0: CONFIRMATION })}</Text>
+        <Text style={styles.confirmLabel}>
+          {translateCopy('Onaylamak için aşağıya {{p0}} yaz.', { p0: CONFIRMATION })}
+        </Text>
         <TextField
           value={confirmation}
           onChangeText={setConfirmation}
           autoCapitalize="characters"
           autoCorrect={false}
           placeholder={CONFIRMATION}
-          accessibilityLabel={translateCopy("Kalıcı silme onay metni")}
+          accessibilityLabel={translateCopy('Kalıcı silme onay metni')}
         />
         <Pressable
           accessibilityRole="checkbox"
@@ -265,21 +301,33 @@ export default function DeleteAccountScreen() {
           <View style={[styles.checkbox, acknowledged && styles.checked]}>
             {acknowledged ? <Icon name="checkmark" color="#050505" size={17} /> : null}
           </View>
-          <Text style={styles.checkLabel}>{translateCopy("30 günlük geri alma süresi sonunda verilerin kalıcı olarak silineceğini anladım.")}</Text>
+          <Text style={styles.checkLabel}>
+            {translateCopy(
+              '30 günlük geri alma süresi sonunda verilerin kalıcı olarak silineceğini anladım.',
+            )}
+          </Text>
         </Pressable>
       </GlassSettingsPanel>
-      <SettingsNote warning>{translateCopy("Hesabına erişim hemen kapanır. Silme isteğinden sonraki 30 gün boyunca hesabın geri getirilebilir durumda tutulur. Bu sürede yeniden giriş yapıp silme isteğinden vazgeçebilirsin. Süre dolunca dosyalar ve hesap verileri kalıcı olarak temizlenir. Hoş geldin hakkının tekrar verilmesini önlemek için geri döndürülemeyen, anahtarlı kimlik özetleri saklanabilir.")}</SettingsNote>
+      <SettingsNote warning>
+        {translateCopy(
+          'Hesabına erişim hemen kapanır. Silme isteğinden sonraki 30 gün boyunca hesabın geri getirilebilir durumda tutulur. Bu sürede yeniden giriş yapıp silme isteğinden vazgeçebilirsin. Süre dolunca dosyalar ve hesap verileri kalıcı olarak temizlenir. Hoş geldin hakkının tekrar verilmesini önlemek için geri döndürülemeyen, anahtarlı kimlik özetleri saklanabilir.',
+        )}
+      </SettingsNote>
       {preview.data &&
       !preview.data.canVerifyGoogle &&
       !preview.data.canVerifyApple &&
       !preview.data.canVerifyPassword ? (
-        <SettingsNote warning>{translateCopy("Bu hesap için desteklenen bir yeniden doğrulama yöntemi bulunamadı. Yardım ve destek üzerinden bize ulaş.")}</SettingsNote>
+        <SettingsNote warning>
+          {translateCopy(
+            'Bu hesap için desteklenen bir yeniden doğrulama yöntemi bulunamadı. Yardım ve destek üzerinden bize ulaş.',
+          )}
+        </SettingsNote>
       ) : null}
       {preview.data?.canVerifyApple && Platform.OS !== 'ios' ? (
-        <SettingsNote warning>{translateCopy("Apple ile yeniden doğrulama iOS üzerinde yapılır. Bu cihazda hesabını silmek için web silme sayfasını kullanabilirsin.")}<Text
-            style={styles.goldText}
-            onPress={() => void Linking.openURL('https://ai.ranvals.com/birkare/hesap-silme/')}
-          >{translateCopy("{{p0}}Web hesabı silme sayfasını aç", { p0: ' ' })}</Text>
+        <SettingsNote warning>
+          {translateCopy(
+            'Apple ile bağlı hesabın yetkisini güvenli biçimde kaldırmak için hesabını güncel BirKare iOS uygulamasından silmelisin.',
+          )}
         </SettingsNote>
       ) : null}
       {error ? (
@@ -287,9 +335,9 @@ export default function DeleteAccountScreen() {
           {error}
         </Text>
       ) : null}
-      {preview.data?.canVerifyGoogle ? (
+      {preview.data?.canVerifyGoogle && !preview.data.canVerifyApple ? (
         <GoogleSignInButton
-          label={translateCopy("Google ile doğrula ve sil")}
+          label={translateCopy('Google ile doğrula ve sil')}
           forceReauthentication
           disabled={!canConfirm}
           onError={(cause) => setError(cause.message)}
@@ -305,7 +353,7 @@ export default function DeleteAccountScreen() {
           style={[styles.appleAction, (!canConfirm || busy) && styles.disabled]}
         >
           <Icon name="logo-apple" size={21} color="#111111" />
-          <Text style={styles.appleActionText}>{translateCopy("Apple ile doğrula ve sil")}</Text>
+          <Text style={styles.appleActionText}>{translateCopy('Apple ile doğrula ve sil')}</Text>
         </Pressable>
       ) : null}
       <View style={styles.actions}>
@@ -316,10 +364,10 @@ export default function DeleteAccountScreen() {
           style={styles.action}
         >
           <GlassSurface radius={23} tone="neutral" contentStyle={styles.actionContent}>
-            <Text style={styles.actionLabel}>{translateCopy("Vazgeç")}</Text>
+            <Text style={styles.actionLabel}>{translateCopy('Vazgeç')}</Text>
           </GlassSurface>
         </Pressable>
-        {preview.data?.canVerifyPassword ? (
+        {preview.data?.canVerifyPassword && !preview.data.canVerifyApple ? (
           <Pressable
             accessibilityRole="button"
             accessibilityState={{ disabled: !canConfirm || !password, busy }}
@@ -330,7 +378,7 @@ export default function DeleteAccountScreen() {
             <View style={styles.deleteAction}>
               <Icon name="trash-outline" size={21} color="#FF8C83" />
               <Text style={[styles.actionLabel, styles.dangerText]}>
-                {busy ? translateCopy("İşleniyor…") : translateCopy("Kalıcı sil")}
+                {busy ? translateCopy('İşleniyor…') : translateCopy('Kalıcı sil')}
               </Text>
             </View>
           </Pressable>

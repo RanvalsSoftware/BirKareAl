@@ -37,14 +37,14 @@ export type StudioSubmissionStage =
   | 'QUEUED';
 
 export const studioSubmissionLabels: Record<StudioSubmissionStage, string> = {
-  CHECKING: translateCopy("Seçimler ve kredi kontrol ediliyor"),
-  READING_PRIMARY: translateCopy("Ana görsel hazırlanıyor"),
-  UPLOADING_PRIMARY: translateCopy("Ana görsel güvenle yükleniyor"),
-  READING_SECONDARY: translateCopy("Kıyafet görseli hazırlanıyor"),
-  UPLOADING_SECONDARY: translateCopy("Kıyafet görseli güvenle yükleniyor"),
-  CREATING: translateCopy("Stüdyo projesi hazırlanıyor"),
-  QUEUEING: translateCopy("Üretim başlatılıyor"),
-  QUEUED: translateCopy("Üretim sıraya alındı"),
+  get CHECKING() { return translateCopy("Seçimler ve kredi kontrol ediliyor"); },
+  get READING_PRIMARY() { return translateCopy("Ana görsel hazırlanıyor"); },
+  get UPLOADING_PRIMARY() { return translateCopy("Ana görsel güvenle yükleniyor"); },
+  get READING_SECONDARY() { return translateCopy("Kıyafet görseli hazırlanıyor"); },
+  get UPLOADING_SECONDARY() { return translateCopy("Kıyafet görseli güvenle yükleniyor"); },
+  get CREATING() { return translateCopy("Stüdyo projesi hazırlanıyor"); },
+  get QUEUEING() { return translateCopy("Üretim başlatılıyor"); },
+  get QUEUED() { return translateCopy("Üretim sıraya alındı"); },
 };
 
 export type StudioQuote = GenerationQuote & {
@@ -72,17 +72,17 @@ function invalid(message: string): never {
 }
 
 export function resolveStudioSelection(flow: StudioFlow): StudioServerSelection {
-  if (flow.userNotes.trim().length > 500) invalid('Ek not en fazla 500 karakter olabilir.');
+  if (flow.userNotes.trim().length > 500) invalid(translateCopy('Ek not en fazla 500 karakter olabilir.'));
   if (flow.mode === 'product') {
-    if (!flow.categoryId) invalid('Önce ürün kategorisini seçmelisin.');
-    if (!flow.sceneId) invalid('Önce ürün sahnesini seçmelisin.');
+    if (!flow.categoryId) invalid(translateCopy('Önce ürün kategorisini seçmelisin.'));
+    if (!flow.sceneId) invalid(translateCopy('Önce ürün sahnesini seçmelisin.'));
     return { kind: 'PRODUCT_STUDIO', categoryId: flow.categoryId, sceneId: flow.sceneId };
   }
   if (flow.mode === 'fashion') {
-    if (!flow.sceneId) invalid('Önce kıyafet sahnesini seçmelisin.');
+    if (!flow.sceneId) invalid(translateCopy('Önce kıyafet sahnesini seçmelisin.'));
     return { kind: 'VIRTUAL_TRY_ON', sceneId: flow.sceneId };
   }
-  if (!flow.presetId) invalid('Önce manikür görünümünü seçmelisin.');
+  if (!flow.presetId) invalid(translateCopy('Önce manikür görünümünü seçmelisin.'));
   return { kind: 'NAIL_PREVIEW', presetId: flow.presetId };
 }
 
@@ -129,12 +129,12 @@ export async function startStudioGeneration(
 ): Promise<StartedStudioGeneration> {
   if (!flow.primaryUri)
     invalid(
-      flow.mode === 'nails' ? 'Önce el fotoğrafını seçmelisin.' : 'Önce ana görseli seçmelisin.',
+      translateCopy(flow.mode === 'nails' ? 'Önce el fotoğrafını seçmelisin.' : 'Önce ana görseli seçmelisin.'),
     );
   if (flow.mode === 'fashion' && !flow.secondaryUri)
-    invalid('Kıyafet denemesi için kıyafet fotoğrafını da seçmelisin.');
+    invalid(translateCopy('Kıyafet denemesi için kıyafet fotoğrafını da seçmelisin.'));
   if (!flow.rightsConfirmed)
-    invalid('Devam etmek için yüklediğin görselleri kullanma hakkını onaylamalısın.');
+    invalid(translateCopy('Devam etmek için yüklediğin görselleri kullanma hakkını onaylamalısın.'));
 
   const requestScope = captureSessionRequestScope();
   const studio = resolveStudioSelection(flow);
@@ -154,7 +154,7 @@ export async function startStudioGeneration(
   ]);
   let attempt = attempts.get(attemptKey);
   if (attempt && attempt.fingerprint !== fingerprint)
-    invalid('Seçimler değişti. Üretimi yeni işlem anahtarıyla tekrar başlat.');
+    invalid(translateCopy('Seçimler değişti. Üretimi yeni işlem anahtarıyla tekrar başlat.'));
   if (!attempt) {
     if (attempts.size >= 12) {
       const removable = [...attempts].find(([, item]) => !item.pending && item.result);
@@ -176,7 +176,7 @@ export async function startStudioGeneration(
         body: JSON.stringify(quotePayload(flow, studio)),
       });
     requestScope.assertCurrent();
-    if (!current.quote?.canGenerate) invalid('Bu üretim için yeterli kredin bulunmuyor.');
+    if (!current.quote?.canGenerate) invalid(translateCopy('Bu üretim için yeterli kredin bulunmuyor.'));
 
     current.primaryUpload ??= await uploadSourceAsset(
       { sourceUri: flow.primaryUri, sourceName: flow.primaryName },
@@ -212,7 +212,7 @@ export async function startStudioGeneration(
           aspectRatio: flow.aspectRatio,
         }),
       });
-      if (!response.project?.id) invalid('Stüdyo projesi oluşturulamadı. Lütfen tekrar dene.');
+      if (!response.project?.id) invalid(translateCopy('Stüdyo projesi oluşturulamadı. Lütfen tekrar dene.'));
       current.project = response.project;
     }
     requestScope.assertCurrent();
@@ -244,7 +244,7 @@ export async function startStudioGeneration(
     });
     requestScope.assertCurrent();
     if (!generation.generationId || generation.projectId !== current.project.id)
-      invalid('Üretim yanıtı doğrulanamadı. Aynı işlemi yeniden deneyebilirsin.');
+      invalid(translateCopy('Üretim yanıtı doğrulanamadı. Aynı işlemi yeniden deneyebilirsin.'));
 
     const result: StartedStudioGeneration = {
       selection: studio,

@@ -12,31 +12,45 @@ const englishErrors: Readonly<Record<string, string>> = {
   AUTH_CONSENT_REQUIRED: 'Accept all required permissions to continue.',
   AUTH_AGE_RESTRICTED: 'You must be at least 18 years old to use BirKare AI.',
   AUTH_GOOGLE_NOT_CONFIGURED: 'Google sign-in is not configured for this environment.',
-  AUTH_GOOGLE_CLIENT_MISMATCH: 'Google sign-in does not match the server configuration. Update the app or contact support.',
+  AUTH_GOOGLE_CLIENT_MISMATCH:
+    'Google sign-in does not match the server configuration. Update the app or contact support.',
   AUTH_GOOGLE_TOKEN_EXPIRED: 'Your Google sign-in has expired. Continue with Google again.',
-  AUTH_GOOGLE_VERIFICATION_UNAVAILABLE: 'Google sign-in could not be verified right now. Please try again.',
+  AUTH_GOOGLE_VERIFICATION_UNAVAILABLE:
+    'Google sign-in could not be verified right now. Please try again.',
   AUTH_INVALID_GOOGLE_TOKEN: 'Google sign-in could not be verified. Please sign in again.',
   AUTH_APPLE_NOT_CONFIGURED: 'Apple sign-in is not configured for this environment.',
   AUTH_INVALID_APPLE_TOKEN: 'Apple sign-in could not be verified. Please sign in again.',
   AUTH_APPLE_TOKEN_EXPIRED: 'Your Apple sign-in has expired. Continue with Apple again.',
-  AUTH_APPLE_VERIFICATION_UNAVAILABLE: 'Apple sign-in could not be verified right now. Please try again.',
-  AUTH_SOCIAL_ACCOUNT_LINK_REQUIRED: 'An account already exists with this email. Sign in with your password, then link Google in Settings > Security.',
-  AUTH_SOCIAL_EMAIL_MISMATCH: 'Link a social account with the same email address as your BirKare account.',
+  AUTH_APPLE_VERIFICATION_UNAVAILABLE:
+    'Apple sign-in could not be verified right now. Please try again.',
+  AUTH_APPLE_REVOCATION_NOT_CONFIGURED: 'Apple account removal is not configured. Contact support.',
+  AUTH_APPLE_REVOCATION_UNAVAILABLE:
+    'The Apple account connection could not be removed right now. Try again.',
+  DELETION_APPLE_REAUTH_REQUIRED:
+    'Continue with Apple to remove the linked Apple account before deletion.',
+  DELETION_APPLE_CODE_REQUIRED: 'Continue with Apple again to confirm account deletion.',
+  AUTH_SOCIAL_ACCOUNT_LINK_REQUIRED:
+    'An account already exists with this email. Sign in with your password, then link Google in Settings > Security.',
+  AUTH_SOCIAL_EMAIL_MISMATCH:
+    'Link a social account with the same email address as your BirKare account.',
   AUTH_SOCIAL_ALREADY_LINKED: 'This social account is already linked to another account.',
-  AUTH_SOCIAL_PENDING_TOKEN_INVALID: 'Your registration session has expired. Sign in with Google or Apple again.',
+  AUTH_SOCIAL_PENDING_TOKEN_INVALID:
+    'Your registration session has expired. Sign in with Google or Apple again.',
   AUTH_SOCIAL_PROFILE_REQUIRED: 'Complete the required profile details to continue.',
   AUTH_INVALID_REFRESH_TOKEN: 'Your session is no longer valid. Please sign in again.',
   AUTH_REFRESH_TOKEN_EXPIRED: 'Your session has expired. Please sign in again.',
   AUTH_REFRESH_TOKEN_REUSE: 'Your session was closed for security. Please sign in again.',
   AUTH_SESSION_CHANGED: 'Your session changed. Please restart this operation.',
-  AUTH_VERIFICATION_DELIVERY_FAILED: 'Your account was created, but the verification email could not be sent. Resend it from the verification screen.',
+  AUTH_VERIFICATION_DELIVERY_FAILED:
+    'Your account was created, but the verification email could not be sent. Resend it from the verification screen.',
   AUTH_INVALID_VERIFICATION_TOKEN: 'The verification code is incorrect, expired or already used.',
   AUTH_INVALID_VERIFICATION_CODE: 'The verification code is incorrect, expired or already used.',
   AUTH_VERIFICATION_ATTEMPTS_EXCEEDED: 'Too many incorrect codes. Request a new verification code.',
   AUTH_INVALID_RESET_TOKEN: 'This password reset link is invalid, expired or already used.',
   AUTH_INVALID_DELETION_TOKEN: 'This account deletion link is invalid, expired or already used.',
   AUTH_ACCOUNT_DELETION_PENDING: 'Your account is pending deletion. Would you like to restore it?',
-  AUTH_ACCOUNT_DELETION_RECOVERY_UNAVAILABLE: 'The account recovery period has ended or recovery is unavailable.',
+  AUTH_ACCOUNT_DELETION_RECOVERY_UNAVAILABLE:
+    'The account recovery period has ended or recovery is unavailable.',
   AUTH_REAUTHENTICATION_REQUIRED: 'Sign in again to confirm this sensitive action.',
   MAIL_DELIVERY_UNAVAILABLE: 'Email delivery is temporarily unavailable. Please try again later.',
   EMAIL_DOMAIN_NOT_ALLOWED: 'Use a supported email provider to create your account.',
@@ -54,15 +68,18 @@ const englishErrors: Readonly<Record<string, string>> = {
   CREDITS_INSUFFICIENT: 'You do not have enough credits for this operation.',
   BILLING_UNAVAILABLE: 'Purchases are temporarily unavailable. Please try again later.',
   REVENUECAT_DISABLED: 'Purchases are temporarily unavailable. Please try again later.',
-  REVENUECAT_UNAVAILABLE: 'Your purchase could not be verified right now. Please try restoring purchases later.',
+  REVENUECAT_UNAVAILABLE:
+    'Your purchase could not be verified right now. Please try restoring purchases later.',
   GENERATION_DISABLED: 'Image generation is temporarily unavailable.',
   GENERATION_NOT_FOUND: 'This generation could not be found.',
   PROJECT_NOT_FOUND: 'This project could not be found.',
   ASSET_NOT_FOUND: 'This image is no longer available.',
   ASSET_INVALID_IMAGE: 'Select a supported, valid image and try again.',
   GENERATION_INVALID_SOURCE: 'The source photo is not ready. Upload it again.',
-  TREND_QUALITY_REJECTED: 'The result did not pass the quality check. Check Credits for the refund status.',
-  TREND_QUALITY_CHECK_UNAVAILABLE: 'The image quality check is temporarily unavailable. Check Credits for the refund status.',
+  TREND_QUALITY_REJECTED:
+    'The result did not pass the quality check. Check Credits for the refund status.',
+  TREND_QUALITY_CHECK_UNAVAILABLE:
+    'The image quality check is temporarily unavailable. Check Credits for the refund status.',
   MODERATION_BLOCKED: 'This request does not comply with the content safety rules.',
   INPUT_MODERATION_BLOCKED: 'The photo or request did not pass the safety check.',
   NETWORK_REQUEST_FAILED: 'Unable to reach the server. Check your connection and try again.',
@@ -72,8 +89,15 @@ const englishErrors: Readonly<Record<string, string>> = {
 
 /** Keep the error's code, details and request ID intact at the call site. */
 export function localizedApiErrorMessage(code: unknown, original: unknown): string {
-  if (getLanguage() === 'tr') return typeof original === 'string' && original ? original : t('errors.generic');
-  return typeof code === 'string' && Object.hasOwn(englishErrors, code)
-    ? englishErrors[code]!
+  const language = getLanguage();
+  if (language === 'tr')
+    return typeof original === 'string' && original ? original : t('errors.generic');
+  if (language === 'en') {
+    return typeof code === 'string' && Object.hasOwn(englishErrors, code)
+      ? englishErrors[code]!
+      : t('errors.generic');
+  }
+  return code === 'NETWORK_REQUEST_FAILED' || code === 'NETWORK_REQUEST_TIMEOUT'
+    ? t('errors.network')
     : t('errors.generic');
 }

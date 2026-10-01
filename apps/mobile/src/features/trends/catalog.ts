@@ -13,7 +13,19 @@ const artwork: Record<TrendPresetId, ImageSourcePropType> = {
   streetwear_editorial: require('../../../assets/trends/streetwear.webp'),
   neon_club_night: require('../../../assets/trends/neon.webp'),
 };
-export const trends = trendPresets.map((preset) => ({ ...preset, source: artwork[preset.id] }));
+export const trends = trendPresets.map((preset) => ({
+  id: preset.id,
+  get name() {
+    return preset.name;
+  },
+  get description() {
+    return preset.description;
+  },
+  get detail() {
+    return preset.detail;
+  },
+  source: artwork[preset.id],
+}));
 export const featuredTrends = trends.filter(
   (trend) => !['romantic_dinner_80s', 'romantic_closeup_80s'].includes(trend.id),
 );

@@ -4,6 +4,12 @@ import en from './locales/en.json';
 import copy from './locales/copy-en.json';
 import supplemental from './locales/supplemental-en.json';
 import ui from './locales/ui-en.json';
+import de from './locales/de.json';
+import es from './locales/es.json';
+import ar from './locales/ar.json';
+import copyDe from './locales/copy-de.json';
+import copyEs from './locales/copy-es.json';
+import copyAr from './locales/copy-ar.json';
 import inventory from './copy-inventory.json';
 import { setLanguagePreference, tr as translateCopy } from './engine';
 
@@ -42,6 +48,36 @@ describe('bundled translation coverage', () => {
     expect(translateCopy('Hayal Et')).toBe('Imagine');
     expect(translateCopy('Varyasyon 4')).toBe('Variation 4');
     expect(translateCopy('Şifreler eşleşmiyor.')).toBe('The passwords do not match.');
+  });
+  it('ships complete German, Spanish and Arabic dictionaries', async () => {
+    const english = { ...copy, ...supplemental, ...ui };
+    for (const [language, named, localized] of [
+      ['de', de, copyDe], ['es', es, copyEs], ['ar', ar, copyAr],
+    ] as const) {
+      for (const key of Object.keys(tr) as (keyof typeof tr)[]) {
+        expect(named[key]?.trim(), `${language}:${key}`).not.toBe('');
+        if (!(language === 'ar' && /^(credits|images)_/.test(key))) {
+          expect(placeholders(named[key]), `${language}:${key}`).toEqual(placeholders(tr[key]));
+        }
+      }
+      if (language !== 'ar') expect(Object.keys(named).sort(), language).toEqual(Object.keys(tr).sort());
+      else {
+        for (const key of ['credits_zero', 'credits_two', 'credits_few', 'credits_many', 'images_zero', 'images_two', 'images_few', 'images_many']) {
+          expect((named as Record<string, string>)[key]?.trim(), `ar:${key}`).not.toBe('');
+        }
+      }
+      expect(Object.keys(localized).sort(), language).toEqual(Object.keys(english).sort());
+      for (const [key, value] of Object.entries(localized)) {
+        expect(value.trim(), `${language}:${key}`).not.toBe('');
+        expect(placeholders(value), `${language}:${key}`).toEqual(placeholders(key));
+      }
+    }
+    await setLanguagePreference('de');
+    expect(translateCopy('AI ile düzenle')).toBe('Mit KI bearbeiten');
+    await setLanguagePreference('es');
+    expect(translateCopy('Hesabı sil')).toBe('Eliminar cuenta');
+    await setLanguagePreference('ar');
+    expect(translateCopy('İstediğin değişikliği yaz…')).toContain('التغيير');
   });
   it('switches catalogue labels without changing identifiers or user-created text', async () => {
     await setLanguagePreference('en');

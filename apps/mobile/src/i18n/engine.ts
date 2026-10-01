@@ -1,7 +1,13 @@
 import { createInstance } from 'i18next';
 import trMessages from './locales/tr.json';
 import enMessages from './locales/en.json';
+import deMessages from './locales/de.json';
+import esMessages from './locales/es.json';
+import arMessages from './locales/ar.json';
 import englishCopy from './locales/copy-en.json';
+import germanCopy from './locales/copy-de.json';
+import spanishCopy from './locales/copy-es.json';
+import arabicCopy from './locales/copy-ar.json';
 import supplementalCopy from './locales/supplemental-en.json';
 import uiCopy from './locales/ui-en.json';
 const completeEnglishCopy = { ...englishCopy, ...supplementalCopy, ...uiCopy };
@@ -11,13 +17,16 @@ import { formattingLocale, parseLanguagePreference, resolveLanguage, type Device
 // it without importing React Native, auth, SecureStore or native localization.
 export const i18n = createInstance();
 void i18n.init({
-  lng: 'tr', fallbackLng: 'en', supportedLngs: ['tr', 'en'],
+  lng: 'tr', fallbackLng: 'en', supportedLngs: ['tr', 'en', 'de', 'es', 'ar'],
   initImmediate: false, keySeparator: false, nsSeparator: false,
   defaultNS: 'translation', returnEmptyString: false,
   interpolation: { escapeValue: false },
   resources: {
     tr: { translation: trMessages, copy: Object.fromEntries(Object.keys(completeEnglishCopy).map((text) => [text, text])) },
     en: { translation: enMessages, copy: completeEnglishCopy },
+    de: { translation: deMessages, copy: germanCopy },
+    es: { translation: esMessages, copy: spanishCopy },
+    ar: { translation: arMessages, copy: arabicCopy },
   },
 });
 

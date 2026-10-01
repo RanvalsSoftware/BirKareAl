@@ -95,7 +95,7 @@ export default function ProgressScreen() {
       } catch (error) {
         if (active && !pollErrorShown.current) {
           pollErrorShown.current = true;
-          setRequestError(error instanceof Error ? error.message : 'Üretim durumu alınamadı.');
+          setRequestError(error instanceof Error ? error.message : translateCopy('Üretim durumu alınamadı.'));
         }
       }
       if (active) timer = setTimeout(() => void poll(), 1_500);
@@ -129,7 +129,7 @@ export default function ProgressScreen() {
         terminalGenerationId.current = cancelled.id;
       setGeneration(cancelled);
     } catch (error) {
-      setRequestError(error instanceof Error ? error.message : 'Üretim iptal edilemedi.');
+      setRequestError(error instanceof Error ? error.message : translateCopy('Üretim iptal edilemedi.'));
     } finally {
       setIsCancelling(false);
     }
@@ -171,12 +171,12 @@ export default function ProgressScreen() {
             ? translateCopy("Görselin hazırlanıyor")
             : translateCopy("Üretimine bağlanılıyor");
   const phaseDetail = isCancelled
-    ? 'Bu işlem durduruldu. Yeni bir üretim başlatabilirsin.'
+    ? translateCopy('Bu işlem durduruldu. Yeni bir üretim başlatabilirsin.')
     : stopped
       ? (visibleGeneration?.failure?.message ??
-        'Seçimlerini kontrol ederek yeniden deneyebilirsin.')
+        translateCopy('Seçimlerini kontrol ederek yeniden deneyebilirsin.'))
       : completed
-        ? 'Sonucun kaydedildi. Şimdi görseline geçiyoruz.'
+        ? translateCopy('Sonucun kaydedildi. Şimdi görseline geçiyoruz.')
         : presentation.detail;
 
   return (

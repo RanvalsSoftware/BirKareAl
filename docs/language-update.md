@@ -1,4 +1,4 @@
-# BirKare AI — Turkish and English language update
+# BirKare AI — five-language update
 
 ## Branch boundary
 
@@ -9,11 +9,11 @@ The source branch is not advanced or merged by this work. All language commits a
 
 ## Implemented behavior
 
-The app follows an explicit local `system | tr | en` preference. System mode selects the first supported Turkish or English language in the OS-provided ordered locale list, otherwise English. It does not request location permission, inspect an IP address or infer language from the store country. Explicit user choices override system changes and persist locally. Native storage uses SecureStore; the web implementation uses localStorage. Storage failure does not hold the app indefinitely behind initialization: reads are bounded and the UI can report a failed preference save.
+The app follows an explicit local `system | tr | en | de | es | ar` preference. System mode selects the first supported language in the OS-provided ordered locale list, otherwise English. It does not request location permission, inspect an IP address or infer language from the store country. Explicit user choices override system changes and persist locally. Native storage uses SecureStore; the web implementation uses localStorage. Storage failure does not hold the app indefinitely behind initialization: reads are bounded and the UI can report a failed preference save.
 
 The shared `expo-localization`, `i18next` and `react-i18next` integration resolves language before exposing the first app screens. App foreground events refresh system locales. Language switching changes the presentation without keying/remounting the navigator or clearing forms, image selections, sessions or generation jobs.
 
-Settings includes a language page with Use device language, Turkish and English. A compact picker is available from the login surface. The new language route is added without duplicating the existing Turkish route tree.
+Settings includes a language page with Use device language, Turkish, English, German, Spanish and Arabic. A compact picker is available from the login surface. The language route is shared rather than duplicating route trees.
 
 ## Translation coverage and stable contracts
 
@@ -35,9 +35,16 @@ Mail localization reuses the original validated recipients, URLs, tokens and exp
 
 ## Native configuration and deployment boundary
 
-The app config declares Turkish and English supported locales and includes localized iOS permission resources. The dependency lockfile includes the localization dependencies. These native additions require a new Android/iOS binary; an existing binary cannot gain the new native module solely through a JavaScript update. The feature still needs a release build and real-device validation before store publication.
+The app config declares all five supported locales, enables RTL support and includes localized iOS permission resources. The dependency lockfile includes the localization dependencies. These native additions require a new Android/iOS binary; an existing binary cannot gain the new native locale declarations solely through a JavaScript update. The feature still needs a release build and real-device validation before store publication.
 
 API deployment is required for the localized email behavior. No database migration, database reset, credential change, subscription product change or production deployment is part of this implementation. Existing environment secrets stay in their current authorized deployment environments. This change does not upload an AAB/IPA or edit App Store/Play Store listings, external website text or store screenshots.
+
+Storefront country is deliberately not an application-language input. App Store Connect and Google Play listing localizations control the product page, while the installed app follows its explicit preference or the OS per-app/device language list. The Turkish and English store copy sources, console mapping and release test matrix are documented in [store-localization.md](store-localization.md).
+
+German, Spanish (Spain) and Arabic are active runtime languages with complete validated dictionaries,
+native permission copy, localized transactional e-mail and store metadata drafts. Their current copy is
+machine translated and still needs native-speaker editorial review plus Arabic RTL device QA before
+final store publication. See [language-expansion-plan.md](language-expansion-plan.md).
 
 In-app legal draft warnings remain visible. Translation of the current draft is not legal approval or a claim that those documents are ready for publication. Text embedded in image assets and third-party/OS surfaces needs separate visual review; user photos are deliberately not rewritten.
 
@@ -49,4 +56,4 @@ Tests cover ordered device-language selection, unsupported-language fallback, ma
 
 One-time branch-scoped source-conversion jobs were used during implementation and their write-enabled workflow definitions have been removed. The retained audit/migration scripts are development tooling, not startup hooks or database migrations. Normal validation never commits changes.
 
-Automated tests use synthetic fixtures and mocked native/provider interfaces. They are not real-device visual tests, live Google sign-in, real purchases, live email delivery or App Store/Play approval. Small screens, large text, fresh TR/EN installs, device-language changes, existing-account login and a complete generation/share flow must still be checked in the native release candidate.
+Automated tests use synthetic fixtures and mocked native/provider interfaces. They are not real-device visual tests, live Google sign-in, real purchases, live email delivery or App Store/Play approval. Small screens, large text, fresh installs in all five languages, device-language changes, Arabic RTL, existing-account login and a complete generation/share flow must still be checked in the native release candidate.

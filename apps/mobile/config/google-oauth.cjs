@@ -8,6 +8,15 @@ function requiredClient(value, label) {
   return { id: normalized, projectNumber: match[1] };
 }
 
+function androidClients(value) {
+  const normalized = value?.trim() ?? '';
+  if (!normalized) return [];
+  const values = normalized.split(',').map((entry) => entry.trim());
+  if (values.some((entry) => !entry) || values.length > 6)
+    throw new Error('Google Android client IDs must be a comma-separated list of at most six clients.');
+  return [...new Set(values.map((entry) => requiredClient(entry, 'Google Android client ID')))];
+}
+
 /**
  * Android still passes the Web client ID to GoogleSignin.configure(). The
  * Android client is required here as release evidence that package + SHA-1 was
@@ -22,14 +31,13 @@ function validateGoogleOAuthClients(input) {
   if (web.projectNumber !== ios.projectNumber)
     throw new Error('Google Web and iOS OAuth clients must belong to the same project.');
 
-  const androidValue = input.androidClientId?.trim() ?? '';
-  if (input.requireAndroid && !androidValue)
+  const android = androidClients(input.androidClientId);
+  if (input.requireAndroid && android.length === 0)
     throw new Error(
       'EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID is required for Android store builds. Register the package and signing SHA-1 in the same Google Cloud project first.',
     );
-  if (androidValue) {
-    const android = requiredClient(androidValue, 'Google Android client ID');
-    if (web.projectNumber !== android.projectNumber)
+  for (const client of android) {
+    if (web.projectNumber !== client.projectNumber)
       throw new Error('Google Web and Android OAuth clients must belong to the same project.');
   }
 }

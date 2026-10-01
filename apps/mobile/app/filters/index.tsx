@@ -99,7 +99,7 @@ export default function FiltersScreen() {
       {category !== 'Güzellik' && category !== 'Dönüşüm' ? (
         <>
           <View style={styles.titleRow}>
-            <Text style={styles.title}>{category === 'Tümü' ? translateCopy("Tüm filtreler") : category}</Text>
+            <Text style={styles.title}>{category === 'Tümü' ? translateCopy("Tüm filtreler") : translateCopy(category)}</Text>
             <Text style={styles.count}>{items.length}{' '}{translateCopy("filtre")}</Text>
           </View>
           {items.length ? (
@@ -122,7 +122,7 @@ export default function FiltersScreen() {
               icon="search-outline"
               title={translateCopy("Filtre bulunamadı")}
               detail={translateCopy("Farklı bir arama veya kategori seçmeyi dene.")}
-              action="Tüm filtreleri gör"
+              action={translateCopy('Tüm filtreleri gör')}
               onAction={() => {
                 setQuery('');
                 setCategory('Tümü');

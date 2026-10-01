@@ -61,18 +61,30 @@ async function fixture() {
   let googleIssuedAt = Math.floor(Date.now() / 1000);
   let appleSubject = 'own-apple-subject';
   let appleIssuedAt = Math.floor(Date.now() / 1000);
+  const revokedAppleCodes: string[] = [];
+  let failAppleRevocation = false;
   const service = new AccountDeletionService(
     repository,
     storage,
     { verify: async (hash, password) => hash === 'test-hash' && password === 'correct-password' },
     { verify: async () => ({ subject: googleSubject, email, issuedAt: googleIssuedAt }) },
     { verify: async () => ({ subject: appleSubject, email, issuedAt: appleIssuedAt }) },
+    {
+      revoke: async (code) => {
+        if (failAppleRevocation) throw new Error('temporary Apple outage');
+        revokedAppleCodes.push(code);
+      },
+    },
   );
   return {
     repository,
     user,
     service,
     deletedKeys,
+    revokedAppleCodes,
+    failAppleRevocation: (value: boolean) => {
+      failAppleRevocation = value;
+    },
     failStorage: (value: boolean) => {
       failStorage = value;
     },
@@ -102,6 +114,18 @@ test('deletion requires exact confirmation and exactly one real reauthentication
       appleIdToken: 'y'.repeat(30),
     }).success,
     false,
+  );
+  assert.equal(
+    DeleteAccountSchema.safeParse({ confirmation, appleIdToken: 'y'.repeat(30) }).success,
+    false,
+  );
+  assert.equal(
+    DeleteAccountSchema.safeParse({
+      confirmation,
+      appleIdToken: 'y'.repeat(30),
+      appleAuthorizationCode: 'fresh-code',
+    }).success,
+    true,
   );
   assert.equal(
     DeleteAccountSchema.safeParse({ confirmation, password: 'p', userId: 'someone-else' }).success,
@@ -151,6 +175,11 @@ test('a password changed during asynchronous reauthentication cannot authorize a
     {
       verify: async () => {
         throw new Error('Apple must not be used for password reauthentication');
+      },
+    },
+    {
+      revoke: async () => {
+        throw new Error('Apple must not be revoked');
       },
     },
   );
@@ -251,21 +280,53 @@ test('Apple deletion accepts only a fresh token for the already-linked immutable
     canVerifyApple: true,
     recoveryDays: ACCOUNT_DELETION_RECOVERY_DAYS,
   });
+  await assert.rejects(
+    () => f.service.request(f.user.id, { confirmation, password: 'correct-password' }),
+    matchesCode('DELETION_APPLE_REAUTH_REQUIRED'),
+  );
+  assert.equal((await f.repository.getUserById(f.user.id))?.status, 'ACTIVE');
   f.apple('other-apple-subject');
   await assert.rejects(
-    () => f.service.request(f.user.id, { confirmation, appleIdToken: 'token' }),
+    () =>
+      f.service.request(f.user.id, {
+        confirmation,
+        appleIdToken: 'token',
+        appleAuthorizationCode: 'fresh-code',
+      }),
     matchesCode('DELETION_REAUTH_FAILED'),
   );
   f.apple('own-apple-subject', Math.floor(Date.now() / 1000) - 600);
   await assert.rejects(
-    () => f.service.request(f.user.id, { confirmation, appleIdToken: 'token' }),
+    () =>
+      f.service.request(f.user.id, {
+        confirmation,
+        appleIdToken: 'token',
+        appleAuthorizationCode: 'fresh-code',
+      }),
     matchesCode('DELETION_REAUTH_STALE'),
   );
   f.apple('own-apple-subject');
+  f.failAppleRevocation(true);
+  await assert.rejects(() =>
+    f.service.request(f.user.id, {
+      confirmation,
+      appleIdToken: 'token',
+      appleAuthorizationCode: 'fresh-code',
+    }),
+  );
+  assert.equal((await f.repository.getUserById(f.user.id))?.status, 'ACTIVE');
+  f.failAppleRevocation(false);
   assert.equal(
-    (await f.service.request(f.user.id, { confirmation, appleIdToken: 'token' })).deletionRequested,
+    (
+      await f.service.request(f.user.id, {
+        confirmation,
+        appleIdToken: 'token',
+        appleAuthorizationCode: 'fresh-code',
+      })
+    ).deletionRequested,
     true,
   );
+  assert.deepEqual(f.revokedAppleCodes, ['fresh-code']);
 });
 
 test('a deletion-pending account can be restored during the 30-day recovery window', async () => {
@@ -318,6 +379,11 @@ test('a partially deleted storage manifest is retained and safely retried before
     },
     {
       verify: async () => {
+        throw new Error('Apple is not used');
+      },
+    },
+    {
+      revoke: async () => {
         throw new Error('Apple is not used');
       },
     },

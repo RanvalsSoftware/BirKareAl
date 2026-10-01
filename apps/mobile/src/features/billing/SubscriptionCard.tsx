@@ -66,7 +66,7 @@ export function SubscriptionCard() {
       : translateCopy("Otomatik yenileme kapatıldı.")
     : billing.isPro
       ? expiresText
-        ? `${billing.entitlement?.willRenew ? 'Yenileme tarihi' : translateCopy("Erişim bitişi")}: ${expiresText}`
+        ? translateCopy('{{p0}}: {{p1}}', { p0: translateCopy(billing.entitlement?.willRenew ? 'Yenileme tarihi' : 'Erişim bitişi'), p1: expiresText })
         : translateCopy("Süresiz Pro erişimi · Otomatik yenileme yok.")
       : translateCopy("Aylık, yıllık ve ömür boyu seçeneklerini mağazanın güncel yerel fiyatlarıyla inceleyin.");
 
@@ -91,7 +91,7 @@ export function SubscriptionCard() {
       {cancelled ? (
         <View accessibilityRole="alert" style={styles.cancelledBox}>
           <Ionicons name="close-circle" size={18} color="#FF8D80" />
-          <Text style={styles.cancelledText}>{translateCopy("İptal edildi{{p0}}", { p0: expiresText ? ` · ${expiresText} tarihine kadar kullanabilirsiniz.` : '' })}</Text>
+          <Text style={styles.cancelledText}>{expiresText ? translateCopy('İptal edildi · {{p0}} tarihine kadar kullanabilirsiniz.', { p0: expiresText }) : translateCopy('İptal edildi')}</Text>
         </View>
       ) : null}
 

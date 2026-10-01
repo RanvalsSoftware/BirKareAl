@@ -8,6 +8,7 @@ import { asyncHandler, sendSuccess } from '../../services/http.js';
 import { toPublicUser } from '../auth/auth.service.js';
 import { GoogleIdTokenService } from '../auth/google-id-token.service.js';
 import { AppleIdTokenService } from '../auth/apple-id-token.service.js';
+import { AppleTokenRevocationService } from '../auth/apple-token-revocation.service.js';
 import { AccountDeletionService } from './account-deletion.service.js';
 import { authRateLimit } from '../../middleware/rate-limit.middleware.js';
 
@@ -19,6 +20,7 @@ export function createUsersRouter(deps: ApiDependencies): Router {
     deps.passwordService,
     new GoogleIdTokenService(deps.config),
     new AppleIdTokenService(deps.config),
+    new AppleTokenRevocationService(deps.config),
   );
   router.use(requireAuth(deps.tokenService, deps.repository));
 

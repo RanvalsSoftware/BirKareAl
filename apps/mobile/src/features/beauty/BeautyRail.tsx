@@ -37,13 +37,13 @@ export function BeautyRail({
           <Pressable
             key={option.id}
             accessibilityRole="button"
-            accessibilityLabel={`${option.number}. ${option.name}${option.isPro ? (proUnlocked ? ', PRO' : translateCopy(", PRO kilitli")) : ''}${intensity ? translateCopy(", yoğunluk yüzde {{p0}}", { p0: intensity }) : ''}`}
+            accessibilityLabel={`${option.number}. ${option.name}${option.isPro ? (proUnlocked ? ', PRO' : translateCopy(', PRO kilitli')) : ''}${intensity ? translateCopy(', yoğunluk yüzde {{p0}}', { p0: intensity }) : ''}`}
             accessibilityState={{ selected }}
             accessibilityHint={
               settings && (!option.isPro || proUnlocked)
                 ? intensity > 0
-                  ? translateCopy("Bu dokunuşu kaldırmak için dokun.")
-                  : translateCopy("Bu dokunuşu uygulamak için dokun.")
+                  ? translateCopy('Bu dokunuşu kaldırmak için dokun.')
+                  : translateCopy('Bu dokunuşu uygulamak için dokun.')
                 : undefined
             }
             onPress={() => onSelect(option)}
@@ -81,10 +81,10 @@ export function BeautyRail({
               </Text>
               <Text style={styles.caption}>
                 {intensity
-                  ? `%${intensity} aktif`
+                  ? translateCopy('%{{p0}} aktif', { p0: intensity })
                   : settings
-                    ? translateCopy("Kapalı · Dokun ve seç")
-                    : translateCopy("Temsili görünüm")}
+                    ? translateCopy('Kapalı · Dokun ve seç')
+                    : translateCopy('Temsili görünüm')}
               </Text>
             </View>
             {intensity > 0 ? (

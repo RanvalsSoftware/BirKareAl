@@ -26,6 +26,10 @@ jobs:
         run: |
           node scripts/language-audit.mjs > /tmp/birkare-language-inventory.txt
           head -n 1 /tmp/birkare-language-inventory.txt
+      - run: pnpm validate:store-localizations
+      - run: pnpm validate:language-scaffolding
+      - run: pnpm validate:language-source-coverage
+      - run: pnpm validate:language-kits
       - run: pnpm --filter @birkare/database exec prisma generate
       - run: pnpm --filter @birkare/mobile typecheck
       - run: pnpm --filter @birkare/api typecheck

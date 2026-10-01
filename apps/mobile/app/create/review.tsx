@@ -91,7 +91,8 @@ export default function ReviewScreen() {
       flow.transformation,
       flow.trendPreset,
       flow.secondarySourceUri,
-    , languageRevision],
+      languageRevision,
+    ],
   );
   const quoteRequestKey = `${quoteInputKey}:${quoteRefresh}`;
   const quote = quoteState.requestKey === quoteRequestKey ? quoteState.quote : null;
@@ -119,7 +120,7 @@ export default function ReviewScreen() {
             requestKey: quoteRequestKey,
             status: 'error',
             quote: null,
-            error: error instanceof Error ? error.message : 'Kredi özeti alınamadı.',
+            error: error instanceof Error ? error.message : translateCopy('Kredi özeti alınamadı.'),
           });
         }
       });
@@ -158,7 +159,7 @@ export default function ReviewScreen() {
       setStartError(
         error instanceof Error
           ? error.message
-          : 'Üretim güvenle başlatılamadı. Lütfen tekrar dene.',
+          : translateCopy('Üretim güvenle başlatılamadı. Lütfen tekrar dene.'),
       );
     } finally {
       startingRef.current = false;
@@ -174,11 +175,11 @@ export default function ReviewScreen() {
     router,
   ]);
 
-  const person = getName(fictionalPeople, flow.personId, 'Yok');
+  const person = getName(fictionalPeople, flow.personId, translateCopy('Yok'));
   const style = getName(
     filters,
     flow.styleId,
-    flow.mode === 'portrait' ? 'Sıcak Stüdyo' : 'Doğal Işık',
+    translateCopy(flow.mode === 'portrait' ? 'Sıcak Stüdyo' : 'Doğal Işık'),
   );
   const cost = quote?.creditCost ?? 0;
   const availableCredits = quote?.availableCredits ?? 0;

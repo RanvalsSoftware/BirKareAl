@@ -21,6 +21,7 @@ import {
   getPendingSocialRegistration,
 } from '@/features/auth/social-registration';
 import { consumePendingOnboardingCreateDraft } from '@/features/create/createFlow';
+import { consumePostAuthDestination } from '@/features/auth/post-auth-destination';
 import {
   AuthBrandBar,
   AuthFormCard,
@@ -86,8 +87,9 @@ export default function SocialCompleteScreen() {
   const submit = handleSubmit(async (values) => {
     if (!pendingRegistration) {
       setError('root', {
-        message:
-          translateCopy("Bu sosyal kayıt oturumu bulunamadı veya süresi doldu. Lütfen yeniden sosyal giriş yap."),
+        message: translateCopy(
+          'Bu sosyal kayıt oturumu bulunamadı veya süresi doldu. Lütfen yeniden sosyal giriş yap.',
+        ),
       });
       return;
     }
@@ -112,13 +114,15 @@ export default function SocialCompleteScreen() {
         router.replace({ pathname: '/create/review', params: { autoStart: 'onboarding' } });
         return;
       }
-      router.replace(onboardingDraft ? '/create/upload' : '/(tabs)/home');
+      router.replace(
+        onboardingDraft ? '/create/upload' : (consumePostAuthDestination() ?? '/(tabs)/home'),
+      );
     } catch (error) {
       setError('root', {
         message:
           error instanceof Error
             ? error.message
-            : translateCopy("Sosyal kayıt tamamlanamadı. Lütfen tekrar deneyin."),
+            : translateCopy('Sosyal kayıt tamamlanamadı. Lütfen tekrar deneyin.'),
       });
     }
   });
@@ -141,8 +145,11 @@ export default function SocialCompleteScreen() {
           tone={pendingRegistration ? 'neutral' : 'warning'}
         >
           {pendingRegistration
-            ? translateCopy("{{p0}} ile doğrulanan hesap: {{p1}}", { p0: pendingRegistration.provider ?? 'Sosyal giriş', p1: pendingRegistration.profile.email })
-            : translateCopy("Sosyal kayıt oturumun bulunamadı. Giriş ekranından yeniden devam et.")}
+            ? translateCopy('{{p0}} ile doğrulanan hesap: {{p1}}', {
+                p0: pendingRegistration.provider ?? translateCopy('Sosyal giriş'),
+                p1: pendingRegistration.profile.email,
+              })
+            : translateCopy('Sosyal kayıt oturumun bulunamadı. Giriş ekranından yeniden devam et.')}
         </AuthNote>
         <Controller
           control={control}
@@ -154,7 +161,7 @@ export default function SocialCompleteScreen() {
                 <Ionicons color={authColors.yellow} name="person-outline" size={18} />
                 <TextInput
                   ref={ref}
-                  accessibilityLabel={translateCopy("Ad")}
+                  accessibilityLabel={translateCopy('Ad')}
                   autoCapitalize="words"
                   autoComplete="given-name"
                   autoCorrect={false}
@@ -193,7 +200,7 @@ export default function SocialCompleteScreen() {
                     lastNameInput.current = input;
                     ref(input);
                   }}
-                  accessibilityLabel={translateCopy("Soyad")}
+                  accessibilityLabel={translateCopy('Soyad')}
                   autoCapitalize="words"
                   autoComplete="family-name"
                   autoCorrect={false}
@@ -232,7 +239,7 @@ export default function SocialCompleteScreen() {
                     birthYearInput.current = input;
                     ref(input);
                   }}
-                  accessibilityLabel={translateCopy("Doğum yılı")}
+                  accessibilityLabel={translateCopy('Doğum yılı')}
                   blurOnSubmit={false}
                   cursorColor={authColors.yellow}
                   inputAccessoryViewID={
@@ -362,7 +369,7 @@ export default function SocialCompleteScreen() {
           <View style={styles.keyboardToolbar}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={translateCopy("Klavyeyi kapat")}
+              accessibilityLabel={translateCopy('Klavyeyi kapat')}
               onPress={Keyboard.dismiss}
               style={styles.keyboardDone}
             >

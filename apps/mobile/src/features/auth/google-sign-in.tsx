@@ -28,7 +28,12 @@ type GoogleSignInButtonProps = {
   forceReauthentication?: boolean;
   disabled?: boolean;
   onError: (error: Error) => void;
-  onSuccess: (idToken: string) => Promise<void>;
+  onSuccess: (idToken: string, profile: GoogleProfileHint) => Promise<void>;
+};
+
+export type GoogleProfileHint = {
+  firstName: string | null;
+  lastName: string | null;
 };
 
 function nonEmpty(value: unknown): string | undefined {
@@ -73,7 +78,9 @@ function loadNativeGoogleSignIn(): NativeGoogleSignIn | null {
 function nativeModuleUnavailableError(): Error {
   return new GoogleAuthError(
     'GOOGLE_NATIVE_MODULE_MISSING',
-    translateCopy("Google ile giriş için yeni bir iOS/Android development build gerekir. Bu özellik Expo Go’da çalışmaz."),
+    translateCopy(
+      'Google ile giriş için yeni bir iOS/Android development build gerekir. Bu özellik Expo Go’da çalışmaz.',
+    ),
   );
 }
 
@@ -96,10 +103,14 @@ export async function signOutOfNativeGoogleIfAvailable(): Promise<void> {
 function formatGoogleError(google: NativeGoogleSignIn, error: unknown): Error {
   if (google.isErrorWithCode(error)) {
     if (error.code === google.statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-      return new Error(translateCopy("Bu cihazda Google Play Hizmetleri kullanılamıyor veya güncel değil."));
+      return new Error(
+        translateCopy('Bu cihazda Google Play Hizmetleri kullanılamıyor veya güncel değil.'),
+      );
     }
     if (error.code === google.statusCodes.IN_PROGRESS) {
-      return new Error(translateCopy("Google ile giriş zaten başlatıldı. Lütfen işlemi tamamlayın."));
+      return new Error(
+        translateCopy('Google ile giriş zaten başlatıldı. Lütfen işlemi tamamlayın.'),
+      );
     }
   }
 
@@ -136,7 +147,7 @@ function configureGoogle(
  * the BirKare server verifies before granting its own application session.
  */
 export function GoogleSignInButton({
-  label = 'Google ile giriş yap',
+  label = translateCopy('Google ile giriş yap'),
   forceReauthentication = false,
   disabled = false,
   onError,
@@ -185,10 +196,19 @@ export function GoogleSignInButton({
         if (!idToken) {
           throw new GoogleAuthError(
             'GOOGLE_ID_TOKEN_MISSING',
-            translateCopy("Google bu uygulama için kimlik belirteci vermedi. Web Client ID ile yeni native derlemenin eşleştiğini kontrol edin."),
+            translateCopy(
+              'Google bu uygulama için kimlik belirteci vermedi. Web Client ID ile yeni native derlemenin eşleştiğini kontrol edin.',
+            ),
           );
         }
-        await onSuccess(idToken);
+        // The ID token remains the only identity proof. Native profile fields
+        // are merely a form-prefill fallback for Android accounts whose token
+        // omits optional given_name/family_name claims; the user reviews and
+        // submits them on the protected profile-completion screen.
+        await onSuccess(idToken, {
+          firstName: nonEmpty(response.data.user.givenName) ?? null,
+          lastName: nonEmpty(response.data.user.familyName) ?? null,
+        });
       } catch (error) {
         if (google.isErrorWithCode(error) && error.code === google.statusCodes.SIGN_IN_CANCELLED)
           return;

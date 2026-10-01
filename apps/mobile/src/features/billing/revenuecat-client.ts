@@ -121,7 +121,7 @@ export function createRevenueCatClient(options: ClientOptions) {
 
   const assertAccount = (version: number, userId: string | null) => {
     if (!userId || !current(version, userId) || sdkUserId !== userId)
-      fail('Hesap değişti. İşleme devam etmek için hesabınıza tekrar giriş yapın.');
+      fail(translateCopy('Hesap değişti. İşleme devam etmek için hesabınıza tekrar giriş yapın.'));
   };
 
   const saveInfo = (info: CustomerInfo, version: number, userId: string) => {
@@ -140,8 +140,8 @@ export function createRevenueCatClient(options: ClientOptions) {
           error: offering
             ? null
             : options.offeringId
-              ? `RevenueCat’te \`${options.offeringId}\` offering’i bulunamadı. Ürünleri bu offering’e bağlayın.`
-              : 'RevenueCat’te bu uygulama için geçerli bir offering bulunamadı. Ürünleri bağlayıp current offering seçin.',
+              ? translateCopy('RevenueCat’te `{{p0}}` offering’i bulunamadı. Ürünleri bu offering’e bağlayın.', { p0: options.offeringId })
+              : translateCopy('RevenueCat’te bu uygulama için geçerli bir offering bulunamadı. Ürünleri bağlayıp current offering seçin.'),
         });
       }
     } catch (error) {
@@ -224,7 +224,7 @@ export function createRevenueCatClient(options: ClientOptions) {
           publish({ status: 'unavailable', error: options.unavailableReason });
           return;
         }
-        if (!options.apiKey) fail('RevenueCat public SDK anahtarı yapılandırılmamış.');
+        if (!options.apiKey) fail(translateCopy('RevenueCat public SDK anahtarı yapılandırılmamış.'));
         sdkModule ??= await options.loadSdk();
         if (!current(version, userId)) return;
         const sdk = sdkModule.default;
@@ -333,7 +333,7 @@ export function createRevenueCatClient(options: ClientOptions) {
             item.identifier === pkg.identifier &&
             item.product.identifier === pkg.product.identifier,
         );
-        if (!offered) fail('Bu paket artık geçerli teklifte yok. Paket listesini yenileyin.');
+        if (!offered) fail(translateCopy('Bu paket artık geçerli teklifte yok. Paket listesini yenileyin.'));
         const { customerInfo } = await sdkModule!.default.purchasePackage(offered!);
         return completed(customerInfo, version, userId);
       }),
@@ -342,7 +342,7 @@ export function createRevenueCatClient(options: ClientOptions) {
         const allowed = new Set(options.creditProductIds ?? []);
         const offered = snapshot.creditProducts.find((item) => item.identifier === product.identifier);
         if (!allowed.has(product.identifier) || !offered)
-          fail('Bu kredi paketi artık mağazada kullanılamıyor. Paket listesini yenileyin.');
+          fail(translateCopy('Bu kredi paketi artık mağazada kullanılamıyor. Paket listesini yenileyin.'));
         const { customerInfo } = await sdkModule!.default.purchaseStoreProduct(offered!);
         return completed(customerInfo, version, userId);
       }),
@@ -352,7 +352,7 @@ export function createRevenueCatClient(options: ClientOptions) {
       ),
     presentPaywall: () =>
       action(async (version, userId) => {
-        if (!snapshot.offering) fail('Önce RevenueCat’te ürünleri bir offering’e bağlayın.');
+        if (!snapshot.offering) fail(translateCopy('Önce RevenueCat’te ürünleri bir offering’e bağlayın.'));
         const ui = await options.loadUi();
         assertAccount(version, userId);
         const result = await ui.default.presentPaywallIfNeeded({
@@ -363,7 +363,7 @@ export function createRevenueCatClient(options: ClientOptions) {
         if (result === ui.PAYWALL_RESULT.CANCELLED) return { kind: 'cancelled' };
         if (result === ui.PAYWALL_RESULT.ERROR)
           fail(
-            'Paywall açılamadı veya işlem tamamlanamadı. Paket kartlarıyla tekrar deneyebilirsiniz.',
+            translateCopy('Paywall açılamadı veya işlem tamamlanamadı. Paket kartlarıyla tekrar deneyebilirsiniz.'),
           );
         assertAccount(version, userId);
         return completed(await sdkModule!.default.getCustomerInfo(), version, userId);

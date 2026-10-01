@@ -1,4 +1,4 @@
-import { getLanguage } from './engine';
+import { getLanguage, tr } from './engine';
 
 /** Explicit presentation adapter for legacy enum tokens. Never changes the
  * value stored in a form or sent to the API; never use this on free user text. */
@@ -12,5 +12,6 @@ const english: Readonly<Record<string, string>> = {
   'Güzellik': 'Beauty', 'Dönüşüm': 'Transformation',
 };
 export function displayOption(value: string): string {
-  return getLanguage() === 'en' && Object.hasOwn(english, value) ? english[value]! : value;
+  if (!Object.hasOwn(english, value) || getLanguage() === 'tr') return value;
+  return getLanguage() === 'en' ? english[value]! : tr(value);
 }

@@ -48,7 +48,10 @@ validateGoogleOAuthClients({
 
 const plugins: NonNullable<ExpoConfig['plugins']> = [
   'expo-router',
-  ['expo-localization', { supportedLocales: { ios: ['tr', 'en'], android: ['tr', 'en'] } }],
+  ['expo-localization', {
+    supportedLocales: { ios: ['tr', 'en', 'de', 'es', 'ar'], android: ['tr', 'en', 'de', 'es', 'ar'] },
+    supportsRTL: true,
+  }],
   'expo-font',
   [
     'expo-build-properties',
@@ -100,7 +103,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   name: appName,
   slug: 'birkare-ai',
   scheme: 'birkareai',
-  locales: { tr: './locales/tr.json', en: './locales/en.json' },
+  locales: {
+    tr: './locales/tr.json',
+    en: './locales/en.json',
+    de: './locales/de.json',
+    es: './locales/es.json',
+    ar: './locales/ar.json',
+  },
   version: '0.1.0',
   // App icons must be opaque. Keeping the transparent gold mark here makes
   // iOS flatten it over white, which is why the installed icon looked like a

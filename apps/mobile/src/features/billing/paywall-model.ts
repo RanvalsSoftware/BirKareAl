@@ -14,17 +14,17 @@ export type ProPlan = {
 const PLAN_COPY: Record<ProPlanId, Omit<ProPlan, 'id' | 'package'>> = {
   monthly: {
     get label() { return translateCopy("Aylık"); },
-    note: 'Her ay 80 kredi',
+    get note() { return translateCopy('Her ay 80 kredi'); },
     featured: false,
   },
   annual: {
     get label() { return translateCopy("Yıllık"); },
-    note: 'Her ay 80 kredi',
+    get note() { return translateCopy('Her ay 80 kredi'); },
     featured: true,
   },
   lifetime: {
     get label() { return translateCopy("Ömür Boyu"); },
-    note: '200 başlangıç kredisi · Kalıcı Pro',
+    get note() { return translateCopy('200 başlangıç kredisi · Kalıcı Pro'); },
     featured: false,
   },
 };

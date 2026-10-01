@@ -81,11 +81,11 @@ export function CustomProPaywall() {
       : null;
   const activeNote = billing.subscriptionCancelled
     ? date
-      ? `Abonelik iptal edildi · Pro erişimin ${date} tarihine kadar devam eder.`
-      : 'Abonelik iptal edildi · Otomatik yenileme kapalı.'
+      ? translateCopy('Abonelik iptal edildi · Pro erişimin {{p0}} tarihine kadar devam eder.', { p0: date })
+      : translateCopy('Abonelik iptal edildi · Otomatik yenileme kapalı.')
     : date
-      ? `${billing.entitlement?.willRenew ? 'Yenileme' : 'Erişim bitişi'}: ${date}`
-      : 'Kalıcı Pro erişimi · AI üretimleri kredi kullanır.';
+      ? translateCopy('{{p0}}: {{p1}}', { p0: translateCopy(billing.entitlement?.willRenew ? 'Yenileme' : 'Erişim bitişi'), p1: date })
+      : translateCopy('Kalıcı Pro erişimi · AI üretimleri kredi kullanır.');
 
   const priceMismatch =
     billing.appEnv !== 'production'
@@ -101,16 +101,16 @@ export function CustomProPaywall() {
 
   const priceWarning = priceMismatch
     ? priceMismatch.package.product.currencyCode !== 'TRY'
-      ? `${priceMismatch.label} mağazadan ${priceMismatch.package.product.currencyCode} olarak geliyor. Türkiye fiyatını test etmek için Apple Sandbox / Google Play test hesabının mağaza bölgesini Türkiye yapın. BirKare fiyatı dönüştürmez; mağazanın gerçek priceString değeri gösterilir.`
-      : `${priceMismatch.label} mağaza fiyatı politika ile eşleşmiyor. Beklenen TRY fiyatı ₺${MOBILE_PRO_PRICE_POLICY[
+      ? translateCopy('{{p0}} mağazadan {{p1}} olarak geliyor. Türkiye fiyatını test etmek için Apple Sandbox / Google Play test hesabının mağaza bölgesini Türkiye yapın. BirKare fiyatı dönüştürmez; mağazanın gerçek priceString değeri gösterilir.', { p0: priceMismatch.label, p1: priceMismatch.package.product.currencyCode })
+      : translateCopy('{{p0}} mağaza fiyatı politika ile eşleşmiyor. Beklenen TRY fiyatı ₺{{p1}}. App Store Connect / Google Play Console fiyatını kontrol edin.', { p0: priceMismatch.label, p1: MOBILE_PRO_PRICE_POLICY[
           priceMismatch.id
-        ].toLocaleString(getAppLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. App Store Connect / Google Play Console fiyatını kontrol edin.`
+        ].toLocaleString(getAppLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }) })
     : null;
 
   const cancellationStatus = billing.subscriptionCancelled
     ? date
-      ? `Abonelik iptal edildi. Pro erişimi ${date} tarihine kadar devam eder.`
-      : 'Abonelik iptal edildi. Otomatik yenileme kapalı.'
+      ? translateCopy('Abonelik iptal edildi. Pro erişimi {{p0}} tarihine kadar devam eder.', { p0: date })
+      : translateCopy('Abonelik iptal edildi. Otomatik yenileme kapalı.')
     : null;
 
   const status =
@@ -119,10 +119,10 @@ export function CustomProPaywall() {
     billing.error ||
     (!billing.ready
       ? billing.status === 'signed_out'
-        ? 'Paketleri satın almak için hesabınıza giriş yapın.'
-        : 'Mağaza bağlantısı hazırlanıyor…'
+        ? translateCopy('Paketleri satın almak için hesabınıza giriş yapın.')
+        : translateCopy('Mağaza bağlantısı hazırlanıyor…')
       : plans.length === 0 && !billing.isPro
-        ? 'birkare_pro teklifindeki ürünler bulunamadı.'
+        ? translateCopy('birkare_pro teklifindeki ürünler bulunamadı.')
         : null);
   return (
     <View style={s.modal} testID="pro-bottom-sheet-host">

@@ -11,9 +11,11 @@ import { TokenService } from './token.service.js';
 test('language selection is bounded, weighted and never interprets a country as a language', () => {
   assert.equal(communicationLanguage('en-GB'), 'en');
   assert.equal(communicationLanguage('tr_TR'), 'tr');
-  assert.equal(communicationLanguage('de-DE'), undefined);
+  assert.equal(communicationLanguage('de-DE'), 'de');
+  assert.equal(communicationLanguage('es_ES'), 'es');
+  assert.equal(communicationLanguage('ar-SA'), 'ar');
   assert.equal(communicationLanguage('en\r\nBcc: attacker'), undefined);
-  assert.equal(preferredRequestLanguage('de-DE, tr-TR;q=0.9, en;q=0.8'), 'tr');
+  assert.equal(preferredRequestLanguage('de-DE, tr-TR;q=0.9, en;q=0.8'), 'de');
   assert.equal(preferredRequestLanguage('tr;q=0.2,en-US;q=1'), 'en');
   assert.equal(preferredRequestLanguage('tr;q=0,en;q=0.5'), 'en');
   assert.equal(preferredRequestLanguage('en;q=2,tr'), 'tr');
@@ -40,7 +42,12 @@ test('English auth email keeps exact tokens, encoded links, validity and recipie
     assert.match(english.text, kind === 'verification' ? /10 minutes/ : /1 hour/);
     assert.match(english.text, /only be used once/);
     assert.equal(authMail({ ...input, locale: 'tr-TR' }).text, turkish.text);
-    assert.equal(authMail({ ...input, locale: 'de-DE' }).text, turkish.text);
+    for (const locale of ['de-DE', 'es-ES', 'ar'] as const) {
+      const localized = authMail({ ...input, locale });
+      assert.notEqual(localized.text, turkish.text);
+      assert.equal(localized.text.match(/birkareai:\/\/\S+/)?.[0], links[0]);
+      assert.match(localized.text, new RegExp(token));
+    }
   }
   assert.throws(() => authMail({ kind:'verification',token:'123',email:'x@example.test',locale:'en' }), { code:'MAIL_DELIVERY_UNAVAILABLE' });
 });
@@ -52,6 +59,11 @@ test('English deletion mail preserves validated destination and one-time token',
   assert.equal(tr.text.match(/https:\/\/\S+/)?.[0], en.text.match(/https:\/\/\S+/)?.[0]);
   assert.match(en.subject, /account deletion link/);
   assert.match(en.text, /30 minutes/);
+  for (const locale of ['de-DE', 'es-ES', 'ar'] as const) {
+    const localized = accountDeletionMail({ ...input, locale });
+    assert.notEqual(localized.text, tr.text);
+    assert.equal(localized.text.match(/https:\/\/\S+/)?.[0], tr.text.match(/https:\/\/\S+/)?.[0]);
+  }
   assert.throws(() => accountDeletionMail({ ...input,webUrl:'http://foreign.example/delete',locale:'en' }), { code:'MAIL_DELIVERY_UNAVAILABLE' });
 });
 

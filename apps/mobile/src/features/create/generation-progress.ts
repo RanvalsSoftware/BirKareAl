@@ -55,7 +55,7 @@ export const generationPhases = [
   { get label() { return translateCopy("Fotoğraf analizi"); }, get detail() { return translateCopy("Fotoğrafın ve üretim ayarların kontrol ediliyor."); } },
   { get label() { return translateCopy("Sahne hazırlığı"); }, get detail() { return translateCopy("Seçtiğin sahne ve görünüm hazırlanıyor."); } },
   { get label() { return translateCopy("AI ile oluşturma"); }, get detail() { return translateCopy("Fotoğrafın, seçtiğin görünümle yeniden işleniyor."); } },
-  { label: 'Son kontroller', get detail() { return translateCopy("Görselin işleniyor ve güvenlik kontrolünden geçiriliyor."); } },
+  { get label() { return translateCopy('Son kontroller'); }, get detail() { return translateCopy("Görselin işleniyor ve güvenlik kontrolünden geçiriliyor."); } },
 ];
 
 function phaseForStatus(status: GenerationStatus | undefined) {

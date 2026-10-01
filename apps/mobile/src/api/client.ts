@@ -15,7 +15,7 @@ export type ApiError = Error & {
 
 export const API_REQUEST_TIMEOUT_MS = 30_000;
 export const NETWORK_REQUEST_FAILED_MESSAGE =
-  "Sunucuya şu anda ulaşılamıyor. İnternet bağlantını kontrol edip tekrar dene.";
+  translateCopy("Sunucuya şu anda ulaşılamıyor. İnternet bağlantını kontrol edip tekrar dene.");
 
 /** Never expose native URLSession/Expo fetch internals to application screens. */
 async function fetchWithTransportError(url: string, init: RequestInit): Promise<Response> {

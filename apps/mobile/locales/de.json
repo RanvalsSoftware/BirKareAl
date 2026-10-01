@@ -1,0 +1,8 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "BirKare AI verwendet deine Kamera, um ein Ausgangsfoto für das von dir gewählte Bild aufzunehmen.",
+    "NSPhotoLibraryUsageDescription": "BirKare AI verwendet nur die von dir ausgewählten Fotos zur Bilderstellung und -bearbeitung.",
+    "NSPhotoLibraryAddUsageDescription": "BirKare AI kann die von dir erstellten Bilder in deiner Fotomediathek speichern."
+  },
+  "android": { "app_name": "BirKare AI" }
+}

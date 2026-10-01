@@ -1,0 +1,16 @@
+{
+  "language.title": "Idioma",
+  "language.subtitle": "Usa BirKare en el idioma que prefieras",
+  "language.system": "Usar el idioma del dispositivo",
+  "language.systemHint": "Sigue las preferencias de idioma de tu dispositivo. Se usa inglés para los idiomas no compatibles.",
+  "language.saved": "Tu preferencia de idioma se ha guardado en este dispositivo.",
+  "language.saveFailed": "El idioma ha cambiado, pero no se pudo guardar tu preferencia. Inténtalo de nuevo.",
+  "language.retry": "Guardar de nuevo",
+  "language.back": "Atrás",
+  "credits_one": "{{count}} crédito",
+  "credits_other": "{{count}} créditos",
+  "images_one": "{{count}} imagen",
+  "images_other": "{{count}} imágenes",
+  "errors.generic": "Algo ha salido mal. Inténtalo de nuevo.",
+  "errors.network": "No se puede conectar con el servidor. Comprueba tu conexión a Internet e inténtalo de nuevo."
+}

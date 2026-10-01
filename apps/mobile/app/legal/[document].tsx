@@ -16,7 +16,7 @@ const content: Record<
     get updated() { return translateCopy("3 Eylül 2026"); },
     sections: [
       {
-        heading: '1. Kapsam ve kabul',
+        get heading() { return translateCopy('1. Kapsam ve kabul'); },
         get body() { return translateCopy("BirKare AI hesabı oluşturarak bu örnek Kullanım Koşulları’nı kabul etmiş olursun. Koşulları kabul etmiyorsan hesap oluşturmamalı veya hizmeti kullanmamalısın."); },
       },
       {
@@ -54,7 +54,7 @@ const content: Record<
     get updated() { return translateCopy("7 Eylül 2026"); },
     sections: [
       {
-        heading: '1. Toplanan bilgiler',
+        get heading() { return translateCopy('1. Toplanan bilgiler'); },
         get body() { return translateCopy("Hesap bilgileri, yüklediğin fotoğraflar, seçtiğin sahne ve filtreler, üretim kayıtları, cihaz bilgileri ve güvenlik günlükleri hizmeti sunmak için işlenebilir."); },
       },
       {
@@ -66,8 +66,8 @@ const content: Record<
         get body() { return translateCopy("Kaynak fotoğrafın yalnızca seçtiğin üretim veya düzenleme işlemini gerçekleştirmek için yetkili hizmet sağlayıcılara aktarılabilir. BirKare AI, fotoğraflarını kendi model eğitimi için kullanmaz."); },
       },
       {
-        heading: '4. Saklama ve silme',
-        get body() { return translateCopy("Hesabını Ayarlar bölümünde yeniden kimlik doğrulayarak kalıcı olarak silmeye gönderebilirsin. Erişim hemen kapanır; kısa süreli dosya bağlantıları için en az 10 dakika beklenir ve dosya/veri temizliği otomatik yürütülür. Temizlikte geçici hata olursa işlem yeniden denenir. Ücretsiz başlangıç hakkının tekrar verilmesini önlemek için e-posta ve bağlı giriş kimliklerinin anahtarlı özetleri tutulur; bu kayıtta açık e-posta, fotoğraf veya şifre bulunmaz. Varsa mağaza aboneliğin ayrıca mağazadan yönetilmelidir. Yayın öncesi saklama süreleri ve hukuki dayanaklar ayrıca doğrulanmalıdır."); },
+        get heading() { return translateCopy('4. Saklama ve silme'); },
+        get body() { return translateCopy("Kaynak fotoğraflar, yüz içeren görseller ve üretilen sonuçlar hesabındaki projeleri sunmak için saklanır. Doğrulanmış hesap silme isteğinde erişim hemen kapatılır. İstek tarihinden itibaren 30 gün içinde aynı hesapla doğrulanıp geri alma işlemini onaylayabilirsin; giriş yapmak tek başına silmeyi iptal etmez. 30 gün sonunda dosya ve hesap verilerinin kalıcı temizliği başlar; geçici hatalar yeniden denenir. Tamamlanan silmeye ait sınırlı işlem kaydı 30 gün sonra kaldırılır. Promosyon kötüye kullanımını önleyen anahtarlı kimlik özetleri saklanabilir; bunlarda fotoğraf, yüz verisi veya açık kimlik bilgisi bulunmaz. Mağaza aboneliğini ayrıca mağazadan yönetmelisin."); },
       },
       {
         get heading() { return translateCopy("5. Paylaşım ve aktarım"); },
@@ -106,7 +106,7 @@ const content: Record<
     get updated() { return translateCopy("2 Eylül 2026"); },
     sections: [
       {
-        heading: 'Kurgusal koleksiyon',
+        get heading() { return translateCopy('Kurgusal koleksiyon'); },
         get body() { return translateCopy("Bu uygulamadaki karakter örnekleri tamamen hayal ürünüdür; gerçek kişiler, gerçek buluşmalar veya gerçek onaylar anlamına gelmez."); },
       },
       {
@@ -124,7 +124,7 @@ const content: Record<
         get body() { return translateCopy("Başkalarına ait fotoğrafları, kimliği veya kişilik haklarını izinsiz kullanma. Paylaşımlarda açık, dürüst ve saygılı ol."); },
       },
       {
-        heading: 'Raporlama',
+        get heading() { return translateCopy('Raporlama'); },
         get body() { return translateCopy("Uygunsuz veya yanlış yönlendirici bir içerik görürsen destek ekibine raporla."); },
       },
     ],

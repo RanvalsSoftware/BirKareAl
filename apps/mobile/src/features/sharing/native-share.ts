@@ -86,8 +86,8 @@ export async function exportGeneratedImage(
         UTI: type.uti,
         dialogTitle:
           destination === 'other'
-            ? 'AI görselini paylaş'
-            : `${destination} uygulamasını paylaşım menüsünden seç`,
+            ? translateCopy('AI görselini paylaş')
+            : translateCopy('{{p0}} uygulamasını paylaşım menüsünden seç', { p0: destination }),
       });
       handedToShareSheet = true;
     }

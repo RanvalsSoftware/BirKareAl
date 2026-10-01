@@ -168,8 +168,8 @@ export function migrate() {
   if(!native['expo-localization'])throw new Error('Installed Expo does not declare a compatible localization version');
   patchFile('apps/mobile/package.json',s=>{const p=JSON.parse(s);p.dependencies['expo-localization']=native['expo-localization'];p.dependencies.i18next='25.5.2';p.dependencies['react-i18next']='16.0.0';return JSON.stringify(p,null,2)+'\n';});
   patchFile('apps/mobile/app.config.ts',s=>{
-    s=replaceRequired(s,"  'expo-router',","  'expo-router',\n  ['expo-localization', { supportedLocales: { ios: ['tr', 'en'], android: ['tr', 'en'] } }],");
-    s=replaceRequired(s,"  scheme: 'birkareai',","  scheme: 'birkareai',\n  locales: { tr: './locales/tr.json', en: './locales/en.json' },");return s;
+    if(!s.includes("['expo-localization'"))s=replaceRequired(s,"  'expo-router',","  'expo-router',\n  ['expo-localization', { supportedLocales: { ios: ['tr', 'en', 'de', 'es', 'ar'], android: ['tr', 'en', 'de', 'es', 'ar'] }, supportsRTL: true }],");
+    if(!/\n\s*locales:\s*\{/.test(s))s=replaceRequired(s,"  scheme: 'birkareai',","  scheme: 'birkareai',\n  locales: { tr: './locales/tr.json', en: './locales/en.json', de: './locales/de.json', es: './locales/es.json', ar: './locales/ar.json' },");return s;
   });
   patchFile('apps/mobile/app/_layout.tsx',s=>{
     if(s.includes('function RootNavigator()'))return s;
@@ -182,6 +182,7 @@ export function migrate() {
     return replaceRequired(s,'<View style={styles.content}>{children}</View>','<View style={styles.content}>{children}<LanguagePicker compact /></View>');
   });
   patchFile('apps/mobile/app/settings/index.tsx',s=>{
+    if(s.includes("import { useLanguage }"))return s;
     if(!s.includes("import { useLanguage }"))s="import { useLanguage } from '@/i18n/use-language';\nimport { t } from '@/i18n/engine';\n"+s;
     s=replaceRequired(s,'  const router = useRouter();','  const router = useRouter();\n  const language = useLanguage();');
     s=replaceRequired(s,'          value="Türkçe"\n          detail="Bu sürüm Türkçe olarak sunuluyor"',`          value={language.preference === 'system' ? t('language.system') : language.language === 'tr' ? 'Türkçe' : 'English'}\n          detail={t('language.subtitle')}\n          onPress={() => router.push('/settings/language' as never)}`);return s;

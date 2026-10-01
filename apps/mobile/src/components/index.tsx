@@ -316,7 +316,7 @@ export function TextField({
 }
 
 export function PasswordField({
-  label = 'Şifre',
+  label = translateCopy('Şifre'),
   ...props
 }: Omit<TextFieldProps, 'secureTextEntry' | 'rightAdornment'>) {
   const languageRevision = useLanguageRevision();
@@ -350,7 +350,7 @@ export function PasswordField({
 
 export function BackButton({
   fallback = '/(tabs)/home',
-  label = 'Geri',
+  label = translateCopy('Geri'),
 }: {
   fallback?: string;
   label?: string;
@@ -728,7 +728,7 @@ export function CharacterTile({
 export function UploadTile({
   sourceUri,
   onPress,
-  label = 'Fotoğraf seç',
+  label = translateCopy('Fotoğraf seç'),
 }: {
   sourceUri?: string | null;
   onPress: () => void;
@@ -1023,7 +1023,7 @@ function AnimatedProgressSegment({
 
 export function SourcePreview({
   sourceUri,
-  label = 'Kaynak fotoğraf',
+  label = translateCopy('Kaynak fotoğraf'),
 }: {
   sourceUri?: string | null;
   label?: string;

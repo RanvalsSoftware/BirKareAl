@@ -1,0 +1,35 @@
+APPLE REVIEW RESPONSE — DRAFT, NOT SUBMITTED
+Submission: 26b305a3-9a3b-4fdb-851c-bf8984a62ee0
+
+Before sending: confirm the storage provider actually used by the reviewed backend, storage/backup regions and backup expiration settings. The production compose uses private Cloudflare R2 and Google Cloud SQL; the alternative Portainer stack uses local storage. Repository configuration does not prove which stack is deployed. Update the published privacy policy with these concrete details and the provider retention terms, then add the exact published paragraphs to the response. Do not claim that every copy is deleted exactly on day 30: cleanup starts after the recovery window and retries failures; backup/provider retention is separate.
+
+Hello App Review Team,
+
+Thank you for the clarification. BirKare AI processes photos selected or captured by the user, which may contain faces, to perform requested image generation and editing. These photos and generated outputs are associated with the user's projects. Our application does not implement face search, biometric authentication, or a separately stored facial-template/face-embedding database. Preserving facial appearance is an image-editing instruction, not an identity verification service.
+
+The selected images and instructions are sent from our backend to OpenAI for image processing and applicable safety checks. Some workflows also use image-based quality review. BirKare does not use these photos to train its own models. OpenAI's default API data policy does not use API inputs or outputs for training unless the customer opts in; the actual organization's data-sharing settings must be confirmed before making this statement about the deployment. Provider safety retention is separate from BirKare account deletion. OpenAI documents default abuse-monitoring retention up to 30 days, with legal/safety exceptions; image inputs have additional safety-review exceptions. We do not claim Zero Data Retention without an approved and configured arrangement.
+
+Storage: [REPLACE with the verified live storage provider, database provider, regions and backup retention. Do not submit this placeholder.]
+
+In our application, source photos and generated images remain available as account/project content until deletion. A verified account deletion request immediately disables access and revokes sessions. Content is retained for a 30-day recovery window from the deletion request. Recovery requires authenticating the same account and explicitly confirming restoration. Merely opening or signing into the app does not silently cancel deletion. After the deadline, automatic cleanup deletes stored objects and account-related records; temporary failures are retried. The API runs this cleanup at startup and every minute. A limited completed-deletion audit record expires after a further 30 days. Anti-abuse keyed identity hashes may remain while the relevant promotional/security control operates; these do not contain photos, face data, names or plaintext email addresses. Store subscription management is separate.
+
+Our published policy is https://ai.ranvals.com/gizlilik-politikasi/
+Relevant sections: 2 (data categories), 3 (photos, faces and AI processing), 5 (service providers and transfers), 6 (retention/deletion), and 7 (user rights and deletion access).
+
+Current exact excerpts:
+Section 3: “Yüz içeren fotoğraflar görsel dönüşümün parçası olarak işlenir.”
+Section 6: “30 gün dolduğunda geri alma sona erer ve kalıcı veri temizliği otomatik olarak başlar”
+
+Before submission, replace/add the full face-data paragraphs quoted from the updated published policy so the reviewer can directly verify collection, purposes, named processors, storage and retention. The present public text names OpenAI, but storage is described only conditionally and provider/backup retention is not concrete enough to answer all questions fully.
+
+References checked:
+https://developer.apple.com/app-store/review/
+https://developers.openai.com/api/docs/guides/your-data
+
+Internal evidence:
+packages/database/src/deletion.ts — 30-day recovery and audit retention
+apps/api/src/modules/users/account-deletion.service.ts — reauthentication, object deletion, retry
+apps/api/src/server.ts — scheduled cleanup
+apps/api/src/modules/auth/auth.service.ts — explicit recovery confirmation
+packages/ai/src/providers.ts — OpenAI image generation/editing and moderation
+packages/ai/src/trend-quality-review.ts — image quality review

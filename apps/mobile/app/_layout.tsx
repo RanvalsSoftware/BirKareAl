@@ -1,7 +1,7 @@
-import { useLanguageRevision } from '@/i18n/use-language';
+import { useLanguage, useLanguageRevision } from '@/i18n/use-language';
 import { LanguageProvider } from '@/i18n/LanguageProvider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Stack } from 'expo-router';
+import { LocaleProvider, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState, type PropsWithChildren } from 'react';
@@ -50,6 +50,8 @@ function Providers({ children }: PropsWithChildren) {
 
 function RootNavigator() {
   const languageRevision = useLanguageRevision();
+  const { language } = useLanguage();
+  const direction = language === 'ar' ? 'rtl' : 'ltr';
 
   useAuthBootstrap();
   const splashHidden = useRef(false);
@@ -82,8 +84,9 @@ function RootNavigator() {
   }, []);
 
   return (
-    <Providers>
-      <View onLayout={hideNativeSplash} style={{ flex: 1, backgroundColor: '#050505' }}>
+    <LocaleProvider direction={direction}>
+      <Providers>
+      <View onLayout={hideNativeSplash} style={{ flex: 1, backgroundColor: '#050505', direction }}>
         <StatusBar style="light" />
         <Stack
           screenOptions={{
@@ -143,12 +146,11 @@ function RootNavigator() {
           />
         </Stack>
       </View>
-    </Providers>
+      </Providers>
+    </LocaleProvider>
   );
 }
 
 export default function RootLayout() {
-  const languageRevision = useLanguageRevision();
-
   return <LanguageProvider><RootNavigator /></LanguageProvider>;
 }

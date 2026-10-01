@@ -37,7 +37,7 @@ export default function SceneScreen() {
           imageSource={beautySceneImage}
           icon="sparkles-outline"
           palette={['#3A2830', '#B38A5B']}
-          badge="10 görünüm"
+          badge={translateCopy('10 görünüm')}
           onPress={() => router.push('/beauty' as never)}
         />
         {scenes.map((scene) => (

@@ -6,5 +6,9 @@ export default function LanguageScreen() {
   const languageRevision = useLanguageRevision();
 
   useLanguageRevision();
-  return <SettingsPage title={t('language.title')} subtitle={t('language.subtitle')}><LanguagePicker /></SettingsPage>;
+  return (
+    <SettingsPage title={t('language.title')} subtitle={t('language.subtitle')}>
+      <LanguagePicker />
+    </SettingsPage>
+  );
 }

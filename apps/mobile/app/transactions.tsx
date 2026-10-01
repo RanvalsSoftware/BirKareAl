@@ -1,5 +1,5 @@
 import { useLanguageRevision } from '@/i18n/use-language';
-import { tr as translateCopy } from '@/i18n/engine';
+import { getLocale as getAppLocale, tr as translateCopy } from '@/i18n/engine';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -22,15 +22,15 @@ import { colors, spacing, typography } from '@/theme';
 
 const filters: { id: TransactionFilter; label: string }[] = [
   { id: 'all', get label() { return translateCopy("Tümü"); } },
-  { id: 'earned', label: translateCopy("Eklenen") },
-  { id: 'spent', label: translateCopy("Harcanan") },
+  { id: 'earned', get label() { return translateCopy("Eklenen"); } },
+  { id: 'spent', get label() { return translateCopy("Harcanan"); } },
   { id: 'returned', get label() { return translateCopy("İadeler"); } },
 ];
 
 function dateTime(value: string) {
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) return translateCopy("Tarih bilgisi yok");
-  return new Intl.DateTimeFormat('tr-TR', {
+  return new Intl.DateTimeFormat(getAppLocale(), {
     day: '2-digit',
     month: 'long',
     year: 'numeric',

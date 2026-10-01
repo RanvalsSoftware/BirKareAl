@@ -130,6 +130,25 @@ test('HTTP web deletion request reaches MailService and builds the local BirKare
   assert.ok((link.searchParams.get('token') ?? '').length >= 40);
 });
 
+test('public deletion link cannot bypass Apple token revocation', async (t) => {
+  const f = await fixture('memory', 'privaterelay.appleid.com');
+  t.after(() => f.emailSecurityService.close());
+  const user = await seed(f, 'APPLE');
+
+  const requested = await f.authService.requestAccountDeletionLink(user.email, {});
+  assert.ok(requested.developmentDeletionToken);
+  await assert.rejects(
+    () => f.authService.confirmAccountDeletionLink({
+      token: requested.developmentDeletionToken!,
+      reason: 'PRIVACY',
+    }),
+    codeIs('DELETION_APPLE_REAUTH_REQUIRED'),
+  );
+
+  assert.equal((await f.repository.getUserById(user.id))?.status, 'ACTIVE');
+  assert.equal(await f.repository.getAccountDeletion(user.id), null);
+});
+
 test('new password, Google and Apple accounts cannot bypass the known-provider policy', async (t) => {
   const f = await fixture();
   t.after(() => f.emailSecurityService.close());

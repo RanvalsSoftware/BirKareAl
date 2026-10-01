@@ -539,7 +539,7 @@ function Security() {
               icon="checkmark-circle"
               title={translateCopy("Google hesabı bağlı")}
               detail={translateCopy("Bu giriş yöntemi hesabında etkin")}
-              value="Bağlı"
+              value={translateCopy('Bağlı')}
               last
             />
           </GlassSettingsPanel>
@@ -571,8 +571,8 @@ function Security() {
               key={session.id}
               icon="phone-portrait-outline"
               title={session.deviceName || session.platform || translateCopy("Kayıtlı cihaz")}
-              detail={translateCopy("{{p0}}Son kullanım: {{p1}}", { p0: session.current ? 'Bu oturum · ' : '', p1: new Date(session.lastUsedAt).toLocaleDateString('tr-TR') })}
-              value={session.current ? 'Aktif' : 'Kapat'}
+              detail={translateCopy("{{p0}}Son kullanım: {{p1}}", { p0: session.current ? `${translateCopy('Bu oturum')} · ` : '', p1: new Date(session.lastUsedAt).toLocaleDateString(getAppLocale()) })}
+              value={translateCopy(session.current ? 'Aktif' : 'Kapat')}
               last={index === active.length - 1}
               disabled={working}
               onPress={
@@ -652,15 +652,15 @@ type Transaction = {
   availableAfter: number | null;
 };
 const transactionLabels: Record<string, string> = {
-  PURCHASE: translateCopy("Kredi satın alımı"),
-  SUBSCRIPTION_GRANT: translateCopy("Üyelik kredisi"),
-  GENERATION_RESERVATION: translateCopy("Üretim için ayrıldı"),
-  GENERATION_CAPTURE: translateCopy("Görsel üretimi"),
-  GENERATION_RELEASE: translateCopy("Ayrılan kredi serbest bırakıldı"),
-  REFUND: translateCopy("Kredi iadesi"),
-  BONUS: 'Hediye kredi',
-  ADMIN_ADJUSTMENT: translateCopy("Bakiye düzenlemesi"),
-  CHARGEBACK: translateCopy("Ödeme iptali"),
+  get PURCHASE() { return translateCopy("Kredi satın alımı"); },
+  get SUBSCRIPTION_GRANT() { return translateCopy("Üyelik kredisi"); },
+  get GENERATION_RESERVATION() { return translateCopy("Üretim için ayrıldı"); },
+  get GENERATION_CAPTURE() { return translateCopy("Görsel üretimi"); },
+  get GENERATION_RELEASE() { return translateCopy("Ayrılan kredi serbest bırakıldı"); },
+  get REFUND() { return translateCopy("Kredi iadesi"); },
+  get BONUS() { return translateCopy('Hediye kredi'); },
+  get ADMIN_ADJUSTMENT() { return translateCopy("Bakiye düzenlemesi"); },
+  get CHARGEBACK() { return translateCopy("Ödeme iptali"); },
 };
 
 function History() {

@@ -9,13 +9,17 @@ import { Controller, useForm } from 'react-hook-form';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { apiRequest } from '@/api/client';
 import { useAuthStore } from '@/features/auth/auth-store';
-import { GoogleSignInButton } from '@/features/auth/google-sign-in';
-import { setPendingSocialRegistration } from '@/features/auth/social-registration';
+import { GoogleSignInButton, type GoogleProfileHint } from '@/features/auth/google-sign-in';
+import {
+  setPendingSocialRegistration,
+  withGoogleProfileFallback,
+} from '@/features/auth/social-registration';
 import {
   recoveryUntilFromError,
   stageDeletionRecoveryHandoff,
 } from '@/features/auth/deletion-recovery-handoff';
 import { consumePendingOnboardingCreateDraft } from '@/features/create/createFlow';
+import { consumePostAuthDestination } from '@/features/auth/post-auth-destination';
 import {
   AuthBrandBar,
   AuthFormCard,
@@ -96,7 +100,7 @@ export default function RegisterScreen() {
   }, [clearErrors, errors.root?.message]);
 
   const completeGoogleSignIn = useCallback(
-    async (idToken: string) => {
+    async (idToken: string, profileHint: GoogleProfileHint) => {
       setSocialError(null);
       try {
         const result = await signInWithGoogle(idToken);
@@ -114,7 +118,7 @@ export default function RegisterScreen() {
         if (result.kind === 'profile_completion_required') {
           setPendingSocialRegistration({
             pendingToken: result.pendingToken,
-            profile: result.profile,
+            profile: withGoogleProfileFallback(result.profile, profileHint),
             provider: 'Google',
           });
           router.push('/(auth)/social-complete');
@@ -125,7 +129,9 @@ export default function RegisterScreen() {
           router.replace({ pathname: '/create/review', params: { autoStart: 'onboarding' } });
           return;
         }
-        router.replace(onboardingDraft ? '/create/upload' : '/(tabs)/home');
+        router.replace(
+          onboardingDraft ? '/create/upload' : (consumePostAuthDestination() ?? '/(tabs)/home'),
+        );
       } catch (error) {
         const recoveryUntil = recoveryUntilFromError(error);
         if (recoveryUntil) {
@@ -195,7 +201,7 @@ export default function RegisterScreen() {
         return;
       }
       setError('root', {
-        message: error instanceof Error ? error.message : translateCopy("Kayıt oluşturulamadı."),
+        message: error instanceof Error ? error.message : translateCopy('Kayıt oluşturulamadı.'),
       });
     } finally {
       registering.current = false;
@@ -241,7 +247,7 @@ export default function RegisterScreen() {
                 <View style={styles.inputRow}>
                   <Ionicons color={authColors.yellow} name="person-outline" size={16} />
                   <TextInput
-                    accessibilityLabel={translateCopy("Ad")}
+                    accessibilityLabel={translateCopy('Ad')}
                     autoComplete="given-name"
                     blurOnSubmit={false}
                     cursorColor={authColors.yellow}
@@ -274,7 +280,7 @@ export default function RegisterScreen() {
                   <Ionicons color={authColors.yellow} name="person-outline" size={16} />
                   <TextInput
                     ref={lastNameInputRef}
-                    accessibilityLabel={translateCopy("Soyad")}
+                    accessibilityLabel={translateCopy('Soyad')}
                     autoComplete="family-name"
                     blurOnSubmit={false}
                     cursorColor={authColors.yellow}
@@ -308,7 +314,7 @@ export default function RegisterScreen() {
                 <Ionicons color={authColors.yellow} name="mail-outline" size={18} />
                 <TextInput
                   ref={emailInputRef}
-                  accessibilityLabel={translateCopy("E-posta")}
+                  accessibilityLabel={translateCopy('E-posta')}
                   autoCapitalize="none"
                   autoComplete="email"
                   autoCorrect={false}
@@ -318,7 +324,7 @@ export default function RegisterScreen() {
                   onBlur={onBlur}
                   onChangeText={onChange}
                   onSubmitEditing={() => birthYearInputRef.current?.focus()}
-                  placeholder={translateCopy("ornek@gmail.com")}
+                  placeholder={translateCopy('ornek@gmail.com')}
                   placeholderTextColor={authColors.muted}
                   rejectResponderTermination={false}
                   returnKeyType="next"
@@ -350,7 +356,7 @@ export default function RegisterScreen() {
                 <Ionicons color={authColors.yellow} name="calendar-outline" size={17} />
                 <TextInput
                   ref={birthYearInputRef}
-                  accessibilityLabel={translateCopy("Doğum yılı")}
+                  accessibilityLabel={translateCopy('Doğum yılı')}
                   blurOnSubmit={false}
                   cursorColor={authColors.yellow}
                   keyboardType="number-pad"
@@ -384,7 +390,7 @@ export default function RegisterScreen() {
                 <Ionicons color={authColors.yellow} name="lock-closed-outline" size={17} />
                 <TextInput
                   ref={passwordInputRef}
-                  accessibilityLabel={translateCopy("Şifre")}
+                  accessibilityLabel={translateCopy('Şifre')}
                   autoComplete="new-password"
                   blurOnSubmit={false}
                   cursorColor={authColors.yellow}
@@ -402,7 +408,9 @@ export default function RegisterScreen() {
                   value={value ?? ''}
                 />
                 <Pressable
-                  accessibilityLabel={showPassword ? translateCopy("Şifreyi gizle") : translateCopy("Şifreyi göster")}
+                  accessibilityLabel={
+                    showPassword ? translateCopy('Şifreyi gizle') : translateCopy('Şifreyi göster')
+                  }
                   accessibilityRole="button"
                   hitSlop={10}
                   onPress={() => setShowPassword((current) => !current)}
@@ -431,7 +439,7 @@ export default function RegisterScreen() {
                 <Ionicons color={authColors.yellow} name="shield-checkmark-outline" size={17} />
                 <TextInput
                   ref={confirmationInputRef}
-                  accessibilityLabel={translateCopy("Şifre tekrar")}
+                  accessibilityLabel={translateCopy('Şifre tekrar')}
                   autoComplete="new-password"
                   blurOnSubmit={false}
                   cursorColor={authColors.yellow}
@@ -448,7 +456,11 @@ export default function RegisterScreen() {
                   value={value ?? ''}
                 />
                 <Pressable
-                  accessibilityLabel={showConfirmation ? translateCopy("Şifreyi gizle") : translateCopy("Şifreyi göster")}
+                  accessibilityLabel={
+                    showConfirmation
+                      ? translateCopy('Şifreyi gizle')
+                      : translateCopy('Şifreyi göster')
+                  }
                   accessibilityRole="button"
                   hitSlop={10}
                   onPress={() => setShowConfirmation((current) => !current)}

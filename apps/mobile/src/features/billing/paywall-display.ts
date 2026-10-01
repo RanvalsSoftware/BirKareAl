@@ -1,3 +1,4 @@
+import { tr as translateCopy } from '@/i18n/engine';
 import type { ProPlan, ProPlanId } from './paywall-model';
 import type { ProPlanDisplay } from './ProPaywallView';
 
@@ -7,16 +8,16 @@ export function toDisplayPlan(plan: ProPlan, locale?: string): ProPlanDisplay {
   const product = plan.package.product;
   if (plan.id === 'annual' && Number.isFinite(product.price) && product.price > 0 && product.currencyCode) {
     try {
-      monthlyEquivalent = 'Aylık karşılığı ' + new Intl.NumberFormat(locale, {
+      monthlyEquivalent = translateCopy('Aylık karşılığı {{p0}}', { p0: new Intl.NumberFormat(locale, {
         style: 'currency', currency: product.currencyCode,
-      }).format(product.price / 12);
+      }).format(product.price / 12) });
     } catch {
       // Keep the store-supplied total price; an optional comparison may be absent.
     }
   }
   return {
     id: plan.id, label: plan.label, price: product.priceString,
-    period: plan.id === 'lifetime' ? 'tek sefer' : plan.id === 'annual' ? '/ yıl' : '/ ay',
+    period: plan.id === 'lifetime' ? translateCopy('tek sefer') : plan.id === 'annual' ? translateCopy('/ yıl') : translateCopy('/ ay'),
     note: plan.note, monthlyEquivalent,
   };
 }
@@ -37,7 +38,7 @@ export function toDisplayPlans(plans: readonly ProPlan[], locale?: string): ProP
     const year = plan.package.product;
     if (plan.id === 'annual' && month && month.currencyCode === year.currencyCode &&
       Number.isFinite(month.price) && month.price > 0 && Number.isFinite(year.price) &&
-      year.price > 0 && year.price < month.price * 12) display.badge = 'En avantajlı';
+      year.price > 0 && year.price < month.price * 12) display.badge = translateCopy('En avantajlı');
     return display;
   });
 }

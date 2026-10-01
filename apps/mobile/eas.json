@@ -30,11 +30,13 @@
     },
     "preview": {
       "distribution": "internal",
+      "credentialsSource": "local",
       "environment": "preview",
       "env": {
         "EXPO_PUBLIC_APP_ENV": "staging",
         "EXPO_PUBLIC_API_BASE_URL": "https://birkare-api.ranvals.com",
         "EXPO_PUBLIC_SUPPORT_EMAIL": "birkareal@ranvals.com",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "197394599682-a7897p3rt9i9ocgbmou6pbf1p3hjrepv.apps.googleusercontent.com",
         "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "197394599682-0nmn4oppa3v23p9dv4ovdneh4fpq2sbv.apps.googleusercontent.com"
       },
       "android": {
@@ -49,12 +51,12 @@
         "EXPO_PUBLIC_APP_ENV": "staging",
         "EXPO_PUBLIC_API_BASE_URL": "https://birkare-api.ranvals.com",
         "EXPO_PUBLIC_SUPPORT_EMAIL": "birkareal@ranvals.com",
-        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "197394599682-cubvb4e2ajh6621djsrkv3dhbgo6j15p.apps.googleusercontent.com"
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "197394599682-a7897p3rt9i9ocgbmou6pbf1p3hjrepv.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "197394599682-cubvb4e2ajh6621djsrkv3dhbgo6j15p.apps.googleusercontent.com,197394599682-08sti8uhplpeb1svj51salr07ovoci9r.apps.googleusercontent.com"
       },
       "autoIncrement": false,
       "android": {
-        "buildType": "app-bundle",
-        "credentialsSource": "remote"
+        "buildType": "app-bundle"
       }
     },
     "production": {
@@ -65,12 +67,12 @@
         "EXPO_PUBLIC_APP_ENV": "production",
         "EXPO_PUBLIC_API_BASE_URL": "https://birkare-api.ranvals.com",
         "EXPO_PUBLIC_SUPPORT_EMAIL": "birkareal@ranvals.com",
-        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "197394599682-cubvb4e2ajh6621djsrkv3dhbgo6j15p.apps.googleusercontent.com"
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "197394599682-a7897p3rt9i9ocgbmou6pbf1p3hjrepv.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "197394599682-cubvb4e2ajh6621djsrkv3dhbgo6j15p.apps.googleusercontent.com,197394599682-08sti8uhplpeb1svj51salr07ovoci9r.apps.googleusercontent.com"
       },
       "autoIncrement": false,
       "android": {
-        "buildType": "app-bundle",
-        "credentialsSource": "remote"
+        "buildType": "app-bundle"
       }
     }
   },

@@ -5,6 +5,8 @@ import { tr } from '@/i18n/engine';
 import { useLanguageRevision } from '@/i18n/use-language';
 
 export default function GenerationDetailScreen() {
+  const languageRevision = useLanguageRevision();
+
   useLanguageRevision();
   const { id } = useLocalSearchParams<{ id?: string | string[] }>();
   const generationId = typeof id === 'string' ? id : undefined;

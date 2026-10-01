@@ -1,4 +1,5 @@
 import type { PendingSocialProfile } from './auth-store';
+import type { GoogleProfileHint } from './google-sign-in';
 
 export type PendingSocialRegistration = {
   pendingToken: string;
@@ -21,4 +22,15 @@ export function getPendingSocialRegistration(): PendingSocialRegistration | null
 
 export function clearPendingSocialRegistration(): void {
   pendingSocialRegistration = null;
+}
+
+export function withGoogleProfileFallback(
+  profile: PendingSocialProfile,
+  hint: GoogleProfileHint,
+): PendingSocialProfile {
+  return {
+    ...profile,
+    firstName: profile.firstName?.trim() || hint.firstName?.trim() || null,
+    lastName: profile.lastName?.trim() || hint.lastName?.trim() || null,
+  };
 }

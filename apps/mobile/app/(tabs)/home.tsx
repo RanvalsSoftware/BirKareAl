@@ -76,10 +76,18 @@ const stadiumScene = scenes.find((scene) => scene.id === 'scene-stadium-lights')
 const homeSlides: HomeSlide[] = [
   {
     id: 'football-scene',
-    eyebrow: 'KURGUSAL SAHNE',
-    get title() { return translateCopy("Stadyumda futbol anı"); },
-    get description() { return translateCopy("Işıklar altında, futbol enerjisini taşıyan özgün bir sahne oluştur."); },
-    action: 'Sahneyi seç',
+    get eyebrow() {
+      return translateCopy('KURGUSAL SAHNE');
+    },
+    get title() {
+      return translateCopy('Stadyumda futbol anı');
+    },
+    get description() {
+      return translateCopy('Işıklar altında, futbol enerjisini taşıyan özgün bir sahne oluştur.');
+    },
+    get action() {
+      return translateCopy('Sahneyi seç');
+    },
     icon: 'football',
     palette: ['#0B2939', '#52731D'],
     source: require('../../assets/home/images/slider/football.webp'),
@@ -93,10 +101,18 @@ const homeSlides: HomeSlide[] = [
   },
   {
     id: 'beauty-filter',
-    eyebrow: 'GÜZELLİK STÜDYOSU',
-    get title() { return translateCopy("Işıltını öne çıkar"); },
-    get description() { return translateCopy("10 görünüm, sana özel yoğunluk. Doğal rötuş ve makyajı birlikte seç."); },
-    action: 'Güzelliği keşfet',
+    get eyebrow() {
+      return translateCopy('GÜZELLİK STÜDYOSU');
+    },
+    get title() {
+      return translateCopy('Işıltını öne çıkar');
+    },
+    get description() {
+      return translateCopy('10 görünüm, sana özel yoğunluk. Doğal rötuş ve makyajı birlikte seç.');
+    },
+    get action() {
+      return translateCopy('Güzelliği keşfet');
+    },
     icon: 'color-filter',
     palette: ['#6B3240', '#D28A75'],
     source: require('../../assets/home/images/slider/beauty.webp'),
@@ -104,10 +120,18 @@ const homeSlides: HomeSlide[] = [
   },
   {
     id: 'background-transform',
-    eyebrow: 'ARKA PLAN DÖNÜŞÜMÜ',
-    get title() { return translateCopy("Manzaranı yeniden kur"); },
-    get description() { return translateCopy("Pozunu korurken fotoğrafını yeni bir şehir atmosferine taşı."); },
-    action: 'Arka planı seç',
+    get eyebrow() {
+      return translateCopy('ARKA PLAN DÖNÜŞÜMÜ');
+    },
+    get title() {
+      return translateCopy('Manzaranı yeniden kur');
+    },
+    get description() {
+      return translateCopy('Pozunu korurken fotoğrafını yeni bir şehir atmosferine taşı.');
+    },
+    get action() {
+      return translateCopy('Arka planı seç');
+    },
     icon: 'layers',
     palette: ['#3A251F', '#D88835'],
     source: require('../../assets/home/images/slider/background.webp'),
@@ -272,7 +296,10 @@ export default function HomeScreen() {
           <Pressable
             key={slide.id}
             accessibilityRole="tab"
-            accessibilityLabel={`${slide.title}, ${index + 1}. kart`}
+            accessibilityLabel={translateCopy('{{p0}}, {{p1}}. kart', {
+              p0: slide.title,
+              p1: index + 1,
+            })}
             accessibilityState={{ selected: index === activeSlide }}
             onPress={() => selectSlide(index)}
             style={[styles.paginationDot, index === activeSlide && styles.paginationDotActive]}
@@ -283,7 +310,7 @@ export default function HomeScreen() {
       <View style={styles.quickActions}>
         <QuickAction
           icon="camera-outline"
-          title={translateCopy("Fotoğraf yükle")}
+          title={translateCopy('Fotoğraf yükle')}
           onPress={() => {
             resetCreateFlow();
             router.push('/create/upload' as never);
@@ -291,7 +318,7 @@ export default function HomeScreen() {
         />
         <QuickAction
           icon="people-outline"
-          title={translateCopy("Kurgusal karakter")}
+          title={translateCopy('Kurgusal karakter')}
           onPress={() => {
             resetCreateFlow();
             setCreateFlow({ mode: 'scene', sourceKind: 'fictional' });
@@ -300,12 +327,12 @@ export default function HomeScreen() {
         />
         <QuickAction
           icon="color-filter-outline"
-          title={translateCopy("Filtre dene")}
+          title={translateCopy('Filtre dene')}
           onPress={() => router.push('/filters' as never)}
         />
         <QuickAction
           icon="sparkles-outline"
-          title={translateCopy("AI araçları")}
+          title={translateCopy('AI araçları')}
           onPress={() => router.push('/(tabs)/explore' as never)}
         />
       </View>
@@ -319,13 +346,19 @@ export default function HomeScreen() {
         {popularSceneCards.map((item) => (
           <PopularSceneCard
             key={item.id}
-            title={item.id === 'face' ? translateCopy("Güzellik") : item.title}
+            title={item.id === 'face' ? translateCopy('Güzellik') : item.title}
             subtitle={
-              item.id === 'face' ? translateCopy("Doğal rötuş, makyaj ve sana özel yoğunluk") : item.description
+              item.id === 'face'
+                ? translateCopy('Doğal rötuş, makyaj ve sana özel yoğunluk')
+                : item.description
             }
             source={item.id === 'face' ? beautySceneImage : item.source}
             palette={item.palette}
-            badge={item.id === 'face' ? translateCopy("10 görünüm") : `${item.creditCost} kredi`}
+            badge={
+              item.id === 'face'
+                ? translateCopy('10 görünüm')
+                : translateCopy('{{p0}} kredi', { p0: item.creditCost })
+            }
             onPress={() => {
               if (item.id === 'face') {
                 resetCreateFlow();
@@ -385,7 +418,7 @@ export default function HomeScreen() {
           <VisualTile
             key={item.id}
             title={item.name}
-            subtitle={translateCopy("AI ile uygulanır")}
+            subtitle={translateCopy('AI ile uygulanır')}
             palette={item.palette}
             icon={item.icon}
             imageSource={item.previewSource}
@@ -409,7 +442,7 @@ export default function HomeScreen() {
           <CharacterTile
             key={item.id}
             name={item.name}
-            subtitle={translateCopy("Kurgusal karakter")}
+            subtitle={translateCopy('Kurgusal karakter')}
             initials={item.icon}
             palette={item.palette}
             imageSource={item.previewSource}
@@ -425,8 +458,12 @@ export default function HomeScreen() {
           <Icon name="shield-checkmark-outline" size={23} color={colors.accentYellow} />
         </View>
         <View style={styles.bottomCardCopy}>
-          <Text style={styles.bottomCardTitle}>{translateCopy("Senin fotoğrafın, senin kontrolün.")}</Text>
-          <Text style={styles.bottomCardText}>{translateCopy("Her üretim AI etiketiyle ve izin odaklı hazırlanır.")}</Text>
+          <Text style={styles.bottomCardTitle}>
+            {translateCopy('Senin fotoğrafın, senin kontrolün.')}
+          </Text>
+          <Text style={styles.bottomCardText}>
+            {translateCopy('Her üretim AI etiketiyle ve izin odaklı hazırlanır.')}
+          </Text>
         </View>
       </LinearGradient>
     </ScrollView>
@@ -540,13 +577,7 @@ function QuickAction({
             <Icon name={icon} size={26} color={colors.textPrimary} />
           </GlassSurface>
           <Text numberOfLines={2} style={styles.quickActionText}>
-            {title === 'Fotoğraf yükle'
-              ? translateCopy("Fotoğraf yükle")
-              : title === 'Kurgusal karakter'
-                ? translateCopy("Kurgusal karakter")
-                : title === 'Filtre dene'
-                  ? translateCopy("Filtre dene")
-                  : translateCopy("AI araçları")}
+            {title}
           </Text>
           <LinearGradient
             colors={['#8146D9', '#B15DC0', '#E78D3D']}
@@ -573,7 +604,10 @@ function StudioHomeCard({
 
   return (
     <Pressable
-      accessibilityLabel={translateCopy("{{p0}}, {{p1}} krediden başlayan", { p0: item.name, p1: item.creditCost })}
+      accessibilityLabel={translateCopy('{{p0}}, {{p1}} krediden başlayan', {
+        p0: item.name,
+        p1: item.creditCost,
+      })}
       accessibilityRole="button"
       onPress={onPress}
       style={({ pressed }) => [styles.studioCard, pressed && styles.pressed]}
@@ -590,7 +624,10 @@ function StudioHomeCard({
       />
       <View style={styles.studioCardBadge}>
         <Icon name="flash" size={13} color={colors.accentYellow} />
-        <Text style={styles.studioCardBadgeText}>{item.creditCost}{translateCopy("+ kredi")}</Text>
+        <Text style={styles.studioCardBadgeText}>
+          {item.creditCost}
+          {translateCopy('+ kredi')}
+        </Text>
       </View>
       <View style={styles.studioCardCopy}>
         <Text numberOfLines={1} style={styles.studioCardTitle}>

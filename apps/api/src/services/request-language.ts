@@ -1,12 +1,14 @@
 /** Presentation metadata only. Never use a language header for authorization. */
-export type CommunicationLanguage = 'tr' | 'en';
+export type CommunicationLanguage = 'tr' | 'en' | 'de' | 'es' | 'ar';
+
+const supportedLanguages: readonly CommunicationLanguage[] = ['tr', 'en', 'de', 'es', 'ar'];
 
 export function communicationLanguage(value: unknown): CommunicationLanguage | undefined {
   if (typeof value !== 'string' || value.length > 80) return undefined;
   const code = value.trim().toLowerCase().replace(/_/g, '-');
-  if (/^tr(?:-[a-z0-9]{2,8})*$/.test(code)) return 'tr';
-  if (/^en(?:-[a-z0-9]{2,8})*$/.test(code)) return 'en';
-  return undefined;
+  if (!/^[a-z]{2}(?:-[a-z0-9]{2,8})*$/.test(code)) return undefined;
+  const language = code.split('-')[0] as CommunicationLanguage;
+  return supportedLanguages.includes(language) ? language : undefined;
 }
 
 /** Honors weights and order; excludes q=0, wildcards and malformed entries. */

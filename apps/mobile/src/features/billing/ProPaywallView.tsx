@@ -67,8 +67,8 @@ export function ProPaywallView(props: ProPaywallViewProps) {
   const stacked = maxWidth < 360 || fontScale > 1.25;
   const heroHeight = Math.round((maxWidth - 32) * 0.48);
   const features = [
-    { image: assets.infinity, title: 'Krediyle AI', detail: translateCopy("üretimi") },
-    { image: assets.people, title: 'Premium', detail: 'karakterler ve sahneler' },
+    { image: assets.infinity, title: translateCopy('Krediyle AI'), detail: translateCopy("üretimi") },
+    { image: assets.people, title: translateCopy('Premium'), detail: translateCopy('karakterler ve sahneler') },
     { image: assets.wand, title: translateCopy("Pro araçlar"), detail: translateCopy("ve daha fazlası") },
   ];
   const scenes = [

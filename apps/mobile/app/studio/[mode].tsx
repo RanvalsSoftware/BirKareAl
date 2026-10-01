@@ -51,20 +51,20 @@ const modeCopy: Record<
   product: {
     get title() { return translateCopy("Ürün & katalog çekimi"); },
     get subtitle() { return translateCopy("Ürünün kimliği ve tasarımı korunur"); },
-    primaryLabel: 'Ürün fotoğrafını seç',
-    primaryHint: 'Ürün net, tek ve mümkünse sade zeminde görünmeli.',
+    get primaryLabel() { return translateCopy('Ürün fotoğrafını seç'); },
+    get primaryHint() { return translateCopy('Ürün net, tek ve mümkünse sade zeminde görünmeli.'); },
   },
   fashion: {
     get title() { return translateCopy("Kıyafet deneme"); },
     get subtitle() { return translateCopy("Kişi ve kıyafet iki ayrı kaynak olarak işlenir"); },
-    primaryLabel: 'Kişi fotoğrafını seç',
-    primaryHint: 'Yüzün ve vücut duruşunun net göründüğü bir fotoğraf seç.',
+    get primaryLabel() { return translateCopy('Kişi fotoğrafını seç'); },
+    get primaryHint() { return translateCopy('Yüzün ve vücut duruşunun net göründüğü bir fotoğraf seç.'); },
   },
   nails: {
     get title() { return translateCopy("Tırnak & manikür"); },
     get subtitle() { return translateCopy("Yalnızca tırnak görünümü değiştirilir"); },
-    primaryLabel: 'El fotoğrafını seç',
-    primaryHint: 'Parmakların tamamı net ve birbirinden ayrılmış görünmeli.',
+    get primaryLabel() { return translateCopy('El fotoğrafını seç'); },
+    get primaryHint() { return translateCopy('Parmakların tamamı net ve birbirinden ayrılmış görünmeli.'); },
   },
 };
 
@@ -171,7 +171,7 @@ export default function StudioModeScreen() {
           setQuoteState({
             requestKey: quoteRequestKey,
             quote: null,
-            error: error instanceof Error ? error.message : 'Kredi özeti alınamadı.',
+            error: error instanceof Error ? error.message : translateCopy('Kredi özeti alınamadı.'),
           });
         });
     }, 140);
@@ -215,7 +215,7 @@ export default function StudioModeScreen() {
         params: { generationId: result.generation.generationId },
       } as never);
     } catch (error) {
-      setStartError(error instanceof Error ? error.message : 'Üretim başlatılamadı.');
+      setStartError(error instanceof Error ? error.message : translateCopy('Üretim başlatılamadı.'));
     } finally {
       startLock.current = false;
       setStarting(false);
@@ -313,7 +313,7 @@ export default function StudioModeScreen() {
       <Text style={styles.fieldTitle}>{translateCopy("Kalite")}</Text>
       <View style={styles.choiceRow}>
         <MiniChoice
-          caption={`${previewCredits} kredi`}
+          caption={translateCopy('{{p0}} kredi', { p0: previewCredits })}
           label={translateCopy("Önizleme")}
           onPress={() => set({ quality: 'PREVIEW' })}
           selected={flow.quality === 'PREVIEW'}
@@ -325,7 +325,7 @@ export default function StudioModeScreen() {
           selected={flow.quality === 'STANDARD'}
         />
         <MiniChoice
-          caption={`Standart +${hdExtraCredits}`}
+          caption={translateCopy('Standart +{{p0}}', { p0: hdExtraCredits })}
           label="HD"
           onPress={() => set({ quality: 'HD' })}
           selected={flow.quality === 'HD'}

@@ -4,6 +4,7 @@ import { createApiDependencies } from './services/dependencies.js';
 import { AccountDeletionService } from './modules/users/account-deletion.service.js';
 import { GoogleIdTokenService } from './modules/auth/google-id-token.service.js';
 import { AppleIdTokenService } from './modules/auth/apple-id-token.service.js';
+import { AppleTokenRevocationService } from './modules/auth/apple-token-revocation.service.js';
 
 async function main(): Promise<void> {
   const deps = await createApiDependencies();
@@ -16,6 +17,7 @@ async function main(): Promise<void> {
     deps.passwordService,
     new GoogleIdTokenService(deps.config),
     new AppleIdTokenService(deps.config),
+    new AppleTokenRevocationService(deps.config),
   );
   let deletionSweepRunning = false;
   const sweepAccountDeletions = async () => {

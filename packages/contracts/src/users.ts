@@ -14,12 +14,17 @@ export const DeleteAccountSchema = z
     password: z.string().min(1).max(256).optional(),
     googleIdToken: z.string().min(20).max(12000).optional(),
     appleIdToken: z.string().min(20).max(12000).optional(),
+    appleAuthorizationCode: z.string().min(8).max(4096).optional(),
   })
   .strict()
   .refine(
     (input) =>
       [input.password, input.googleIdToken, input.appleIdToken].filter(Boolean).length === 1,
     'Tek bir yeniden doğrulama yöntemi gereklidir.',
+  )
+  .refine(
+    (input) => Boolean(input.appleIdToken) === Boolean(input.appleAuthorizationCode),
+    'Apple ile silme için kimlik belirteci ve yetkilendirme kodu birlikte gereklidir.',
   );
 
 export const UpdatePreferencesSchema = z

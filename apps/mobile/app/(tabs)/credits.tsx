@@ -167,7 +167,7 @@ export default function CreditsScreen() {
             {MOBILE_CREDIT_PRODUCTS.map((pack) => {
               const presentation = packPresentation[pack.id];
               const product = productsById.get(pack.productId);
-              const price = product?.priceString ?? (billing.ready ? 'Mağazada yok' : 'Yükleniyor…');
+              const price = product?.priceString ?? translateCopy(billing.ready ? 'Mağazada yok' : 'Yükleniyor…');
               const priceMismatch =
                 billing.appEnv !== 'production' &&
                 product &&
@@ -191,11 +191,11 @@ export default function CreditsScreen() {
                     <Icon name={presentation.icon} size={30} color="#FFD866" />
                   </View>
                   <View style={styles.packCopy}>
-                    <Text style={styles.packTitle}>{pack.label}</Text>
+                    <Text style={styles.packTitle}>{translateCopy(pack.label)}</Text>
                     <Text style={styles.packCredits}>{pack.credits}{' '}{translateCopy("kredi")}</Text>
-                    <Text style={styles.packNote}>{presentation.note}</Text>
+                    <Text style={styles.packNote}>{translateCopy(presentation.note)}</Text>
                     {priceMismatch ? (
-                      <Text style={styles.priceWarning}>{translateCopy("Test uyarısı: mağaza fiyatı politika ile eşleşmiyor. Beklenen TRY fiyatı ₺ {{p0}}.", { p0: pack.expectedTryPrice.toLocaleString('tr-TR', {
+                      <Text style={styles.priceWarning}>{translateCopy("Test uyarısı: mağaza fiyatı politika ile eşleşmiyor. Beklenen TRY fiyatı ₺ {{p0}}.", { p0: pack.expectedTryPrice.toLocaleString(getAppLocale(), {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         }) })}</Text>
@@ -205,7 +205,7 @@ export default function CreditsScreen() {
                     <Text style={styles.packPrice}>{price}</Text>
                     <Pressable
                       accessibilityRole="button"
-                      accessibilityLabel={`${pack.label}, ${pack.credits} kredi, ${price}`}
+                        accessibilityLabel={translateCopy('{{p0}}, {{p1}} kredi, {{p2}}', { p0: translateCopy(pack.label), p1: pack.credits, p2: price })}
                       accessibilityState={{ disabled }}
                       disabled={disabled}
                       onPress={() => void purchaseCredits(pack.productId, pack.credits)}

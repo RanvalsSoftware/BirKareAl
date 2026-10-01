@@ -91,9 +91,9 @@ export const categories = experienceScenes;
 export const filterGroups: { id: FilterGroup; label: string }[] = [
   { id: 'all', get label() { return translateCopy("Tümü"); } },
   { id: 'natural', get label() { return translateCopy("Doğal"); } },
-  { id: 'art', label: 'Sanatsal' },
-  { id: 'cinematic', label: 'Sinematik' },
-  { id: 'professional', label: 'Portre' },
+  { id: 'art', get label() { return translateCopy('Sanatsal'); } },
+  { id: 'cinematic', get label() { return translateCopy('Sinematik'); } },
+  { id: 'professional', get label() { return translateCopy('Portre'); } },
 ];
 
 export const filters: {
@@ -140,7 +140,7 @@ export const filters: {
   },
   {
     id: 'black-white',
-    title: 'Siyah Beyaz',
+    get title() { return translateCopy('Siyah Beyaz'); },
     group: 'professional',
     source: require('../../../assets/onboarding/images/filters/siyah-beyaz.webp'),
   },
@@ -190,7 +190,7 @@ export const fanScenes: {
 }[] = [
   {
     id: 'fan-stadium-01',
-    title: 'Stadyum Selfie',
+    get title() { return translateCopy('Stadyum Selfie'); },
     source: require('../../../assets/onboarding/images/scenes/stadium.webp'),
   },
   {
@@ -200,7 +200,7 @@ export const fanScenes: {
   },
   {
     id: 'fan-celebration',
-    title: 'Kutlama Karesi',
+    get title() { return translateCopy('Kutlama Karesi'); },
     source: require('../../../assets/onboarding/images/scenes/stadium.webp'),
   },
 ];

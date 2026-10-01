@@ -59,7 +59,7 @@ export function OnboardingHeader({
         ) : null}
       </View>
       <View style={styles.headerCenter}>
-        {step ? <Text style={styles.headerStep}>{step}</Text> : null}
+        {step ? <Text style={styles.headerStep}>{translateCopy(step)}</Text> : null}
         {title ? <Text numberOfLines={1} style={styles.headerTitle}>{title}</Text> : null}
       </View>
       <View style={[styles.headerSide, styles.headerRight]}>
@@ -77,7 +77,7 @@ export function StepProgress({ active, total = 4 }: { active: number; total?: nu
   const languageRevision = useLanguageRevision();
 
   return (
-    <View accessibilityLabel={`Onboarding ${active + 1} / ${total}`} style={styles.stepProgress}>
+    <View accessibilityLabel={translateCopy('Adım {{p0}} / {{p1}}', { p0: active + 1, p1: total })} style={styles.stepProgress}>
       {Array.from({ length: total }, (_, index) => (
         <View key={index} style={[styles.stepDot, active === index && styles.stepDotActive]} />
       ))}

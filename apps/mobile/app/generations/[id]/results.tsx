@@ -133,7 +133,7 @@ export default function GenerationResultsScreen() {
     sourceUrl?.startsWith('/') && accessToken
       ? { authorization: `Bearer ${accessToken}` }
       : undefined;
-  const styleName = filters.find((item) => item.id === flow.styleId)?.name ?? 'Doğal Işık';
+  const styleName = filters.find((item) => item.id === flow.styleId)?.name ?? translateCopy('Doğal Işık');
 
   useEffect(() => {
     if (!generationId || generationId === 'demo') return;
@@ -146,7 +146,7 @@ export default function GenerationResultsScreen() {
       })
       .catch((error) => {
         if (active)
-          setGenerationError(error instanceof Error ? error.message : 'Sonuçlar yüklenemedi.');
+          setGenerationError(error instanceof Error ? error.message : translateCopy('Sonuçlar yüklenemedi.'));
       });
     return () => {
       active = false;
@@ -198,14 +198,14 @@ export default function GenerationResultsScreen() {
           : current,
       );
     } catch (error) {
-      setSelectionError(error instanceof Error ? error.message : 'Varyasyon seçilemedi.');
+      setSelectionError(error instanceof Error ? error.message : translateCopy('Varyasyon seçilemedi.'));
     }
   };
 
   const submitReport = async () => {
     if (!reportReason || reportSending) return;
     if (!generationId || generationId === 'demo') {
-      setReportError('Sunucuda kayıtlı olmayan bir önizleme raporlanamaz.');
+      setReportError(translateCopy('Sunucuda kayıtlı olmayan bir önizleme raporlanamaz.'));
       return;
     }
     const input = createContentReportInput({
@@ -229,7 +229,7 @@ export default function GenerationResultsScreen() {
       reportAttempt.current = null;
     } catch (error) {
       setReportError(
-        error instanceof Error ? error.message : 'Rapor gönderilemedi. Lütfen tekrar dene.',
+        error instanceof Error ? error.message : translateCopy('Rapor gönderilemedi. Lütfen tekrar dene.'),
       );
     } finally {
       setReportSending(false);
@@ -275,7 +275,7 @@ export default function GenerationResultsScreen() {
         ) : (
           <SourcePreview
             sourceUri={flow.sourceUri}
-            label={translateCopy("{{p0}} önizlemesi", { p0: selectedVariant?.label ?? 'Sonuç' })}
+            label={translateCopy("{{p0}} önizlemesi", { p0: selectedVariant?.label ?? translateCopy('Sonuç') })}
           />
         )}
         {!imageUri ? (
@@ -523,7 +523,7 @@ function ReportModal({
                 <View style={[styles.radio, reason === item && styles.radioSelected]}>
                   {reason === item ? <View style={styles.radioDot} /> : null}
                 </View>
-                <Text style={styles.reportReasonText}>{item}</Text>
+                <Text style={styles.reportReasonText}>{translateCopy(item)}</Text>
               </Pressable>
             ))}
           </ScrollView>

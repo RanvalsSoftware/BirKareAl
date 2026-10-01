@@ -60,20 +60,20 @@ export default function SupportScreen() {
           <Pressable
             key={item.question}
             accessibilityRole="button"
-            accessibilityLabel={item.question}
+            accessibilityLabel={translateCopy(item.question)}
             accessibilityState={{ expanded: open === item.question }}
             onPress={() => setOpen((current) => (current === item.question ? null : item.question))}
             style={styles.faq}
           >
             <View style={styles.faqTop}>
-              <Text style={styles.question}>{item.question}</Text>
+              <Text style={styles.question}>{translateCopy(item.question)}</Text>
               <Icon
                 name={open === item.question ? 'chevron-up' : 'chevron-down'}
                 size={18}
                 color={colors.textMuted}
               />
             </View>
-            {open === item.question ? <Text style={styles.answer}>{item.answer}</Text> : null}
+            {open === item.question ? <Text style={styles.answer}>{translateCopy(item.answer)}</Text> : null}
           </Pressable>
         ))}
       </View>

@@ -42,9 +42,10 @@ import type { SocialAuthProvider } from '@birkare/database';
 import { randomInt } from 'node:crypto';
 import { EmailSecurityService } from './email-security.service.js';
 import { assertKnownRegistrationProvider } from './email-provider-policy.js';
+import type { CommunicationLanguage } from '../../services/request-language.js';
 
 export type AuthRequestContext = {
-  preferredLocale?: 'tr' | 'en';
+  preferredLocale?: CommunicationLanguage;
   deviceId?: string;
   deviceName?: string;
   platform?: string;
@@ -336,6 +337,13 @@ export class AuthService {
     const user = await this.repository.getUserById(token.userId);
     if (!user || user.deletedAt || user.status !== 'ACTIVE') {
       throw forbidden('AUTH_ACCOUNT_UNAVAILABLE', 'Bu hesap silme işlemi için kullanılamıyor.');
+    }
+    const providers = await this.repository.listAuthProviders(user.id);
+    if (providers.includes('APPLE')) {
+      throw forbidden(
+        'DELETION_APPLE_REAUTH_REQUIRED',
+        'Apple ile bağlı hesabınızı silmek için BirKare iOS uygulamasında Apple ile yeniden doğrulayın.',
+      );
     }
     void input.reason;
     void input.details;

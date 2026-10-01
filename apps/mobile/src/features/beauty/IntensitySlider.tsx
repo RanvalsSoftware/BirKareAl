@@ -11,7 +11,7 @@ export function IntensitySlider({
   value,
   onChange,
   disabled = false,
-  label = 'Güzellik yoğunluğu',
+  label = translateCopy('Güzellik yoğunluğu'),
 }: {
   value: number;
   onChange: (value: number) => void;

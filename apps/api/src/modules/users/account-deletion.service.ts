@@ -8,6 +8,7 @@ import type { StorageProvider } from '@birkare/storage';
 import { badRequest, forbidden, notFound } from '@birkare/shared';
 import type { GoogleIdentityVerifier } from '../auth/google-id-token.service.js';
 import type { AppleIdentityVerifier } from '../auth/apple-id-token.service.js';
+import type { AppleTokenRevoker } from '../auth/apple-token-revocation.service.js';
 import type { PasswordService } from '../../services/password.service.js';
 
 export class AccountDeletionService {
@@ -17,6 +18,7 @@ export class AccountDeletionService {
     private readonly passwordService: Pick<PasswordService, 'verify'>,
     private readonly google: GoogleIdentityVerifier,
     private readonly apple: AppleIdentityVerifier,
+    private readonly appleTokens: AppleTokenRevoker,
   ) {}
 
   async preview(userId: string) {
@@ -38,6 +40,7 @@ export class AccountDeletionService {
       password?: string;
       googleIdToken?: string;
       appleIdToken?: string;
+      appleAuthorizationCode?: string;
     },
   ) {
     if (
@@ -51,6 +54,13 @@ export class AccountDeletionService {
     const user = await this.repository.getUserById(userId);
     if (!user || user.status !== 'ACTIVE')
       throw forbidden('ACCOUNT_UNAVAILABLE', 'Hesap bu işlem için kullanılamıyor.');
+    const providers = await this.repository.listAuthProviders(userId);
+    if (providers.includes('APPLE') && (!input.appleIdToken || !input.appleAuthorizationCode)) {
+      throw forbidden(
+        'DELETION_APPLE_REAUTH_REQUIRED',
+        'Apple ile bağlı hesabı silmek için Apple ile yeniden doğrulama gereklidir.',
+      );
+    }
     if (input.password) {
       if (
         !user.passwordHash ||
@@ -75,6 +85,11 @@ export class AccountDeletionService {
           'Güncel bir Google doğrulaması gerekli. Google oturumunu yeniden açıp tekrar dene.',
         );
     } else {
+      if (!input.appleAuthorizationCode)
+        throw badRequest(
+          'DELETION_APPLE_CODE_REQUIRED',
+          'Apple hesap bağlantısını kaldırmak için güncel yetkilendirme kodu gereklidir.',
+        );
       const identity = await this.apple.verify(input.appleIdToken!);
       const linked = await this.repository.getUserByAuthAccount('APPLE', identity.subject);
       if (linked?.id !== userId)
@@ -91,6 +106,7 @@ export class AccountDeletionService {
           'DELETION_REAUTH_STALE',
           'Güncel bir Apple doğrulaması gerekli. Apple ile yeniden giriş yapıp tekrar dene.',
         );
+      await this.appleTokens.revoke(input.appleAuthorizationCode);
     }
     const record = await this.repository.requestAccountDeletion(
       userId,

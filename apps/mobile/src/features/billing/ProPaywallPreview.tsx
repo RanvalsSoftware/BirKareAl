@@ -8,22 +8,22 @@ import type { ProPlanId } from './paywall-model';
 
 // Deliberately not PurchasesPackage values. No SDK/API/auth/wallet import here.
 const PREVIEW_PLANS: readonly ProPlanDisplay[] = [
-  { id: 'monthly', get label() { return translateCopy("Aylık"); }, price: '₺299,99', period: '/ ay', note: 'Her ay 80 kredi' },
+  { id: 'monthly', get label() { return translateCopy("Aylık"); }, price: '₺299,99', get period() { return translateCopy('/ ay'); }, get note() { return translateCopy('Her ay 80 kredi'); } },
   {
     id: 'annual',
     get label() { return translateCopy("Yıllık"); },
     price: '₺2.499,99',
-    period: '/ yıl',
-    note: 'Her ay 80 kredi',
-    monthlyEquivalent: 'Aylık karşılığı ₺208,33',
-    badge: 'En avantajlı',
+    get period() { return translateCopy('/ yıl'); },
+    get note() { return translateCopy('Her ay 80 kredi'); },
+    get monthlyEquivalent() { return translateCopy('Aylık karşılığı ₺208,33'); },
+    get badge() { return translateCopy('En avantajlı'); },
   },
   {
     id: 'lifetime',
     get label() { return translateCopy("Ömür Boyu"); },
     price: '₺4.999,99',
-    period: 'tek sefer',
-    note: '200 başlangıç kredisi · Kalıcı Pro',
+    get period() { return translateCopy('tek sefer'); },
+    get note() { return translateCopy('200 başlangıç kredisi · Kalıcı Pro'); },
   },
 ];
 export function ProPaywallPreview({ initialPlan = 'lifetime' }: { initialPlan?: ProPlanId }) {

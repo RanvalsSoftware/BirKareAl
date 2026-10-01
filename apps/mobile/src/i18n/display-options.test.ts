@@ -10,6 +10,12 @@ it('localizes legacy options only at the presentation boundary', async () => {
   expect(original).toEqual(['Önizleme','Standart','HD','Yakın','Orta','Uzak']);
   expect(displayOption('file:///photo.jpg')).toBe('file:///photo.jpg');
   expect(displayOption('old_money_portrait')).toBe('old_money_portrait');
+  await setLanguagePreference('de');
+  expect(displayOption('Önizleme')).toBe('Vorschau');
+  await setLanguagePreference('es');
+  expect(displayOption('Önizleme')).toBe('Vista previa');
+  await setLanguagePreference('ar');
+  expect(displayOption('Önizleme')).toBe('معاينة');
   await setLanguagePreference('tr');
   expect(original.map(displayOption)).toEqual(original);
 });

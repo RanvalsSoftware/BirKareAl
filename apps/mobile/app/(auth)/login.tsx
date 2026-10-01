@@ -1,4 +1,4 @@
-import { tr as translateCopy } from '@/i18n/engine';
+import { getLocale, tr as translateCopy } from '@/i18n/engine';
 import { useLanguageRevision } from '@/i18n/use-language';
 import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,16 +9,20 @@ import { Controller, useForm } from 'react-hook-form';
 import { Keyboard, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuthStore } from '@/features/auth/auth-store';
 import { AppleSignInButton } from '@/features/auth/apple-sign-in';
-import { GoogleSignInButton } from '@/features/auth/google-sign-in';
+import { GoogleSignInButton, type GoogleProfileHint } from '@/features/auth/google-sign-in';
 import {
   consumeDeletionRecoveryHandoff,
   recoveryUntilFromError,
   type SocialDeletionRecoveryAttempt,
 } from '@/features/auth/deletion-recovery-handoff';
-import { setPendingSocialRegistration } from '@/features/auth/social-registration';
+import {
+  setPendingSocialRegistration,
+  withGoogleProfileFallback,
+} from '@/features/auth/social-registration';
 import { AuthSuccessNotice } from '@/features/auth/AuthSuccessNotice';
 import { useRouteAuthNotice } from '@/features/auth/use-auth-notice';
 import { consumePendingOnboardingCreateDraft } from '@/features/create/createFlow';
+import { consumePostAuthDestination } from '@/features/auth/post-auth-destination';
 import {
   AuthBrandBar,
   AuthFormCard,
@@ -105,7 +109,9 @@ export default function LoginScreen() {
       router.replace({ pathname: '/create/review', params: { autoStart: 'onboarding' } });
       return;
     }
-    router.replace(onboardingDraft ? '/create/upload' : '/(tabs)/home');
+    router.replace(
+      onboardingDraft ? '/create/upload' : (consumePostAuthDestination() ?? '/(tabs)/home'),
+    );
   }, []);
   const stageDeletionRecovery = useCallback(
     (
@@ -185,7 +191,7 @@ export default function LoginScreen() {
     }
   });
   const completeGoogleSignIn = useCallback(
-    async (idToken: string) => {
+    async (idToken: string, profileHint: GoogleProfileHint) => {
       dismissVerified();
       setSocialError(null);
       try {
@@ -193,7 +199,7 @@ export default function LoginScreen() {
         if (result.kind === 'profile_completion_required') {
           setPendingSocialRegistration({
             pendingToken: result.pendingToken,
-            profile: result.profile,
+            profile: withGoogleProfileFallback(result.profile, profileHint),
             provider: 'Google',
           });
           router.push('/(auth)/social-complete');
@@ -309,7 +315,7 @@ export default function LoginScreen() {
                   onBlur={onBlur}
                   onChangeText={onChange}
                   onSubmitEditing={() => passwordInputRef.current?.focus()}
-                  placeholder={translateCopy("ornek@eposta.com")}
+                  placeholder={translateCopy('ornek@eposta.com')}
                   placeholderTextColor={authColors.muted}
                   rejectResponderTermination={false}
                   returnKeyType="next"
@@ -447,7 +453,7 @@ export default function LoginScreen() {
                 <Ionicons name="time-outline" size={18} color="#E7C46E" />
                 <Text style={styles.recoveryDeadlineText}>
                   {copy('Son geri alma tarihi: ', 'Recovery deadline: ')}
-                  {new Date(recovery.recoveryUntil).toLocaleString(copy('tr-TR', 'en-US'), {
+                  {new Date(recovery.recoveryUntil).toLocaleString(getLocale(), {
                     day: '2-digit',
                     month: 'long',
                     year: 'numeric',

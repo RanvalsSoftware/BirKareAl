@@ -59,6 +59,9 @@ x-backend-environment: &backend-environment
   GOOGLE_WEB_CLIENT_ID: ${GOOGLE_WEB_CLIENT_ID:-}
   GOOGLE_ANDROID_CLIENT_ID: ${GOOGLE_ANDROID_CLIENT_ID:-}
   APPLE_BUNDLE_ID: com.birkareai.mobile
+  APPLE_TEAM_ID: ${APPLE_TEAM_ID:?Set Apple Developer Team ID}
+  APPLE_KEY_ID: ${APPLE_KEY_ID:?Set Sign in with Apple key ID}
+  APPLE_PRIVATE_KEY_FILE: /run/secrets/apple-signin-private-key
 
 x-backend-runtime: &backend-runtime
   platform: linux/amd64
@@ -183,6 +186,8 @@ services:
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-BirKare AI}
       MAIL_APP_SCHEME: ${MAIL_APP_SCHEME:-birkareai}
       SUPPORT_EMAIL: ${SUPPORT_EMAIL:-birkareal@ranvals.com}
+    secrets:
+      - apple-signin-private-key
     ports:
       - '${API_BIND_ADDRESS:-127.0.0.1}:${API_PUBLISHED_PORT:-4000}:4000'
     stop_grace_period: 30s
@@ -199,3 +204,5 @@ volumes:
 secrets:
   cloudsql-service-account:
     file: ${CLOUD_SQL_CREDENTIALS_FILE:?Set path to the Cloud SQL service-account JSON}
+  apple-signin-private-key:
+    file: ${APPLE_PRIVATE_KEY_HOST_FILE:?Set path to Sign in with Apple .p8 private key}

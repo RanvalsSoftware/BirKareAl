@@ -134,21 +134,40 @@ describe('mobile release configuration', () => {
 
   it('uses explicit store AAB profiles with distinct EAS environments', () => {
     expect(eas.cli.appVersionSource).toBe('local');
+    expect(eas.build.preview).toMatchObject({
+      distribution: 'internal',
+      credentialsSource: 'local',
+      env: {
+        EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID:
+          '197394599682-0nmn4oppa3v23p9dv4ovdneh4fpq2sbv.apps.googleusercontent.com',
+      },
+      android: { buildType: 'apk' },
+    });
     expect(eas.build.staging).toMatchObject({
       distribution: 'store',
       credentialsSource: 'local',
       autoIncrement: false,
       environment: 'preview',
-      env: { EXPO_PUBLIC_APP_ENV: 'staging' },
+      env: {
+        EXPO_PUBLIC_APP_ENV: 'staging',
+        EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID:
+          '197394599682-cubvb4e2ajh6621djsrkv3dhbgo6j15p.apps.googleusercontent.com,197394599682-08sti8uhplpeb1svj51salr07ovoci9r.apps.googleusercontent.com',
+      },
       android: { buildType: 'app-bundle' },
     });
+    expect(eas.build.staging.android).not.toHaveProperty('credentialsSource');
     expect(eas.build.production).toMatchObject({
       distribution: 'store',
       credentialsSource: 'local',
       autoIncrement: false,
       environment: 'production',
-      env: { EXPO_PUBLIC_APP_ENV: 'production' },
+      env: {
+        EXPO_PUBLIC_APP_ENV: 'production',
+        EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID:
+          '197394599682-cubvb4e2ajh6621djsrkv3dhbgo6j15p.apps.googleusercontent.com,197394599682-08sti8uhplpeb1svj51salr07ovoci9r.apps.googleusercontent.com',
+      },
       android: { buildType: 'app-bundle' },
     });
+    expect(eas.build.production.android).not.toHaveProperty('credentialsSource');
   });
 });

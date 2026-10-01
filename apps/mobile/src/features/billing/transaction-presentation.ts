@@ -6,15 +6,15 @@ import type { CreditTransaction } from './use-wallet';
 export type TransactionFilter = 'all' | 'earned' | 'spent' | 'returned';
 
 export const transactionLabels: Record<string, string> = {
-  PURCHASE: translateCopy("Kredi satın alımı"),
-  SUBSCRIPTION_GRANT: translateCopy("Pro üyelik kredisi"),
-  GENERATION_RESERVATION: translateCopy("Üretim için ayrıldı"),
-  GENERATION_CAPTURE: translateCopy("AI görsel üretimi"),
-  GENERATION_RELEASE: translateCopy("Üretim kredisi iade edildi"),
-  REFUND: translateCopy("Kredi iadesi"),
-  BONUS: translateCopy("Hoş geldin kredisi"),
-  ADMIN_ADJUSTMENT: translateCopy("Bakiye düzenlemesi"),
-  CHARGEBACK: translateCopy("Ödeme iptali"),
+  get PURCHASE() { return translateCopy("Kredi satın alımı"); },
+  get SUBSCRIPTION_GRANT() { return translateCopy("Pro üyelik kredisi"); },
+  get GENERATION_RESERVATION() { return translateCopy("Üretim için ayrıldı"); },
+  get GENERATION_CAPTURE() { return translateCopy("AI görsel üretimi"); },
+  get GENERATION_RELEASE() { return translateCopy("Üretim kredisi iade edildi"); },
+  get REFUND() { return translateCopy("Kredi iadesi"); },
+  get BONUS() { return translateCopy("Hoş geldin kredisi"); },
+  get ADMIN_ADJUSTMENT() { return translateCopy("Bakiye düzenlemesi"); },
+  get CHARGEBACK() { return translateCopy("Ödeme iptali"); },
 };
 
 export function transactionTitle(item: CreditTransaction): string {
@@ -39,7 +39,7 @@ export function transactionIcon(type: string): ComponentProps<typeof Icon>['name
 
 export function transactionStatus(status: string): string {
   if (status === 'COMPLETED') return translateCopy("Tamamlandı");
-  if (status === 'PENDING') return 'Bekliyor';
+  if (status === 'PENDING') return translateCopy('Bekliyor');
   if (status === 'REVERSED') return translateCopy("Geri alındı");
   if (status === 'FAILED') return translateCopy("Başarısız");
   return status;

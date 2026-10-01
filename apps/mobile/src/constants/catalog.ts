@@ -23,8 +23,10 @@ export const scenes: CatalogItem[] = [
   {
     id: 'scene-stadium-lights',
     slug: 'stadium-lights',
-    name: 'Gece Stadyumu',
-    get subtitle() { return translateCopy("Işıklar altında güçlü bir kare"); },
+    get name() { return translateCopy('Gece Stadyumu'); },
+    get subtitle() {
+      return translateCopy('Işıklar altında güçlü bir kare');
+    },
     kind: 'scene',
     category: 'Spor',
     palette: ['#183A4E', '#50621B'],
@@ -35,8 +37,12 @@ export const scenes: CatalogItem[] = [
   {
     id: 'scene-award-night',
     slug: 'award-night',
-    get name() { return translateCopy("Ödül Gecesi"); },
-    get subtitle() { return translateCopy("Şehir kıyısında ışıltılı bir davet"); },
+    get name() {
+      return translateCopy('Ödül Gecesi');
+    },
+    get subtitle() {
+      return translateCopy('Şehir kıyısında ışıltılı bir davet');
+    },
     kind: 'scene',
     category: 'Etkinlik',
     palette: ['#57310F', '#B56A17'],
@@ -47,8 +53,12 @@ export const scenes: CatalogItem[] = [
   {
     id: 'scene-city-glow',
     slug: 'city-glow',
-    get name() { return translateCopy("Şehir Işıkları"); },
-    get subtitle() { return translateCopy("Gece şehir dokusu"); },
+    get name() {
+      return translateCopy('Şehir Işıkları');
+    },
+    get subtitle() {
+      return translateCopy('Gece şehir dokusu');
+    },
     kind: 'scene',
     category: 'Şehir',
     palette: ['#27104C', '#135E73'],
@@ -59,8 +69,12 @@ export const scenes: CatalogItem[] = [
   {
     id: 'scene-coastal-day',
     slug: 'coastal-day',
-    get name() { return translateCopy("Sahil Günü"); },
-    get subtitle() { return translateCopy("Turkuaz koyda Akdeniz terası"); },
+    get name() {
+      return translateCopy('Sahil Günü');
+    },
+    get subtitle() {
+      return translateCopy('Turkuaz koyda Akdeniz terası');
+    },
     kind: 'scene',
     category: 'Doğa',
     palette: ['#075B70', '#E2B35B'],
@@ -71,8 +85,12 @@ export const scenes: CatalogItem[] = [
   {
     id: 'scene-studio-ink',
     slug: 'studio-ink',
-    get name() { return translateCopy("Stüdyo Işığı"); },
-    get subtitle() { return translateCopy("Pencere ışığında doğal portre"); },
+    get name() {
+      return translateCopy('Stüdyo Işığı');
+    },
+    get subtitle() {
+      return translateCopy('Pencere ışığında doğal portre');
+    },
     kind: 'scene',
     category: 'Portre',
     palette: ['#202020', '#565656'],
@@ -84,8 +102,10 @@ export const scenes: CatalogItem[] = [
   {
     id: 'scene-neon-future',
     slug: 'neon-future',
-    name: 'Neon Gelecek',
-    get subtitle() { return translateCopy("Neon şehirde sinematik otomobil karesi"); },
+    get name() { return translateCopy('Neon Gelecek'); },
+    get subtitle() {
+      return translateCopy('Neon şehirde sinematik otomobil karesi');
+    },
     kind: 'scene',
     category: 'Fantastik',
     palette: ['#3B0E5F', '#2C8BA2'],
@@ -97,8 +117,12 @@ export const scenes: CatalogItem[] = [
   {
     id: 'scene-alpine-lake',
     slug: 'alpine-lake',
-    get name() { return translateCopy("Dağ Gölü"); },
-    get subtitle() { return translateCopy("Gün batımı, dağlar ve ahşap kulübe"); },
+    get name() {
+      return translateCopy('Dağ Gölü');
+    },
+    get subtitle() {
+      return translateCopy('Gün batımı, dağlar ve ahşap kulübe');
+    },
     kind: 'scene',
     category: 'Doğa',
     palette: ['#18364A', '#E99742'],
@@ -112,8 +136,12 @@ export const filters: CatalogItem[] = [
   {
     id: 'filter-natural',
     slug: 'natural-light',
-    get name() { return translateCopy("Doğal Işık"); },
-    get subtitle() { return translateCopy("Sade, dengeli bir görünüm"); },
+    get name() {
+      return translateCopy('Doğal Işık');
+    },
+    get subtitle() {
+      return translateCopy('Sade, dengeli bir görünüm');
+    },
     kind: 'filter',
     category: 'Doğal',
     palette: ['#315F54', '#C7B582'],
@@ -125,8 +153,12 @@ export const filters: CatalogItem[] = [
   {
     id: 'filter-drift',
     slug: 'drift-art',
-    get name() { return translateCopy("Akışkan Sanat"); },
-    get subtitle() { return translateCopy("Canlı renklerle özgün AI stil"); },
+    get name() {
+      return translateCopy('Akışkan Sanat');
+    },
+    get subtitle() {
+      return translateCopy('Canlı renklerle özgün AI stil');
+    },
     kind: 'filter',
     category: 'Sanatsal',
     palette: ['#D74673', '#4422A8'],
@@ -140,7 +172,7 @@ export const filters: CatalogItem[] = [
     id: 'filter-pop',
     slug: 'pop-poster',
     name: 'Pop Poster',
-    subtitle: 'Grafik, cesur ve parlak',
+    get subtitle() { return translateCopy('Grafik, cesur ve parlak'); },
     kind: 'filter',
     category: 'Sanatsal',
     palette: ['#FF534B', '#FFB703'],
@@ -153,7 +185,9 @@ export const filters: CatalogItem[] = [
     id: 'filter-hdr',
     slug: 'hdr-glow',
     name: 'HDR Glow',
-    get subtitle() { return translateCopy("Daha net ışık ve doku"); },
+    get subtitle() {
+      return translateCopy('Daha net ışık ve doku');
+    },
     kind: 'filter',
     category: 'Doğal',
     palette: ['#2B3F59', '#C7843E'],
@@ -165,8 +199,12 @@ export const filters: CatalogItem[] = [
   {
     id: 'filter-bokeh',
     slug: 'soft-bokeh',
-    get name() { return translateCopy("Yumuşak Bokeh"); },
-    get subtitle() { return translateCopy("Yumuşak arka plan derinliği"); },
+    get name() {
+      return translateCopy('Yumuşak Bokeh');
+    },
+    get subtitle() {
+      return translateCopy('Yumuşak arka plan derinliği');
+    },
     kind: 'filter',
     category: 'Portre',
     palette: ['#5F243D', '#B78258'],
@@ -178,8 +216,8 @@ export const filters: CatalogItem[] = [
   {
     id: 'filter-cinematic',
     slug: 'cinematic-noir',
-    name: 'Sinematik',
-    subtitle: 'Film hissi veren dramatik tonlar',
+    get name() { return translateCopy('Sinematik'); },
+    get subtitle() { return translateCopy('Film hissi veren dramatik tonlar'); },
     kind: 'filter',
     category: 'Sinematik',
     palette: ['#0F2138', '#775431'],
@@ -192,7 +230,9 @@ export const filters: CatalogItem[] = [
     id: 'filter-vintage',
     slug: 'warm-vintage',
     name: 'Vintage',
-    get subtitle() { return translateCopy("Sıcak ve zamansız doku"); },
+    get subtitle() {
+      return translateCopy('Sıcak ve zamansız doku');
+    },
     kind: 'filter',
     category: 'Retro',
     palette: ['#6E3B2D', '#C99B57'],
@@ -204,8 +244,10 @@ export const filters: CatalogItem[] = [
   {
     id: 'filter-mono',
     slug: 'monochrome',
-    name: 'Monokrom',
-    get subtitle() { return translateCopy("Güçlü siyah beyaz kontrast"); },
+    get name() { return translateCopy('Monokrom'); },
+    get subtitle() {
+      return translateCopy('Güçlü siyah beyaz kontrast');
+    },
     kind: 'filter',
     category: 'Portre',
     palette: ['#101010', '#8B8B8B'],
@@ -217,8 +259,12 @@ export const filters: CatalogItem[] = [
   {
     id: 'filter-studio',
     slug: 'warm-studio',
-    get name() { return translateCopy("Sıcak Stüdyo"); },
-    get subtitle() { return translateCopy("Yumuşak, profesyonel stüdyo ışığı"); },
+    get name() {
+      return translateCopy('Sıcak Stüdyo');
+    },
+    get subtitle() {
+      return translateCopy('Yumuşak, profesyonel stüdyo ışığı');
+    },
     kind: 'filter',
     category: 'Portre',
     palette: ['#4A302A', '#D99159'],
@@ -231,7 +277,9 @@ export const filters: CatalogItem[] = [
     id: 'filter-cyberpunk',
     slug: 'cyberpunk',
     name: 'Cyberpunk',
-    get subtitle() { return translateCopy("Özgün neon gece atmosferi"); },
+    get subtitle() {
+      return translateCopy('Özgün neon gece atmosferi');
+    },
     kind: 'filter',
     category: 'Sinematik',
     palette: ['#3A1C6D', '#00B8D9'],
@@ -243,8 +291,10 @@ export const filters: CatalogItem[] = [
   {
     id: 'filter-watercolor',
     slug: 'watercolor',
-    name: 'Suluboya',
-    get subtitle() { return translateCopy("Katmanlı, özgün boya dokusu"); },
+    get name() { return translateCopy('Suluboya'); },
+    get subtitle() {
+      return translateCopy('Katmanlı, özgün boya dokusu');
+    },
     kind: 'filter',
     category: 'Sanatsal',
     palette: ['#4C8AAA', '#E0AF7A'],
@@ -256,8 +306,10 @@ export const filters: CatalogItem[] = [
   {
     id: 'filter-sketch',
     slug: 'sketch',
-    name: 'Eskiz',
-    get subtitle() { return translateCopy("İnce çizgi ve doğal kâğıt dokusu"); },
+    get name() { return translateCopy('Eskiz'); },
+    get subtitle() {
+      return translateCopy('İnce çizgi ve doğal kâğıt dokusu');
+    },
     kind: 'filter',
     category: 'Sanatsal',
     palette: ['#4A4543', '#BEB3A4'],
@@ -270,7 +322,9 @@ export const filters: CatalogItem[] = [
     id: 'filter-cartoon',
     slug: 'cartoon',
     name: 'Cartoon',
-    get subtitle() { return translateCopy("Özgün, temiz çizgili illüstrasyon"); },
+    get subtitle() {
+      return translateCopy('Özgün, temiz çizgili illüstrasyon');
+    },
     kind: 'filter',
     category: 'Sanatsal',
     palette: ['#CD4E45', '#F3BB43'],
@@ -287,7 +341,7 @@ export const fictionalPeople: CatalogItem[] = [
     id: 'persona-aras',
     slug: 'deniz-aras',
     name: 'Deniz Aras',
-    subtitle: 'Kurgusal spor hikâyesi',
+    get subtitle() { return translateCopy('Kurgusal spor hikâyesi'); },
     kind: 'person',
     category: 'Kurgusal karakter',
     palette: ['#195982', '#203543'],
@@ -300,7 +354,9 @@ export const fictionalPeople: CatalogItem[] = [
     id: 'persona-nova',
     slug: 'mira-nova',
     name: 'Mira Nova',
-    get subtitle() { return translateCopy("Kurgusal müzik evreni"); },
+    get subtitle() {
+      return translateCopy('Kurgusal müzik evreni');
+    },
     kind: 'person',
     category: 'Kurgusal karakter',
     palette: ['#7B1E67', '#EC5E98'],
@@ -313,7 +369,7 @@ export const fictionalPeople: CatalogItem[] = [
     id: 'persona-kaya',
     slug: 'atlas-kaya',
     name: 'Atlas Kaya',
-    subtitle: 'Kurgusal sinema evreni',
+    get subtitle() { return translateCopy('Kurgusal sinema evreni'); },
     kind: 'person',
     category: 'Kurgusal karakter',
     palette: ['#664213', '#B37938'],
@@ -326,7 +382,7 @@ export const fictionalPeople: CatalogItem[] = [
     id: 'persona-luma',
     slug: 'luma-veren',
     name: 'Luma Veren',
-    subtitle: 'Kurgusal moda hikâyesi',
+    get subtitle() { return translateCopy('Kurgusal moda hikâyesi'); },
     kind: 'person',
     category: 'Kurgusal karakter',
     palette: ['#373A74', '#9E7BC3'],
@@ -339,7 +395,9 @@ export const fictionalPeople: CatalogItem[] = [
     id: 'persona-ela',
     slug: 'ela-serra',
     name: 'Ela Serra',
-    get subtitle() { return translateCopy("Kurgusal doğa hikâyesi"); },
+    get subtitle() {
+      return translateCopy('Kurgusal doğa hikâyesi');
+    },
     kind: 'person',
     category: 'Kurgusal karakter',
     palette: ['#3D4E2A', '#B78B45'],
@@ -352,23 +410,15 @@ export const fictionalPeople: CatalogItem[] = [
 
 export const aiTools: CatalogItem[] = [
   {
-    id: 'tool-gender-change',
-    slug: 'gender-change',
-    get name() { return translateCopy("Cinsiyet değiştirme"); },
-    get subtitle() { return translateCopy("Seçtiğin kadınsı veya erkeksi AI görünümü"); },
-    kind: 'tool',
-    category: 'AI araçları',
-    palette: ['#18151D', '#BBA476'],
-    icon: '✧',
-    ai: true,
-    previewSource: require('../../assets/beauty/gender-change.webp'),
-  },
-  {
     id: 'tool-background',
     previewSource: require('../../assets/onboarding/images/scenes/background-change.webp'),
     slug: 'background',
-    get name() { return translateCopy("Arka plan değiştir"); },
-    get subtitle() { return translateCopy("Kendinizi yepyeni bir sahneye taşıyın"); },
+    get name() {
+      return translateCopy('Arka plan değiştir');
+    },
+    get subtitle() {
+      return translateCopy('Kendinizi yepyeni bir sahneye taşıyın');
+    },
     kind: 'tool',
     category: 'AI araçları',
     palette: ['#31175D', '#7550A4'],
@@ -380,8 +430,12 @@ export const aiTools: CatalogItem[] = [
     id: 'tool-light',
     previewSource: require('../../assets/onboarding/images/scenes/light-change.webp'),
     slug: 'light',
-    get name() { return translateCopy("Işığı düzelt"); },
-    get subtitle() { return translateCopy("Gölgeleri ve sıcaklığı dengeleyin"); },
+    get name() {
+      return translateCopy('Işığı düzelt');
+    },
+    get subtitle() {
+      return translateCopy('Gölgeleri ve sıcaklığı dengeleyin');
+    },
     kind: 'tool',
     category: 'AI araçları',
     palette: ['#754517', '#D5A340'],
@@ -393,8 +447,12 @@ export const aiTools: CatalogItem[] = [
     id: 'tool-portrait',
     previewSource: require('../../assets/onboarding/images/scenes/portrait-change.webp'),
     slug: 'portrait',
-    get name() { return translateCopy("Portre değiştir"); },
-    get subtitle() { return translateCopy("Doğal ayrıntıları koruyun"); },
+    get name() {
+      return translateCopy('Portre değiştir');
+    },
+    get subtitle() {
+      return translateCopy('Doğal ayrıntıları koruyun');
+    },
     kind: 'tool',
     category: 'AI araçları',
     palette: ['#264A58', '#71A7A4'],
@@ -406,14 +464,34 @@ export const aiTools: CatalogItem[] = [
     id: 'tool-extend',
     previewSource: require('../../assets/onboarding/images/scenes/photo-size-change.webp'),
     slug: 'extend',
-    get name() { return translateCopy("Fotoğrafı genişlet"); },
-    get subtitle() { return translateCopy("Yeni bir kadraj oluşturun"); },
+    get name() {
+      return translateCopy('Fotoğrafı genişlet');
+    },
+    get subtitle() {
+      return translateCopy('Yeni bir kadraj oluşturun');
+    },
     kind: 'tool',
     category: 'AI araçları',
     palette: ['#52264B', '#9D6086'],
     icon: '↗',
     creditCost: 2,
     ai: true,
+  },
+  {
+    id: 'tool-gender-change',
+    slug: 'gender-change',
+    get name() {
+      return translateCopy('Cinsiyet değiştirme');
+    },
+    get subtitle() {
+      return translateCopy('Seçtiğin kadınsı veya erkeksi AI görünümü');
+    },
+    kind: 'tool',
+    category: 'AI araçları',
+    palette: ['#18151D', '#BBA476'],
+    icon: '✧',
+    ai: true,
+    previewSource: require('../../assets/beauty/gender-change.webp'),
   },
 ];
 
