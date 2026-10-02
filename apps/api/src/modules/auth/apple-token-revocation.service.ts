@@ -13,8 +13,23 @@ export interface AppleTokenRevoker {
 
 type AppleRevocationConfig = Pick<
   BirKareConfig,
-  'APPLE_BUNDLE_ID' | 'APPLE_TEAM_ID' | 'APPLE_KEY_ID' | 'APPLE_PRIVATE_KEY_FILE'
+  | 'APPLE_BUNDLE_ID'
+  | 'APPLE_TEAM_ID'
+  | 'APPLE_KEY_ID'
+  | 'APPLE_PRIVATE_KEY_FILE'
+  | 'APPLE_PRIVATE_KEY_BASE64'
 >;
+
+function decodePrivateKey(value: string): string {
+  const decoded = Buffer.from(value, 'base64').toString('utf8').trim();
+  if (
+    !decoded.startsWith('-----BEGIN PRIVATE KEY-----') ||
+    !decoded.endsWith('-----END PRIVATE KEY-----')
+  ) {
+    throw new Error('Invalid Apple PKCS#8 private key');
+  }
+  return decoded;
+}
 
 export class AppleTokenRevocationService implements AppleTokenRevoker {
   private signingKey: Promise<KeyLike> | undefined;
@@ -27,8 +42,19 @@ export class AppleTokenRevocationService implements AppleTokenRevoker {
   ) {}
 
   private configured() {
-    const { APPLE_BUNDLE_ID, APPLE_TEAM_ID, APPLE_KEY_ID, APPLE_PRIVATE_KEY_FILE } = this.config;
-    if (!APPLE_BUNDLE_ID || !APPLE_TEAM_ID || !APPLE_KEY_ID || !APPLE_PRIVATE_KEY_FILE) {
+    const {
+      APPLE_BUNDLE_ID,
+      APPLE_TEAM_ID,
+      APPLE_KEY_ID,
+      APPLE_PRIVATE_KEY_FILE,
+      APPLE_PRIVATE_KEY_BASE64,
+    } = this.config;
+    if (
+      !APPLE_BUNDLE_ID ||
+      !APPLE_TEAM_ID ||
+      !APPLE_KEY_ID ||
+      (!APPLE_PRIVATE_KEY_FILE && !APPLE_PRIVATE_KEY_BASE64)
+    ) {
       throw unavailable(
         'AUTH_APPLE_REVOCATION_NOT_CONFIGURED',
         'Apple hesap bağlantısı şu an güvenli biçimde kaldırılamıyor. Lütfen destekle iletişime geçin.',
@@ -39,14 +65,17 @@ export class AppleTokenRevocationService implements AppleTokenRevoker {
       teamId: APPLE_TEAM_ID,
       keyId: APPLE_KEY_ID,
       privateKeyFile: APPLE_PRIVATE_KEY_FILE,
+      privateKeyBase64: APPLE_PRIVATE_KEY_BASE64,
     };
   }
 
   private async clientSecret(): Promise<string> {
     const values = this.configured();
-    this.signingKey ??= this.loadPrivateKey(values.privateKeyFile).then((pem) =>
-      importPKCS8(pem.trim(), 'ES256'),
-    );
+    this.signingKey ??= (
+      values.privateKeyBase64
+        ? Promise.resolve(decodePrivateKey(values.privateKeyBase64))
+        : this.loadPrivateKey(values.privateKeyFile!)
+    ).then((pem) => importPKCS8(pem.trim(), 'ES256'));
     const now = Math.floor(Date.now() / 1000);
     return new SignJWT({})
       .setProtectedHeader({ alg: 'ES256', kid: values.keyId })

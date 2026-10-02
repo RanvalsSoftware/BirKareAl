@@ -110,7 +110,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     es: './locales/es.json',
     ar: './locales/ar.json',
   },
-  version: '0.1.0',
+  version: '1.0',
   // App icons must be opaque. Keeping the transparent gold mark here makes
   // iOS flatten it over white, which is why the installed icon looked like a
   // white tile even though the application itself uses a black theme.
@@ -122,7 +122,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     icon: './assets/onboarding/images/brand/logo-gold-icon-black.png',
     supportsTablet: true,
     bundleIdentifier: 'com.birkareai.mobile',
-    buildNumber: '10',
+    buildNumber: '11',
     usesAppleSignIn: true,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
@@ -153,7 +153,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
     permissions: ['com.android.vending.BILLING'],
     // New Play upload with R8 code/resource optimization enabled.
-    versionCode: 6,
+    versionCode: 7,
     adaptiveIcon: {
       foregroundImage: './assets/onboarding/images/brand/logo-gold-icon.png',
       backgroundColor: '#050505',

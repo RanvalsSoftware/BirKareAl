@@ -106,6 +106,19 @@ const RawEnvSchema = z.object({
   APPLE_TEAM_ID: OptionalEnvString(z.string().trim().regex(/^[A-Z0-9]{10}$/)),
   APPLE_KEY_ID: OptionalEnvString(z.string().trim().regex(/^[A-Z0-9]{10}$/)),
   APPLE_PRIVATE_KEY_FILE: OptionalEnvString(z.string().trim().min(1).max(1024)),
+  // Portainer can inject the downloaded Apple .p8 key as one-line Base64.
+  // Base64 is transport encoding, not encryption; keep it server-only.
+  APPLE_PRIVATE_KEY_BASE64: OptionalEnvString(
+    z
+      .string()
+      .trim()
+      .min(32)
+      .max(16_384)
+      .regex(
+        /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/,
+        'geçerli tek satırlık Base64 olmalıdır',
+      ),
+  ),
 
   // RevenueCat public SDK keys stay in Expo config. The REST secret and
   // webhook authorization token below are backend-only and are used to turn a
@@ -214,13 +227,20 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): BirKareConf
     }
   }
   const isProductionLike = config.NODE_ENV === 'production' || config.NODE_ENV === 'staging';
+  if (config.APPLE_PRIVATE_KEY_FILE && config.APPLE_PRIVATE_KEY_BASE64) {
+    throw new Error(
+      'APPLE_PRIVATE_KEY_FILE ve APPLE_PRIVATE_KEY_BASE64 aynı anda tanımlanmamalıdır.',
+    );
+  }
   if (
     isProductionLike &&
     config.APPLE_BUNDLE_ID &&
-    (!config.APPLE_TEAM_ID || !config.APPLE_KEY_ID || !config.APPLE_PRIVATE_KEY_FILE)
+    (!config.APPLE_TEAM_ID ||
+      !config.APPLE_KEY_ID ||
+      (!config.APPLE_PRIVATE_KEY_FILE && !config.APPLE_PRIVATE_KEY_BASE64))
   ) {
     throw new Error(
-      'Apple ile giriş açıkken hesap silme token iptali için APPLE_TEAM_ID, APPLE_KEY_ID ve APPLE_PRIVATE_KEY_FILE zorunludur.',
+      'Apple ile giriş açıkken hesap silme token iptali için APPLE_TEAM_ID, APPLE_KEY_ID ve APPLE_PRIVATE_KEY_FILE veya APPLE_PRIVATE_KEY_BASE64 zorunludur.',
     );
   }
   if (config.DATABASE_PROVIDER === 'prisma' && !config.DATABASE_URL) {

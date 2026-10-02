@@ -35,6 +35,49 @@ test('exchanges a fresh Apple authorization code and revokes the returned refres
   assert.ok(calls.every((call) => call.body.get('client_secret')?.split('.').length === 3));
 });
 
+test('accepts a Portainer-safe Base64 encoded Apple private key without a file mount', async () => {
+  const { privateKey } = await generateKeyPair('ES256');
+  const pem = await exportPKCS8(privateKey);
+  const calls: Array<{ url: string; body: URLSearchParams }> = [];
+  const request = async (input: string | URL | Request, init?: RequestInit) => {
+    calls.push({ url: String(input), body: init?.body as URLSearchParams });
+    if (String(input).endsWith('/auth/token'))
+      return new Response(JSON.stringify({ refresh_token: 'apple-refresh-token' }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    return new Response(null, { status: 200 });
+  };
+  const service = new AppleTokenRevocationService(
+    {
+      APPLE_BUNDLE_ID: config.APPLE_BUNDLE_ID,
+      APPLE_TEAM_ID: config.APPLE_TEAM_ID,
+      APPLE_KEY_ID: config.APPLE_KEY_ID,
+      APPLE_PRIVATE_KEY_BASE64: Buffer.from(pem, 'utf8').toString('base64'),
+    },
+    request as typeof fetch,
+    async () => {
+      throw new Error('Base64 configuration must not read a host file');
+    },
+  );
+  await service.revoke('fresh-authorization-code');
+  assert.equal(calls.length, 2);
+});
+
+test('rejects malformed decoded Base64 key material without exposing it', async () => {
+  const service = new AppleTokenRevocationService({
+    APPLE_BUNDLE_ID: config.APPLE_BUNDLE_ID,
+    APPLE_TEAM_ID: config.APPLE_TEAM_ID,
+    APPLE_KEY_ID: config.APPLE_KEY_ID,
+    APPLE_PRIVATE_KEY_BASE64: Buffer.from('not-a-private-key', 'utf8').toString('base64'),
+  });
+  await assert.rejects(
+    () => service.revoke('fresh-code'),
+    (error: unknown) =>
+      error instanceof ApiError && error.code === 'AUTH_APPLE_REVOCATION_UNAVAILABLE',
+  );
+});
+
 test('fails closed when Apple credentials or revocation are unavailable', async () => {
   const missing = new AppleTokenRevocationService(
     {},
