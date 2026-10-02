@@ -10,6 +10,7 @@ import { toDisplayPlans } from './paywall-display';
 import { useRevenueCat } from './revenuecat';
 import type { BillingResult } from './revenuecat-client';
 import { planById, plansFromOffering, preferredPlanId, type ProPlanId } from './paywall-model';
+import { openBirkarePrivacyPolicy } from '@/constants/legal-links';
 
 /** Real purchase controller. Never falls back to screenshot/demo packages. */
 export function CustomProPaywall() {
@@ -147,7 +148,9 @@ export function CustomProPaywall() {
             void billing.restore().then((result) => notify(result, true));
           }}
           onTerms={() => router.push('/legal/terms' as never)}
-          onPrivacy={() => router.push('/legal/privacy' as never)}
+          onPrivacy={() => {
+            void openBirkarePrivacyPolicy();
+          }}
           busy={billing.busy}
           active={billing.isPro}
           activeNote={activeNote}

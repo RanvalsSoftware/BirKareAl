@@ -25,6 +25,12 @@ test('HTTP beauty prices layers, protects premium tools with PRO, replays idempo
     status: 'ACTIVE',
     emailVerifiedAt: new Date(),
   });
+  await repository.createUserConsentEvent(active.id, {
+    type: 'IMAGE_PROCESSING_EXPLICIT',
+    version: 'v1.0',
+    action: 'GRANTED',
+    source: 'FIRST_IMAGE_UPLOAD',
+  });
   await repository.grantCredits({
     userId: user.id,
     amount: 21,

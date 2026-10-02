@@ -1488,11 +1488,6 @@
       "translation": "هذه الوثيقة غير متوفرة. اختر مستندًا من شاشة المستندات القانونية."
     },
     {
-      "key": "Bu belgeler ürün içi bilgilendirme taslaklarıdır. Yayına alınmadan önce hukuk uzmanı tarafından gözden geçirilmelidir.",
-      "source": "These documents are informational drafts for the app. They must be reviewed by a legal professional before publication.",
-      "translation": "هذه المستندات عبارة عن مسودات إعلامية للتطبيق. ويجب مراجعتها من قبل متخصص قانوني قبل النشر."
-    },
-    {
       "key": "Bu cihaz dahil tüm cihazlarda yeniden giriş yapman gerekecek.",
       "source": "You will need to sign in again on every device, including this one.",
       "translation": "ستحتاج إلى تسجيل الدخول مرة أخرى على كل جهاز، بما في ذلك هذا الجهاز."
@@ -1636,11 +1631,6 @@
       "key": "Bu liste sunucu kayıtlarından gelir. Rezervasyon, harcama ve iade ayrı işlemlerdir; rezervasyon ikinci kez ücretlendirme değildir.",
       "source": "This list comes from server records. Reservations, charges and refunds are separate entries; a reservation is not a second charge.",
       "translation": "تأتي هذه القائمة من سجلات الخادم. الحجوزات والرسوم والمبالغ المستردة هي إدخالات منفصلة؛ الحجز ليس تهمة ثانية."
-    },
-    {
-      "key": "Bu metin uygulama prototipi için hazırlanmış örnek bir taslaktır; yayın öncesinde hukuk uzmanı tarafından incelenmelidir.",
-      "source": "This is a sample draft prepared for the app prototype and must be reviewed by a legal professional before publication.",
-      "translation": "هذه مسودة نموذجية تم إعدادها للنموذج الأولي للتطبيق ويجب مراجعتها بواسطة متخصص قانوني قبل النشر."
     },
     {
       "key": "Bu oturum",

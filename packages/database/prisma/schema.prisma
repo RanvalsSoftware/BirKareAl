@@ -30,16 +30,26 @@ enum AuthProvider {
 }
 
 enum ConsentType {
+  NOTICE
   TERMS
   PRIVACY
   AI_DISCLOSURE
   AGE_CONFIRMATION
   IMAGE_RIGHTS
+  IMAGE_PROCESSING_EXPLICIT
 }
 
 enum ConsentSource {
   PASSWORD_REGISTRATION
   SOCIAL_REGISTRATION
+  FIRST_IMAGE_UPLOAD
+  PRE_GENERATION
+  SETTINGS
+}
+
+enum ConsentEventAction {
+  GRANTED
+  REVOKED
 }
 
 enum AssetType {
@@ -198,6 +208,7 @@ model User {
   profile       Profile?
   accounts      AuthAccount[]
   consents      UserConsent[]
+  consentEvents UserConsentEvent[]
   sessions      Session[]
   emailTokens   EmailToken[]
   assets        Asset[]
@@ -307,6 +318,20 @@ model UserConsent {
 
   @@unique([userId, type, version])
   @@index([userId, acceptedAt])
+}
+
+model UserConsentEvent {
+  id         String             @id @default(uuid())
+  userId     String
+  type       ConsentType
+  version    String
+  action     ConsentEventAction
+  source     ConsentSource
+  createdAt  DateTime            @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, createdAt])
 }
 
 model Session {

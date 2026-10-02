@@ -120,7 +120,7 @@ describe('Google profile completion controlled inputs', () => {
     await type('Doğum yılı', '1993');
     await act(async () => renderer.root.findByType(host('GradientAuthButton')).props.onPress());
     expect(mocks.complete).not.toHaveBeenCalled();
-    for (let index = 0; index < 5; index += 1) {
+    for (let index = 0; index < 2; index += 1) {
       await act(async () => renderer.root.findAllByType(host('CheckRow'))[index]!.props.onPress());
     }
     await act(async () => renderer.root.findByType(host('GradientAuthButton')).props.onPress());
@@ -130,10 +130,7 @@ describe('Google profile completion controlled inputs', () => {
       lastName: 'Çetin',
       birthYear: 1993,
       acceptedTerms: true,
-      acceptedPrivacy: true,
-      acceptedAiDisclosure: true,
-      acceptedAge: true,
-      acceptedImageRights: true,
+      acceptedNotice: true,
     });
     expect(field('Ad').props.value).toBe('Ayşe');
     expect(field('Doğum yılı').props.value).toBe('1993');

@@ -6,12 +6,12 @@ import type { LanguagePreference } from './resolve-language';
 export function LanguagePicker({ compact = false }: { compact?: boolean }) {
   const state = useLanguage();
   const options: { value: LanguagePreference; title: string; icon: string }[] = [
-    { value: 'system', title: t('language.system'), icon: '🌐' },
-    { value: 'tr', title: 'Türkçe', icon: '🇹🇷' },
-    { value: 'en', title: 'English', icon: '🇬🇧' },
-    { value: 'de', title: 'Deutsch', icon: '🇩🇪' },
-    { value: 'es', title: 'Español', icon: '🇪🇸' },
-    { value: 'ar', title: 'العربية', icon: '🇸🇦' },
+    { value: 'system', title: t('language.system'), icon: 'SYS' },
+    { value: 'tr', title: 'Türkçe', icon: 'TR' },
+    { value: 'en', title: 'English', icon: 'EN' },
+    { value: 'de', title: 'Deutsch', icon: 'DE' },
+    { value: 'es', title: 'Español', icon: 'ES' },
+    { value: 'ar', title: 'العربية', icon: 'AR' },
   ];
   return (
     <View style={[styles.container, compact && styles.compact]}>
@@ -36,13 +36,13 @@ export function LanguagePicker({ compact = false }: { compact?: boolean }) {
             ]}
           >
             <View style={styles.optionCopy}>
-              <Text
+              <View
                 accessibilityElementsHidden
                 importantForAccessibility="no-hide-descendants"
                 style={styles.flag}
               >
-                {option.icon}
-              </Text>
+                <Text style={styles.languageCode}>{option.icon}</Text>
+              </View>
               <Text
                 style={[styles.label, state.preference === option.value && styles.selectedLabel]}
               >
@@ -94,7 +94,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   optionCopy: { alignItems: 'center', flexDirection: 'row', gap: 10 },
-  flag: { fontSize: 21, width: 27 },
+  flag: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,196,0,0.09)',
+    borderColor: 'rgba(255,196,0,0.28)',
+    borderRadius: 6,
+    borderWidth: 1,
+    height: 22,
+    justifyContent: 'center',
+    width: 28,
+  },
+  languageCode: { color: '#FFE17C', fontSize: 8, fontWeight: '900', letterSpacing: 0.2 },
   inlineOption: { minHeight: 44, paddingHorizontal: 11, paddingVertical: 9 },
   selected: { borderColor: '#F5C842', backgroundColor: '#30280D' },
   label: { color: '#DEDCE0', fontSize: 14, flexShrink: 1 },

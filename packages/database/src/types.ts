@@ -20,8 +20,29 @@ export type UserStatus =
 export type AuthProvider = 'PASSWORD' | 'GOOGLE' | 'APPLE';
 export type SocialAuthProvider = Exclude<AuthProvider, 'PASSWORD'>;
 export type ConsentType =
-  'TERMS' | 'PRIVACY' | 'AI_DISCLOSURE' | 'AGE_CONFIRMATION' | 'IMAGE_RIGHTS';
-export type ConsentSource = 'PASSWORD_REGISTRATION' | 'SOCIAL_REGISTRATION';
+  | 'NOTICE'
+  | 'TERMS'
+  | 'PRIVACY'
+  | 'AI_DISCLOSURE'
+  | 'AGE_CONFIRMATION'
+  | 'IMAGE_RIGHTS'
+  | 'IMAGE_PROCESSING_EXPLICIT';
+export type ConsentSource =
+  | 'PASSWORD_REGISTRATION'
+  | 'SOCIAL_REGISTRATION'
+  | 'FIRST_IMAGE_UPLOAD'
+  | 'PRE_GENERATION'
+  | 'SETTINGS';
+export type ConsentEventRecord = {
+  id: string;
+  userId: string;
+  type: ConsentType;
+  version: string;
+  action: 'GRANTED' | 'REVOKED';
+  source: ConsentSource;
+  createdAt: Date;
+};
+export type CreateConsentEventInput = Omit<ConsentEventRecord, 'id' | 'userId' | 'createdAt'>;
 export type ProjectStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED' | 'DELETION_PENDING' | 'DELETED';
 
 export type UserPreferences = {
@@ -547,6 +568,11 @@ export interface BirKareRepository {
   ): Promise<PendingSocialLoginRecord | null>;
   purgePendingSocialLogins(input: { before: Date; limit: number }): Promise<number>;
   listUserConsents(userId: string): Promise<UserConsentRecord[]>;
+  listUserConsentEvents(userId: string, type: ConsentType): Promise<ConsentEventRecord[]>;
+  createUserConsentEvent(
+    userId: string,
+    input: CreateConsentEventInput,
+  ): Promise<ConsentEventRecord>;
   listAuthProviders(userId: string): Promise<AuthProvider[]>;
   requestAccountDeletion(
     userId: string,

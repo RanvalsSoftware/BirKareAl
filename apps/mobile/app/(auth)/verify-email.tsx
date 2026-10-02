@@ -247,7 +247,7 @@ export default function VerifyEmailScreen() {
 
   return (
     <View style={styles.screen}>
-      <AuthLayout>
+      <AuthLayout showLanguagePicker={false}>
         <AuthBrandBar onBack={goBack} />
         <AuthLogo compact />
         <View style={styles.icon}>

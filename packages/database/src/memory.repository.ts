@@ -25,6 +25,9 @@ import type {
   AssetRecord,
   BirKareRepository,
   CatalogSnapshot,
+  ConsentEventRecord,
+  ConsentType,
+  CreateConsentEventInput,
   CreateAssetInput,
   CreateGenerationInput,
   CreateProjectInput,
@@ -92,6 +95,7 @@ export class MemoryRepository implements BirKareRepository {
   private readonly pendingSocialLoginIdsByTokenHash = new Map<string, string>();
   private readonly userConsents = new Map<string, UserConsentRecord>();
   private readonly userConsentIdsByUserTypeVersion = new Map<string, string>();
+  private readonly userConsentEvents = new Map<string, ConsentEventRecord>();
   private readonly sessions = new Map<string, SessionRecord>();
   private readonly sessionIdsByRefreshHash = new Map<string, string>();
   private readonly emailTokens = new Map<string, EmailTokenRecord>();
@@ -198,8 +202,7 @@ export class MemoryRepository implements BirKareRepository {
       deletionIdentityHash(this.identitySecret, input.provider, input.providerAccountId),
     ]);
     const abuseKeyHash =
-      input.welcomeCreditAbuseHash ??
-      welcomeCreditAbuseHash(this.identitySecret, email);
+      input.welcomeCreditAbuseHash ?? welcomeCreditAbuseHash(this.identitySecret, email);
     const welcomeAmount =
       !wasDeleted && !this.welcomeCreditClaims.has(abuseKeyHash) ? WELCOME_CREDIT_AMOUNT : 0;
     const accountKey = providerAccountKey(input.provider, input.providerAccountId);
@@ -349,6 +352,31 @@ export class MemoryRepository implements BirKareRepository {
       .map(clone);
   }
 
+  async listUserConsentEvents(userId: string, type: ConsentType): Promise<ConsentEventRecord[]> {
+    return [...this.userConsentEvents.values()]
+      .filter((event) => event.userId === userId && event.type === type)
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+      .map(clone);
+  }
+
+  async createUserConsentEvent(
+    userId: string,
+    input: CreateConsentEventInput,
+  ): Promise<ConsentEventRecord> {
+    if (!this.users.has(userId)) throw notFound('USER_NOT_FOUND', 'Kullanıcı bulunamadı.');
+    const previous = [...this.userConsentEvents.values()]
+      .filter((event) => event.userId === userId && event.type === input.type)
+      .reduce((latest, event) => Math.max(latest, event.createdAt.getTime()), 0);
+    const record: ConsentEventRecord = {
+      id: createId(),
+      userId,
+      ...input,
+      createdAt: new Date(Math.max(Date.now(), previous + 1)),
+    };
+    this.userConsentEvents.set(record.id, record);
+    return clone(record);
+  }
+
   async updateUser(
     id: string,
     input: Partial<
@@ -454,10 +482,7 @@ export class MemoryRepository implements BirKareRepository {
     return record ? clone(record) : null;
   }
 
-  async restoreAccountDeletion(
-    userId: string,
-    now: Date,
-  ): Promise<AccountDeletionRecord | null> {
+  async restoreAccountDeletion(userId: string, now: Date): Promise<AccountDeletionRecord | null> {
     const record = this.accountDeletions.get(userId);
     const user = this.users.get(userId);
     if (!user || user.status !== 'DELETION_PENDING' || !user.deletedAt) return null;
@@ -491,10 +516,7 @@ export class MemoryRepository implements BirKareRepository {
   async listPendingAccountDeletions(now: Date, limit: number): Promise<AccountDeletionRecord[]> {
     return clone(
       [...this.accountDeletions.values()]
-        .filter(
-          (item) =>
-            !item.completedAt && accountDeletionRecoveryDeadline(item) <= now,
-        )
+        .filter((item) => !item.completedAt && accountDeletionRecoveryDeadline(item) <= now)
         .slice(0, limit),
     );
   }

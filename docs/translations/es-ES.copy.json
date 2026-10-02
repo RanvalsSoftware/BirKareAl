@@ -1488,11 +1488,6 @@
       "translation": "Este documento no está disponible. Elija un documento de la pantalla de documentos legales."
     },
     {
-      "key": "Bu belgeler ürün içi bilgilendirme taslaklarıdır. Yayına alınmadan önce hukuk uzmanı tarafından gözden geçirilmelidir.",
-      "source": "These documents are informational drafts for the app. They must be reviewed by a legal professional before publication.",
-      "translation": "Estos documentos son borradores informativos para la aplicación. Deben ser revisados ​​por un profesional del derecho antes de su publicación."
-    },
-    {
       "key": "Bu cihaz dahil tüm cihazlarda yeniden giriş yapman gerekecek.",
       "source": "You will need to sign in again on every device, including this one.",
       "translation": "Deberá iniciar sesión nuevamente en todos los dispositivos, incluido este."
@@ -1636,11 +1631,6 @@
       "key": "Bu liste sunucu kayıtlarından gelir. Rezervasyon, harcama ve iade ayrı işlemlerdir; rezervasyon ikinci kez ücretlendirme değildir.",
       "source": "This list comes from server records. Reservations, charges and refunds are separate entries; a reservation is not a second charge.",
       "translation": "Esta lista proviene de los registros del servidor. Las reservas, cargos y reembolsos son entradas separadas; una reserva no es un segundo cargo."
-    },
-    {
-      "key": "Bu metin uygulama prototipi için hazırlanmış örnek bir taslaktır; yayın öncesinde hukuk uzmanı tarafından incelenmelidir.",
-      "source": "This is a sample draft prepared for the app prototype and must be reviewed by a legal professional before publication.",
-      "translation": "Este es un borrador de muestra preparado para el prototipo de la aplicación y debe ser revisado por un profesional legal antes de su publicación."
     },
     {
       "key": "Bu oturum",

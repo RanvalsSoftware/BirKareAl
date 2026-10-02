@@ -48,10 +48,7 @@ export type SocialSignInResult =
   | { kind: 'deletion_recovery_required'; recoveryUntil: string; recoveryDays: number };
 
 export type CompleteSocialRegistrationInput = {
-  acceptedAge: boolean;
-  acceptedAiDisclosure: boolean;
-  acceptedImageRights: boolean;
-  acceptedPrivacy: boolean;
+  acceptedNotice: boolean;
   acceptedTerms: boolean;
   birthYear: number;
   firstName: string;
@@ -60,19 +57,13 @@ export type CompleteSocialRegistrationInput = {
 };
 
 function requiresSocialProfileCompletion(
-  input:
-    | AuthSessionResponse
-    | PendingSocialRegistrationResponse
-    | DeletionRecoveryRequiredResponse,
+  input: AuthSessionResponse | PendingSocialRegistrationResponse | DeletionRecoveryRequiredResponse,
 ): input is PendingSocialRegistrationResponse {
   return 'needsProfileCompletion' in input && input.needsProfileCompletion;
 }
 
 function requiresDeletionRecovery(
-  input:
-    | AuthSessionResponse
-    | PendingSocialRegistrationResponse
-    | DeletionRecoveryRequiredResponse,
+  input: AuthSessionResponse | PendingSocialRegistrationResponse | DeletionRecoveryRequiredResponse,
 ): input is DeletionRecoveryRequiredResponse {
   return 'deletionRecoveryRequired' in input && input.deletionRecoveryRequired;
 }
@@ -190,11 +181,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   async signInWithApple(input) {
     const result = await apiRequest<
       AuthSessionResponse | PendingSocialRegistrationResponse | DeletionRecoveryRequiredResponse
-    >(
-      '/v1/auth/apple',
-      { method: 'POST', body: JSON.stringify(input) },
-      { authenticated: false },
-    );
+    >('/v1/auth/apple', { method: 'POST', body: JSON.stringify(input) }, { authenticated: false });
     if (requiresSocialProfileCompletion(result)) {
       return {
         kind: 'profile_completion_required',
@@ -228,10 +215,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           locale: getAppLocale(),
           consent: {
             termsAccepted: input.acceptedTerms,
-            privacyAccepted: input.acceptedPrivacy,
-            aiDisclosureAccepted: input.acceptedAiDisclosure,
-            ageConfirmed: input.acceptedAge,
-            ownImageOrPermissionConfirmed: input.acceptedImageRights,
+            noticeAccepted: input.acceptedNotice,
           },
         }),
       },
@@ -243,7 +227,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
   async linkGoogleAccount(idToken) {
     if (get().state !== 'authenticated')
-      throw new Error(translateCopy("Google hesabını bağlamak için önce giriş yapmalısın."));
+      throw new Error(translateCopy('Google hesabını bağlamak için önce giriş yapmalısın.'));
     await apiRequest('/v1/auth/google/link', { method: 'POST', body: JSON.stringify({ idToken }) });
   },
   async signOut() {

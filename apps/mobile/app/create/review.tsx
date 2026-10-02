@@ -3,7 +3,7 @@ import { useLanguageRevision } from '@/i18n/use-language';
 import { tr as translateCopy } from '@/i18n/engine';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
+import { Redirect, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { CreditBadge, Icon, Notice, Screen } from '@/components';
@@ -25,6 +25,7 @@ import { CREDIT_WALLET_QUERY_KEY } from '@/features/billing/use-wallet';
 import { beautyOptions } from '@/features/beauty/catalog';
 import { beautyIntensity } from '@/features/beauty/settings';
 import { getTrendPreset } from '@/features/trends/presets';
+import { ensureImageProcessingConsent } from '@/features/legal/image-processing-consent';
 
 function getName<T extends { id: string; name: string }>(
   items: T[],
@@ -49,6 +50,7 @@ export default function ReviewScreen() {
   const { autoStart: rawAutoStart } = useLocalSearchParams<{ autoStart?: string }>();
   const autoStart = Array.isArray(rawAutoStart) ? rawAutoStart[0] : rawAutoStart;
   const autoStartAttempted = useRef(false);
+  const consentRouteOpened = useRef(false);
   const { flow, reset } = useCreateFlow();
   const [quoteRefresh, setQuoteRefresh] = useState(0);
   const [quoteState, setQuoteState] = useState<QuoteState>({
@@ -62,10 +64,26 @@ export default function ReviewScreen() {
   const attemptRef = useRef<{ fingerprint: string; key: string } | null>(null);
   const [retryFingerprint, setRetryFingerprint] = useState<string | null>(null);
   const [submissionStage, setSubmissionStage] = useState<SubmissionStage>('CHECKING');
+  const [explicitConsent, setExplicitConsent] = useState(false);
   const flowFingerprint = useMemo(() => JSON.stringify(flow), [flow, languageRevision]);
   const retryingSameSubmission = retryFingerprint === flowFingerprint;
   const [startError, setStartError] = useState<string | null>(null);
   const [quoteErrorVisible, setQuoteErrorVisible] = useState(true);
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      void ensureImageProcessingConsent()
+        .then((result) => {
+          if (active) setExplicitConsent(result.granted);
+        })
+        .catch(() => {
+          if (active) setExplicitConsent(false);
+        });
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
   const quoteInputKey = useMemo(
     () =>
       [
@@ -130,7 +148,12 @@ export default function ReviewScreen() {
   }, [flow, quoteRequestKey]);
 
   const startGeneration = useCallback(async () => {
-    if (isStarting || startingRef.current || (!quote?.canGenerate && !retryingSameSubmission))
+    if (
+      isStarting ||
+      startingRef.current ||
+      !explicitConsent ||
+      (!quote?.canGenerate && !retryingSameSubmission)
+    )
       return;
     startingRef.current = true;
     if (attemptRef.current?.fingerprint !== flowFingerprint) {
@@ -168,6 +191,7 @@ export default function ReviewScreen() {
   }, [
     flow,
     flowFingerprint,
+    explicitConsent,
     isStarting,
     queryClient,
     quote?.canGenerate,
@@ -190,10 +214,23 @@ export default function ReviewScreen() {
   const readyToStart = Boolean(
     flow.sourceUri &&
     flow.sourceRightsConfirmed &&
+    explicitConsent &&
     secondarySourceReady &&
     (retryingSameSubmission || (quote?.canGenerate && !isQuoting)) &&
     !isStarting,
   );
+
+  useEffect(() => {
+    if (
+      autoStart !== 'onboarding' ||
+      !flow.sourceUri ||
+      explicitConsent ||
+      consentRouteOpened.current
+    )
+      return;
+    consentRouteOpened.current = true;
+    router.push('/legal/grant-consent' as never);
+  }, [autoStart, explicitConsent, flow.sourceUri, router]);
 
   useEffect(() => {
     if (autoStart !== 'onboarding' || !readyToStart || autoStartAttempted.current) return;
@@ -216,20 +253,20 @@ export default function ReviewScreen() {
   return (
     <Screen contentContainerStyle={styles.content}>
       <CreateHeader
-        title={translateCopy("Üretim özeti")}
-        subtitle={translateCopy("Oluşturmadan önce son kontrol")}
+        title={translateCopy('Üretim özeti')}
+        subtitle={translateCopy('Oluşturmadan önce son kontrol')}
         step={3}
         right={
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={translateCopy("Yeni oluştur")}
+            accessibilityLabel={translateCopy('Yeni oluştur')}
             onPress={() => {
               reset();
               router.dismissTo('/create' as never);
             }}
             style={styles.newCreate}
           >
-            <Text style={styles.newCreateText}>{translateCopy("Yeni oluştur")}</Text>
+            <Text style={styles.newCreateText}>{translateCopy('Yeni oluştur')}</Text>
             <Icon name="add" size={18} color={colors.textPrimary} />
           </Pressable>
         }
@@ -239,48 +276,77 @@ export default function ReviewScreen() {
           <Image source={{ uri: flow.sourceUri }} resizeMode="cover" style={styles.summaryImage} />
           <View style={styles.sourceBadge}>
             <Icon name="sparkles" size={12} color={colors.accentYellow} />
-            <Text style={styles.sourceBadgeText}>{translateCopy("Kaynak")}</Text>
+            <Text style={styles.sourceBadgeText}>{translateCopy('Kaynak')}</Text>
           </View>
         </View>
         <View style={styles.summaryDetails}>
           <Detail
-            label={translateCopy("Mod")}
+            label={translateCopy('Mod')}
             value={
               flow.beauty
-                ? translateCopy("Güzellik Stüdyosu")
+                ? translateCopy('Güzellik Stüdyosu')
                 : flow.transformation
-                  ? translateCopy("Cinsiyet değiştirme")
+                  ? translateCopy('Cinsiyet değiştirme')
                   : flow.trendPreset
-                    ? translateCopy("Akımlar")
+                    ? translateCopy('Akımlar')
                     : modeName(flow.mode)
             }
             icon="sparkles-outline"
           />
           {flow.trendPreset ? (
             <Detail
-              label={translateCopy("Akım")}
-              value={`${getTrendPreset(flow.trendPreset)?.name ?? translateCopy("Akım")} · %${flow.filterIntensity}`}
+              label={translateCopy('Akım')}
+              value={`${getTrendPreset(flow.trendPreset)?.name ?? translateCopy('Akım')} · %${flow.filterIntensity}`}
               icon="sparkles-outline"
             />
           ) : (
             <Detail
-              label={translateCopy("Tarz")}
+              label={translateCopy('Tarz')}
               value={`${style} · %${flow.filterIntensity}`}
               icon="color-filter-outline"
             />
           )}
           <Detail
-            label={translateCopy("Kompozisyon")}
-            value={`${flow.trendPreset ? translateCopy("Akıma uygun kadraj") : flow.mode === 'filter' || flow.mode === 'background' ? translateCopy("Kaynak kadrajı") : flow.composition} · ${flow.aspectRatio}`}
+            label={translateCopy('Kompozisyon')}
+            value={`${flow.trendPreset ? translateCopy('Akıma uygun kadraj') : flow.mode === 'filter' || flow.mode === 'background' ? translateCopy('Kaynak kadrajı') : flow.composition} · ${flow.aspectRatio}`}
             icon="scan-outline"
           />
           <Detail
-            label={translateCopy("Çıktı")}
-            value={translateCopy("{{p0}} görsel · {{p1}}", { p0: flow.numberOfImages, p1: displayOption(flow.quality) })}
+            label={translateCopy('Çıktı')}
+            value={translateCopy('{{p0}} görsel · {{p1}}', {
+              p0: flow.numberOfImages,
+              p1: displayOption(flow.quality),
+            })}
             icon="image-outline"
           />
         </View>
       </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled: explicitConsent }}
+        onPress={() => {
+          if (!explicitConsent) router.push('/legal/grant-consent' as never);
+        }}
+        style={[styles.consentCard, explicitConsent && styles.consentCardAccepted]}
+      >
+        <Icon
+          name={explicitConsent ? 'checkmark-circle' : 'document-text-outline'}
+          size={23}
+          color={explicitConsent ? colors.accentYellow : colors.textSecondary}
+        />
+        <View style={styles.consentCopy}>
+          <Text style={styles.consentTitle}>
+            {explicitConsent
+              ? translateCopy('Açık rıza kayıtlı')
+              : translateCopy('Açık Rıza Metnini oku ve izin ver')}
+          </Text>
+          <Text style={styles.consentDetail}>
+            {translateCopy(
+              'Fotoğrafı sunucuya yüklemeden ve üretimi başlatmadan önce ayrı izin gerekir.',
+            )}
+          </Text>
+        </View>
+      </Pressable>
       {flow.secondarySourceUri ? (
         <View style={styles.secondarySummary}>
           <Image
@@ -289,15 +355,17 @@ export default function ReviewScreen() {
             style={styles.secondarySummaryImage}
           />
           <View style={styles.secondarySummaryCopy}>
-            <Text style={styles.secondarySummaryTitle}>{translateCopy("İkinci kişi kaynağı")}</Text>
-            <Text style={styles.secondarySummaryText}>{translateCopy("Ayrı fotoğraftaki kişinin kimliği korunarak aynı sahneye eklenir.")}</Text>
+            <Text style={styles.secondarySummaryTitle}>{translateCopy('İkinci kişi kaynağı')}</Text>
+            <Text style={styles.secondarySummaryText}>
+              {translateCopy('Ayrı fotoğraftaki kişinin kimliği korunarak aynı sahneye eklenir.')}
+            </Text>
           </View>
           <Icon name="people-outline" size={20} color={colors.accentYellow} />
         </View>
       ) : null}
       {flow.mode === 'character' ? (
         <View style={styles.details}>
-          <Detail label={translateCopy("Karakter")} value={person} icon="person-outline" />
+          <Detail label={translateCopy('Karakter')} value={person} icon="person-outline" />
         </View>
       ) : null}
       {flow.beauty ? (
@@ -315,30 +383,43 @@ export default function ReviewScreen() {
         </View>
       ) : null}
       {flow.trendPreset ? (
-        <Notice tone="neutral" title={translateCopy("Akım dönüşümü")}>{translateCopy("Yukarıdaki görsel kaynak fotoğrafındır, oluşturulmuş sonuç değildir. Yüz kimliğin korunarak kıyafet, poz, saçın şekillendirilmesi, makyaj ve ortam akıma göre değişebilir.")}</Notice>
+        <Notice tone="neutral" title={translateCopy('Akım dönüşümü')}>
+          {translateCopy(
+            'Yukarıdaki görsel kaynak fotoğrafındır, oluşturulmuş sonuç değildir. Yüz kimliğin korunarak kıyafet, poz, saçın şekillendirilmesi, makyaj ve ortam akıma göre değişebilir.',
+          )}
+        </Notice>
       ) : null}
       {flow.customInstruction ? (
         <View style={styles.instruction}>
-          <Text style={styles.instructionLabel}>{translateCopy("ÖZEL TALİMAT")}</Text>
+          <Text style={styles.instructionLabel}>{translateCopy('ÖZEL TALİMAT')}</Text>
           <Text style={styles.instructionText}>{flow.customInstruction}</Text>
         </View>
       ) : null}
       <View style={styles.reviewStack}>
         <View style={styles.costCard}>
-          <Text style={styles.costLabel}>{translateCopy("SUNUCU TARAFINDAN HESAPLANAN MALİYET")}</Text>
+          <Text style={styles.costLabel}>
+            {translateCopy('SUNUCU TARAFINDAN HESAPLANAN MALİYET')}
+          </Text>
           <View style={styles.costRow}>
             <Text style={styles.cost}>
-              <Text style={styles.costNumber}>{isQuoting ? '…' : quote ? cost : '—'}</Text>{' '}{translateCopy("kredi")}</Text>
+              <Text style={styles.costNumber}>{isQuoting ? '…' : quote ? cost : '—'}</Text>{' '}
+              {translateCopy('kredi')}
+            </Text>
             {quote ? <CreditBadge credits={unlimitedCredits ? '∞' : availableCredits} /> : null}
           </View>
           <Text style={styles.remaining}>
             {quote ? (
-              <>{translateCopy("Üretimden sonra tahmini")}{' '}
-                <Text style={styles.remainingStrong}>{remainingCredits}{' '}{translateCopy("kredi")}</Text>{' '}{translateCopy("kalır.")}</>
+              <>
+                {translateCopy('Üretimden sonra tahmini')}{' '}
+                <Text style={styles.remainingStrong}>
+                  {remainingCredits} {translateCopy('kredi')}
+                </Text>{' '}
+                {translateCopy('kalır.')}
+              </>
             ) : quoteError ? (
-              translateCopy("Kredi tutarı alınamadı; bakiye değişmedi.")
+              translateCopy('Kredi tutarı alınamadı; bakiye değişmedi.')
             ) : (
-              translateCopy("Kredi özeti güvenle doğrulanıyor.")
+              translateCopy('Kredi özeti güvenle doğrulanıyor.')
             )}
           </Text>
           {quote ? (
@@ -355,32 +436,59 @@ export default function ReviewScreen() {
         {quoteError && quoteErrorVisible ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={translateCopy("Kredi özetini yeniden dene")}
+            accessibilityLabel={translateCopy('Kredi özetini yeniden dene')}
             onPress={() => setQuoteRefresh((value) => value + 1)}
           >
-            <Notice tone="warning" title={translateCopy("Kredi özeti alınamadı")}>{translateCopy("{{p0}} Yeniden denemek için dokun.", { p0: quoteError })}</Notice>
+            <Notice tone="warning" title={translateCopy('Kredi özeti alınamadı')}>
+              {translateCopy('{{p0}} Yeniden denemek için dokun.', { p0: quoteError })}
+            </Notice>
           </Pressable>
         ) : null}
         {quoteError && !quoteErrorVisible ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={translateCopy("Kredi özetini yeniden dene")}
+            accessibilityLabel={translateCopy('Kredi özetini yeniden dene')}
             onPress={() => setQuoteRefresh((value) => value + 1)}
             style={styles.retryQuote}
           >
             <Icon name="refresh" size={18} color={colors.accentYellow} />
-            <Text style={styles.retryQuoteText}>{translateCopy("Kredi özetini yeniden dene")}</Text>
+            <Text style={styles.retryQuoteText}>{translateCopy('Kredi özetini yeniden dene')}</Text>
           </Pressable>
         ) : null}
         {quote && !quote.canGenerate ? (
-          <Notice tone="warning" title={translateCopy("Yetersiz kredi")}>{translateCopy("Bu üretim için {{p0}} kredi gerekir; kullanılabilir bakiyen {{p1}} kredi.", { p0: cost, p1: availableCredits })}</Notice>
+          <Notice tone="warning" title={translateCopy('Yetersiz kredi')}>
+            {translateCopy(
+              'Bu üretim için {{p0}} kredi gerekir; kullanılabilir bakiyen {{p1}} kredi.',
+              { p0: cost, p1: availableCredits },
+            )}
+          </Notice>
         ) : null}
-        {startError ? (
-          <Notice tone="warning" title={translateCopy("Üretim başlatılamadı")}>
+        {!explicitConsent ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={translateCopy('Açık Rıza Metnini oku ve izin ver')}
+            onPress={() => router.push('/legal/grant-consent' as never)}
+          >
+            <Notice tone="warning" title={translateCopy('Üretim başlatılamadı')}>
+              <>
+                {translateCopy('Fotoğrafı sunucuya yüklemeden ve üretimi başlatmadan önce ayrı izin gerekir.')}{' '}
+                <Text style={styles.consentNoticeAction}>
+                  {translateCopy('Açık Rıza Metnini oku ve izin ver')}
+                </Text>
+              </>
+            </Notice>
+          </Pressable>
+        ) : null}
+        {startError && explicitConsent ? (
+          <Notice tone="warning" title={translateCopy('Üretim başlatılamadı')}>
             {startError}
           </Notice>
         ) : null}
-        <Notice tone="neutral" title={translateCopy("Başlatmadan önce")}>{translateCopy("Üretim, gönderdiğin kaynak fotoğrafı ve seçimlerini kullanır. Sonuçlar AI içeriği olarak işaretlenir.")}</Notice>
+        <Notice tone="neutral" title={translateCopy('Başlatmadan önce')}>
+          {translateCopy(
+            'Üretim, gönderdiğin kaynak fotoğrafı ve seçimlerini kullanır. Sonuçlar AI içeriği olarak işaretlenir.',
+          )}
+        </Notice>
         {isStarting ? <SubmissionProgress stage={submissionStage} /> : null}
       </View>
       <WizardFooter
@@ -388,20 +496,20 @@ export default function ReviewScreen() {
           isStarting
             ? `${submissionStageLabels[submissionStage]}…`
             : retryingSameSubmission
-              ? translateCopy("Aynı işlemi yeniden dene")
+              ? translateCopy('Aynı işlemi yeniden dene')
               : isQuoting
-                ? translateCopy("Kredi özeti hazırlanıyor…")
+                ? translateCopy('Kredi özeti hazırlanıyor…')
                 : !quote
-                  ? translateCopy("Kredi özeti gerekli")
-                  : translateCopy("{{p0}} krediyle oluştur", { p0: cost })
+                  ? translateCopy('Kredi özeti gerekli')
+                  : translateCopy('{{p0}} krediyle oluştur', { p0: cost })
         }
         disabled={!readyToStart}
         loading={isStarting}
         onPress={() => void startGeneration()}
         hint={
           flow.sourceRightsConfirmed
-            ? translateCopy("Fiyat, yükleme ve kredi rezervasyonu API tarafından doğrulanır.")
-            : translateCopy("Devam etmek için kaynak fotoğraf kullanım hakkını onayla.")
+            ? translateCopy('Fiyat, yükleme ve kredi rezervasyonu API tarafından doğrulanır.')
+            : translateCopy('Devam etmek için kaynak fotoğraf kullanım hakkını onayla.')
         }
       />
     </Screen>
@@ -529,6 +637,42 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   reviewStack: { gap: spacing.md, marginTop: spacing.md },
+  consentCard: {
+    alignItems: 'flex-start',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: spacing.md,
+    padding: 14,
+  },
+  consentCardAccepted: { borderColor: 'rgba(255,196,0,0.60)', backgroundColor: '#15130D' },
+  consentCopy: { flex: 1 },
+  consentTitle: {
+    ...typography.label,
+    color: colors.textPrimary,
+    fontWeight: '800',
+    lineHeight: 19,
+  },
+  consentDetail: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    lineHeight: 17,
+    marginTop: 5,
+  },
+  consentNoticeAction: {
+    color: colors.accentYellow,
+    fontWeight: '800',
+    textDecorationLine: 'underline',
+  },
+  consentDocumentLink: {
+    alignSelf: 'flex-start',
+    minHeight: 40,
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
   costLabel: { ...typography.overline, color: colors.accentYellow, fontSize: 10 },
   costRow: {
     flexDirection: 'row',

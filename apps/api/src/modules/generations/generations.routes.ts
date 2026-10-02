@@ -42,6 +42,7 @@ import { validate } from '../../middleware/validate.middleware.js';
 import type { ApiDependencies } from '../../services/dependencies.js';
 import { asyncHandler, sendSuccess } from '../../services/http.js';
 import { assertProGenerationAccess } from '../billing/pro-access.js';
+import { requireImageProcessingConsent } from '../users/consent.js';
 
 const stableStringify = (value: unknown): string => {
   if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
@@ -497,6 +498,7 @@ async function reserveCreateAndEnqueue(
     idempotencyKey?: string;
   },
 ) {
+  await requireImageProcessingConsent(deps, input.userId);
   const pricedSelection =
     input.recipe.version === 1 ? (input.recipe.selection ?? input.project) : null;
   if (input.recipe.version === 1) {

@@ -72,6 +72,7 @@ export default function RegisterScreen() {
     formState: { errors, isSubmitting },
     clearErrors,
     setError,
+    watch,
   } = useForm<RegisterValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -82,12 +83,10 @@ export default function RegisterScreen() {
       passwordConfirmation: '',
       birthYear: undefined,
       acceptedTerms: false,
-      acceptedPrivacy: false,
-      acceptedAiDisclosure: false,
-      acceptedAge: false,
-      acceptedImageRights: false,
+      acceptedNotice: false,
     },
   });
+  const legalChecksComplete = watch('acceptedTerms') && watch('acceptedNotice');
   useEffect(() => {
     if (!socialError) return;
     const timeout = setTimeout(() => setSocialError(null), 4_000);
@@ -171,10 +170,7 @@ export default function RegisterScreen() {
             locale: getAppLocale(),
             consent: {
               termsAccepted: values.acceptedTerms,
-              privacyAccepted: values.acceptedPrivacy,
-              aiDisclosureAccepted: values.acceptedAiDisclosure,
-              ageConfirmed: values.acceptedAge,
-              ownImageOrPermissionConfirmed: values.acceptedImageRights,
+              noticeAccepted: values.acceptedNotice,
             },
           }),
         },
@@ -209,7 +205,7 @@ export default function RegisterScreen() {
   });
 
   return (
-    <AuthLayout>
+    <AuthLayout showLanguagePicker={false}>
       <AuthBrandBar
         actionLabel={copy('Giriş yap', 'Sign in')}
         onAction={() => router.replace('/(auth)/login')}
@@ -227,7 +223,7 @@ export default function RegisterScreen() {
       <AuthFormCard>
         <GoogleSignInButton
           label={copy('Google ile devam et', 'Continue with Google')}
-          disabled={isSubmitting}
+          disabled={isSubmitting || !legalChecksComplete}
           onError={showGoogleError}
           onSuccess={completeGoogleSignIn}
         />
@@ -481,9 +477,7 @@ export default function RegisterScreen() {
         />
         <View style={styles.consentHeader}>
           <Ionicons color={authColors.yellow} name="sparkles-outline" size={15} />
-          <Text style={styles.consentHeaderText}>
-            {copy('Güvenli kullanım onayları', 'Safe-use consents')}
-          </Text>
+          <Text style={styles.consentHeaderText}>{translateCopy('Yasal belgeler')}</Text>
         </View>
         <Controller
           control={control}
@@ -492,80 +486,46 @@ export default function RegisterScreen() {
             <CheckRow
               checked={value}
               documentLink={{
-                label: copy('Kullanım Koşulları', 'Terms of Use'),
+                label: translateCopy('Kullanım koşulları'),
                 onPress: () =>
                   router.push({ pathname: '/legal/[document]', params: { document: 'terms' } }),
               }}
               error={errors.acceptedTerms?.message}
               onPress={() => onChange(!value)}
             >
-              {copy('’nı okudum ve kabul ediyorum.', ' — I have read and accept them.')}
+              {translateCopy(
+                '’nı okudum ve kabul ediyorum. Ayrıca 18 yaşından büyük olduğumu beyan ederim.',
+              )}
             </CheckRow>
           )}
         />
         <Controller
           control={control}
-          name="acceptedPrivacy"
+          name="acceptedNotice"
           render={({ field: { onChange, value } }) => (
             <CheckRow
               checked={value}
               documentLink={{
-                label: copy('Gizlilik Politikası', 'Privacy Policy'),
+                label: translateCopy('Aydınlatma Metni’ni okudum ve anladım'),
                 onPress: () =>
-                  router.push({ pathname: '/legal/[document]', params: { document: 'privacy' } }),
+                  router.push({ pathname: '/legal/[document]', params: { document: 'notice' } }),
               }}
-              error={errors.acceptedPrivacy?.message}
+              checkboxAccessibilityLabel={translateCopy('Aydınlatma Metni’ni okudum ve anladım')}
+              error={errors.acceptedNotice?.message}
               onPress={() => onChange(!value)}
             >
-              {copy('’nı okudum ve kabul ediyorum.', ' — I have read and accept it.')}
+              {''}
             </CheckRow>
           )}
         />
-        <Controller
-          control={control}
-          name="acceptedAiDisclosure"
-          render={({ field: { onChange, value } }) => (
-            <CheckRow
-              checked={value}
-              error={errors.acceptedAiDisclosure?.message}
-              onPress={() => onChange(!value)}
-            >
-              {copy(
-                'Sonuçların AI ile oluşturulabileceğini ve etiketleneceğini kabul ediyorum.',
-                'I understand that results may be AI-generated and labeled.',
-              )}
-            </CheckRow>
-          )}
-        />
-        <Controller
-          control={control}
-          name="acceptedAge"
-          render={({ field: { onChange, value } }) => (
-            <CheckRow
-              checked={value}
-              error={errors.acceptedAge?.message}
-              onPress={() => onChange(!value)}
-            >
-              {copy('18 yaşını doldurduğumu onaylıyorum.', 'I confirm that I am at least 18.')}
-            </CheckRow>
-          )}
-        />
-        <Controller
-          control={control}
-          name="acceptedImageRights"
-          render={({ field: { onChange, value } }) => (
-            <CheckRow
-              checked={value}
-              error={errors.acceptedImageRights?.message}
-              onPress={() => onChange(!value)}
-            >
-              {copy(
-                'Yüklediğim fotoğraf için gerekli kullanım hakkına sahibim.',
-                'I have the necessary rights to use the photo I upload.',
-              )}
-            </CheckRow>
-          )}
-        />
+        <Pressable
+          accessibilityRole="link"
+          onPress={() => router.push('/legal/privacy' as never)}
+          style={styles.privacyPolicyLink}
+        >
+          <Ionicons color={authColors.yellow} name="open-outline" size={15} />
+          <Text style={styles.privacyPolicyText}>{translateCopy('Gizlilik politikası')}</Text>
+        </Pressable>
         {errors.root?.message ? (
           <Text accessibilityLiveRegion="polite" style={styles.serverError}>
             {errors.root.message}
@@ -575,6 +535,7 @@ export default function RegisterScreen() {
           accessibilityLabel={copy('Kayıt ol', 'Sign up')}
           icon="arrow-forward"
           loading={isSubmitting}
+          disabled={!legalChecksComplete}
           onPress={() => void submit()}
         >
           {copy('Kayıt ol', 'Sign up')}
@@ -627,6 +588,21 @@ const styles = StyleSheet.create({
     paddingTop: 17,
   },
   consentHeaderText: { color: '#F0D173', fontSize: 12, fontWeight: '800' },
+  privacyPolicyLink: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    gap: 6,
+    minHeight: 42,
+    paddingHorizontal: 4,
+  },
+  privacyPolicyText: {
+    color: authColors.yellow,
+    fontSize: 13,
+    fontWeight: '800',
+    textDecorationLine: 'underline',
+  },
+  privacyPolicyHint: { color: authColors.secondary, fontSize: 11 },
   serverError: {
     color: '#FF877D',
     fontSize: 13,

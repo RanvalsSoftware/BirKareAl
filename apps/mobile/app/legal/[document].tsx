@@ -3,129 +3,117 @@ import { tr as translateCopy } from '@/i18n/engine';
 import { useLocalSearchParams } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { GlassSurface } from '@/components';
+import { AppleGlassButton, GlassSurface } from '@/components';
+import { openBirkarePrivacyPolicy } from '@/constants/legal-links';
+import {
+  explicitConsentSections,
+  privacyNoticeSections,
+  privacyPolicySections,
+  termsSections,
+} from '@/features/legal/privacy-notice';
 import { SettingsNote, SettingsPage } from '@/features/settings/components';
 import { colors, spacing, typography } from '@/theme';
 
 const content: Record<
   string,
-  { title: string; updated: string; sections: { heading: string; body: string }[] }
+  { title: string; updated: string; sections: readonly { heading: string; body: string }[] }
 > = {
   terms: {
-    get title() { return translateCopy("Kullanım koşulları"); },
-    get updated() { return translateCopy("3 Eylül 2026"); },
-    sections: [
-      {
-        get heading() { return translateCopy('1. Kapsam ve kabul'); },
-        get body() { return translateCopy("BirKare AI hesabı oluşturarak bu örnek Kullanım Koşulları’nı kabul etmiş olursun. Koşulları kabul etmiyorsan hesap oluşturmamalı veya hizmeti kullanmamalısın."); },
-      },
-      {
-        get heading() { return translateCopy("2. Hesap ve yaş şartı"); },
-        get body() { return translateCopy("Hizmet 18 yaş ve üzeri kullanıcılar içindir. Kayıt bilgilerinin doğru tutulmasından, şifrenin korunmasından ve hesabındaki işlemlerden sen sorumlusun."); },
-      },
-      {
-        get heading() { return translateCopy("3. Fotoğraf ve içerik hakları"); },
-        get body() { return translateCopy("Yalnızca sana ait olan veya kullanmak için gerekli izne sahip olduğun fotoğraf ve içerikleri yükleyebilirsin. Başkalarının telif, kişilik ve gizlilik haklarına saygı göstermelisin."); },
-      },
-      {
-        get heading() { return translateCopy("4. AI üretimi ve şeffaflık"); },
-        get body() { return translateCopy("Üretilen sonuçlar yapay zekâ tarafından oluşturulabilir veya önemli ölçüde değiştirilebilir. Sonuçların hatalı olabileceğini ve paylaşım sırasında AI içeriği olarak belirtilmesi gerekebileceğini kabul edersin."); },
-      },
-      {
-        get heading() { return translateCopy("5. Yasaklanan kullanımlar"); },
-        get body() { return translateCopy("İzinsiz kimlik taklidi, aldatma, taciz, yasa dışı içerik, mahrem görüntü, nefret veya güvenliği tehlikeye atan üretimler yasaktır. Bu tür istekler engellenebilir."); },
-      },
-      {
-        get heading() { return translateCopy("6. Krediler ve ücretli özellikler"); },
-        get body() { return translateCopy("Bazı üretimler kredi veya ücretli üyelik gerektirebilir. Satın alma öncesinde gösterilen fiyat, kapsam ve varsa yenileme bilgileri ilgili işlem için geçerlidir."); },
-      },
-      {
-        get heading() { return translateCopy("7. Askıya alma ve değişiklikler"); },
-        get body() { return translateCopy("Güvenlik, kötüye kullanım veya koşul ihlali durumunda erişim sınırlandırılabilir. Önemli koşul değişiklikleri uygulama içinde duyurulur ve yürürlük tarihi açıkça gösterilir."); },
-      },
-      {
-        get heading() { return translateCopy("8. İletişim"); },
-        get body() { return translateCopy("Koşullar, hesap veya içerik haklarıyla ilgili sorularını uygulamadaki Destek bölümünden iletebilirsin."); },
-      },
-    ],
-  },
-  privacy: {
-    get title() { return translateCopy("Gizlilik politikası"); },
-    get updated() { return translateCopy("7 Eylül 2026"); },
-    sections: [
-      {
-        get heading() { return translateCopy('1. Toplanan bilgiler'); },
-        get body() { return translateCopy("Hesap bilgileri, yüklediğin fotoğraflar, seçtiğin sahne ve filtreler, üretim kayıtları, cihaz bilgileri ve güvenlik günlükleri hizmeti sunmak için işlenebilir."); },
-      },
-      {
-        get heading() { return translateCopy("2. Kullanım amaçları"); },
-        get body() { return translateCopy("Bilgiler hesabını oluşturmak, görsel üretim taleplerini yerine getirmek, güvenliği sağlamak, kötüye kullanımı önlemek ve talep ettiğin destek hizmetini sunmak amacıyla kullanılır."); },
-      },
-      {
-        get heading() { return translateCopy("3. Fotoğraflar ve AI sağlayıcıları"); },
-        get body() { return translateCopy("Kaynak fotoğrafın yalnızca seçtiğin üretim veya düzenleme işlemini gerçekleştirmek için yetkili hizmet sağlayıcılara aktarılabilir. BirKare AI, fotoğraflarını kendi model eğitimi için kullanmaz."); },
-      },
-      {
-        get heading() { return translateCopy('4. Saklama ve silme'); },
-        get body() { return translateCopy("Kaynak fotoğraflar, yüz içeren görseller ve üretilen sonuçlar hesabındaki projeleri sunmak için saklanır. Doğrulanmış hesap silme isteğinde erişim hemen kapatılır. İstek tarihinden itibaren 30 gün içinde aynı hesapla doğrulanıp geri alma işlemini onaylayabilirsin; giriş yapmak tek başına silmeyi iptal etmez. 30 gün sonunda dosya ve hesap verilerinin kalıcı temizliği başlar; geçici hatalar yeniden denenir. Tamamlanan silmeye ait sınırlı işlem kaydı 30 gün sonra kaldırılır. Promosyon kötüye kullanımını önleyen anahtarlı kimlik özetleri saklanabilir; bunlarda fotoğraf, yüz verisi veya açık kimlik bilgisi bulunmaz. Mağaza aboneliğini ayrıca mağazadan yönetmelisin."); },
-      },
-      {
-        get heading() { return translateCopy("5. Paylaşım ve aktarım"); },
-        get body() { return translateCopy("Veriler satılmaz. Barındırma, güvenlik, ödeme ve AI üretimi gibi hizmetleri sağlayan sözleşmeli iş ortakları yalnızca görevleri için gerekli verilere erişebilir."); },
-      },
-      {
-        get heading() { return translateCopy("6. Güvenlik"); },
-        get body() { return translateCopy("Yetkisiz erişimi azaltmak için erişim kontrolleri, güvenli iletişim ve operasyonel kayıtlar kullanılır. Hiçbir sistemin mutlak güvenlik garantisi veremeyeceğini bilmelisin."); },
-      },
-      {
-        get heading() { return translateCopy("7. Hakların"); },
-        get body() { return translateCopy("Uygulanabilir mevzuat kapsamında verilerine erişme, düzeltme, silme, işlemeyi sınırlandırma veya itiraz etme hakların olabilir. Taleplerini Destek bölümünden iletebilirsin."); },
-      },
-      {
-        get heading() { return translateCopy("8. Değişiklikler ve iletişim"); },
-        get body() { return translateCopy("Politika güncellendiğinde yeni tarih bu ekranda gösterilir. Gizlilik soruların için uygulamadaki Destek ve Gizlilik bölümünü kullanabilirsin."); },
-      },
-    ],
+    get title() {
+      return translateCopy('Kullanım koşulları');
+    },
+    get updated() {
+      return translateCopy('2 Ekim 2026');
+    },
+    sections: termsSections,
   },
   'ai-policy': {
-    get title() { return translateCopy("AI içerik politikası"); },
-    get updated() { return translateCopy("2 Eylül 2026"); },
+    get title() {
+      return translateCopy('AI içerik politikası');
+    },
+    get updated() {
+      return translateCopy('2 Eylül 2026');
+    },
     sections: [
       {
-        get heading() { return translateCopy("Şeffaflık"); },
-        get body() { return translateCopy("AI ile üretilen veya önemli ölçüde düzenlenen sonuçlar, paylaşım akışında AI içeriği olarak işaretlenir."); },
+        get heading() {
+          return translateCopy('Şeffaflık');
+        },
+        get body() {
+          return translateCopy(
+            'AI ile üretilen veya önemli ölçüde düzenlenen sonuçlar, paylaşım akışında AI içeriği olarak işaretlenir.',
+          );
+        },
       },
       {
-        get heading() { return translateCopy("Güvenlik"); },
-        get body() { return translateCopy("Zararlı, yanıltıcı veya izinsiz içerik talepleri denetlenir ve gerektiğinde engellenir."); },
+        get heading() {
+          return translateCopy('Güvenlik');
+        },
+        get body() {
+          return translateCopy(
+            'Zararlı, yanıltıcı veya izinsiz içerik talepleri denetlenir ve gerektiğinde engellenir.',
+          );
+        },
       },
     ],
   },
   'fan-content': {
-    get title() { return translateCopy("Kurgusal karakter açıklaması"); },
-    get updated() { return translateCopy("2 Eylül 2026"); },
+    get title() {
+      return translateCopy('Kurgusal karakter açıklaması');
+    },
+    get updated() {
+      return translateCopy('2 Eylül 2026');
+    },
     sections: [
       {
-        get heading() { return translateCopy('Kurgusal koleksiyon'); },
-        get body() { return translateCopy("Bu uygulamadaki karakter örnekleri tamamen hayal ürünüdür; gerçek kişiler, gerçek buluşmalar veya gerçek onaylar anlamına gelmez."); },
+        get heading() {
+          return translateCopy('Kurgusal koleksiyon');
+        },
+        get body() {
+          return translateCopy(
+            'Bu uygulamadaki karakter örnekleri tamamen hayal ürünüdür; gerçek kişiler, gerçek buluşmalar veya gerçek onaylar anlamına gelmez.',
+          );
+        },
       },
       {
-        get heading() { return translateCopy("Paylaşım"); },
-        get body() { return translateCopy("Kurgusal karakter içeren sonuçların AI içeriği açıklamasıyla paylaşılması gerekir."); },
+        get heading() {
+          return translateCopy('Paylaşım');
+        },
+        get body() {
+          return translateCopy(
+            'Kurgusal karakter içeren sonuçların AI içeriği açıklamasıyla paylaşılması gerekir.',
+          );
+        },
       },
     ],
   },
   community: {
-    get title() { return translateCopy("Topluluk kuralları"); },
-    get updated() { return translateCopy("2 Eylül 2026"); },
+    get title() {
+      return translateCopy('Topluluk kuralları');
+    },
+    get updated() {
+      return translateCopy('2 Eylül 2026');
+    },
     sections: [
       {
-        get heading() { return translateCopy("Saygı ve izin"); },
-        get body() { return translateCopy("Başkalarına ait fotoğrafları, kimliği veya kişilik haklarını izinsiz kullanma. Paylaşımlarda açık, dürüst ve saygılı ol."); },
+        get heading() {
+          return translateCopy('Saygı ve izin');
+        },
+        get body() {
+          return translateCopy(
+            'Başkalarına ait fotoğrafları, kimliği veya kişilik haklarını izinsiz kullanma. Paylaşımlarda açık, dürüst ve saygılı ol.',
+          );
+        },
       },
       {
-        get heading() { return translateCopy('Raporlama'); },
-        get body() { return translateCopy("Uygunsuz veya yanlış yönlendirici bir içerik görürsen destek ekibine raporla."); },
+        get heading() {
+          return translateCopy('Raporlama');
+        },
+        get body() {
+          return translateCopy(
+            'Uygunsuz veya yanlış yönlendirici bir içerik görürsen destek ekibine raporla.',
+          );
+        },
       },
     ],
   },
@@ -135,16 +123,27 @@ export default function LegalDocumentScreen() {
   const languageRevision = useLanguageRevision();
 
   const { document } = useLocalSearchParams<{ document: string }>();
+  if (document === 'privacy') return <PrivacyPolicyScreen />;
+  if (document === 'notice')
+    return <LegalTextScreen title="Aydınlatma Metni" sections={privacyNoticeSections} />;
+  if (document === 'explicit-consent')
+    return <LegalTextScreen title="Açık Rıza Metni" sections={explicitConsentSections} />;
   const item = content[document];
   if (!item)
     return (
-      <SettingsPage title={translateCopy("Belge bulunamadı")}>
-        <SettingsNote warning>{translateCopy("Bu belge mevcut değil. Yasal belgeler ekranından geçerli bir belge seçebilirsin.")}</SettingsNote>
+      <SettingsPage title={translateCopy('Belge bulunamadı')}>
+        <SettingsNote warning>
+          {translateCopy(
+            'Bu belge mevcut değil. Yasal belgeler ekranından geçerli bir belge seçebilirsin.',
+          )}
+        </SettingsNote>
       </SettingsPage>
     );
   return (
-    <SettingsPage title={item.title} subtitle={translateCopy("Son güncelleme: {{p0}}", { p0: item.updated })}>
-      <SettingsNote warning>{translateCopy("Bu metin uygulama prototipi için hazırlanmış örnek bir taslaktır; yayın öncesinde hukuk uzmanı tarafından incelenmelidir.")}</SettingsNote>
+    <SettingsPage
+      title={item.title}
+      subtitle={translateCopy('Son güncelleme: {{p0}}', { p0: item.updated })}
+    >
       <GlassSurface radius={25} tone="neutral" glow={false} contentStyle={styles.document}>
         {item.sections.map((section) => (
           <View key={section.heading} style={styles.section}>
@@ -153,6 +152,64 @@ export default function LegalDocumentScreen() {
           </View>
         ))}
       </GlassSurface>
+    </SettingsPage>
+  );
+}
+
+function LegalTextScreen({
+  title,
+  sections,
+}: {
+  title: string;
+  sections: readonly { heading: string; body: string }[];
+}) {
+  const languageRevision = useLanguageRevision();
+  return (
+    <SettingsPage
+      title={title}
+      subtitle={translateCopy('Son güncelleme: {{p0}}', { p0: '2 Ekim 2026' })}
+    >
+      <GlassSurface radius={25} tone="neutral" glow={false} contentStyle={styles.document}>
+        {sections.map((section) => (
+          <View key={section.heading} style={styles.section}>
+            <Text style={styles.heading}>{section.heading}</Text>
+            <Text style={styles.body}>{section.body}</Text>
+          </View>
+        ))}
+      </GlassSurface>
+      {title === 'Açık Rıza Metni' ? (
+        <SettingsNote>
+          {translateCopy(
+            'Açık rıza, yalnızca bu metni okuyup ayrı olarak izin verdiğinde alınır. Onay vermemen hesap açmanı engellemez; bu izne bağlı görsel üretim kullanılamayabilir.',
+          )}
+        </SettingsNote>
+      ) : null}
+    </SettingsPage>
+  );
+}
+
+function PrivacyPolicyScreen() {
+  const languageRevision = useLanguageRevision();
+  return (
+    <SettingsPage
+      title={translateCopy('Gizlilik politikası')}
+      subtitle={translateCopy('Kişisel veriler ve uygulama kullanımı')}
+    >
+      <GlassSurface radius={25} tone="neutral" glow={false} contentStyle={styles.document}>
+        {privacyPolicySections.map((section) => (
+          <View key={section.heading} style={styles.section}>
+            <Text style={styles.heading}>{section.heading}</Text>
+            <Text style={styles.body}>{section.body}</Text>
+          </View>
+        ))}
+      </GlassSurface>
+      <AppleGlassButton
+        label={translateCopy('Gizlilik politikasının web sürümünü aç')}
+        icon="open-outline"
+        onPress={() => {
+          void openBirkarePrivacyPolicy();
+        }}
+      />
     </SettingsPage>
   );
 }

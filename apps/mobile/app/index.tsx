@@ -7,7 +7,6 @@ import { useAuthStore } from '@/features/auth/auth-store';
 import { GuidedSplash, LogoIntro, PhotoPrelude } from '@/features/onboarding/launch-experience';
 import { getOnboardingCompleted, setOnboardingCompleted } from '@/features/onboarding/storage';
 import { clearRefreshToken } from '@/features/auth/token-store';
-import { stagePostAuthDestination } from '@/features/auth/post-auth-destination';
 import { resetCreateFlow } from '@/features/create/createFlow';
 import { colors } from '@/theme';
 
@@ -69,9 +68,7 @@ export default function LaunchScreen() {
   const skipGuidedSplash = useCallback(() => {
     void (async () => {
       resetCreateFlow();
-      stagePostAuthDestination('/(tabs)/projects');
-      await setOnboardingCompleted(true);
-      navigateOnce('/(auth)/login');
+      navigateOnce('/(onboarding)/consent');
     })();
   }, [navigateOnce]);
 

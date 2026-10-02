@@ -88,7 +88,7 @@ function AmbientGlow() {
   );
 }
 
-export function AuthLayout({ children }: PropsWithChildren) {
+export function AuthLayout({ children, showLanguagePicker = true }: PropsWithChildren<{ showLanguagePicker?: boolean }>) {
   const languageRevision = useLanguageRevision();
 
   return (
@@ -104,7 +104,7 @@ export function AuthLayout({ children }: PropsWithChildren) {
           keyboardShouldPersistTaps="always"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.content}>{children}<LanguagePicker compact /></View>
+          <View style={styles.content}>{children}{showLanguagePicker ? <LanguagePicker compact /> : null}</View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -579,11 +579,13 @@ export function CheckRow({
   children,
   error,
   documentLink,
+  checkboxAccessibilityLabel,
 }: {
   checked: boolean;
   onPress: () => void;
   children: ReactNode;
   error?: string;
+  checkboxAccessibilityLabel?: string;
   documentLink?: {
     label: string;
     onPress: () => void;
@@ -602,7 +604,7 @@ export function CheckRow({
       {documentLink ? (
         <View style={styles.checkRow}>
           <Pressable
-            accessibilityLabel={translateCopy("{{p0}} kabulü", { p0: documentLink.label })}
+            accessibilityLabel={checkboxAccessibilityLabel ?? translateCopy("{{p0}} kabulü", { p0: documentLink.label })}
             accessibilityRole="checkbox"
             accessibilityState={{ checked }}
             hitSlop={10}

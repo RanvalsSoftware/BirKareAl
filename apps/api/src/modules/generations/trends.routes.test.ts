@@ -25,6 +25,12 @@ test('HTTP trends validate quote, snapshot choice, replay safely, preview and re
     status: 'ACTIVE',
     emailVerifiedAt: new Date(),
   });
+  await repository.createUserConsentEvent(active.id, {
+    type: 'IMAGE_PROCESSING_EXPLICIT',
+    version: 'v1.0',
+    action: 'GRANTED',
+    source: 'FIRST_IMAGE_UPLOAD',
+  });
   await repository.grantCredits({
     userId: user.id,
     amount: 21,
@@ -242,7 +248,11 @@ test('HTTP trends validate quote, snapshot choice, replay safely, preview and re
     await repository.updateGeneration(toolId, { status: 'COMPLETED' });
     const toolRevision = await post(
       `/${toolId}/revisions`,
-      { sourceOutputId: toolOutput.id, instruction: 'Keep the exposure natural', quality: 'PREVIEW' },
+      {
+        sourceOutputId: toolOutput.id,
+        instruction: 'Keep the exposure natural',
+        quality: 'PREVIEW',
+      },
       'tool-test-revision',
     );
     assert.equal(toolRevision.status, 202);

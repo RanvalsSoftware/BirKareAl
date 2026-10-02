@@ -56,6 +56,7 @@ export default function SocialCompleteScreen() {
     formState: { errors, isSubmitting },
     clearErrors,
     setError,
+    watch,
   } = useForm<SocialCompleteFormValues, unknown, SocialCompleteValues>({
     resolver: zodResolver(socialCompleteFormSchema),
     defaultValues: {
@@ -63,12 +64,10 @@ export default function SocialCompleteScreen() {
       lastName: pendingRegistration?.profile.lastName ?? '',
       birthYear: '',
       acceptedTerms: false,
-      acceptedPrivacy: false,
-      acceptedAiDisclosure: false,
-      acceptedAge: false,
-      acceptedImageRights: false,
+      acceptedNotice: false,
     },
   });
+  const legalChecksComplete = watch('acceptedTerms') && watch('acceptedNotice');
 
   useEffect(() => {
     if (!errors.root?.message) return;
@@ -101,10 +100,7 @@ export default function SocialCompleteScreen() {
         lastName: values.lastName,
         birthYear: values.birthYear,
         acceptedTerms: values.acceptedTerms,
-        acceptedPrivacy: values.acceptedPrivacy,
-        acceptedAiDisclosure: values.acceptedAiDisclosure,
-        acceptedAge: values.acceptedAge,
-        acceptedImageRights: values.acceptedImageRights,
+        acceptedNotice: values.acceptedNotice,
       });
       clearPendingSocialRegistration();
       setRegistrationSuccess(true);
@@ -128,7 +124,7 @@ export default function SocialCompleteScreen() {
   });
 
   return (
-    <AuthLayout>
+    <AuthLayout showLanguagePicker={false}>
       <AuthBrandBar onBack={goBack} />
       <AuthLogo compact />
       <AuthTitle
@@ -274,77 +270,45 @@ export default function SocialCompleteScreen() {
             <CheckRow
               checked={value}
               documentLink={{
-                label: copy('Kullanım Koşulları', 'Terms of Use'),
+                label: translateCopy('Kullanım koşulları'),
                 onPress: () =>
                   router.push({ pathname: '/legal/[document]', params: { document: 'terms' } }),
               }}
               error={errors.acceptedTerms?.message}
               onPress={() => onChange(!value)}
             >
-              {copy('’nı okudum ve kabul ediyorum.', ' — I have read and accept them.')}
-            </CheckRow>
-          )}
-        />
-        <Controller
-          control={control}
-          name="acceptedPrivacy"
-          render={({ field: { onChange, value } }) => (
-            <CheckRow
-              checked={value}
-              documentLink={{
-                label: copy('Gizlilik Politikası', 'Privacy Policy'),
-                onPress: () =>
-                  router.push({ pathname: '/legal/[document]', params: { document: 'privacy' } }),
-              }}
-              error={errors.acceptedPrivacy?.message}
-              onPress={() => onChange(!value)}
-            >
-              {copy('’nı okudum ve kabul ediyorum.', ' — I have read and accept it.')}
-            </CheckRow>
-          )}
-        />
-        <Controller
-          control={control}
-          name="acceptedAiDisclosure"
-          render={({ field: { onChange, value } }) => (
-            <CheckRow
-              checked={value}
-              error={errors.acceptedAiDisclosure?.message}
-              onPress={() => onChange(!value)}
-            >
-              {copy(
-                'AI içerik açıklamasını kabul ediyorum.',
-                'I accept the AI content disclosure.',
+              {translateCopy(
+                '’nı okudum ve kabul ediyorum. Ayrıca 18 yaşından büyük olduğumu beyan ederim.',
               )}
             </CheckRow>
           )}
         />
         <Controller
           control={control}
-          name="acceptedAge"
+          name="acceptedNotice"
           render={({ field: { onChange, value } }) => (
             <CheckRow
               checked={value}
-              error={errors.acceptedAge?.message}
+              documentLink={{
+                label: translateCopy('Aydınlatma Metni’ni okudum ve anladım'),
+                onPress: () =>
+                  router.push({ pathname: '/legal/[document]', params: { document: 'notice' } }),
+              }}
+              checkboxAccessibilityLabel={translateCopy('Aydınlatma Metni’ni okudum ve anladım')}
+              error={errors.acceptedNotice?.message}
               onPress={() => onChange(!value)}
             >
-              {copy('18 yaşını doldurduğumu onaylıyorum.', 'I confirm that I am at least 18.')}
+              {''}
             </CheckRow>
           )}
         />
-        <Controller
-          control={control}
-          name="acceptedImageRights"
-          render={({ field: { onChange, value } }) => (
-            <CheckRow
-              checked={value}
-              error={errors.acceptedImageRights?.message}
-              onPress={() => onChange(!value)}
-            >
-              {copy('Fotoğraf kullanım hakkına sahibim.', 'I have the right to use this photo.')}
-            </CheckRow>
-          )}
-        />
+        <Pressable
+          accessibilityRole="link"
+          onPress={() => router.push('/legal/privacy' as never)}
+          style={styles.privacyPolicyLink}
+        >
+          <Text style={styles.privacyPolicyText}>{translateCopy('Gizlilik politikası')}</Text>
+        </Pressable>
         {registrationSuccess ? (
           <View accessibilityLiveRegion="polite" style={styles.successBanner}>
             <View style={styles.successIcon}>
@@ -358,6 +322,7 @@ export default function SocialCompleteScreen() {
         <GradientAuthButton
           icon="arrow-forward"
           loading={isSubmitting}
+          disabled={!legalChecksComplete}
           onPress={() => void submit()}
         >
           {copy('Devam et', 'Continue')}
@@ -419,6 +384,21 @@ const styles = StyleSheet.create({
   },
   keyboardDoneText: { color: '#FFC400', fontSize: 16, fontWeight: '600' as const },
   consentDivider: { backgroundColor: 'rgba(255,255,255,.08)', height: 1, marginTop: 22 },
+  privacyPolicyLink: {
+    alignItems: 'center' as const,
+    alignSelf: 'flex-start' as const,
+    flexDirection: 'row' as const,
+    gap: 6,
+    minHeight: 42,
+    paddingHorizontal: 4,
+  },
+  privacyPolicyText: {
+    color: authColors.yellow,
+    fontSize: 13,
+    fontWeight: '800' as const,
+    textDecorationLine: 'underline' as const,
+  },
+  privacyPolicyHint: { color: authColors.secondary, fontSize: 11 },
   error: { color: '#FF928A', fontSize: 13, lineHeight: 19, marginTop: 14 },
   successBanner: {
     alignItems: 'center' as const,

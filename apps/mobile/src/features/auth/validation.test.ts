@@ -17,10 +17,7 @@ describe('auth form validation', () => {
       passwordConfirmation: 'Guclu-Sifre-123!',
       birthYear: 1992,
       acceptedTerms: true,
-      acceptedPrivacy: true,
-      acceptedAiDisclosure: true,
-      acceptedAge: true,
-      acceptedImageRights: true,
+      acceptedNotice: true,
     });
     expect(result.success).toBe(true);
   });
@@ -34,16 +31,29 @@ describe('auth form validation', () => {
       passwordConfirmation: 'other',
       birthYear: 1992,
       acceptedTerms: true,
-      acceptedPrivacy: true,
-      acceptedAiDisclosure: true,
-      acceptedAge: true,
-      acceptedImageRights: true,
+      acceptedNotice: true,
     });
     expect(result.success).toBe(false);
   });
 
   it('requires a valid login e-mail and a password', () => {
     expect(loginSchema.safeParse({ email: 'not-an-email', password: '' }).success).toBe(false);
+  });
+
+  it('requires separate terms acceptance and privacy-notice acknowledgment', () => {
+    const registration = {
+      firstName: 'Ayşe',
+      lastName: 'Kaya',
+      email: 'ayse@example.com',
+      password: 'Guclu-Sifre-123!',
+      passwordConfirmation: 'Guclu-Sifre-123!',
+      birthYear: 1992,
+      acceptedTerms: true,
+      acceptedNotice: true,
+    };
+    expect(registerSchema.safeParse(registration).success).toBe(true);
+    expect(registerSchema.safeParse({ ...registration, acceptedNotice: false }).success).toBe(false);
+    expect(registerSchema.safeParse({ ...registration, acceptedTerms: false }).success).toBe(false);
   });
 
   it('requires equal reset passwords', () => {
@@ -62,10 +72,7 @@ describe('Google profile completion keyboard values', () => {
     firstName: 'Ayşe',
     lastName: 'Çetin',
     acceptedTerms: true,
-    acceptedPrivacy: true,
-    acceptedAiDisclosure: true,
-    acceptedAge: true,
-    acceptedImageRights: true,
+    acceptedNotice: true,
   };
 
   it('preserves partial typed years and backspace as strings instead of NaN or numeric resets', () => {
@@ -89,14 +96,8 @@ describe('Google profile completion keyboard values', () => {
     }
   });
 
-  it('still requires every consent; Google login is not consent to register', () => {
-    for (const consent of [
-      'acceptedTerms',
-      'acceptedPrivacy',
-      'acceptedAiDisclosure',
-      'acceptedAge',
-      'acceptedImageRights',
-    ]) {
+  it('requires contract acceptance and privacy-notice acknowledgment for social registration', () => {
+    for (const consent of ['acceptedTerms', 'acceptedNotice']) {
       expect(
         socialCompleteFormSchema.safeParse({ ...fields, birthYear: '1998', [consent]: false })
           .success,

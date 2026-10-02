@@ -53,6 +53,13 @@ test('HTTP photo upload accepts exact ArrayBuffer bytes; MIME, ownership and rev
       status: 'ACTIVE',
       emailVerifiedAt: new Date(),
     });
+    if (email.includes('owner'))
+      await repository.createUserConsentEvent(user.id, {
+        type: 'IMAGE_PROCESSING_EXPLICIT',
+        version: 'v1.0',
+        action: 'GRANTED',
+        source: 'FIRST_IMAGE_UPLOAD',
+      });
     const session = await repository.createSession({
       userId: user.id,
       refreshTokenHash: email,

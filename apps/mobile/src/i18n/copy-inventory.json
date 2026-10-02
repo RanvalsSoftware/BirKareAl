@@ -30,22 +30,10 @@
     ]
   },
   {
-    "text": "’nı okudum ve kabul ediyorum.",
+    "text": "’nı okudum ve kabul ediyorum. Ayrıca 18 yaşından büyük olduğumu beyan ederim.",
     "files": [
       "apps/mobile/app/(auth)/register.tsx",
       "apps/mobile/app/(auth)/social-complete.tsx"
-    ]
-  },
-  {
-    "text": "’nı ve topluluk güvenliği kurallarını kabul etmiş olursun.",
-    "files": [
-      "apps/mobile/app/(onboarding)/consent.tsx"
-    ]
-  },
-  {
-    "text": "’nı,",
-    "files": [
-      "apps/mobile/app/(onboarding)/consent.tsx"
     ]
   },
   {
@@ -306,18 +294,6 @@
     ]
   },
   {
-    "text": "1. Kapsam ve kabul",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
-    "text": "1. Toplanan bilgiler",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
     "text": "10 görünüm",
     "files": [
       "apps/mobile/app/(tabs)/explore.tsx",
@@ -344,38 +320,13 @@
     ]
   },
   {
-    "text": "18 yaşını doldurduğumu onaylıyorum.",
+    "text": "2 Ekim 2026",
     "files": [
-      "apps/mobile/app/(auth)/register.tsx",
-      "apps/mobile/app/(auth)/social-complete.tsx"
-    ]
-  },
-  {
-    "text": "18 yaşını doldurduğunuzu onaylamalısınız.",
-    "files": [
-      "apps/mobile/src/features/auth/validation.ts"
-    ]
-  },
-  {
-    "text": "18 yaşını doldurdum",
-    "files": [
-      "apps/mobile/app/(onboarding)/consent.tsx"
+      "apps/mobile/app/legal/[document].tsx"
     ]
   },
   {
     "text": "2 Eylül 2026",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
-    "text": "2. Hesap ve yaş şartı",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
-    "text": "2. Kullanım amaçları",
     "files": [
       "apps/mobile/app/legal/[document].tsx"
     ]
@@ -388,12 +339,6 @@
     ]
   },
   {
-    "text": "3 Eylül 2026",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
     "text": "3 özgün 80’ler görünümü",
     "files": [
       "apps/mobile/app/trends/[slug].tsx"
@@ -403,18 +348,6 @@
     "text": "3 stil",
     "files": [
       "apps/mobile/app/trends/[slug].tsx"
-    ]
-  },
-  {
-    "text": "3. Fotoğraf ve içerik hakları",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
-    "text": "3. Fotoğraflar ve AI sağlayıcıları",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
     ]
   },
   {
@@ -433,72 +366,6 @@
     "text": "4:5 mobil önizleme · seçim değiştirilebilir",
     "files": [
       "apps/mobile/app/(onboarding)/filters.tsx"
-    ]
-  },
-  {
-    "text": "4. AI üretimi ve şeffaflık",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
-    "text": "4. Saklama ve silme",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
-    "text": "5. Paylaşım ve aktarım",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
-    "text": "5. Yasaklanan kullanımlar",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
-    "text": "6. Güvenlik",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
-    "text": "6. Krediler ve ücretli özellikler",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
-    "text": "7 Eylül 2026",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
-    "text": "7. Askıya alma ve değişiklikler",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
-    "text": "7. Hakların",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
-    "text": "8. Değişiklikler ve iletişim",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
-    "text": "8. İletişim",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
     ]
   },
   {
@@ -602,6 +469,65 @@
     "text": "Açık AI bildirimi",
     "files": [
       "apps/mobile/app/(onboarding)/fan-moment.tsx"
+    ]
+  },
+  {
+    "text": "Açık rıza kaydedilemedi.",
+    "files": [
+      "apps/mobile/app/legal/grant-consent.tsx"
+    ]
+  },
+  {
+    "text": "Açık rıza kaydedilemedi. Lütfen tekrar dene.",
+    "files": [
+      "apps/mobile/app/(onboarding)/consent.tsx"
+    ]
+  },
+  {
+    "text": "Açık rıza kayıtlı",
+    "files": [
+      "apps/mobile/app/create/review.tsx"
+    ]
+  },
+  {
+    "text": "Açık Rıza Metni",
+    "files": [
+      "apps/mobile/app/(onboarding)/consent.tsx",
+      "apps/mobile/app/legal/[document].tsx",
+      "apps/mobile/app/legal/grant-consent.tsx",
+      "apps/mobile/app/legal/index.tsx",
+      "apps/mobile/app/settings/[section].tsx"
+    ]
+  },
+  {
+    "text": "Açık Rıza Metni'ni okudum, izin veriyorum.",
+    "files": [
+      "apps/mobile/app/(onboarding)/consent.tsx",
+      "apps/mobile/app/legal/grant-consent.tsx"
+    ]
+  },
+  {
+    "text": "Açık Rıza Metnini oku ve izin ver",
+    "files": [
+      "apps/mobile/app/create/review.tsx"
+    ]
+  },
+  {
+    "text": "Açık rıza, yalnızca bu metni okuyup ayrı olarak izin verdiğinde alınır. Onay vermemen hesap açmanı engellemez; bu izne bağlı görsel üretim kullanılamayabilir.",
+    "files": [
+      "apps/mobile/app/legal/[document].tsx"
+    ]
+  },
+  {
+    "text": "Açık rızamı geri çek",
+    "files": [
+      "apps/mobile/app/settings/[section].tsx"
+    ]
+  },
+  {
+    "text": "Açık rızanı geri çekmek istiyor musun?",
+    "files": [
+      "apps/mobile/app/settings/[section].tsx"
     ]
   },
   {
@@ -757,24 +683,6 @@
     "text": "AI görselini paylaş",
     "files": [
       "apps/mobile/src/features/sharing/native-share.ts"
-    ]
-  },
-  {
-    "text": "AI içeriği açıklamasını kabul ediyorum",
-    "files": [
-      "apps/mobile/app/(onboarding)/consent.tsx"
-    ]
-  },
-  {
-    "text": "AI içerik açıklamasını kabul ediyorum.",
-    "files": [
-      "apps/mobile/app/(auth)/social-complete.tsx"
-    ]
-  },
-  {
-    "text": "AI içerik açıklamasını kabul etmelisiniz.",
-    "files": [
-      "apps/mobile/src/features/auth/validation.ts"
     ]
   },
   {
@@ -1219,6 +1127,33 @@
     ]
   },
   {
+    "text": "Aydınlatma Metni",
+    "files": [
+      "apps/mobile/app/legal/[document].tsx",
+      "apps/mobile/app/legal/index.tsx",
+      "apps/mobile/app/settings/[section].tsx"
+    ]
+  },
+  {
+    "text": "Aydınlatma Metni ve Kullanım Koşulları kayıt sırasında ayrı olarak sunulur.",
+    "files": [
+      "apps/mobile/app/(onboarding)/consent.tsx"
+    ]
+  },
+  {
+    "text": "Aydınlatma Metni'ni okuduğunuzu onaylamalısınız.",
+    "files": [
+      "apps/mobile/src/features/auth/validation.ts"
+    ]
+  },
+  {
+    "text": "Aydınlatma Metni’ni okudum ve anladım",
+    "files": [
+      "apps/mobile/app/(auth)/register.tsx",
+      "apps/mobile/app/(auth)/social-complete.tsx"
+    ]
+  },
+  {
     "text": "Aydınlık ve sade lifestyle moda karesi.",
     "files": [
       "apps/mobile/src/features/studio/catalog.ts"
@@ -1420,12 +1355,6 @@
     ]
   },
   {
-    "text": "Bazı üretimler kredi veya ücretli üyelik gerektirebilir. Satın alma öncesinde gösterilen fiyat, kapsam ve varsa yenileme bilgileri ilgili işlem için geçerlidir.",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
     "text": "Bej Editorial Stüdyo",
     "files": [
       "apps/mobile/src/features/studio/catalog.ts"
@@ -1510,12 +1439,6 @@
     "text": "Bildirimler",
     "files": [
       "apps/mobile/app/settings/[section].tsx"
-    ]
-  },
-  {
-    "text": "Bilgiler hesabını oluşturmak, görsel üretim taleplerini yerine getirmek, güvenliği sağlamak, kötüye kullanımı önlemek ve talep ettiğin destek hizmetini sunmak amacıyla kullanılır.",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
     ]
   },
   {
@@ -1659,12 +1582,6 @@
     ]
   },
   {
-    "text": "BirKare AI hesabı oluşturarak bu örnek Kullanım Koşulları’nı kabul etmiş olursun. Koşulları kabul etmiyorsan hesap oluşturmamalı veya hizmeti kullanmamalısın.",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
     "text": "BirKare AI için 18 yaşını doldurmuş olmalısınız.",
     "files": [
       "apps/mobile/src/features/auth/validation.ts"
@@ -1683,12 +1600,6 @@
     ]
   },
   {
-    "text": "BirKare AI şu anda 18 yaş ve üzeri kullanıcılar için tasarlanmıştır.",
-    "files": [
-      "apps/mobile/app/(onboarding)/consent.tsx"
-    ]
-  },
-  {
     "text": "BirKare AI üretim sonucu kullanıcı tarafından raporlandı.",
     "files": [
       "apps/mobile/src/features/support/tickets.ts"
@@ -1698,12 +1609,6 @@
     "text": "BirKare AI, seçtiğin fotoğrafı referans alır. Sen sahneyi ve tarzı belirlersin; sistem yeni bir kareyi oluşturmak için seçimini hazırlar.",
     "files": [
       "apps/mobile/app/(onboarding)/welcome.tsx"
-    ]
-  },
-  {
-    "text": "BirKare hesap verilerim",
-    "files": [
-      "apps/mobile/app/settings/[section].tsx"
     ]
   },
   {
@@ -1794,12 +1699,6 @@
     "text": "Bu belge mevcut değil. Yasal belgeler ekranından geçerli bir belge seçebilirsin.",
     "files": [
       "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
-    "text": "Bu belgeler ürün içi bilgilendirme taslaklarıdır. Yayına alınmadan önce hukuk uzmanı tarafından gözden geçirilmelidir.",
-    "files": [
-      "apps/mobile/app/legal/index.tsx"
     ]
   },
   {
@@ -1974,12 +1873,6 @@
     "text": "Bu liste sunucu kayıtlarından gelir. Rezervasyon, harcama ve iade ayrı işlemlerdir; rezervasyon ikinci kez ücretlendirme değildir.",
     "files": [
       "apps/mobile/app/settings/[section].tsx"
-    ]
-  },
-  {
-    "text": "Bu metin uygulama prototipi için hazırlanmış örnek bir taslaktır; yayın öncesinde hukuk uzmanı tarafından incelenmelidir.",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
     ]
   },
   {
@@ -2362,12 +2255,6 @@
     ]
   },
   {
-    "text": "Devam ederek",
-    "files": [
-      "apps/mobile/app/(onboarding)/consent.tsx"
-    ]
-  },
-  {
     "text": "devam ediyor",
     "files": [
       "apps/mobile/app/create/progress.tsx"
@@ -2396,12 +2283,6 @@
     "text": "Devam etmek için fotoğrafı kullanma hakkına sahip olduğunu onaylamalısın.",
     "files": [
       "apps/mobile/src/features/create/server.ts"
-    ]
-  },
-  {
-    "text": "Devam etmek için gizlilik politikasını kabul etmelisiniz.",
-    "files": [
-      "apps/mobile/src/features/auth/validation.ts"
     ]
   },
   {
@@ -2470,12 +2351,6 @@
     "text": "Dışa aktar ve paylaş",
     "files": [
       "apps/mobile/app/generations/[id]/results.tsx"
-    ]
-  },
-  {
-    "text": "Dışa aktarma şu an hesap bilgilerini, kredi hareketlerini ve en fazla 50 projeyi içerir. Görsel dosyaları dahil değildir; görsellerini Projeler bölümünden kaydedebilirsin.",
-    "files": [
-      "apps/mobile/app/settings/[section].tsx"
     ]
   },
   {
@@ -3201,22 +3076,21 @@
     ]
   },
   {
+    "text": "Fotoğraf işlemeden önce ayrı izin",
+    "files": [
+      "apps/mobile/app/legal/grant-consent.tsx"
+    ]
+  },
+  {
+    "text": "Fotoğraf Kullanım Hakkı",
+    "files": [
+      "apps/mobile/app/(onboarding)/consent.tsx"
+    ]
+  },
+  {
     "text": "Fotoğraf kullanım hakkım var",
     "files": [
-      "apps/mobile/app/(onboarding)/consent.tsx",
       "apps/mobile/app/create/upload.tsx"
-    ]
-  },
-  {
-    "text": "Fotoğraf kullanım hakkına sahibim.",
-    "files": [
-      "apps/mobile/app/(auth)/social-complete.tsx"
-    ]
-  },
-  {
-    "text": "Fotoğraf kullanım hakkınızı onaylamalısınız.",
-    "files": [
-      "apps/mobile/src/features/auth/validation.ts"
     ]
   },
   {
@@ -3307,9 +3181,22 @@
     ]
   },
   {
+    "text": "Fotoğrafı sunucuya yüklemeden ve üretimi başlatmadan önce ayrı izin gerekir.",
+    "files": [
+      "apps/mobile/app/create/review.tsx"
+    ]
+  },
+  {
     "text": "Fotoğrafım",
     "files": [
       "apps/mobile/app/create/upload.tsx"
+    ]
+  },
+  {
+    "text": "Fotoğrafın AI işlemede kullanımı için ayrı izin",
+    "files": [
+      "apps/mobile/app/legal/index.tsx",
+      "apps/mobile/app/settings/[section].tsx"
     ]
   },
   {
@@ -3624,6 +3511,18 @@
     ]
   },
   {
+    "text": "Geri çek",
+    "files": [
+      "apps/mobile/app/settings/[section].tsx"
+    ]
+  },
+  {
+    "text": "Geri çekme yeni fotoğraf işlemlerini durdurur",
+    "files": [
+      "apps/mobile/app/settings/[section].tsx"
+    ]
+  },
+  {
     "text": "Geri getirmezsen süre sonunda kalıcı silme başlar. Bu ekranı kapatmak silme tarihini değiştirmez.",
     "files": [
       "apps/mobile/app/(auth)/login.tsx"
@@ -3676,6 +3575,8 @@
   {
     "text": "Gizlilik politikası",
     "files": [
+      "apps/mobile/app/(auth)/register.tsx",
+      "apps/mobile/app/(auth)/social-complete.tsx",
       "apps/mobile/app/legal/[document].tsx",
       "apps/mobile/app/legal/index.tsx",
       "apps/mobile/app/settings/[section].tsx"
@@ -3684,9 +3585,19 @@
   {
     "text": "Gizlilik Politikası",
     "files": [
-      "apps/mobile/app/(auth)/register.tsx",
-      "apps/mobile/app/(auth)/social-complete.tsx",
       "apps/mobile/app/(onboarding)/consent.tsx"
+    ]
+  },
+  {
+    "text": "Gizlilik politikası açılamadı. Lütfen daha sonra tekrar dene.",
+    "files": [
+      "apps/mobile/src/constants/legal-links.ts"
+    ]
+  },
+  {
+    "text": "Gizlilik politikasının web sürümünü aç",
+    "files": [
+      "apps/mobile/app/legal/[document].tsx"
     ]
   },
   {
@@ -4123,6 +4034,12 @@
     ]
   },
   {
+    "text": "Güncel metni webde aç",
+    "files": [
+      "apps/mobile/app/settings/[section].tsx"
+    ]
+  },
+  {
     "text": "Günlük, hafif ve doğal makyaj görünümü.",
     "files": [
       "apps/mobile/src/features/beauty/catalog.ts"
@@ -4150,12 +4067,6 @@
     "text": "Güvenli durum takibi için bir üretim kimliği gerekli.",
     "files": [
       "apps/mobile/app/create/progress.tsx"
-    ]
-  },
-  {
-    "text": "Güvenli kullanım onayları",
-    "files": [
-      "apps/mobile/app/(auth)/register.tsx"
     ]
   },
   {
@@ -4206,12 +4117,6 @@
     "files": [
       "apps/mobile/app/settings/[section].tsx",
       "apps/mobile/app/settings/index.tsx"
-    ]
-  },
-  {
-    "text": "Güvenlik, kötüye kullanım veya koşul ihlali durumunda erişim sınırlandırılabilir. Önemli koşul değişiklikleri uygulama içinde duyurulur ve yürürlük tarihi açıkça gösterilir.",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
     ]
   },
   {
@@ -4638,12 +4543,6 @@
     ]
   },
   {
-    "text": "Hesap bilgileri, yüklediğin fotoğraflar, seçtiğin sahne ve filtreler, üretim kayıtları, cihaz bilgileri ve güvenlik günlükleri hizmeti sunmak için işlenebilir.",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
     "text": "Hesap değişti. İşleme devam etmek için hesabınıza tekrar giriş yapın.",
     "files": [
       "apps/mobile/src/features/billing/revenuecat-client.ts"
@@ -4717,12 +4616,6 @@
     ]
   },
   {
-    "text": "Hesap, kredi hareketleri ve proje bilgileri (JSON)",
-    "files": [
-      "apps/mobile/app/settings/[section].tsx"
-    ]
-  },
-  {
     "text": "Hesap, ödeme ve içerik raporu talepleri için mümkün olduğunda proje veya işlem ayrıntısını ekle.",
     "files": [
       "apps/mobile/app/support/index.tsx"
@@ -4735,15 +4628,10 @@
     ]
   },
   {
-    "text": "Hizmet 18 yaş ve üzeri kullanıcılar içindir. Kayıt bilgilerinin doğru tutulmasından, şifrenin korunmasından ve hesabındaki işlemlerden sen sorumlusun.",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
     "text": "Hizmetin kullanım kuralları",
     "files": [
-      "apps/mobile/app/legal/index.tsx"
+      "apps/mobile/app/legal/index.tsx",
+      "apps/mobile/app/settings/[section].tsx"
     ]
   },
   {
@@ -5142,12 +5030,6 @@
     ]
   },
   {
-    "text": "İzinsiz kimlik taklidi, aldatma, taciz, yasa dışı içerik, mahrem görüntü, nefret veya güvenliği tehlikeye atan üretimler yasaktır. Bu tür istekler engellenebilir.",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
     "text": "İzinsiz yüz kullanımı",
     "files": [
       "apps/mobile/app/generations/[id]/results.tsx"
@@ -5386,6 +5268,12 @@
     ]
   },
   {
+    "text": "Kaydediliyor…",
+    "files": [
+      "apps/mobile/app/legal/grant-consent.tsx"
+    ]
+  },
+  {
     "text": "Kaydet ve paylaş",
     "files": [
       "apps/mobile/app/generations/[id]/results.tsx"
@@ -5486,21 +5374,9 @@
     ]
   },
   {
-    "text": "Kaynak fotoğrafın yalnızca seçtiğin üretim veya düzenleme işlemini gerçekleştirmek için yetkili hizmet sağlayıcılara aktarılabilir. BirKare AI, fotoğraflarını kendi model eğitimi için kullanmaz.",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
     "text": "Kaynak fotoğrafın yalnızca üretim amacıyla güvenli depolamada işlenir. Ayarlardan üretim sonrası silme tercihini değiştirebilirsin.",
     "files": [
       "apps/mobile/app/support/index.tsx"
-    ]
-  },
-  {
-    "text": "Kaynak fotoğraflar, yüz içeren görseller ve üretilen sonuçlar hesabındaki projeleri sunmak için saklanır. Doğrulanmış hesap silme isteğinde erişim hemen kapatılır. İstek tarihinden itibaren 30 gün içinde aynı hesapla doğrulanıp geri alma işlemini onaylayabilirsin; giriş yapmak tek başına silmeyi iptal etmez. 30 gün sonunda dosya ve hesap verilerinin kalıcı temizliği başlar; geçici hatalar yeniden denenir. Tamamlanan silmeye ait sınırlı işlem kaydı 30 gün sonra kaldırılır. Promosyon kötüye kullanımını önleyen anahtarlı kimlik özetleri saklanabilir; bunlarda fotoğraf, yüz verisi veya açık kimlik bilgisi bulunmaz. Mağaza aboneliğini ayrıca mağazadan yönetmelisin.",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
     ]
   },
   {
@@ -5650,6 +5526,19 @@
     "text": "Kişinin yüzünü, pozunu ve kıyafetini koruyarak arka planı sıcak gün batımı ışığında zarif bir şehir terasına dönüştür.",
     "files": [
       "apps/mobile/src/constants/experience-scenes.ts"
+    ]
+  },
+  {
+    "text": "Kişisel veriler ve uygulama kullanımı",
+    "files": [
+      "apps/mobile/app/legal/[document].tsx"
+    ]
+  },
+  {
+    "text": "Kişisel verilerin nasıl işlendiği ve hakların",
+    "files": [
+      "apps/mobile/app/legal/index.tsx",
+      "apps/mobile/app/settings/[section].tsx"
     ]
   },
   {
@@ -5804,12 +5693,6 @@
     "text": "Konu",
     "files": [
       "apps/mobile/app/support/ticket.tsx"
-    ]
-  },
-  {
-    "text": "Koşullar, hesap veya içerik haklarıyla ilgili sorularını uygulamadaki Destek bölümünden iletebilirsin.",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
     ]
   },
   {
@@ -6055,15 +5938,16 @@
   {
     "text": "Kullanım koşulları",
     "files": [
+      "apps/mobile/app/(auth)/register.tsx",
+      "apps/mobile/app/(auth)/social-complete.tsx",
       "apps/mobile/app/legal/[document].tsx",
-      "apps/mobile/app/legal/index.tsx"
+      "apps/mobile/app/legal/index.tsx",
+      "apps/mobile/app/settings/[section].tsx"
     ]
   },
   {
     "text": "Kullanım Koşulları",
     "files": [
-      "apps/mobile/app/(auth)/register.tsx",
-      "apps/mobile/app/(auth)/social-complete.tsx",
       "apps/mobile/app/(onboarding)/consent.tsx"
     ]
   },
@@ -6598,7 +6482,8 @@
   {
     "text": "Onayla ve devam et",
     "files": [
-      "apps/mobile/app/(onboarding)/consent.tsx"
+      "apps/mobile/app/(onboarding)/consent.tsx",
+      "apps/mobile/app/legal/grant-consent.tsx"
     ]
   },
   {
@@ -7110,12 +6995,6 @@
     ]
   },
   {
-    "text": "Politika güncellendiğinde yeni tarih bu ekranda gösterilir. Gizlilik soruların için uygulamadaki Destek ve Gizlilik bölümünü kullanabilirsin.",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
     "text": "Pop Art",
     "files": [
       "apps/mobile/src/features/onboarding/data.ts"
@@ -7588,6 +7467,12 @@
     "text": "RevenueCat’te bu uygulama için geçerli bir offering bulunamadı. Ürünleri bağlayıp current offering seçin.",
     "files": [
       "apps/mobile/src/features/billing/revenuecat-client.ts"
+    ]
+  },
+  {
+    "text": "Rızaya dayalı yeni fotoğraf üretimleri durur. Daha önce tamamlanan işlemler geri alınmaz.",
+    "files": [
+      "apps/mobile/app/settings/[section].tsx"
     ]
   },
   {
@@ -8476,18 +8361,6 @@
     ]
   },
   {
-    "text": "Sonuçların AI ile oluşturulabileceğini ve etiketleneceğini kabul ediyorum.",
-    "files": [
-      "apps/mobile/app/(auth)/register.tsx"
-    ]
-  },
-  {
-    "text": "Sonuçların AI ile üretildiğini ve yanıltıcı kullanımın yasak olduğunu anlıyorum.",
-    "files": [
-      "apps/mobile/app/(onboarding)/consent.tsx"
-    ]
-  },
-  {
     "text": "Sonuçlarını kaydet",
     "files": [
       "apps/mobile/app/(tabs)/projects.tsx"
@@ -9167,12 +9040,6 @@
     ]
   },
   {
-    "text": "Üretilen sonuçlar yapay zekâ tarafından oluşturulabilir veya önemli ölçüde değiştirilebilir. Sonuçların hatalı olabileceğini ve paylaşım sırasında AI içeriği olarak belirtilmesi gerekebileceğini kabul edersin.",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
     "text": "Üretim anahtarı geçersiz. Lütfen tekrar dene.",
     "files": [
       "apps/mobile/src/features/create/server.ts"
@@ -9537,12 +9404,6 @@
     ]
   },
   {
-    "text": "Uygulanabilir mevzuat kapsamında verilerine erişme, düzeltme, silme, işlemeyi sınırlandırma veya itiraz etme hakların olabilir. Taleplerini Destek bölümünden iletebilirsin.",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
     "text": "Uygunsuz veya cinsel içerik",
     "files": [
       "apps/mobile/app/generations/[id]/results.tsx"
@@ -9632,24 +9493,6 @@
     "text": "Veri, fotoğraf ve saklama bilgileri",
     "files": [
       "apps/mobile/app/legal/index.tsx"
-    ]
-  },
-  {
-    "text": "Veriler hazırlanıyor…",
-    "files": [
-      "apps/mobile/app/settings/[section].tsx"
-    ]
-  },
-  {
-    "text": "Veriler satılmaz. Barındırma, güvenlik, ödeme ve AI üretimi gibi hizmetleri sağlayan sözleşmeli iş ortakları yalnızca görevleri için gerekli verilere erişebilir.",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
-    "text": "Verilerimi dışa aktar",
-    "files": [
-      "apps/mobile/app/settings/[section].tsx"
     ]
   },
   {
@@ -9747,12 +9590,6 @@
     ]
   },
   {
-    "text": "Yalnızca sana ait olan veya kullanmak için gerekli izne sahip olduğun fotoğraf ve içerikleri yükleyebilirsin. Başkalarının telif, kişilik ve gizlilik haklarına saygı göstermelisin.",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
     "text": "Yalnızca tırnak görünümü değiştirilir",
     "files": [
       "apps/mobile/app/studio/[mode].tsx"
@@ -9823,6 +9660,7 @@
   {
     "text": "Yasal belgeler",
     "files": [
+      "apps/mobile/app/(auth)/register.tsx",
       "apps/mobile/app/(tabs)/profile.tsx",
       "apps/mobile/app/legal/index.tsx",
       "apps/mobile/app/settings/index.tsx"
@@ -9939,12 +9777,6 @@
     ]
   },
   {
-    "text": "Yetkisiz erişimi azaltmak için erişim kontrolleri, güvenli iletişim ve operasyonel kayıtlar kullanılır. Hiçbir sistemin mutlak güvenlik garantisi veremeyeceğini bilmelisin.",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
     "text": "Yiyecek & İçecek",
     "files": [
       "apps/mobile/src/features/studio/catalog.ts"
@@ -9996,13 +9828,7 @@
     ]
   },
   {
-    "text": "Yüklediğim fotoğraf için gerekli kullanım hakkına sahibim.",
-    "files": [
-      "apps/mobile/app/(auth)/register.tsx"
-    ]
-  },
-  {
-    "text": "Yüklediğim fotoğrafın bana ait olduğunu veya gerekli kullanım iznine sahip olduğumu onaylıyorum.",
+    "text": "Yüklediğim fotoğrafın bana ait olduğunu veya gerekli kullanım iznine sahip olduğumu beyan ederim.",
     "files": [
       "apps/mobile/app/(onboarding)/consent.tsx"
     ]

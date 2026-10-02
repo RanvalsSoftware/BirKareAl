@@ -35,16 +35,9 @@ export const registerSchema = z
     acceptedTerms: z
       .boolean()
       .refine((value) => value, { error: () => translateCopy("Devam etmek için koşulları kabul etmelisiniz.") }),
-    acceptedPrivacy: z
+    acceptedNotice: z
       .boolean()
-      .refine((value) => value, { error: () => translateCopy("Devam etmek için gizlilik politikasını kabul etmelisiniz.") }),
-    acceptedAiDisclosure: z
-      .boolean()
-      .refine((value) => value, { error: () => translateCopy("AI içerik açıklamasını kabul etmelisiniz.") }),
-    acceptedAge: z.boolean().refine((value) => value, { error: () => translateCopy("18 yaşını doldurduğunuzu onaylamalısınız.") }),
-    acceptedImageRights: z
-      .boolean()
-      .refine((value) => value, { error: () => translateCopy("Fotoğraf kullanım hakkınızı onaylamalısınız.") }),
+      .refine((value) => value, { error: () => translateCopy("Aydınlatma Metni'ni okuduğunuzu onaylamalısınız.") }),
   })
   .refine((values) => values.password === values.passwordConfirmation, {
     error: () => translateCopy("Şifreler eşleşmiyor."),
@@ -82,16 +75,9 @@ export const socialCompleteSchema = z.object({
   acceptedTerms: z
     .boolean()
     .refine((value) => value, { error: () => translateCopy("Devam etmek için koşulları kabul etmelisiniz.") }),
-  acceptedPrivacy: z
+  acceptedNotice: z
     .boolean()
-    .refine((value) => value, { error: () => translateCopy("Devam etmek için gizlilik politikasını kabul etmelisiniz.") }),
-  acceptedAiDisclosure: z
-    .boolean()
-    .refine((value) => value, { error: () => translateCopy("AI içerik açıklamasını kabul etmelisiniz.") }),
-  acceptedAge: z.boolean().refine((value) => value, { error: () => translateCopy("18 yaşını doldurduğunuzu onaylamalısınız.") }),
-  acceptedImageRights: z
-    .boolean()
-    .refine((value) => value, { error: () => translateCopy("Fotoğraf kullanım hakkınızı onaylamalısınız.") }),
+    .refine((value) => value, { error: () => translateCopy("Aydınlatma Metni'ni okuduğunuzu onaylamalısınız.") }),
 });
 
 export type SocialCompleteValues = z.infer<typeof socialCompleteSchema>;

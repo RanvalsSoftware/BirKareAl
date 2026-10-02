@@ -6,6 +6,7 @@ import { requireAuth } from '../../middleware/auth.middleware.js';
 import { validate } from '../../middleware/validate.middleware.js';
 import type { ApiDependencies } from '../../services/dependencies.js';
 import { asyncHandler, sendSuccess } from '../../services/http.js';
+import { requireImageProcessingConsent } from '../users/consent.js';
 
 const extensionForMime = (mimeType: string): string =>
   ({ 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' })[mimeType] ?? 'bin';
@@ -112,6 +113,9 @@ export function createAssetsRouter(deps: ApiDependencies): Router {
     '/uploads/initiate',
     validate(UploadInitiateSchema),
     asyncHandler(async (req, res) => {
+      if (req.body.purpose === 'USER_SOURCE') {
+        await requireImageProcessingConsent(deps, req.auth!.userId);
+      }
       const assetId = createId();
       const extension = extensionForMime(req.body.mimeType);
       const category = req.body.purpose === 'AVATAR' ? 'avatars' : 'sources';
@@ -207,8 +211,7 @@ export function createAssetsRouter(deps: ApiDependencies): Router {
       if (asset.status !== 'READY')
         throw forbidden('ASSET_NOT_READY', 'Görsel henüz kullanıma hazır değil.');
       const validated = await readValidatedStoredUpload(deps, asset);
-      if (!asset.sha256)
-        await deps.repository.updateAsset(asset.id, { sha256: validated.digest });
+      if (!asset.sha256) await deps.repository.updateAsset(asset.id, { sha256: validated.digest });
       const url =
         asset.storageProvider === 'local'
           ? `/v1/assets/${asset.id}/content`

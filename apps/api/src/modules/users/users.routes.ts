@@ -11,6 +11,8 @@ import { AppleIdTokenService } from '../auth/apple-id-token.service.js';
 import { AppleTokenRevocationService } from '../auth/apple-token-revocation.service.js';
 import { AccountDeletionService } from './account-deletion.service.js';
 import { authRateLimit } from '../../middleware/rate-limit.middleware.js';
+import { z } from 'zod';
+import { IMAGE_PROCESSING_CONSENT_VERSION, latestImageProcessingConsent } from './consent.js';
 
 export function createUsersRouter(deps: ApiDependencies): Router {
   const router = Router();
@@ -23,6 +25,55 @@ export function createUsersRouter(deps: ApiDependencies): Router {
     new AppleTokenRevocationService(deps.config),
   );
   router.use(requireAuth(deps.tokenService, deps.repository));
+
+  router.get(
+    '/consents/image-processing',
+    asyncHandler(async (req, res) => {
+      const latest = await latestImageProcessingConsent(deps, req.auth!.userId);
+      sendSuccess(res, req.requestId, {
+        granted: Boolean(
+          latest?.action === 'GRANTED' && latest.version === IMAGE_PROCESSING_CONSENT_VERSION,
+        ),
+        version: latest?.version ?? null,
+        updatedAt: latest?.createdAt.toISOString() ?? null,
+      });
+    }),
+  );
+
+  router.post(
+    '/consents/image-processing',
+    validate(z.object({ accepted: z.literal(true) }).strict()),
+    asyncHandler(async (req, res) => {
+      const event = await deps.repository.createUserConsentEvent(req.auth!.userId, {
+        type: 'IMAGE_PROCESSING_EXPLICIT',
+        version: IMAGE_PROCESSING_CONSENT_VERSION,
+        action: 'GRANTED',
+        source: 'FIRST_IMAGE_UPLOAD',
+      });
+      sendSuccess(
+        res,
+        req.requestId,
+        { granted: true, version: event.version, updatedAt: event.createdAt.toISOString() },
+        201,
+      );
+    }),
+  );
+
+  router.delete(
+    '/consents/image-processing',
+    asyncHandler(async (req, res) => {
+      const latest = await latestImageProcessingConsent(deps, req.auth!.userId);
+      if (latest?.action === 'GRANTED') {
+        await deps.repository.createUserConsentEvent(req.auth!.userId, {
+          type: 'IMAGE_PROCESSING_EXPLICIT',
+          version: latest.version,
+          action: 'REVOKED',
+          source: 'SETTINGS',
+        });
+      }
+      sendSuccess(res, req.requestId, { granted: false });
+    }),
+  );
 
   router.get(
     '/',

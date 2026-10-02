@@ -395,6 +395,12 @@ test('HTTP studio routes quote exact prices and persist immutable v2 recipes wit
     status: 'ACTIVE',
     emailVerifiedAt: new Date(),
   });
+  await repository.createUserConsentEvent(active.id, {
+    type: 'IMAGE_PROCESSING_EXPLICIT',
+    version: 'v1.0',
+    action: 'GRANTED',
+    source: 'FIRST_IMAGE_UPLOAD',
+  });
   await repository.grantCredits({
     userId: user.id,
     amount: 21,

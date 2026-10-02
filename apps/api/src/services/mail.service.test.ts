@@ -310,10 +310,7 @@ const registration = {
   dateOfBirth: '1990-01-01',
   consent: {
     termsAccepted: true,
-    privacyAccepted: true,
-    aiDisclosureAccepted: true,
-    ageConfirmed: true,
-    ownImageOrPermissionConfirmed: true,
+    noticeAccepted: true,
   },
 } as const;
 
@@ -475,7 +472,6 @@ test('disabled mail refuses production auth mail equally for known and unknown a
   const development = authFixture(new DisabledMailService(), true);
   assert.ok((await development.service.register(registration, {})).developmentVerificationToken);
 });
-
 
 test('public deletion link is single-use and starts the existing account cleanup flow', async () => {
   const mail = new FakeMail();

@@ -63,8 +63,8 @@ export function stageOnboardingCreateDraft(input: {
     preserveFace: true,
     preserveClothes: true,
     saveSource: true,
-    // Consent is collected on the next screen. Do not make an image eligible
-    // for upload until that explicit confirmation has completed.
+    // Both rights and explicit processing consent are collected before auth.
+    // Do not make this image eligible for upload until the rights checkbox is confirmed.
     sourceRightsConfirmed: false,
     onboardingDraftPending: true,
     customInstruction: scene.customInstruction,

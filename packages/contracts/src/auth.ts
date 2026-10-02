@@ -33,10 +33,7 @@ export const RegisterSchema = z
     dateOfBirth: z.string().date().optional(),
     consent: z.object({
       termsAccepted: z.literal(true),
-      privacyAccepted: z.literal(true),
-      aiDisclosureAccepted: z.literal(true),
-      ageConfirmed: z.literal(true),
-      ownImageOrPermissionConfirmed: z.literal(true),
+      noticeAccepted: z.literal(true),
     }),
   })
   .merge(DeviceSchema);
@@ -78,10 +75,12 @@ export const ResetPasswordSchema = z.object({
   token: z.string().min(40).max(512),
   password: PasswordSchema,
 });
-export const VerifyEmailSchema = z.object({
-  email: EmailSchema,
-  code: z.string().regex(/^\d{6}$/, 'Doğrulama kodu 6 rakamdan oluşmalıdır.'),
-}).merge(DeviceSchema);
+export const VerifyEmailSchema = z
+  .object({
+    email: EmailSchema,
+    code: z.string().regex(/^\d{6}$/, 'Doğrulama kodu 6 rakamdan oluşmalıdır.'),
+  })
+  .merge(DeviceSchema);
 export const ResendVerificationSchema = z.object({ email: EmailSchema }).merge(DeviceSchema);
 
 /**
@@ -96,10 +95,7 @@ export const SocialRegistrationSchema = z.object({
   dateOfBirth: z.string().date(),
   consent: z.object({
     termsAccepted: z.literal(true),
-    privacyAccepted: z.literal(true),
-    aiDisclosureAccepted: z.literal(true),
-    ageConfirmed: z.literal(true),
-    ownImageOrPermissionConfirmed: z.literal(true),
+    noticeAccepted: z.literal(true),
   }),
 });
 

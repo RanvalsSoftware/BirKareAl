@@ -10,36 +10,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { GoldButton, OnboardingHeader } from '@/features/onboarding/components';
 import { confirmOnboardingCreateDraftRights } from '@/features/onboarding/create-handoff';
 import { useOnboarding } from '@/features/onboarding/context';
+import { explicitConsentSections } from '@/features/legal/privacy-notice';
+import { savePendingImageProcessingConsent } from '@/features/legal/image-processing-consent';
 import { colors, radii, spacing } from '@/theme';
-
-const consentRows = [
-  {
-    id: 'rights',
-    icon: 'images-outline' as const,
-    get title() { return translateCopy("Fotoğraf kullanım hakkım var"); },
-    get detail() { return translateCopy("Yüklediğim fotoğrafın bana ait olduğunu veya gerekli kullanım iznine sahip olduğumu onaylıyorum."); },
-  },
-  {
-    id: 'ai',
-    icon: 'sparkles-outline' as const,
-    get title() { return translateCopy("AI içeriği açıklamasını kabul ediyorum"); },
-    get detail() { return translateCopy("Sonuçların AI ile üretildiğini ve yanıltıcı kullanımın yasak olduğunu anlıyorum."); },
-  },
-  {
-    id: 'age',
-    icon: 'calendar-outline' as const,
-    get title() { return translateCopy("18 yaşını doldurdum"); },
-    get detail() { return translateCopy("BirKare AI şu anda 18 yaş ve üzeri kullanıcılar için tasarlanmıştır."); },
-  },
-] as const;
 
 export default function ConsentScreen() {
   const languageRevision = useLanguageRevision();
 
   const { completed, markCompleted, ready } = useOnboarding();
-  const [accepted, setAccepted] = useState<Record<string, boolean>>({});
+  const [rightsAccepted, setRightsAccepted] = useState(false);
+  const [explicitConsentAccepted, setExplicitConsentAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const allAccepted = consentRows.every((row) => accepted[row.id]);
+  const [error, setError] = useState<string | null>(null);
+  const allAccepted = rightsAccepted && explicitConsentAccepted;
 
   useEffect(() => {
     // A completed user can still reach this route through a stale deep link or
@@ -65,10 +48,14 @@ export default function ConsentScreen() {
   async function continueToLogin() {
     if (!allAccepted || submitting) return;
     setSubmitting(true);
+    setError(null);
     try {
+      await savePendingImageProcessingConsent();
       await markCompleted();
       confirmOnboardingCreateDraftRights();
       router.replace('/(auth)/login');
+    } catch {
+      setError(translateCopy('Açık rıza kaydedilemedi. Lütfen tekrar dene.'));
     } finally {
       setSubmitting(false);
     }
@@ -86,69 +73,104 @@ export default function ConsentScreen() {
         <OnboardingHeader
           onBack={returnFromConsent}
           step="BAŞLAMADAN ÖNCE"
-          title={translateCopy("Güvenlik onayları")}
+          title={translateCopy('Güvenlik onayları')}
         />
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <Text accessibilityRole="header" style={styles.title}>{translateCopy("Güvenli bir alan{{p0}}oluşturalım.", { p0: `\n` })}</Text>
-          <Text style={styles.subtitle}>{translateCopy("Fotoğrafların ve platformdaki herkesin haklarını korumak için aşağıdaki onayların tamamı gerekli.")}</Text>
+          <Text accessibilityRole="header" style={styles.title}>
+            {translateCopy('Güvenli bir alan{{p0}}oluşturalım.', { p0: `\n` })}
+          </Text>
+          <Text style={styles.subtitle}>
+            {translateCopy(
+              'Fotoğrafların ve platformdaki herkesin haklarını korumak için aşağıdaki onayların tamamı gerekli.',
+            )}
+          </Text>
           <View style={styles.rows}>
-            {consentRows.map((row) => {
-              const checked = Boolean(accepted[row.id]);
-              return (
-                <Pressable
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked }}
-                  key={row.id}
-                  onPress={() => {
-                    setAccepted((current) => ({ ...current, [row.id]: !current[row.id] }));
-                    void Haptics.selectionAsync();
-                  }}
-                  style={({ pressed }) => [
-                    styles.row,
-                    checked && styles.rowChecked,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <View style={[styles.iconBox, checked && styles.iconBoxChecked]}>
-                    {checked ? (
-                      <Ionicons color={colors.background} name="checkmark" size={20} />
-                    ) : (
-                      <Ionicons color={colors.textSecondary} name={row.icon} size={20} />
-                    )}
-                  </View>
-                  <View style={styles.rowCopy}>
-                    <Text style={styles.rowTitle}>{row.title}</Text>
-                    <Text style={styles.rowDetail}>{row.detail}</Text>
-                  </View>
-                </Pressable>
-              );
-            })}
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: rightsAccepted }}
+              onPress={() => {
+                setRightsAccepted((value) => !value);
+                void Haptics.selectionAsync();
+              }}
+              style={({ pressed }) => [styles.row, rightsAccepted && styles.rowChecked, pressed && styles.pressed]}
+            >
+              <View style={[styles.iconBox, rightsAccepted && styles.iconBoxChecked]}>
+                {rightsAccepted ? (
+                  <Ionicons color={colors.background} name="checkmark" size={20} />
+                ) : (
+                  <Ionicons color={colors.textSecondary} name="images-outline" size={20} />
+                )}
+              </View>
+              <View style={styles.rowCopy}>
+                <Text style={styles.rowTitle}>{translateCopy('Fotoğraf Kullanım Hakkı')}</Text>
+                <Text style={styles.rowDetail}>
+                  {translateCopy(
+                    'Yüklediğim fotoğrafın bana ait olduğunu veya gerekli kullanım iznine sahip olduğumu beyan ederim.',
+                  )}
+                </Text>
+              </View>
+            </Pressable>
+            <View style={styles.explicitDocument}>
+              <Text style={styles.explicitTitle}>{translateCopy('Açık Rıza Metni')}</Text>
+              {explicitConsentSections.map((section) => (
+                <View key={section.heading} style={styles.explicitSection}>
+                  <Text style={styles.explicitHeading}>{translateCopy(section.heading)}</Text>
+                  <Text style={styles.explicitBody}>{translateCopy(section.body)}</Text>
+                </View>
+              ))}
+            </View>
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: explicitConsentAccepted }}
+              onPress={() => {
+                setExplicitConsentAccepted((value) => !value);
+                void Haptics.selectionAsync();
+              }}
+              style={({ pressed }) => [styles.explicitCheck, pressed && styles.pressed]}
+            >
+              <View style={[styles.checkbox, explicitConsentAccepted && styles.checkboxChecked]}>
+                {explicitConsentAccepted ? (
+                  <Ionicons color={colors.background} name="checkmark" size={18} />
+                ) : null}
+              </View>
+              <Text style={styles.explicitCheckText}>
+                {translateCopy("Açık Rıza Metni'ni okudum, izin veriyorum.")}
+              </Text>
+            </Pressable>
           </View>
+          {error ? <Text accessibilityLiveRegion="polite" style={styles.error}>{error}</Text> : null}
           <View style={styles.legalBox}>
             <Ionicons color={colors.textMuted} name="document-text-outline" size={18} />
-            <Text style={styles.legalText}>{translateCopy("Devam ederek")}{' '}
+            <Text style={styles.legalText}>
+              {translateCopy(
+                'Aydınlatma Metni ve Kullanım Koşulları kayıt sırasında ayrı olarak sunulur.',
+              )}{' '}
               <Text
-                accessibilityHint={translateCopy("Belgeyi açar")}
+                accessibilityHint={translateCopy('Belgeyi açar')}
                 accessibilityRole="link"
                 onPress={() =>
                   router.push({ pathname: '/legal/[document]', params: { document: 'terms' } })
                 }
                 style={styles.legalLink}
-              >{translateCopy("Kullanım Koşulları")}</Text>{translateCopy("’nı,")}{' '}
+              >
+                {translateCopy('Kullanım Koşulları')}
+              </Text>
+              {' · '}
               <Text
-                accessibilityHint={translateCopy("Belgeyi açar")}
+                accessibilityHint={translateCopy('Belgeyi açar')}
                 accessibilityRole="link"
-                onPress={() =>
-                  router.push({ pathname: '/legal/[document]', params: { document: 'privacy' } })
-                }
+                onPress={() => router.push('/legal/privacy' as never)}
                 style={styles.legalLink}
-              >{translateCopy("Gizlilik Politikası")}</Text>{translateCopy("’nı ve topluluk güvenliği kurallarını kabul etmiş olursun.")}</Text>
+              >
+                {translateCopy('Gizlilik Politikası')}
+              </Text>
+            </Text>
           </View>
         </ScrollView>
         <View style={styles.bottom}>
           <GoldButton
             disabled={!allAccepted}
-            label={translateCopy("Onayla ve devam et")}
+            label={translateCopy('Onayla ve devam et')}
             loading={submitting}
             onPress={continueToLogin}
           />
@@ -196,6 +218,39 @@ const styles = StyleSheet.create({
   rowCopy: { flex: 1 },
   rowTitle: { color: colors.textPrimary, fontSize: 14, fontWeight: '900', lineHeight: 19 },
   rowDetail: { color: colors.textSecondary, fontSize: 11, lineHeight: 17, marginTop: 5 },
+  explicitDocument: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    gap: 17,
+    padding: 16,
+  },
+  explicitTitle: { color: colors.accentYellow, fontSize: 18, fontWeight: '900' },
+  explicitSection: { gap: 6 },
+  explicitHeading: { color: colors.textPrimary, fontSize: 13, fontWeight: '800' },
+  explicitBody: { color: colors.textSecondary, fontSize: 11, lineHeight: 17 },
+  explicitCheck: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 3,
+    paddingVertical: 8,
+  },
+  checkbox: {
+    alignItems: 'center',
+    borderColor: colors.border,
+    borderRadius: 6,
+    borderWidth: 1,
+    height: 24,
+    justifyContent: 'center',
+    marginTop: 1,
+    width: 24,
+  },
+  checkboxChecked: { backgroundColor: colors.accentYellow, borderColor: colors.accentYellow },
+  explicitCheckText: { color: colors.textPrimary, flex: 1, fontSize: 13, fontWeight: '700', lineHeight: 20 },
+  error: { color: colors.danger, fontSize: 12, lineHeight: 18, paddingHorizontal: 4 },
+  noticeLink: { marginTop: 14, paddingHorizontal: 4, paddingVertical: 6 },
   legalBox: {
     alignItems: 'flex-start',
     flexDirection: 'row',

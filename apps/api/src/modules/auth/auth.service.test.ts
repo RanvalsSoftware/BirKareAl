@@ -27,10 +27,7 @@ const socialRegistration = {
   dateOfBirth: '1990-01-01',
   consent: {
     termsAccepted: true,
-    privacyAccepted: true,
-    aiDisclosureAccepted: true,
-    ageConfirmed: true,
-    ownImageOrPermissionConfirmed: true,
+    noticeAccepted: true,
   },
 } as const;
 
@@ -123,17 +120,11 @@ test('issues an opaque handoff, then creates a verified Google user by immutable
   assert.equal(second.user.id, first.user.id);
   assert.notEqual(second.refreshToken, first.refreshToken);
   const socialConsents = await repository.listUserConsents(first.user.id);
-  assert.equal(socialConsents.length, 5);
-  assert.deepEqual(socialConsents.map((record) => record.type).sort(), [
-    'AGE_CONFIRMATION',
-    'AI_DISCLOSURE',
-    'IMAGE_RIGHTS',
-    'PRIVACY',
-    'TERMS',
-  ]);
+  assert.equal(socialConsents.length, 2);
+  assert.deepEqual(socialConsents.map((record) => record.type).sort(), ['NOTICE', 'TERMS']);
   assert.ok(
     socialConsents.every(
-      (record) => record.source === 'SOCIAL_REGISTRATION' && record.version === '2026-09-04',
+      (record) => record.source === 'SOCIAL_REGISTRATION' && record.version === 'v1.0',
     ),
   );
   assert.equal(
@@ -173,10 +164,10 @@ test('password re-registration and repeated login cannot repeat the welcome gran
   assert.equal((await repository.getWallet(user.id)).available, 0);
   assert.deepEqual(await repository.listCreditTransactions(user.id), []);
   const consents = await repository.listUserConsents(user.id);
-  assert.equal(consents.length, 5);
+  assert.equal(consents.length, 2);
   assert.ok(
     consents.every(
-      (record) => record.source === 'PASSWORD_REGISTRATION' && record.version === '2026-09-04',
+      (record) => record.source === 'PASSWORD_REGISTRATION' && record.version === 'v1.0',
     ),
   );
 
@@ -278,10 +269,7 @@ test('linked Google login can explicitly recover a deletion-pending account', as
   assert.ok(Number.isFinite(Date.parse(pending.recoveryUntil)));
   assert.equal((await repository.getUserById(user.id))?.status, 'DELETION_PENDING');
 
-  const recovered = await service.googleLogin(
-    { ...socialInput(), recoverDeletion: true },
-    {},
-  );
+  const recovered = await service.googleLogin({ ...socialInput(), recoverDeletion: true }, {});
   if (!('user' in recovered)) assert.fail('Expected recovered social session.');
   assert.equal(recovered.user.status, 'ACTIVE');
   assert.equal((await repository.getUserById(user.id))?.deletedAt, null);
@@ -323,10 +311,7 @@ test('linked Google login recovers a legacy deletion-pending user even if the ma
   assert.equal(pending.deletionRecoveryRequired, true);
   assert.equal(pending.recoveryDays, 30);
 
-  const recovered = await service.googleLogin(
-    { ...socialInput(), recoverDeletion: true },
-    {},
-  );
+  const recovered = await service.googleLogin({ ...socialInput(), recoverDeletion: true }, {});
   if (!('user' in recovered)) assert.fail('Expected a recovered session.');
   assert.equal(recovered.user.status, 'ACTIVE');
   const stored = await repository.getUserById(user.id);

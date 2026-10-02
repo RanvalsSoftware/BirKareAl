@@ -255,7 +255,7 @@ export default function LoginScreen() {
   );
 
   return (
-    <AuthLayout>
+    <AuthLayout showLanguagePicker={false}>
       <AuthBrandBar
         actionLabel={copy('Kayıt ol', 'Sign up')}
         onAction={() => router.push('/(auth)/register')}

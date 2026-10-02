@@ -5,6 +5,7 @@ import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ProPaywallView, type ProPlanDisplay } from './ProPaywallView';
 import type { ProPlanId } from './paywall-model';
+import { openBirkarePrivacyPolicy } from '@/constants/legal-links';
 
 // Deliberately not PurchasesPackage values. No SDK/API/auth/wallet import here.
 const PREVIEW_PLANS: readonly ProPlanDisplay[] = [
@@ -47,7 +48,9 @@ export function ProPaywallPreview({ initialPlan = 'lifetime' }: { initialPlan?: 
       onBuy={explain}
       onRestore={explain}
       onTerms={() => router.push('/legal/terms' as never)}
-      onPrivacy={() => router.push('/legal/privacy' as never)}
+      onPrivacy={() => {
+        void openBirkarePrivacyPolicy();
+      }}
     />
   );
 }

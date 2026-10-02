@@ -25,6 +25,9 @@ import type {
   AssetRecord,
   BirKareRepository,
   CatalogSnapshot,
+  ConsentEventRecord,
+  ConsentType,
+  CreateConsentEventInput,
   CreateAssetInput,
   CreateGenerationInput,
   CreateProjectInput,
@@ -142,6 +145,18 @@ function toUserConsent(row: any): UserConsentRecord {
     version: row.version,
     source: row.source as UserConsentRecord['source'],
     acceptedAt: new Date(row.acceptedAt),
+    createdAt: new Date(row.createdAt),
+  };
+}
+
+function toConsentEvent(row: any): ConsentEventRecord {
+  return {
+    id: row.id,
+    userId: row.userId,
+    type: row.type as ConsentEventRecord['type'],
+    version: row.version,
+    action: row.action as ConsentEventRecord['action'],
+    source: row.source as ConsentEventRecord['source'],
     createdAt: new Date(row.createdAt),
   };
 }
@@ -613,6 +628,22 @@ export class PrismaRepository implements BirKareRepository {
       orderBy: [{ acceptedAt: 'asc' }, { type: 'asc' }],
     });
     return rows.map(toUserConsent);
+  }
+
+  async listUserConsentEvents(userId: string, type: ConsentType): Promise<ConsentEventRecord[]> {
+    const rows = await this.prisma.userConsentEvent.findMany({
+      where: { userId, type },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+    });
+    return rows.map(toConsentEvent);
+  }
+
+  async createUserConsentEvent(
+    userId: string,
+    input: CreateConsentEventInput,
+  ): Promise<ConsentEventRecord> {
+    const row = await this.prisma.userConsentEvent.create({ data: { userId, ...input } });
+    return toConsentEvent(row);
   }
 
   async updateUser(
