@@ -173,7 +173,7 @@ export type AssetRecord = {
   ownerId: string | null;
   type: AssetType;
   status: AssetStatus;
-  storageProvider: 'local' | 'r2';
+  storageProvider: 'local' | 'gcs';
   storageKey: string;
   originalName: string | null;
   mimeType: string;

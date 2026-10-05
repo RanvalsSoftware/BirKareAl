@@ -15,7 +15,7 @@ packages/
   contracts/  Ortak Zod istek/yanıt sözleşmeleri
   database/   Prisma şeması ve repository katmanı
   ai/         Prompt, moderasyon ve OpenAI provider sınırı
-  storage/    Local/R2 storage adapter’ları
+  storage/    Local/GCS storage adapter’ları
   config/     Zod tabanlı environment doğrulaması
   logger/     Pino logger
   shared/     Ortak policy, enum ve response yardımcıları
@@ -84,8 +84,8 @@ pnpm format:check
 - Kayıt/giriş doğrulaması Zod ile yapılır; şifreler Argon2id, refresh tokenlar hash + rotation yaklaşımıyla ele alınır.
 - Üretim maliyeti/işi API yerine queue üzerinden yürür; worker modere eder, prompt derler ve çıktıyı saklar.
 - Gerçek, kamusal veya siyasi kişiler başlangıçta kapalıdır. Katalog yalnızca rights engine’in seçilebilir olarak işaretlediği kurgusal/lisanslı kişileri döndürebilir.
-- Production ortamında memory DB, local storage, dev auth ve inline worker geçersizdir; PostgreSQL, Redis/BullMQ ve private R2 zorunlu kılınır.
+- Production ortamında memory DB, local storage, dev auth ve inline worker geçersizdir; PostgreSQL, Redis/BullMQ ve private Google Cloud Storage zorunlu kılınır.
 
 ## Gerçek entegrasyonlar için gerekli environment’lar
 
-`.env.example` tüm değişken adlarını gösterir. Staging/production’da ayrı OpenAI, R2, PostgreSQL, Redis, JWT ve e-posta/bildirim kimlik bilgileri tanımlanmalıdır. Apple/Google giriş ve mağaza satın alma akışları ayrıca ilgili uygulama kimlikleri ve sunucu tarafı receipt doğrulaması ister.
+`.env.example` tüm değişken adlarını gösterir. Staging/production’da ayrı OpenAI, GCS bucket, PostgreSQL, Redis, JWT ve e-posta/bildirim kimlik bilgileri tanımlanmalıdır. Apple/Google giriş ve mağaza satın alma akışları ayrıca ilgili uygulama kimlikleri ve sunucu tarafı receipt doğrulaması ister.

@@ -24,6 +24,7 @@ test('HTTP photo upload accepts exact ArrayBuffer bytes; MIME, ownership and rev
       headers: { 'Content-Type': contentType },
     }),
     putObject: async ({ key, body }) => {
+      if (!Buffer.isBuffer(body)) throw new Error('Fixture expects a Buffer upload.');
       objects.set(key, Buffer.from(body));
     },
     getObject: async (key) => {

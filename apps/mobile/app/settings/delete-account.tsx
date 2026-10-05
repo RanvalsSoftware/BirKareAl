@@ -100,7 +100,7 @@ export default function DeleteAccountScreen() {
       Alert.alert(
         translateCopy('Silme işlemi planlandı'),
         translateCopy(
-          'Hesabına erişim kapatıldı. 30 gün içinde yeniden giriş yaparsan hesabını geri getirebilirsin. Süre dolunca veriler kalıcı olarak silinir.',
+          'Hesabına erişim kapatıldı. 30 gün içinde yeniden giriş yaparak hesabını geri getirebilirsin. Süre dolunca verilerinin silinmesi başlar; geçici hatalar yeniden denenir.',
         ),
       );
     } catch (cause) {
@@ -303,14 +303,14 @@ export default function DeleteAccountScreen() {
           </View>
           <Text style={styles.checkLabel}>
             {translateCopy(
-              '30 günlük geri alma süresi sonunda verilerin kalıcı olarak silineceğini anladım.',
+              '30 günlük geri alma süresi sonunda verilerimin silinmeye başlanacağını anladım.',
             )}
           </Text>
         </Pressable>
       </GlassSettingsPanel>
       <SettingsNote warning>
         {translateCopy(
-          'Hesabına erişim hemen kapanır. Silme isteğinden sonraki 30 gün boyunca hesabın geri getirilebilir durumda tutulur. Bu sürede yeniden giriş yapıp silme isteğinden vazgeçebilirsin. Süre dolunca dosyalar ve hesap verileri kalıcı olarak temizlenir. Hoş geldin hakkının tekrar verilmesini önlemek için geri döndürülemeyen, anahtarlı kimlik özetleri saklanabilir.',
+          'Hesabına erişim hemen kapanır. Silme isteğinden sonraki 30 gün boyunca hesabın geri getirilebilir durumda tutulur. Bu sürede yeniden giriş yapıp silme isteğinden vazgeçebilirsin. Süre dolunca dosyalarının ve hesap verilerinin silinmesi başlar; geçici hatalar yeniden denenir. Depolama hizmetinin ayrı bir kurtarma süresi varsa fiziksel silme daha sonra tamamlanabilir. Hoş geldin hakkının tekrar verilmesini önlemek için geri döndürülemeyen, anahtarlı kimlik özetleri saklanabilir.',
         )}
       </SettingsNote>
       {preview.data &&

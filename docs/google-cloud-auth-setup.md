@@ -1,7 +1,7 @@
 # BirKare AI — Google ile giriş kurulumu
 
 Bu belge yalnızca BirKare AI mobil uygulamasındaki **Google ile devam et** akışı içindir.
-Mevcut proje OpenAI, Cloudflare R2, PostgreSQL ve Redis kullanır; Google Cloud'a OpenAI anahtarı,
+Mevcut proje OpenAI, Google Cloud Storage, Cloud SQL ve Redis kullanabilir; Google Cloud'a OpenAI anahtarı,
 service-account JSON'u, Android keystore'u veya kart/billing bilgisi girilmez.
 
 ## Önce sabit kalacak uygulama kimlikleri

@@ -1,5 +1,8 @@
 # BirKare Portainer stack: Cloud SQL Auth Proxy + automatic Prisma migration.
-# Set the variables in Portainer before deploying this stack.
+# Set the remaining variables in Portainer before deploying this stack.
+# GCS uses Application Default Credentials from the service account attached to
+# the Compute Engine VM (metadata server). No GCS JSON key is mounted; never put
+# a key or its Base64 encoding in this YAML, an environment variable, or an image.
 name: birkare-production
 
 x-backend-environment: &backend-environment
@@ -40,9 +43,10 @@ x-backend-environment: &backend-environment
   REVENUECAT_MONTHLY_CREDITS: ${REVENUECAT_MONTHLY_CREDITS:-80}
   REVENUECAT_ANNUAL_MONTHLY_CREDITS: ${REVENUECAT_ANNUAL_MONTHLY_CREDITS:-80}
   REVENUECAT_LIFETIME_CREDITS: ${REVENUECAT_LIFETIME_CREDITS:-200}
-  STORAGE_DRIVER: local
+  STORAGE_DRIVER: gcs
   LOCAL_STORAGE_PATH: /srv/app/.local-storage
-  ALLOW_LOCAL_STORAGE: 'true'
+  GCS_BUCKET: ${GCS_BUCKET:-bikare}
+  ALLOW_LOCAL_STORAGE: 'false'
   JWT_ISSUER: ${JWT_ISSUER:?Set public HTTPS API URL}
   JWT_USER_AUDIENCE: birkare-mobile
   JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Set JWT secret}
@@ -68,8 +72,6 @@ x-backend-runtime: &backend-runtime
   cap_drop: ['ALL']
   security_opt: ['no-new-privileges:true']
   environment: *backend-environment
-  volumes:
-    - birkare-storage:/srv/app/.local-storage
   depends_on:
     cloudsql-proxy:
       condition: service_started
@@ -139,6 +141,31 @@ services:
         /srv/app/packages/database/prisma/schema.prisma,
       ]
 
+  storage-migrate:
+    image: ghcr.io/ranvals-software/birkare-api:${IMAGE_TAG:?Set release tag}
+    platform: linux/amd64
+    profiles: [storage-migration]
+    restart: 'no'
+    init: true
+    read_only: true
+    tmpfs: ['/tmp:rw,noexec,nosuid,size=64m']
+    cap_drop: ['ALL']
+    security_opt: ['no-new-privileges:true']
+    depends_on:
+      cloudsql-proxy:
+        condition: service_started
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: 'postgresql://${DB_USER:?Set Cloud SQL DB user}:${DB_PASSWORD:?Set Cloud SQL DB password}@cloudsql-proxy:5432/${DB_NAME:?Set Cloud SQL DB name}?schema=public&sslmode=disable'
+      GCS_BUCKET: ${GCS_BUCKET:-bikare}
+      LOCAL_STORAGE_PATH: /srv/app/.local-storage
+    volumes:
+      - birkare-storage:/srv/app/.local-storage
+    entrypoint: ['node', '--import', 'tsx', '/srv/app/packages/database/scripts/migrate-local-storage-to-gcs.ts']
+    command: ['--dry-run']
+
   api:
     <<: *backend-runtime
     image: ghcr.io/ranvals-software/birkare-api:${IMAGE_TAG:?Set release tag}
@@ -165,6 +192,7 @@ services:
 volumes:
   redis-data:
   birkare-storage:
+    name: ${LOCAL_STORAGE_VOLUME_NAME:-birkare-storage}
 
 secrets:
   cloudsql-service-account:

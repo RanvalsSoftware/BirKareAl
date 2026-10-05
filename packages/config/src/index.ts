@@ -43,12 +43,9 @@ const RawEnvSchema = z.object({
   OPENAI_MAX_JOBS_PER_WINDOW: z.coerce.number().int().min(1).max(1000).default(10),
   OPENAI_RATE_WINDOW_MS: z.coerce.number().int().min(1000).max(3_600_000).default(60_000),
 
-  STORAGE_DRIVER: z.enum(['local', 'r2']).default('local'),
+  STORAGE_DRIVER: z.enum(['local', 'gcs']).default('local'),
   LOCAL_STORAGE_PATH: z.string().min(1).default('.local-storage'),
-  R2_ENDPOINT: OptionalEnvString(z.string().url()),
-  R2_BUCKET: OptionalEnvString(z.string().min(3).max(63)),
-  R2_ACCESS_KEY_ID: OptionalEnvString(z.string().min(1)),
-  R2_SECRET_ACCESS_KEY: OptionalEnvString(z.string().min(1)),
+  GCS_BUCKET: OptionalEnvString(z.string().min(3).max(222)),
 
   JWT_ISSUER: z.string().url().default('http://localhost:3001'),
   JWT_USER_AUDIENCE: z.string().min(1).default('birkare-mobile'),
@@ -249,22 +246,8 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): BirKareConf
   if (config.QUEUE_DRIVER === 'bullmq' && !config.REDIS_URL) {
     throw new Error('QUEUE_DRIVER=bullmq iken REDIS_URL zorunludur.');
   }
-  if (
-    config.STORAGE_DRIVER === 'r2' &&
-    (!config.R2_ENDPOINT ||
-      !config.R2_BUCKET ||
-      !config.R2_ACCESS_KEY_ID ||
-      !config.R2_SECRET_ACCESS_KEY)
-  ) {
-    throw new Error('STORAGE_DRIVER=r2 iken R2 bağlantı değişkenleri zorunludur.');
-  }
-  if (
-    isProductionLike &&
-    config.STORAGE_DRIVER === 'r2' &&
-    config.R2_ENDPOINT &&
-    new URL(config.R2_ENDPOINT).protocol !== 'https:'
-  ) {
-    throw new Error('Production ve staging ortamında R2_ENDPOINT HTTPS kullanmalıdır.');
+  if (config.STORAGE_DRIVER === 'gcs' && !config.GCS_BUCKET) {
+    throw new Error('STORAGE_DRIVER=gcs iken GCS_BUCKET zorunludur.');
   }
   if (config.AI_PROVIDER === 'openai' && !config.OPENAI_API_KEY) {
     throw new Error('AI_PROVIDER=openai iken OPENAI_API_KEY zorunludur.');
@@ -339,9 +322,9 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): BirKareConf
   if (isProductionLike && config.QUEUE_DRIVER !== 'bullmq') {
     throw new Error('Production ortamında BullMQ/Redis kuyruğu zorunludur.');
   }
-  if (isProductionLike && config.STORAGE_DRIVER !== 'r2' && !config.ALLOW_LOCAL_STORAGE) {
+  if (isProductionLike && config.STORAGE_DRIVER !== 'gcs' && !config.ALLOW_LOCAL_STORAGE) {
     throw new Error(
-      'Production ortamında private R2 storage zorunludur; tek host kurulumu için ALLOW_LOCAL_STORAGE=true ayarlanmalıdır.',
+      'Production ortamında private Google Cloud Storage zorunludur; local geliştirme için ALLOW_LOCAL_STORAGE=true ayarlanmalıdır.',
     );
   }
   if (isProductionLike && config.AUTH_DEV_MODE) {

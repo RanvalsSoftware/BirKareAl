@@ -7,6 +7,7 @@ import { validate } from '../../middleware/validate.middleware.js';
 import type { ApiDependencies } from '../../services/dependencies.js';
 import { asyncHandler, sendSuccess } from '../../services/http.js';
 import { requireImageProcessingConsent } from '../users/consent.js';
+import { assetStorageKeys } from './storage-keys.js';
 
 const extensionForMime = (mimeType: string): string =>
   ({ 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' })[mimeType] ?? 'bin';
@@ -241,7 +242,9 @@ export function createAssetsRouter(deps: ApiDependencies): Router {
     validate(AssetParamsSchema, 'params'),
     asyncHandler(async (req, res) => {
       const asset = await ownedAsset(deps, req.auth!.userId, req.params.assetId as string);
-      await deps.storage.deleteObject(asset.storageKey);
+      for (const key of assetStorageKeys(asset.storageKey)) {
+        await deps.storage.deleteObject(key);
+      }
       await deps.repository.updateAsset(asset.id, { status: 'DELETED', deletedAt: new Date() });
       sendSuccess(res, req.requestId, { deleted: true });
     }),

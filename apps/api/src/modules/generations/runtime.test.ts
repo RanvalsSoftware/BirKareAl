@@ -425,6 +425,7 @@ async function fixture(options: { unlimited?: boolean } = {}) {
     createUploadUrl: async ({ key }) => ({ url: key }),
     createDownloadUrl: async ({ key }) => key,
     putObject: async ({ key, body }) => {
+      if (!Buffer.isBuffer(body)) throw new Error('Fixture expects a Buffer upload.');
       objects.set(key, body);
     },
     getObject: async (key) => objects.get(key)!,

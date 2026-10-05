@@ -1,7 +1,7 @@
 APPLE REVIEW RESPONSE — DRAFT, NOT SUBMITTED
 Submission: 26b305a3-9a3b-4fdb-851c-bf8984a62ee0
 
-Before sending: confirm the storage provider actually used by the reviewed backend, storage/backup regions and backup expiration settings. The production compose uses private Cloudflare R2 and Google Cloud SQL; the alternative Portainer stack uses local storage. Repository configuration does not prove which stack is deployed. Update the published privacy policy with these concrete details and the provider retention terms, then add the exact published paragraphs to the response. Do not claim that every copy is deleted exactly on day 30: cleanup starts after the recovery window and retries failures; backup/provider retention is separate.
+Before sending: confirm the storage provider actually used by the reviewed backend, storage/backup regions and backup expiration settings. The repository compose configuration now targets private Google Cloud Storage and Google Cloud SQL. Repository configuration does not prove which stack is deployed; confirm the live provider, bucket region, backup policy, and retention with the operator. Update the published privacy policy with these concrete details and the provider retention terms, then add the exact published paragraphs to the response. Do not claim that every copy is deleted exactly on day 30: cleanup starts after the recovery window and retries failures; backup/provider retention is separate.
 
 Hello App Review Team,
 

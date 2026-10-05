@@ -350,7 +350,10 @@ async function workerFixture(verdicts: TrendQualityVerdict[][]) {
   const storage: StorageProvider = {
     createUploadUrl: async ({ key }) => ({ url: key }),
     createDownloadUrl: async ({ key }) => key,
-    putObject: async ({ key, body }) => { objects.set(key, body); },
+    putObject: async ({ key, body }) => {
+      if (!Buffer.isBuffer(body)) throw new Error('Fixture expects a Buffer upload.');
+      objects.set(key, body);
+    },
     getObject: async (key) => objects.get(key)!,
     statObject: async (key) => ({ sizeBytes: objects.get(key)?.length ?? 0 }),
     exists: async (key) => objects.has(key),

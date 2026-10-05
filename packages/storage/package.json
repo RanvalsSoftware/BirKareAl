@@ -11,6 +11,6 @@
   },
   "dependencies": {
     "@birkare/config": "workspace:*",
-    "minio": "^8.0.2"
+    "@google-cloud/storage": "^8.2.0"
   }
 }

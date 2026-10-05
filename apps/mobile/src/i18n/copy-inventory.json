@@ -357,7 +357,7 @@
     ]
   },
   {
-    "text": "30 günlük geri alma süresi sonunda verilerin kalıcı olarak silineceğini anladım.",
+    "text": "30 günlük geri alma süresi sonunda verilerimin silinmeye başlanacağını anladım.",
     "files": [
       "apps/mobile/app/settings/delete-account.tsx"
     ]
@@ -4465,13 +4465,13 @@
     ]
   },
   {
-    "text": "Hesabına erişim hemen kapanır. Silme isteğinden sonraki 30 gün boyunca hesabın geri getirilebilir durumda tutulur. Bu sürede yeniden giriş yapıp silme isteğinden vazgeçebilirsin. Süre dolunca dosyalar ve hesap verileri kalıcı olarak temizlenir. Hoş geldin hakkının tekrar verilmesini önlemek için geri döndürülemeyen, anahtarlı kimlik özetleri saklanabilir.",
+    "text": "Hesabına erişim hemen kapanır. Silme isteğinden sonraki 30 gün boyunca hesabın geri getirilebilir durumda tutulur. Bu sürede yeniden giriş yapıp silme isteğinden vazgeçebilirsin. Süre dolunca dosyalarının ve hesap verilerinin silinmesi başlar; geçici hatalar yeniden denenir. Depolama hizmetinin ayrı bir kurtarma süresi varsa fiziksel silme daha sonra tamamlanabilir. Hoş geldin hakkının tekrar verilmesini önlemek için geri döndürülemeyen, anahtarlı kimlik özetleri saklanabilir.",
     "files": [
       "apps/mobile/app/settings/delete-account.tsx"
     ]
   },
   {
-    "text": "Hesabına erişim kapatıldı. 30 gün içinde yeniden giriş yaparsan hesabını geri getirebilirsin. Süre dolunca veriler kalıcı olarak silinir.",
+    "text": "Hesabına erişim kapatıldı. 30 gün içinde yeniden giriş yaparak hesabını geri getirebilirsin. Süre dolunca verilerinin silinmesi başlar; geçici hatalar yeniden denenir.",
     "files": [
       "apps/mobile/app/settings/delete-account.tsx"
     ]

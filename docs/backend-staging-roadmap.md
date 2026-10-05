@@ -9,21 +9,21 @@ Son kontrol: **8 Eylül 2026**. Amaç gerçek cihazların ulaşabildiği, **üre
 ```text
 Mobil test build → HTTPS API → PostgreSQL
                          ├─ Redis / BullMQ → sürekli çalışan worker → AI sağlayıcı
-                         └─ private R2 ← kaynak fotoğraf ve AI çıktısı
+                         └─ private Google Cloud Storage ← kaynak fotoğraf ve AI çıktısı
 ```
 
 - API: `apps/api`, Node 22, `infra/docker/api.Dockerfile`, port 4000.
 - Worker: `apps/worker`, `infra/docker/worker.Dockerfile`; HTTP sitesi değil, kuyruk tüketen sürekli süreç.
 - Migration: API imajından `pnpm --filter @birkare/database prisma:deploy`.
 - PostgreSQL kalıcı hesap/proje/kredi/iş kayıtları; Redis BullMQ iş kuyruğu.
-- R2 private bucket: staging/production config doğrulaması `STORAGE_DRIVER=r2` zorunlu tutar. Lokal disk iki servisin farklı makinede koşmasına uygun değildir.
+- GCS private bucket: staging/production config doğrulaması `STORAGE_DRIVER=gcs` zorunlu tutar. Lokal disk iki servisin farklı makinede koşmasına uygun değildir.
 - SMTP/transactional e-posta: henüz gerçek göndericiye bağlanmış değil; ayrıca tamamlanacak.
 
 `docker-compose.yml` **yerel geliştirme dosyasıdır**: basit ortak DB şifresi, dışarı açılmış 5432/6379 portları, Mailpit ve local volume bulunur. Dosyayı aynen internete açma.
 
 ## 2. Sağlayıcı ve hesap düzeni
 
-Önerilen ilk mimari: Docker çalıştıran bir PaaS üzerinde API web service + worker background service, aynı bölgede yönetilen PostgreSQL/Redis, ayrı Cloudflare R2 bucket. Render bu servis ayrımını destekleyen bir örnektir; sağlayıcı seçimi ve fiyatlandırma bu çalışmada satın alınmadı. Worker’ın sürekliliği, bölge ve verinin aktarım koşulları bütçe/mahremiyet gereksinimleriyle doğrulanmalıdır. [Render background workers](https://render.com/docs/background-workers)
+Önerilen ilk mimari: Docker çalıştıran bir PaaS üzerinde API web service + worker background service, aynı bölgede yönetilen PostgreSQL/Redis, ayrı Google Cloud Storage bucket. Render bu servis ayrımını destekleyen bir örnektir; sağlayıcı seçimi ve fiyatlandırma bu çalışmada satın alınmadı. Worker’ın sürekliliği, bölge ve verinin aktarım koşulları bütçe/mahremiyet gereksinimleriyle doğrulanmalıdır. [Render background workers](https://render.com/docs/background-workers)
 
 İşletme sahibinin seçmesi gerekenler:
 
@@ -32,7 +32,7 @@ Mobil test build → HTTPS API → PostgreSQL
 - `[aylık altyapı bütçesi]`, `[AI test bütçesi]`, `[yetkili test kullanıcıları]`.
 - `[günlük yedek ve saklama süresi]`, `[beklenen kurtarma süresi]`, `[operasyon sorumlusu]`.
 
-Staging için ayrı DB, Redis, R2 bucket, AI proje/anahtarı ve OAuth test düzeni kullan. Production veritabanını staging’e bağlama, gerçek kullanıcı fotoğraflarını test verisi olarak kopyalama.
+Staging için ayrı DB, Redis, GCS bucket, AI proje/anahtarı ve OAuth test düzeni kullan. Production veritabanını staging’e bağlama, gerçek kullanıcı fotoğraflarını test verisi olarak kopyalama.
 
 ## 3. İlk dış testten önce kapanacak engeller
 
@@ -41,7 +41,7 @@ Staging için ayrı DB, Redis, R2 bucket, AI proje/anahtarı ve OAuth test düze
 3. **AI güvenliği:** Moderasyon gerçek sağlayıcıyla etkin olmalı; UI’daki rapor formu gerçek kayıt/iş akışına bağlanmalı. AI maliyet ve başarısız iş politikası test edilmeli.
 4. **İş sürekliliği:** Worker kapalıyken API’nin “ready” olması işin tamamlanacağını kanıtlamaz. Redis kuyruğunu, en eski bekleyen işi ve worker yaşam sinyalini ayrıca izle.
 5. **Google:** Sunucu audience ile mobil Web client ID aynı olmalı; iOS scheme/Bundle ID, Android package ve Play-signing SHA-1’i ayrı doğrula. [Proje Google kurulum rehberi](google-cloud-auth-setup.md)
-6. **Silme ve retention:** Hesap silme işlemi veritabanı ve R2 temizliğiyle sonlanmalı; en erken temizlik zamanı ve sınırlı HMAC kötüye kullanım kayıtları politikada açıklanmalı. `PASSWORD_PEPPER` değişimini plansız yapma: parola ve HMAC eşleşmelerini etkiler.
+6. **Silme ve retention:** Hesap silme işlemi veritabanı ve GCS temizliğiyle sonlanmalı; en erken temizlik zamanı ve sınırlı HMAC kötüye kullanım kayıtları politikada açıklanmalı. `PASSWORD_PEPPER` değişimini plansız yapma: parola ve HMAC eşleşmelerini etkiler.
 
 ## 4. Ortam değişkenleri
 
@@ -59,10 +59,8 @@ Değerleri platform secret manager’dan gir. Aşağıdaki köşeli parantezleri
 | `GENERATION_WORKER_CONCURRENCY`                                      | İlk testte `1`; ölçümlerle kontrollü artır                                                                             |
 | `OPENAI_MAX_JOBS_PER_WINDOW`                                         | Başlangıç örneği `2`; hesap limitine/bütçeye göre belirle                                                              |
 | `OPENAI_RATE_WINDOW_MS`                                              | `60000`                                                                                                                |
-| `STORAGE_DRIVER`                                                     | `r2`                                                                                                                   |
-| `R2_ENDPOINT`                                                        | Hesaba ait S3 API endpoint, `https://[account-id].r2.cloudflarestorage.com`                                            |
-| `R2_BUCKET`                                                          | Yalnız staging için oluşturulan private bucket                                                                         |
-| `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`                           | Sadece bu bucket’ta gerekli read/write/delete yetkileri                                                                |
+| `STORAGE_DRIVER`                                                     | `gcs`                                                                                                                   |
+| `GCS_BUCKET`                                                         | Yalnız staging için oluşturulan private Cloud Storage bucket                                                          |
 | `JWT_ISSUER`                                                         | `https://[staging-api]`                                                                                                |
 | `JWT_USER_AUDIENCE`                                                  | `birkare-mobile`                                                                                                       |
 | `JWT_ACCESS_SECRET`                                                  | Yüksek entropili, en az 32 karakter; development varsayılanı değil                                                     |
@@ -99,13 +97,13 @@ Mobil bundle içindeki `EXPO_PUBLIC_*` değerler gizli değildir. EAS build prof
 
 1. Yönetilen PostgreSQL ve Redis’i oluştur. Uygulama servisleri özel ağdan ulaşsın; servislerin internete açık yönetici portları olmasın. Yedekleme ve TLS’yi etkinleştir.
 2. Redis için eviction politikasını **noeviction**, kalıcılığı uygun şekilde ayarla. Job kayıtlarını cache gibi kaybetme. Bağlantı ve yeniden bağlanma stratejilerini yük altında test et. [BullMQ production rehberi](https://docs.bullmq.io/guide/going-to-production)
-3. Private R2 bucket oluştur. Public bucket URL/custom public domain açma. İmzalı URL’ler kısa ömürlüdür; uygulama çıktı paylaşımında URL’yi yeniden alır, dış uygulamalara bearer token veya depolama anahtarı göndermez.
-4. Web’den yükleme/test yapılacaksa R2 CORS: yalnız onaylı origin’ler, gerekli `PUT/GET/HEAD`, `Content-Type`; gereksiz `*` açma. Native mobil ile browser CORS farklıdır. Sunucunun presigned istek ayarları ve gerçek tarayıcı upload testi eşleşmeli. [R2 CORS](https://developers.cloudflare.com/r2/buckets/cors/)
+3. Private GCS bucket oluştur. Public bucket URL/custom public domain açma. İmzalı URL’ler kısa ömürlüdür; uygulama çıktı paylaşımında URL’yi yeniden alır, dış uygulamalara bearer token veya depolama anahtarı göndermez.
+4. Web’den yükleme/test yapılacaksa GCS CORS: yalnız onaylı origin’ler, gerekli `PUT/GET/HEAD`, `Content-Type`; gereksiz `*` açma. Native mobil ile browser CORS farklıdır. Sunucunun presigned istek ayarları ve gerçek tarayıcı upload testi eşleşmeli. [Cloud Storage CORS](https://cloud.google.com/storage/docs/configuring-cors)
 5. API web service: repo root Docker context, `infra/docker/api.Dockerfile`, tüm gerekli server env, port 4000. Domain/TLS bağla. Otomatik deploy’u ilk doğrulama bitene kadar kapalı tut.
 6. Aynı release artifact ile tek sefer migration çalıştır. Yeni migration’ı local test DB ve staging yedeği üzerinde önce doğrula. **`prisma migrate reset`**, `db push --accept-data-loss`, production seed veya volume silme kullanma.
-7. Migration başarılıysa API’yi başlat. Worker background service: repo root context, `infra/docker/worker.Dockerfile`, aynı DB/Redis/R2/model env. API’nin container’ında ayrıca inline worker çalıştırma.
+7. Migration başarılıysa API’yi başlat. Worker background service: repo root context, `infra/docker/worker.Dockerfile`, aynı DB/Redis/GCS/model env. API’nin container’ında ayrıca inline worker çalıştırma.
 8. API/worker commit veya image digest’i aynı sürüm olmalı. Birine yeni payload, diğerine eski prompt/contract kodu bırakma.
-9. `/health`, `/ready`, DB, Redis, R2 erişimi ve worker startup loglarını doğrula. HTTP 200 ile yetinme; bir sentetik kuyruk işi uçtan uca tamamlanmalı.
+9. `/health`, `/ready`, DB, Redis, GCS erişimi ve worker startup loglarını doğrula. HTTP 200 ile yetinme; bir sentetik kuyruk işi uçtan uca tamamlanmalı.
 10. İlk izinli fotoğraf testi için üretim kilidini kontrollü aç; harcama limitiyle tek iş. Sonuç ve kredi muhasebesi doğruysa kapalı test kullanıcılarına dağıt.
 
 ## 6. Yerel doğrulama / staging release komutları
@@ -157,8 +155,8 @@ curl --fail https://[staging-api]/ready
 | Başka kullanıcı asset/job ID   | 403/404; sahiplik ve hazır olma kontrolleri atlanamaz                                         |
 | Google release login           | iOS URL scheme ve Android Play signing kimliğiyle başarılı; iptal hata gibi kaydedilmez       |
 | E-posta doğrulama/reset        | Mail gerçekten teslim olur; token tek kullanımlık, süreli; gelişim tokenı dışarı çıkmaz       |
-| Hesap silme                    | Yeni işleri durdurur, session erişimini kapatır, R2 dosyalarını ve hesap kayıtlarını temizler |
-| R2 silme hatası                | Silme talebi kalıcı ve retry edilebilir; sessizce “silindi” denmez                            |
+| Hesap silme                    | Yeni işleri durdurur, session erişimini kapatır, GCS dosyalarını ve hesap kayıtlarını temizler |
+| GCS silme hatası                | Silme talebi kalıcı ve retry edilebilir; sessizce “silindi” denmez                            |
 | Aynı kimlikle tekrar kayıt     | Kararlaştırılan welcome-credit kötüye kullanım koruması server’da çalışır                     |
 | Paylaşım/kaydetme              | Gerçek tamamlanmış çıktı paylaşılır; izin reddi, offline, uygulama yokluğu kontrollü          |
 | Rapor gönderimi                | Sunucu kaydı ve inceleme kuyruğu gerçekten oluşur; erişim/rate limit denetlenir               |
@@ -170,9 +168,9 @@ Test verilerini açıkça sentetik/izinli etiketle. Gerçek kullanıcının tama
 - API 5xx/latency, auth başarısızlık oranı, upload hataları; sadece güvenli error code/request ID kaydet.
 - Worker aktiflik, kuyruk bekleme yaşı, running süreleri, completed/failed oranı, sağlayıcı 429 ve timeout.
 - Her işte reserved/charged/refunded tutarlılığı; duplicate generation/credit alarmı.
-- AI harcama ve hız limitleri, R2 depolama büyümesi, DB bağlantı sınırı, Redis bellek kullanımı.
+- AI harcama ve hız limitleri, GCS depolama büyümesi, DB bağlantı sınırı, Redis bellek kullanımı.
 - Hesap silme pending yaşı ve tekrar eden obje silme hataları; cron/background temizlik döngüsünün çalıştığını izle.
-- PostgreSQL otomatik yedek + periyodik **ayrı restore DB’de** geri yükleme tatbikatı. R2 retention/lifecycle, yedeklerde silme gecikmesi ve HMAC kayıtlarının saklama kararını gizlilik politikasıyla uyumlu yap.
+- PostgreSQL otomatik yedek + periyodik **ayrı restore DB’de** geri yükleme tatbikatı. GCS retention/lifecycle, yedeklerde silme gecikmesi ve HMAC kayıtlarının saklama kararını gizlilik politikasıyla uyumlu yap.
 - Deploy’dan önce DB yedeği ve önceki API/worker image digest’ini kaydet. Geri dönüşte API/worker birlikte önceki uyumlu sürüme alınır. Migration geri almak tablo silmek demek değildir; uyumlu ileri düzeltme veya planlı restore gerekir.
 - Kritik hatada `DISABLE_ALL_GENERATION=false` ile yeni işleri durdur; devam eden/sağlayıcıya gönderilmiş işlerin otomatik duracağını varsayma. Operatör tek tek doğrular; kredi iadesi muhasebeleştirilir.
 - Sır sızarsa ilgili anahtarı sağlayıcıda iptal/rotate et; production kullanıcı oturumlarını ve pepper etkisini planlayarak yönet. Logdan değeri silmek tek başına yeterli değildir.

@@ -42,12 +42,10 @@ x-backend-environment: &backend-environment
   REVENUECAT_MONTHLY_CREDITS: ${REVENUECAT_MONTHLY_CREDITS:-80}
   REVENUECAT_ANNUAL_MONTHLY_CREDITS: ${REVENUECAT_ANNUAL_MONTHLY_CREDITS:-80}
   REVENUECAT_LIFETIME_CREDITS: ${REVENUECAT_LIFETIME_CREDITS:-200}
-  # Current production config requires private R2; local disks are development only.
-  STORAGE_DRIVER: r2
-  R2_ENDPOINT: ${R2_ENDPOINT:?Set private R2 endpoint}
-  R2_BUCKET: ${R2_BUCKET:?Set private R2 bucket}
-  R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:?Set R2 access key ID}
-  R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:?Set R2 secret key}
+  # Private Google Cloud Storage via Application Default Credentials from the
+  # service account attached to the Compute Engine VM; no JSON key is mounted.
+  STORAGE_DRIVER: gcs
+  GCS_BUCKET: ${GCS_BUCKET:?Set private Google Cloud Storage bucket}
   JWT_ISSUER: ${JWT_ISSUER:?Set public HTTPS API URL}
   JWT_USER_AUDIENCE: birkare-mobile
   JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Set unique JWT secret of at least 32 characters}

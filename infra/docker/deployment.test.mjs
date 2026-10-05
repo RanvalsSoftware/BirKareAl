@@ -21,10 +21,10 @@ const fixtureEnv = {
   CORS_ORIGINS: 'https://www.example.invalid',
   JWT_ACCESS_SECRET: 'jwt-fixture-012345678901234567890123456789',
   PASSWORD_PEPPER: 'pepper-fixture-012345678901234567890123456789',
-  R2_ENDPOINT: 'https://storage.example.invalid',
-  R2_BUCKET: 'private-test-bucket',
-  R2_ACCESS_KEY_ID: 'fixture-access-id',
-  R2_SECRET_ACCESS_KEY: 'fixture-secret',
+  GCS_BUCKET: 'private-test-bucket',
+  APPLE_TEAM_ID: 'TEAMFIXTURE',
+  APPLE_KEY_ID: 'KEYFIXTURE',
+  APPLE_PRIVATE_KEY_HOST_FILE: '/dev/null',
 };
 
 function compose(env = fixtureEnv) {
@@ -89,7 +89,11 @@ test('API and worker run immutable backend images with runtime-only required con
     );
     assert.equal(service.environment.AUTH_DEV_MODE, 'false');
     assert.equal(service.environment.ENABLE_INLINE_WORKER, 'false');
-    assert.equal(service.environment.STORAGE_DRIVER, 'r2');
+    assert.equal(service.environment.STORAGE_DRIVER, 'gcs');
+    assert.equal(service.environment.GCS_BUCKET, fixtureEnv.GCS_BUCKET);
+    // GCS authenticates through the VM service account; no key file is mounted.
+    assert.equal(service.environment.GOOGLE_APPLICATION_CREDENTIALS, undefined);
+    assert.ok(!(service.secrets ?? []).some((secret) => secret.source.startsWith('gcs-')));
     assert.equal(service.environment.DISABLE_ALL_GENERATION, 'true');
     assert.equal(service.environment.NODE_ENV, 'staging');
   }
@@ -125,7 +129,7 @@ test('missing production credentials fail interpolation rather than using develo
     'OPENAI_API_KEY',
     'JWT_ACCESS_SECRET',
     'PASSWORD_PEPPER',
-    'R2_SECRET_ACCESS_KEY',
+    'GCS_BUCKET',
     'IMAGE_TAG',
   ]) {
     const env = { ...fixtureEnv };
@@ -145,7 +149,7 @@ test('Dockerfiles use a nonroot multistage runtime and do not bake deployment cr
     assert.match(source, /--frozen-lockfile/);
     assert.doesNotMatch(
       source,
-      /^\s*(ARG|ENV)\s+(DATABASE_URL|OPENAI_API_KEY|JWT_ACCESS_SECRET|PASSWORD_PEPPER|R2_SECRET_ACCESS_KEY)/m,
+      /^\s*(ARG|ENV)\s+(DATABASE_URL|OPENAI_API_KEY|JWT_ACCESS_SECRET|PASSWORD_PEPPER|GCS_CREDENTIALS_FILE)/m,
     );
     assert.doesNotMatch(source, /^COPY\s+(\.\s|\.env)/m);
     assert.doesNotMatch(source, /^COPY\s+apps\/mobile\s/m);

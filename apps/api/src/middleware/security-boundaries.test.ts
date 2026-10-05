@@ -141,11 +141,8 @@ describe('production secret boundaries', () => {
       DATABASE_URL: 'postgresql://app:password@db.example.test:5432/birkare',
       QUEUE_DRIVER: 'bullmq',
       REDIS_URL: 'redis://redis.example.test:6379',
-      STORAGE_DRIVER: 'r2',
-      R2_ENDPOINT: 'https://account.r2.cloudflarestorage.com',
-      R2_BUCKET: 'birkare-private',
-      R2_ACCESS_KEY_ID: 'fixture-access-key',
-      R2_SECRET_ACCESS_KEY: 'fixture-secret-key',
+      STORAGE_DRIVER: 'gcs',
+      GCS_BUCKET: 'birkare-private',
       JWT_ACCESS_SECRET: 'fixture-jwt-secret-at-least-32-characters',
       PASSWORD_PEPPER: 'fixture-password-pepper-at-least-32-characters',
       JWT_ISSUER: 'https://api.example.test',
@@ -162,10 +159,10 @@ describe('production secret boundaries', () => {
       () =>
         loadConfig({
           ...production,
-          R2_ENDPOINT: 'http://account.r2.cloudflarestorage.com',
+          GCS_BUCKET: undefined,
           REVENUECAT_SECRET_API_KEY: 'sk_fixture-server-secret-key',
         }),
-      /R2_ENDPOINT HTTPS/,
+      /GCS_BUCKET zorunludur/,
     );
     assert.equal(
       loadConfig({ ...production, REVENUECAT_SECRET_API_KEY: 'sk_fixture-server-secret-key' })

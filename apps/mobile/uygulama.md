@@ -33,7 +33,7 @@ Bu servis dışarıya açılır. Reverse proxy üzerinden genelde `https://api.d
 - Redis kuyruğundaki işleri alır
 - OpenAI görsel üretimini çağırır
 - Moderasyon kontrolünü yapar
-- Görseli R2’ye kaydeder
+- Görseli sunucu üzerinden private Google Cloud Storage’a kaydeder
 - Kredi tahsil/iade işlemlerini tamamlar
 - Üretim durumunu `COMPLETED`, `FAILED` veya `BLOCKED` yapar
 
@@ -43,10 +43,10 @@ Bu nedenle ikisinin de yayınlanması gerekir:
 
 ```text
 API image:
-ghcr.io/ranvals-software/birkare-api:2026.09.08-2
+ghcr.io/ranvals-software/birkare-api:2026.10.05-gcs-2
 
 Worker image:
-ghcr.io/ranvals-software/birkare-worker:2026.09.08-2
+ghcr.io/ranvals-software/birkare-worker:2026.10.05-gcs-2
 ```
 
 API dışarıdan erişilebilir olmalı, worker ise sadece Portainer’ın private Docker ağı içinde kalmalı.
@@ -66,7 +66,7 @@ Bu dosya repoya gönderilmemeli. Portainer’da Stack oluştururken **Environmen
 Ana env grupları:
 
 ```text
-IMAGE_TAG=2026.09.08-2
+IMAGE_TAG=2026.10.05-gcs-2
 DATABASE_URL=Cloud SQL bağlantısı
 REDIS_PASSWORD=Portainer Redis şifresi
 JWT_ISSUER=https://api.domain.com
@@ -74,10 +74,7 @@ CORS_ORIGINS=https://uygulama-domaini.com
 JWT_ACCESS_SECRET=...
 PASSWORD_PEPPER=...
 OPENAI_API_KEY=...
-R2_ENDPOINT=...
-R2_BUCKET=...
-R2_ACCESS_KEY_ID=...
-R2_SECRET_ACCESS_KEY=...
+GCS_BUCKET=bikare   (kimlik: VM servis hesabı / ADC; JSON anahtarı yok)
 ```
 
 Ayrıca:
@@ -85,7 +82,7 @@ Ayrıca:
 - `DATABASE_URL`: Cloud SQL bağlantısı
 - `REDIS_PASSWORD`: Compose içindeki Redis için
 - `OPENAI_API_KEY`: API ve worker’ın AI kullanımı için
-- `R2_*`: görsellerin kalıcı saklanması için
+- `GCS_BUCKET` ve VM'ye bağlı servis hesabı (ADC): görsellerin private kalıcı saklanması için; mobil uygulama yalnız API'nin verdiği 5 dakikalık signed URL'leri kullanır
 - `JWT_*` ve `PASSWORD_PEPPER`: auth güvenliği için
 - `CORS_ORIGINS`: izin verilen frontend adresleri için
 - `DISABLE_ALL_GENERATION`: ilk kurulumda `true`, kontrollerden sonra `false`
@@ -112,4 +109,4 @@ docker compose --env-file portainer.env \
 
 `migrate` sadece veritabanı tablolarını güncellemek için API image’ını tek seferlik kullanır. Kalıcı çalışan servisler ise `api`, `worker` ve `redis` olur.
 
-Önemli: `.env` dosyasındaki local geliştirme değerleri Portainer’a aynen taşınmamalı. Cloud SQL, R2, HTTPS domaini ve production secret değerleri Portainer’da ayrıca girilmeli.
+Önemli: `.env` dosyasındaki local geliştirme değerleri Portainer’a aynen taşınmamalı. Cloud SQL, GCS bucket, HTTPS domaini ve production secret değerleri Portainer’da ayrıca girilmeli.

@@ -1,6 +1,15 @@
+import { createWriteStream } from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname, resolve, sep } from 'node:path';
-import type { StorageObjectStat, StorageProvider, StorageUploadUrl } from './types.js';
+import { Transform } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
+import type {
+  StorageObjectBody,
+  StorageObjectStat,
+  StorageProvider,
+  StorageUploadUrl,
+} from './types.js';
 
 function assertSafeStorageKey(key: string): string {
   if (!key || key.startsWith('/') || key.includes('\0')) {
@@ -54,15 +63,44 @@ export class LocalStorageProvider implements StorageProvider {
 
   async putObject(input: {
     key: string;
-    body: Buffer;
+    body: StorageObjectBody;
     contentType: string;
     metadata?: Record<string, string>;
+    maxBytes?: number;
   }): Promise<void> {
     const target = this.pathFor(input.key);
     await mkdir(dirname(target), { recursive: true });
-    const temporary = `${target}.${process.pid}.${Date.now()}.tmp`;
-    await writeFile(temporary, input.body, { mode: 0o600 });
-    await rename(temporary, target);
+    const temporary = `${target}.${process.pid}.${randomUUID()}.tmp`;
+    try {
+      if (Buffer.isBuffer(input.body)) {
+        if (input.maxBytes !== undefined && input.body.length > input.maxBytes) {
+          throw new Error('Storage nesnesi izin verilen boyutu aşıyor.');
+        }
+        await writeFile(temporary, input.body, { mode: 0o600, flag: 'wx' });
+      } else {
+        let received = 0;
+        const byteLimit = new Transform({
+          transform(chunk: Buffer | string, _encoding, callback) {
+            const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+            received += bytes.length;
+            if (input.maxBytes !== undefined && received > input.maxBytes) {
+              callback(new Error('Storage nesnesi izin verilen boyutu aşıyor.'));
+              return;
+            }
+            callback(null, bytes);
+          },
+        });
+        await pipeline(
+          input.body,
+          byteLimit,
+          createWriteStream(temporary, { mode: 0o600, flags: 'wx' }),
+        );
+      }
+      await rename(temporary, target);
+    } catch (error) {
+      await rm(temporary, { force: true }).catch(() => undefined);
+      throw error;
+    }
   }
 
   async getObject(key: string, options?: { maxBytes?: number }): Promise<Buffer> {

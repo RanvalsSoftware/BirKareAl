@@ -23,7 +23,8 @@ const secretKeys = new Set([
   'PASSWORD_PEPPER',
   'DB_PASSWORD',
   'REDIS_PASSWORD',
-  'R2_SECRET_ACCESS_KEY',
+  'GCS_CREDENTIALS_FILE',
+  'GOOGLE_APPLICATION_CREDENTIALS',
 ]);
 const secretSources = ['.env', '.local-credentials/deployment/portainer.env'];
 const knownPlaceholder =

@@ -10,6 +10,7 @@ import type { GoogleIdentityVerifier } from '../auth/google-id-token.service.js'
 import type { AppleIdentityVerifier } from '../auth/apple-id-token.service.js';
 import type { AppleTokenRevoker } from '../auth/apple-token-revocation.service.js';
 import type { PasswordService } from '../../services/password.service.js';
+import { assetStorageKeys } from '../assets/storage-keys.js';
 
 export class AccountDeletionService {
   constructor(
@@ -138,7 +139,9 @@ export class AccountDeletionService {
     let failed = 0;
     for (const request of requests) {
       try {
-        for (const key of request.storageKeys) await this.storage.deleteObject(key);
+        for (const key of new Set(request.storageKeys.flatMap(assetStorageKeys))) {
+          await this.storage.deleteObject(key);
+        }
         await this.repository.completeAccountDeletion(request.userId);
         completed++;
       } catch {
