@@ -1,0 +1,34 @@
+# One-off copy of the old local-storage Docker volume into the private GCS bucket.
+# NOT part of the Portainer stack. Run on the Portainer host as an overlay:
+#   docker compose -p birkare-production --env-file <env> \
+#     -f docker-compose.portainer.yml -f docker-compose.storage-migration.yml \
+#     run --rm storage-migrate --dry-run      # then --apply
+# The old volume is external and must already exist; check `docker volume ls`.
+services:
+  storage-migrate:
+    image: ghcr.io/ranvals-software/birkare-api:${IMAGE_TAG:?Set release tag}
+    platform: linux/amd64
+    restart: 'no'
+    init: true
+    read_only: true
+    tmpfs: ['/tmp:rw,noexec,nosuid,size=64m']
+    cap_drop: ['ALL']
+    security_opt: ['no-new-privileges:true']
+    depends_on:
+      cloudsql-proxy:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: 'postgresql://${DB_USER:?Set Cloud SQL DB user}:${DB_PASSWORD:?Set Cloud SQL DB password}@cloudsql-proxy:5432/${DB_NAME:?Set Cloud SQL DB name}?schema=public&sslmode=disable'
+      GCS_BUCKET: ${GCS_BUCKET:-bikare}
+      LOCAL_STORAGE_PATH: /srv/app/.local-storage
+    volumes:
+      - birkare-storage:/srv/app/.local-storage:ro
+    entrypoint: ['node', '--import', 'tsx', '/srv/app/packages/database/scripts/migrate-local-storage-to-gcs.ts']
+    command: ['--dry-run']
+
+volumes:
+  birkare-storage:
+    external: true
+    # Before this change the stack volume was project-scoped.
+    name: ${LOCAL_STORAGE_VOLUME_NAME:-birkare-production_birkare-storage}

@@ -42,7 +42,7 @@
         "EXPO_PUBLIC_REVENUECAT_IOS_API_KEY": "appl_MbKttQjNGBgBFiVaQUnwzZHgOce",
         "EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY": "goog_tcWALgjpXQEKKvqBUqhGsfVBaPV",
         "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "197394599682-a7897p3rt9i9ocgbmou6pbf1p3hjrepv.apps.googleusercontent.com",
-        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "197394599682-0nmn4oppa3v23p9dv4ovdneh4fpq2sbv.apps.googleusercontent.com"
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "197394599682-u5jie9trkp8tbu56umq4oh9lkaq0ejf3.apps.googleusercontent.com"
       },
       "android": {
         "buildType": "apk"

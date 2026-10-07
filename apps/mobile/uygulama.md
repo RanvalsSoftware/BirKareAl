@@ -43,10 +43,10 @@ Bu nedenle ikisinin de yayınlanması gerekir:
 
 ```text
 API image:
-ghcr.io/ranvals-software/birkare-api:2026.10.05-gcs-2
+ghcr.io/ranvals-software/birkare-api:2026.10.05-gcs-4
 
 Worker image:
-ghcr.io/ranvals-software/birkare-worker:2026.10.05-gcs-2
+ghcr.io/ranvals-software/birkare-worker:2026.10.05-gcs-4
 ```
 
 API dışarıdan erişilebilir olmalı, worker ise sadece Portainer’ın private Docker ağı içinde kalmalı.
@@ -66,7 +66,7 @@ Bu dosya repoya gönderilmemeli. Portainer’da Stack oluştururken **Environmen
 Ana env grupları:
 
 ```text
-IMAGE_TAG=2026.10.05-gcs-2
+IMAGE_TAG=2026.10.05-gcs-4
 DATABASE_URL=Cloud SQL bağlantısı
 REDIS_PASSWORD=Portainer Redis şifresi
 JWT_ISSUER=https://api.domain.com

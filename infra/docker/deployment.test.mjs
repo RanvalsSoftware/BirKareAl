@@ -14,7 +14,6 @@ const fixtureEnv = {
   DB_USER: 'birkare_app',
   DB_PASSWORD: 'db-fixture-012345678901234567890123456789',
   CLOUD_SQL_INSTANCE_CONNECTION_NAME: 'project:region:instance',
-  CLOUD_SQL_CREDENTIALS_FILE: '/dev/null',
   REDIS_PASSWORD: 'redis-fixture-012345678901234567890123456789',
   OPENAI_API_KEY: 'sk-fixture-never-used',
   JWT_ISSUER: 'https://api.example.invalid',
@@ -55,9 +54,9 @@ test('production stack uses external SQL and authenticated persistent private Re
     ['api', 'cloudsql-proxy', 'migrate', 'redis', 'worker'],
   );
   assert.equal(services['cloudsql-proxy'].image, 'gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.1');
-  assert.deepEqual(services['cloudsql-proxy'].secrets, [
-    { source: 'cloudsql-service-account', target: '/run/secrets/cloudsql-service-account' },
-  ]);
+  // Keyless: the proxy authenticates with the VM service account.
+  assert.equal(services['cloudsql-proxy'].secrets, undefined);
+  assert.ok(!services['cloudsql-proxy'].command.some((arg) => arg.startsWith('--credentials-file')));
   assert.equal(services['cloudsql-proxy'].ports, undefined);
   assert.equal(services.redis.ports, undefined);
   assert.ok(services.redis.command[0].includes('maxmemory-policy noeviction'));
@@ -124,7 +123,6 @@ test('missing production credentials fail interpolation rather than using develo
     'DB_USER',
     'DB_PASSWORD',
     'CLOUD_SQL_INSTANCE_CONNECTION_NAME',
-    'CLOUD_SQL_CREDENTIALS_FILE',
     'REDIS_PASSWORD',
     'OPENAI_API_KEY',
     'JWT_ACCESS_SECRET',

@@ -23,6 +23,7 @@ import {
 import { validate } from '../../middleware/validate.middleware.js';
 import type { ApiDependencies } from '../../services/dependencies.js';
 import { asyncHandler, getRequestContext, sendSuccess } from '../../services/http.js';
+import { withSocialLoginDiagnostics } from './social-login-diagnostics.js';
 
 export function createAuthRouter(deps: ApiDependencies): Router {
   const router = Router();
@@ -151,7 +152,9 @@ export function createAuthRouter(deps: ApiDependencies): Router {
     authRateLimit,
     validate(SocialLoginSchema),
     asyncHandler(async (req, res) => {
-      const data = await deps.authService.googleLogin(req.body, getRequestContext(req));
+      const data = await withSocialLoginDiagnostics(deps.logger, 'google', 'login', req, () =>
+        deps.authService.googleLogin(req.body, getRequestContext(req)),
+      );
       sendSuccess(res, req.requestId, data);
     }),
   );
@@ -162,7 +165,9 @@ export function createAuthRouter(deps: ApiDependencies): Router {
     requireAuth(deps.tokenService, deps.repository),
     validate(SocialLoginSchema),
     asyncHandler(async (req, res) => {
-      const data = await deps.authService.linkGoogle(req.auth!.userId, req.body);
+      const data = await withSocialLoginDiagnostics(deps.logger, 'google', 'link', req, () =>
+        deps.authService.linkGoogle(req.auth!.userId, req.body),
+      );
       sendSuccess(res, req.requestId, data);
     }),
   );
@@ -185,7 +190,9 @@ export function createAuthRouter(deps: ApiDependencies): Router {
     authRateLimit,
     validate(SocialLoginSchema),
     asyncHandler(async (req, res) => {
-      const data = await deps.authService.appleLogin(req.body, getRequestContext(req));
+      const data = await withSocialLoginDiagnostics(deps.logger, 'apple', 'login', req, () =>
+        deps.authService.appleLogin(req.body, getRequestContext(req)),
+      );
       sendSuccess(res, req.requestId, data);
     }),
   );

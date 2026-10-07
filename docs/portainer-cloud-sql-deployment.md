@@ -6,8 +6,8 @@ Hazırlanma: 5 Ekim 2026. Bu dağıtım **backend API + worker** içindir; mobil
 
 | Parça               | Konum / değer                                                                      |
 | ------------------- | ---------------------------------------------------------------------------------- |
-| API image           | `ghcr.io/ranvals-software/birkare-api:2026.10.05-gcs-2`                                |
-| Worker image        | `ghcr.io/ranvals-software/birkare-worker:2026.10.05-gcs-2`                             |
+| API image           | `ghcr.io/ranvals-software/birkare-api:2026.10.05-gcs-4`                                |
+| Worker image        | `ghcr.io/ranvals-software/birkare-worker:2026.10.05-gcs-4`                             |
 | Platform            | `linux/amd64`                                                                      |
 | Üretim tipi Compose | `docker-compose.production.yml`; ayrı API, worker, Redis ve tek seferlik migration |
 | PostgreSQL          | **Cloud SQL üzerinde harici**; Compose PostgreSQL kurmaz, Cloud SQL Auth Proxy kullanır |
@@ -68,7 +68,7 @@ curl -s -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMeta
 
 7. Uygulama çalıştıktan sonra uçtan uca test başarılıysa daha önce indirilen GCS JSON anahtarı **Console'dan silinir (disable → delete)** ve yerel kopyası (`~/Downloads/...json`) kalıcı olarak silinir. Anahtar sohbette paylaşıldıysa silinmesi zorunludur.
 
-Not: `cloudsql-proxy` hâlâ `CLOUD_SQL_CREDENTIALS_FILE` JSON'unu kullanır. VM servis hesabına `Cloud SQL Client` rolü verilirse proxy'deki `--credentials-file` satırı ve secret kaldırılarak o da ADC'ye geçirilebilir; bu teslimde değiştirilmedi. [Google servis hesabı anahtar güvenliği](https://docs.cloud.google.com/iam/docs/best-practices-for-managing-service-account-keys) · [V4 signed URL imzalama](https://docs.cloud.google.com/storage/docs/access-control/signing-urls-with-helpers)
+`cloudsql-proxy` de JSON anahtarı kullanmaz; aynı VM servis hesabıyla (ADC) bağlanır. Bunun için servis hesabına **Cloud SQL Client** (`roles/cloudsql.client`) rolü verilmeli ve Cloud SQL Admin API etkin olmalıdır. `CLOUD_SQL_CREDENTIALS_FILE` kaldırılmıştır; `/opt/birkare/secrets/*.json` dosyaları stack tarafından okunmaz ve silinebilir. [Google servis hesabı anahtar güvenliği](https://docs.cloud.google.com/iam/docs/best-practices-for-managing-service-account-keys) · [V4 signed URL imzalama](https://docs.cloud.google.com/storage/docs/access-control/signing-urls-with-helpers)
 
 Rıdvan'a özel dosyayı parola yöneticisinin güvenli paylaşımı gibi ayrı bir kanalla ilet; repoya, package açıklamasına, ekran görüntüsüne veya genel sohbet grubuna yapıştırma. Portainer yöneticileri container runtime env değerlerini görebilir; "image'a gömülmedi" ifadesi "sunucu yöneticileri göremez" anlamına gelmez.
 
@@ -77,11 +77,11 @@ Rıdvan'a özel dosyayı parola yöneticisinin güvenli paylaşımı gibi ayrı 
 Repo kökünden build edilir. Backend Dockerfile'ları env dosyalarını kopyalamaz; sırları `ARG`, `ENV`, `--build-arg` veya Dockerfile satırlarına yazmayın. `.dockerignore` ortam dosyalarını, özel credential dizinlerini ve imzalama anahtarlarını build bağlamından dışlar.
 
 ```sh
-docker build --platform=linux/amd64 -f infra/docker/api.Dockerfile -t ghcr.io/ranvals-software/birkare-api:2026.10.05-gcs-2 -t ghcr.io/ranvals-software/birkare-api:latest .
-docker build --platform=linux/amd64 -f infra/docker/worker.Dockerfile -t ghcr.io/ranvals-software/birkare-worker:2026.10.05-gcs-2 -t ghcr.io/ranvals-software/birkare-worker:latest .
-node scripts/audit-release-images.mjs ghcr.io/ranvals-software/birkare-api:2026.10.05-gcs-2 ghcr.io/ranvals-software/birkare-worker:2026.10.05-gcs-2
-docker push ghcr.io/ranvals-software/birkare-api:2026.10.05-gcs-2
-docker push ghcr.io/ranvals-software/birkare-worker:2026.10.05-gcs-2
+docker build --platform=linux/amd64 -f infra/docker/api.Dockerfile -t ghcr.io/ranvals-software/birkare-api:2026.10.05-gcs-4 -t ghcr.io/ranvals-software/birkare-api:latest .
+docker build --platform=linux/amd64 -f infra/docker/worker.Dockerfile -t ghcr.io/ranvals-software/birkare-worker:2026.10.05-gcs-4 -t ghcr.io/ranvals-software/birkare-worker:latest .
+node scripts/audit-release-images.mjs ghcr.io/ranvals-software/birkare-api:2026.10.05-gcs-4 ghcr.io/ranvals-software/birkare-worker:2026.10.05-gcs-4
+docker push ghcr.io/ranvals-software/birkare-api:2026.10.05-gcs-4
+docker push ghcr.io/ranvals-software/birkare-worker:2026.10.05-gcs-4
 docker push ghcr.io/ranvals-software/birkare-api:latest
 docker push ghcr.io/ranvals-software/birkare-worker:latest
 ```
@@ -94,7 +94,7 @@ Bu klasörde Git geçmişi bulunmadığı için doğrulanmamış repo URL/commit
 
 Hedef: Portainer **Docker Standalone / Compose stack**. Swarm kullanılıyorsa profiles, depends_on ve env/secret davranışları ayrıca uyarlanmalı; bu dosyayı doğrudan `docker stack deploy` ile aynı davranır varsaymayın. Compose `.env` interpolation özelliği Swarm ile aynı değildir. [Docker değişken belgesi](https://docs.docker.com/compose/how-tos/environment-variables/variable-interpolation/)
 
-1. Rıdvan Cloud SQL DB/kullanıcıyı, instance connection name'i ve Cloud SQL için least-privilege service-account JSON'u hazırlar. GCS için ayrı bir servis hesabı/kimlik kullanılması önerilir. Compose içindeki `cloudsql-proxy` servisi API, worker ve migration için Cloud SQL bağlantısını sağlar; Cloud SQL portu host'a yayınlanmaz.
+1. Rıdvan Cloud SQL DB/kullanıcıyı, instance connection name'i hazırlar. Cloud SQL ve GCS erişimi VM'ye bağlı servis hesabıyla sağlanır (bölüm 3); JSON anahtarı yoktur. Compose içindeki `cloudsql-proxy` servisi API, worker ve migration için Cloud SQL bağlantısını sağlar; Cloud SQL portu host'a yayınlanmaz.
 2. Google Cloud Storage’da uniform bucket-level access ve public access prevention açık private bucket oluşturulur (`bikare`, hazır). VM'ye bölüm 3'teki gibi servis hesabı bağlanır; JSON anahtarı kullanılmaz. Cloud Storage API ve IAM Service Account Credentials API etkin olmalıdır. Başka bucket kullanılıyorsa `GCS_BUCKET` ile değiştirilir. `AUTH_DEV_MODE=false`, harici Prisma DB, BullMQ ve `STORAGE_DRIVER=gcs` zorunludur.
 3. Portainer registry erişimi yapılandırılır. **`docker-compose.portainer.yml` dosyasının tamamı** Stack Editor'a alınır; private env değerleri Stack > Environment variables alanına verilir. Bir `.env` dosyasının kendiliğinden sunucuda var olduğunu varsaymayın.
 4. Daha önce `birkare-storage` Docker volume'unda saklanan dosyaları GCS'ye taşımadan storage değişikliğini devreye almayın. Migration adımları aşağıdadır. Veritabanı ve volume yedeklerini alın; `migrate reset`, veri kayıplı `db push`, eski kullanıcı/kredi temizliği yapılmaz.
@@ -104,21 +104,21 @@ Hedef: Portainer **Docker Standalone / Compose stack**. Swarm kullanılıyorsa p
 
 ### Mevcut Docker volume'undaki görselleri GCS'ye taşıma
 
-Portainer stack'i önceden local storage ile çalıştıysa `birkare-storage` volume'u kaynak fotoğrafları ve üretim çıktılarını içerir. API ve worker'ı GCS ayarına geçirip volume'daki içerikleri kopyalamadan başlatmak eski görselleri erişilemez yapar. Yeni API image'ı `storage-migrate` adlı tek seferlik, profilli bir yardımcı içerir. Taşıma da API/worker gibi VM servis hesabıyla (ADC) çalışır; ayrı anahtar gerekmez. Bucket public yapılmaz.
+Portainer stack'i önceden local storage ile çalıştıysa `birkare-storage` volume'u kaynak fotoğrafları ve üretim çıktılarını içerir. API ve worker'ı GCS ayarına geçirip volume'daki içerikleri kopyalamadan başlatmak eski görselleri erişilemez yapar. Tek seferlik `storage-migrate` aracı Portainer stack'inde **yoktur**; ayrı `docker-compose.storage-migration.yml` overlay dosyasıyla, sunucuda komut satırından çalıştırılır. Böylece Portainer'ın `profiles` desteği olmasa bile her deploy'da başlamaz. Taşıma da API/worker gibi VM servis hesabıyla (ADC) çalışır; ayrı anahtar gerekmez. Bucket public yapılmaz.
 
 1. Private GCS bucket'ı ve VM servis hesabını (bölüm 3) hazırlayın. Yeni API/worker image tag'ini ve Compose dosyasını hazırlayın; henüz API/worker'ı GCS ile başlatmayın.
 2. Eski dosyalara yeni yazımı durdurmak için API ve worker'ı durdurun. Veritabanı ile `birkare-storage` volume yedeğini alın. Volume'u silmeyin.
-3. Önce `docker volume ls` ile eski local storage volume adını bulun. `LOCAL_STORAGE_VOLUME_NAME` değerini `.env`/Portainer stack environment içinde bu tam adla ayarlayın; varsayılan `birkare-storage` yalnız eski volume gerçekten bu adla varsa uygundur. Yeni API image'ı ve aynı volume ile dry-run çalıştırın:
+3. Önce `docker volume ls` ile eski local storage volume adını bulun. `LOCAL_STORAGE_VOLUME_NAME` değerini `.env`/Portainer stack environment içinde bu tam adla ayarlayın; varsayılan, eski stack'in otomatik verdiği `birkare-production_birkare-storage` adıdır. Overlay volume'u `external` ve salt-okunur bağlar; volume yoksa çalışmaz. Yeni API image'ı ve aynı volume ile dry-run çalıştırın:
 
 ```sh
-docker compose --env-file /secure/birkare/portainer.env -f docker-compose.portainer.yml stop api worker
-docker compose --env-file /secure/birkare/portainer.env -f docker-compose.portainer.yml --profile storage-migration run --rm storage-migrate --dry-run
+docker compose -p birkare-production --env-file /secure/birkare/portainer.env -f docker-compose.portainer.yml stop api worker
+docker compose -p birkare-production --env-file /secure/birkare/portainer.env -f docker-compose.portainer.yml -f docker-compose.storage-migration.yml run --rm storage-migrate --dry-run
 ```
 
 4. Dry-run hatasızsa gerçek aktarımı çalıştırın. Araç her nesneyi boyut ve SHA-256 ile doğrular; GCS'de doğrulanmış kopya oluşturmadan veritabanındaki `storageProvider` alanını değiştirmez. Başarısız dosyalarda işlem hata koduyla durur; API/worker'ı başlatmadan hatayı giderin.
 
 ```sh
-docker compose --env-file /secure/birkare/portainer.env -f docker-compose.portainer.yml --profile storage-migration run --rm storage-migrate --apply
+docker compose -p birkare-production --env-file /secure/birkare/portainer.env -f docker-compose.portainer.yml -f docker-compose.storage-migration.yml run --rm storage-migrate --apply
 ```
 
 5. `local assets checked` ve `migrated` sayılarının beklenen içerikle eşleştiğini ve `failed: 0` olduğunu doğrulayın. Ardından GCS ayarlı stack'i başlatın:
@@ -143,19 +143,16 @@ Rıdvan'ın Portainer sunucusunda hazırlaması gerekenler:
 	 URL-safe olmalıdır; superuser bilgisi kullanılmaz.
 2. Cloud SQL için `INSTANCE_CONNECTION_NAME` değeri alınır:
 	 `project-id:region:instance-name`.
-3. Yalnız bu DB'ye erişebilen bir Google service account oluşturulur ve JSON
-	 anahtarı Portainer host'una güvenli bir dosya olarak konur. Örnek yol:
-	 `/secure/birkare/cloudsql-service-account.json`.
+3. VM'ye bağlı servis hesabına **Cloud SQL Client** rolü verilir. JSON anahtarı
+	 oluşturulmaz ve host'a dosya konmaz.
 4. Portainer Stack environment alanına `.env.production.example` içindeki
 	 değerler girilir. Özellikle şu alanlar zorunludur:
 	 `DB_NAME`, `DB_USER`, `DB_PASSWORD`,
-	 `CLOUD_SQL_INSTANCE_CONNECTION_NAME`, `CLOUD_SQL_CREDENTIALS_FILE`.
-5. `CLOUD_SQL_CREDENTIALS_FILE`, host üzerindeki JSON yolunu göstermelidir.
-	 Compose içindeki `cloudsql-proxy` bu dosyayı
-	 `/run/secrets/cloudsql-service-account` olarak okur. Proxy dışarıya port
+	 `CLOUD_SQL_INSTANCE_CONNECTION_NAME`.
+5. Compose içindeki `cloudsql-proxy` kimliği VM metadata sunucusundan alır. Proxy dışarıya port
 	açmaz; API, worker ve migration yalnızca `cloudsql-proxy:5432` adresini
 kullanır. Fotoğraf ve çıktı dosyaları private GCS bucket'ında tutulur.
-	`birkare-storage` volume'u yalnız profilli ilk aktarım yardımcısına bağlanır.
+	Eski `birkare-storage` volume'u yalnız ayrı `docker-compose.storage-migration.yml` aracına bağlanır.
 
 Portainer Stack deploy edildiğinde normal başlatma komutu migration'ı otomatik
 olarak tetikler:
@@ -201,7 +198,7 @@ docker compose --env-file /secure/birkare/portainer.env -f docker-compose.produc
 docker compose --env-file /secure/birkare/portainer.env -f docker-compose.production.yml ps
 ```
 
-`/secure/birkare/portainer.env` operatörün güvenli sunucu konumu için örnektir; bu çalışmada o sunucuya dosya gönderilmedi. `CLOUD_SQL_CREDENTIALS_FILE` bu host üzerindeki service-account JSON yolunu göstermelidir. `config` komutunu **`--quiet` olmadan** log/sohbete göndermeyin: çözümlenen sırları gösterir.
+`/secure/birkare/portainer.env` operatörün güvenli sunucu konumu için örnektir; bu çalışmada o sunucuya dosya gönderilmedi. `config` komutunu **`--quiet` olmadan** log/sohbete göndermeyin: çözümlenen sırları gösterir.
 
 Redis şifre değişimini sıradan env düzenlemesi saymayın: API/worker bağlantı URL'si ve Redis kimlik doğrulaması birlikte yenilenmelidir. Redis volume'u silmeyin; kuyruk işleri kaybolabilir. Release sabit tag/digest ile pinlenmeli, geri dönüşte API ve worker birlikte önceki uyumlu sürüme alınmalıdır.
 
@@ -230,4 +227,4 @@ Redis şifre değişimini sıradan env düzenlemesi saymayın: API/worker bağla
 - Mobil destek maili değişiklikleri için **272/272** test, TypeScript ve değişen dosyaların lint kontrolü geçti; yeni mobil release oluşturulmadı.
 - Mevcut Docker GHCR oturumu kullanıldı; sohbetteki tokenlar dosyaya alınmadı. Package görünürlüğünü public yapma veya başka paketleri değiştirme işlemi yapılmadı.
 
-Yerel backend ayrıca düzeltme ile yeniden başlatıldı; sağlık/readiness ve ücretsiz model erişimi kontrolü başarılı. Cloud SQL/Portainer sunucusunda deployment veya migration **yapılmadı**; gerçek bağlantı/GCS/SMTP bilgileri eksik. Bu GCS değişikliğini içeren `2026.10.05-gcs-2` image tagleri 5 Ekim 2026'da build edildi, audit'ten geçti ve GHCR'a push edildi (API `sha256:26d87811…`, worker `sha256:ad122dea…`). Portainer'da `IMAGE_TAG=2026.10.05-gcs-2` ve güncel `docker-compose.portainer.yml` ile dağıtılır. Image'ın Packages'a yüklenmesi sunucunun veya mobil uygulamanın canlıya alındığı anlamına gelmez.
+Yerel backend ayrıca düzeltme ile yeniden başlatıldı; sağlık/readiness ve ücretsiz model erişimi kontrolü başarılı. Cloud SQL/Portainer sunucusunda deployment veya migration **yapılmadı**; gerçek bağlantı/GCS/SMTP bilgileri eksik. Bu GCS değişikliğini içeren `2026.10.05-gcs-4` image tagleri 5 Ekim 2026'da build edildi, audit'ten geçti ve GHCR'a push edildi (API `sha256:cc3d6225…`, worker `sha256:5c728c4e…`). Portainer'da `IMAGE_TAG=2026.10.05-gcs-4` ve güncel `docker-compose.portainer.yml` ile dağıtılır. Image'ın Packages'a yüklenmesi sunucunun veya mobil uygulamanın canlıya alındığı anlamına gelmez.

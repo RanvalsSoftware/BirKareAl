@@ -95,10 +95,8 @@ services:
       - --port=5432
       - --structured-logs
       - --health-check
-      - --credentials-file=/run/secrets/cloudsql-service-account
+      # No key file: the proxy uses the VM service account (needs Cloud SQL Client).
       - ${CLOUD_SQL_INSTANCE_CONNECTION_NAME:?Set Cloud SQL instance connection name}
-    secrets:
-      - cloudsql-service-account
     expose:
       - '5432'
     security_opt: ['no-new-privileges:true']
@@ -200,7 +198,5 @@ volumes:
   redis-data:
 
 secrets:
-  cloudsql-service-account:
-    file: ${CLOUD_SQL_CREDENTIALS_FILE:?Set path to the Cloud SQL service-account JSON}
   apple-signin-private-key:
     file: ${APPLE_PRIVATE_KEY_HOST_FILE:?Set path to Sign in with Apple .p8 private key}
