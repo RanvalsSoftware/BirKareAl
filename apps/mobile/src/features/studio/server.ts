@@ -90,7 +90,7 @@ function quotePayload(flow: StudioFlow, studio: StudioServerSelection) {
   return {
     mode: modeMap[flow.mode],
     quality: flow.quality,
-    numberOfImages: 1,
+    numberOfImages: flow.numberOfImages,
     studio,
   };
 }
@@ -135,6 +135,10 @@ export async function startStudioGeneration(
     invalid(translateCopy('Kıyafet denemesi için kıyafet fotoğrafını da seçmelisin.'));
   if (!flow.rightsConfirmed)
     invalid(translateCopy('Devam etmek için yüklediğin görselleri kullanma hakkını onaylamalısın.'));
+  if (flow.productTitle.trim().length > 120)
+    invalid(translateCopy('Ürün adı en fazla 120 karakter olabilir.'));
+  if (flow.quality === 'PREVIEW' && flow.numberOfImages > 2)
+    invalid(translateCopy('Önizleme üretiminde en fazla 2 alternatif seçebilirsin.'));
 
   const requestScope = captureSessionRequestScope();
   const studio = resolveStudioSelection(flow);
@@ -148,8 +152,11 @@ export async function startStudioGeneration(
     flow.secondaryName,
     mode,
     studio,
+    flow.productTitle.trim(),
+    flow.commerceGoal,
     flow.quality,
     flow.aspectRatio,
+    flow.numberOfImages,
     flow.userNotes.trim(),
   ]);
   let attempt = attempts.get(attemptKey);
@@ -202,8 +209,10 @@ export async function startStudioGeneration(
         method: 'POST',
         body: JSON.stringify({
           title:
-            flow.mode === 'product'
-              ? translateCopy("Ürün çekimi")
+            flow.mode === 'product' && flow.productTitle.trim()
+              ? flow.productTitle.trim()
+              : flow.mode === 'product'
+                ? translateCopy("Ürün çekimi")
               : flow.mode === 'fashion'
                 ? translateCopy("Kıyafet deneme")
                 : translateCopy("Tırnak önizleme"),
@@ -235,7 +244,7 @@ export async function startStudioGeneration(
         composition: 'MEDIUM',
         aspectRatio: flow.aspectRatio,
         quality: flow.quality,
-        numberOfImages: 1,
+        numberOfImages: flow.numberOfImages,
         preserveFace: flow.mode === 'fashion',
         preserveClothes: flow.mode === 'fashion' || flow.mode === 'product',
         ...(flow.userNotes.trim() ? { userNotes: flow.userNotes.trim() } : {}),

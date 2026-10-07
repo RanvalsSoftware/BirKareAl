@@ -1,3 +1,7 @@
+# Arşivlenmiş Tasarım Araştırması — Üretim Spesifikasyonu Değildir
+
+> Bu belge önceki ürün keşif döneminden kalan tarihsel bir araştırmadır. Güncel uygulama adı, kapsamı veya App Store sunumunu tanımlamaz. Güncel ürün spesifikasyonu ve kurulum bilgileri için kök `README.md` ile `docs/app-review-resubmission-build-12.md` dosyalarını kullanın.
+
 # Retake AI – Expo React Native + Express.js + OpenAI Tam Teknik Proje Planı
 
 > **Çalışma adı:** Retake AI  

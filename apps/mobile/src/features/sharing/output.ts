@@ -15,7 +15,7 @@ export type ShareGeneration = {
 };
 
 export const AI_DISCLOSURE =
-  'BirKare AI ile yapay zekâ kullanılarak oluşturuldu. Gerçek bir olayın, buluşmanın veya iş birliğinin kanıtı değildir. #AIileOlusturuldu';
+  'BirKare Studio ile yapay zekâ kullanılarak oluşturuldu. Ürün görseli yayımlanmadan önce kullanıcı tarafından incelenmelidir. #AIileOlusturuldu';
 
 export function selectedShareOutput(generation: ShareGeneration, outputId?: string) {
   if (generation.status !== 'COMPLETED')

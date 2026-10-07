@@ -32,6 +32,9 @@ vi.mock('@/features/create/server', () => ({
 function flow(update: Partial<StudioFlow> = {}): StudioFlow {
   return {
     mode: 'product',
+    productTitle: 'Deri omuz çantası',
+    commerceGoal: 'marketplace',
+    numberOfImages: 2,
     primaryUri: 'file:///product.jpg',
     primaryName: 'product.jpg',
     secondaryUri: null,
@@ -151,7 +154,7 @@ describe('studio server selection', () => {
     expect(parsedBody('/v1/generations/quote')).toEqual({
       mode: 'VIRTUAL_TRY_ON',
       quality: 'STANDARD',
-      numberOfImages: 1,
+      numberOfImages: 2,
       studio: { kind: 'VIRTUAL_TRY_ON', sceneId: 'fashion-golden-hour' },
     });
     expect(parsedBody('/v1/projects')).toMatchObject({
@@ -166,6 +169,7 @@ describe('studio server selection', () => {
       mode: 'VIRTUAL_TRY_ON',
       studio: { kind: 'VIRTUAL_TRY_ON', sceneId: 'fashion-golden-hour' },
       quality: 'STANDARD',
+      numberOfImages: 2,
       userNotes: 'Dökümü doğal tut.',
       disclosureAccepted: true,
     });
@@ -181,14 +185,34 @@ describe('studio server selection', () => {
     ['STANDARD', '/v1/generations'],
     ['HD', '/v1/generations'],
   ] as const)('routes %s jobs to the correct generation endpoint', async (quality, endpoint) => {
-    await startStudioGeneration(flow({ quality }), {
+    await startStudioGeneration(flow({ quality, numberOfImages: quality === 'PREVIEW' ? 2 : 4 }), {
       idempotencyKey: `studio_${quality.toLowerCase()}_01`,
     });
     expect(callsAt(endpoint)).toHaveLength(1);
     const otherEndpoint =
       endpoint === '/v1/generations' ? '/v1/generations/preview' : '/v1/generations';
     expect(callsAt(otherEndpoint)).toHaveLength(0);
-    expect(parsedBody(endpoint)).toMatchObject({ quality });
+    expect(parsedBody(endpoint)).toMatchObject({
+      quality,
+      numberOfImages: quality === 'PREVIEW' ? 2 : 4,
+    });
+  });
+
+  it('uses the merchant product name as the project title', async () => {
+    await startStudioGeneration(flow({ productTitle: '  Yeni sezon vazo  ' }), {
+      idempotencyKey: 'studio_product_title_01',
+    });
+
+    expect(parsedBody('/v1/projects')).toMatchObject({ title: 'Yeni sezon vazo' });
+  });
+
+  it('rejects four-image preview requests before uploading', async () => {
+    await expect(
+      startStudioGeneration(flow({ quality: 'PREVIEW', numberOfImages: 4 }), {
+        idempotencyKey: 'studio_preview_limit_01',
+      }),
+    ).rejects.toThrow('en fazla 2');
+    expect(mocks.upload).not.toHaveBeenCalled();
   });
 
   it('replays a lost preview response with the same key without re-uploading or creating twice', async () => {

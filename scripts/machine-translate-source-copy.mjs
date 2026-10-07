@@ -13,7 +13,7 @@ const sleep = (milliseconds) => new Promise((resolve) => setTimeout(resolve, mil
 function protect(value) {
   const replacements = [];
   const protectedValue = value.replace(
-    /\{\{\s*[^}]+?\s*\}\}|https?:\/\/[^\s)]+|BirKare(?: AI)?|`[^`]+`/g,
+    /\{\{\s*[^}]+?\s*\}\}|https?:\/\/[^\s)]+|BirKare(?: AI| Studio)?|`[^`]+`/g,
     (match) => {
       const token = `ZXQSAFE${String(replacements.length).padStart(3, '0')}QXZ`;
       replacements.push([token, match]);

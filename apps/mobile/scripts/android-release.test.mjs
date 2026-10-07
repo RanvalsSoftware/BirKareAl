@@ -45,11 +45,11 @@ test('accepts a dedicated upload key without changing it', () => {
 });
 test('accepts an explicit ignored credentials file without weakening release checks', () => {
   const defaults = parseReleaseArguments([]);
-  assert.ok(defaults.credentialsFile.endsWith('/apps/mobile/credentials.json'));
+  assert.ok(defaults.credentialsFile.replaceAll('\\', '/').endsWith('/apps/mobile/credentials.json'));
 
   const options = parseReleaseArguments(['--check', '--credentials-file', 'credentials.json']);
   assert.equal(options.check, true);
-  assert.ok(options.credentialsFile.endsWith('/apps/mobile/credentials.json'));
+  assert.ok(options.credentialsFile.replaceAll('\\', '/').endsWith('/apps/mobile/credentials.json'));
   assert.throws(
     () => parseReleaseArguments(['--credentials-file']),
     /Usage: node scripts\/android-release\.mjs/,

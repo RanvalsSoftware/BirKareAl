@@ -1,7 +1,7 @@
 import type { ElementType, PropsWithChildren } from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import BeautyScreen from '../../../app/beauty';
+import BeautyScreen from '../legacy/routes/root/beauty';
 import { getCreateFlow, resetCreateFlow } from '../create/createFlow';
 import { resolveCreateFlow } from '../create/server';
 import { emptyBeautySettings, hasBeautyAdjustments } from './settings';

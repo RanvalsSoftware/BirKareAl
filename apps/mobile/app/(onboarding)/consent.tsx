@@ -4,14 +4,10 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { GoldButton, OnboardingHeader } from '@/features/onboarding/components';
-import { confirmOnboardingCreateDraftRights } from '@/features/onboarding/create-handoff';
 import { useOnboarding } from '@/features/onboarding/context';
-import { explicitConsentSections } from '@/features/legal/privacy-notice';
-import { savePendingImageProcessingConsent } from '@/features/legal/image-processing-consent';
 import { colors, radii, spacing } from '@/theme';
 
 export default function ConsentScreen() {
@@ -19,10 +15,8 @@ export default function ConsentScreen() {
 
   const { completed, markCompleted, ready } = useOnboarding();
   const [rightsAccepted, setRightsAccepted] = useState(false);
-  const [explicitConsentAccepted, setExplicitConsentAccepted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const allAccepted = rightsAccepted && explicitConsentAccepted;
 
   useEffect(() => {
     // A completed user can still reach this route through a stale deep link or
@@ -46,16 +40,14 @@ export default function ConsentScreen() {
   }
 
   async function continueToLogin() {
-    if (!allAccepted || submitting) return;
+    if (!rightsAccepted || submitting) return;
     setSubmitting(true);
     setError(null);
     try {
-      await savePendingImageProcessingConsent();
       await markCompleted();
-      confirmOnboardingCreateDraftRights();
       router.replace('/(auth)/login');
     } catch {
-      setError(translateCopy('Açık rıza kaydedilemedi. Lütfen tekrar dene.'));
+      setError(translateCopy('Başlangıç onayı kaydedilemedi. Lütfen tekrar dene.'));
     } finally {
       setSubmitting(false);
     }
@@ -70,18 +62,31 @@ export default function ConsentScreen() {
   return (
     <SafeAreaView edges={['top', 'bottom']} style={styles.safe}>
       <View style={styles.container}>
-        <OnboardingHeader
-          onBack={returnFromConsent}
-          step="BAŞLAMADAN ÖNCE"
-          title={translateCopy('Güvenlik onayları')}
-        />
+        <View style={styles.header}>
+          <Pressable
+            accessibilityLabel={translateCopy('Geri')}
+            accessibilityRole="button"
+            hitSlop={10}
+            onPress={returnFromConsent}
+            style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+          >
+            <Ionicons color={colors.textPrimary} name="arrow-back" size={21} />
+          </Pressable>
+          <View style={styles.headerCopy}>
+            <Text style={styles.headerStep}>{translateCopy('BAŞLAMADAN ÖNCE')}</Text>
+            <Text numberOfLines={1} style={styles.headerTitle}>
+              {translateCopy('Kaynak görsel hakları')}
+            </Text>
+          </View>
+          <View style={styles.headerSpacer} />
+        </View>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <Text accessibilityRole="header" style={styles.title}>
             {translateCopy('Güvenli bir alan{{p0}}oluşturalım.', { p0: `\n` })}
           </Text>
           <Text style={styles.subtitle}>
             {translateCopy(
-              'Fotoğrafların ve platformdaki herkesin haklarını korumak için aşağıdaki onayların tamamı gerekli.',
+              'BirKare Studio’ya yalnızca kullanma hakkına sahip olduğun ürün görsellerini yüklemelisin.',
             )}
           </Text>
           <View style={styles.rows}>
@@ -110,33 +115,14 @@ export default function ConsentScreen() {
                 </Text>
               </View>
             </Pressable>
-            <View style={styles.explicitDocument}>
-              <Text style={styles.explicitTitle}>{translateCopy('Açık Rıza Metni')}</Text>
-              {explicitConsentSections.map((section) => (
-                <View key={section.heading} style={styles.explicitSection}>
-                  <Text style={styles.explicitHeading}>{translateCopy(section.heading)}</Text>
-                  <Text style={styles.explicitBody}>{translateCopy(section.body)}</Text>
-                </View>
-              ))}
-            </View>
-            <Pressable
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: explicitConsentAccepted }}
-              onPress={() => {
-                setExplicitConsentAccepted((value) => !value);
-                void Haptics.selectionAsync();
-              }}
-              style={({ pressed }) => [styles.explicitCheck, pressed && styles.pressed]}
-            >
-              <View style={[styles.checkbox, explicitConsentAccepted && styles.checkboxChecked]}>
-                {explicitConsentAccepted ? (
-                  <Ionicons color={colors.background} name="checkmark" size={18} />
-                ) : null}
-              </View>
-              <Text style={styles.explicitCheckText}>
-                {translateCopy("Açık Rıza Metni'ni okudum, izin veriyorum.")}
+            <View style={styles.consentNotice}>
+              <Ionicons color="#91BBA0" name="shield-checkmark-outline" size={19} />
+              <Text style={styles.consentNoticeText}>
+                {translateCopy(
+                  'Bu adım yüz verisi işlemeye izin vermez. Yüz içeren bir aracı seçersen açık rızan ilgili işlemden hemen önce ayrıca istenir; onay vermemen hesap açmanı engellemez.',
+                )}
               </Text>
-            </Pressable>
+            </View>
           </View>
           {error ? <Text accessibilityLiveRegion="polite" style={styles.error}>{error}</Text> : null}
           <View style={styles.legalBox}>
@@ -168,12 +154,28 @@ export default function ConsentScreen() {
           </View>
         </ScrollView>
         <View style={styles.bottom}>
-          <GoldButton
-            disabled={!allAccepted}
-            label={translateCopy('Onayla ve devam et')}
-            loading={submitting}
-            onPress={continueToLogin}
-          />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ disabled: !rightsAccepted || submitting }}
+            disabled={!rightsAccepted || submitting}
+            onPress={() => void continueToLogin()}
+            style={({ pressed }) => [
+              styles.continueButton,
+              (!rightsAccepted || submitting) && styles.continueButtonDisabled,
+              pressed && rightsAccepted && !submitting && styles.pressed,
+            ]}
+          >
+            {submitting ? (
+              <ActivityIndicator color="#0B2118" />
+            ) : (
+              <>
+                <Text style={styles.continueButtonText}>
+                  {translateCopy('Onayla ve devam et')}
+                </Text>
+                <Ionicons color="#0B2118" name="arrow-forward" size={20} />
+              </>
+            )}
+          </Pressable>
         </View>
       </View>
     </SafeAreaView>
@@ -182,7 +184,32 @@ export default function ConsentScreen() {
 
 const styles = StyleSheet.create({
   safe: { backgroundColor: colors.background, flex: 1 },
-  container: { flex: 1, paddingHorizontal: 20, paddingTop: spacing.xs },
+  container: {
+    alignSelf: 'center',
+    flex: 1,
+    maxWidth: 680,
+    paddingHorizontal: 20,
+    paddingTop: spacing.xs,
+    width: '100%',
+  },
+  header: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    minHeight: 64,
+  },
+  backButton: {
+    alignItems: 'center',
+    borderColor: '#28342D',
+    borderRadius: 14,
+    borderWidth: 1,
+    height: 44,
+    justifyContent: 'center',
+    width: 44,
+  },
+  headerCopy: { alignItems: 'center', flex: 1, paddingHorizontal: 10 },
+  headerStep: { color: '#91BBA0', fontSize: 9, fontWeight: '900', letterSpacing: 1.1 },
+  headerTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: '900', marginTop: 3 },
+  headerSpacer: { width: 44 },
   content: { paddingBottom: 25, paddingTop: 28 },
   title: {
     color: colors.textPrimary,
@@ -203,7 +230,7 @@ const styles = StyleSheet.create({
     gap: 13,
     padding: 15,
   },
-  rowChecked: { backgroundColor: '#15130D', borderColor: 'rgba(255,196,0,0.50)' },
+  rowChecked: { backgroundColor: '#15251C', borderColor: 'rgba(145,187,160,0.65)' },
   iconBox: {
     alignItems: 'center',
     backgroundColor: colors.surfaceElevated,
@@ -214,41 +241,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 44,
   },
-  iconBoxChecked: { backgroundColor: colors.accentYellow, borderColor: colors.accentYellow },
+  iconBoxChecked: { backgroundColor: '#B8F1CD', borderColor: '#B8F1CD' },
   rowCopy: { flex: 1 },
   rowTitle: { color: colors.textPrimary, fontSize: 14, fontWeight: '900', lineHeight: 19 },
   rowDetail: { color: colors.textSecondary, fontSize: 11, lineHeight: 17, marginTop: 5 },
-  explicitDocument: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
+  consentNotice: {
+    alignItems: 'flex-start',
+    backgroundColor: '#111815',
+    borderColor: '#28342D',
     borderRadius: radii.lg,
     borderWidth: 1,
-    gap: 17,
-    padding: 16,
-  },
-  explicitTitle: { color: colors.accentYellow, fontSize: 18, fontWeight: '900' },
-  explicitSection: { gap: 6 },
-  explicitHeading: { color: colors.textPrimary, fontSize: 13, fontWeight: '800' },
-  explicitBody: { color: colors.textSecondary, fontSize: 11, lineHeight: 17 },
-  explicitCheck: {
-    alignItems: 'flex-start',
     flexDirection: 'row',
-    gap: 12,
-    paddingHorizontal: 3,
-    paddingVertical: 8,
+    gap: 10,
+    padding: 14,
   },
-  checkbox: {
-    alignItems: 'center',
-    borderColor: colors.border,
-    borderRadius: 6,
-    borderWidth: 1,
-    height: 24,
-    justifyContent: 'center',
-    marginTop: 1,
-    width: 24,
-  },
-  checkboxChecked: { backgroundColor: colors.accentYellow, borderColor: colors.accentYellow },
-  explicitCheckText: { color: colors.textPrimary, flex: 1, fontSize: 13, fontWeight: '700', lineHeight: 20 },
+  consentNoticeText: { color: colors.textSecondary, flex: 1, fontSize: 11, lineHeight: 17 },
   error: { color: colors.danger, fontSize: 12, lineHeight: 18, paddingHorizontal: 4 },
   noticeLink: { marginTop: 14, paddingHorizontal: 4, paddingVertical: 6 },
   legalBox: {
@@ -259,7 +266,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   legalText: { color: colors.textMuted, flex: 1, fontSize: 11, lineHeight: 17 },
-  legalLink: { color: colors.accentYellow, fontWeight: '800', textDecorationLine: 'underline' },
+  legalLink: { color: '#B8F1CD', fontWeight: '800', textDecorationLine: 'underline' },
   bottom: { paddingBottom: 8, paddingTop: 10 },
+  continueButton: {
+    alignItems: 'center',
+    backgroundColor: '#B8F1CD',
+    borderRadius: 16,
+    flexDirection: 'row',
+    gap: 9,
+    justifyContent: 'center',
+    minHeight: 54,
+    paddingHorizontal: 20,
+  },
+  continueButtonDisabled: { opacity: 0.38 },
+  continueButtonText: { color: '#0B2118', fontSize: 15, fontWeight: '900' },
   pressed: { opacity: 0.78 },
 });

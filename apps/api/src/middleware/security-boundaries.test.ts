@@ -148,6 +148,8 @@ describe('production secret boundaries', () => {
       JWT_ISSUER: 'https://api.example.test',
       CORS_ORIGINS: 'https://app.example.test',
       AUTH_DEV_MODE: 'false',
+      AI_PROVIDER: 'openai',
+      OPENAI_API_KEY: 'sk-fixture-openai-key',
       REVENUECAT_ENABLED: 'true',
       REVENUECAT_WEBHOOK_AUTH_TOKEN: 'fixture-webhook-token-at-least-24-characters',
       REVENUECAT_WEBHOOK_SIGNING_SECRET: 'fixture-webhook-signing-secret-at-least-32',
@@ -155,6 +157,15 @@ describe('production secret boundaries', () => {
     } satisfies NodeJS.ProcessEnv;
 
     assert.throws(() => loadConfig(production), /Secret API key \(sk_\.\.\.\)/);
+    assert.throws(
+      () =>
+        loadConfig({
+          ...production,
+          AI_PROVIDER: 'fake',
+          REVENUECAT_SECRET_API_KEY: 'sk_fixture-server-secret-key',
+        }),
+      /AI_PROVIDER=fake kullanılamaz/,
+    );
     assert.throws(
       () =>
         loadConfig({

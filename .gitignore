@@ -24,3 +24,4 @@ credentials.json
 *.p12
 *.pfx
 artifacts/
+.tmp-ios-export*/

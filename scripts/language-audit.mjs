@@ -39,10 +39,14 @@ const walk = (directory) =>
 for (const filename of roots
   .flatMap(walk)
   .filter(
-    (p) =>
-      /\.tsx?$/.test(p) &&
-      !/\.(?:test|spec)\.|\/i18n\//.test(p) &&
-      !p.endsWith('/features/legal/privacy-notice.ts'),
+    (p) => {
+      const normalized = p.replaceAll('\\', '/');
+      return (
+        /\.tsx?$/.test(normalized) &&
+        !/\.(?:test|spec)\.|\/i18n\//.test(normalized) &&
+        !normalized.endsWith('/features/legal/privacy-notice.ts')
+      );
+    },
   )) {
   const source = ts.createSourceFile(
     filename,
@@ -76,11 +80,12 @@ for (const filename of roots
       if (
         (translationCall || turkish.test(text) || (display && /[A-Za-z]/.test(text))) &&
         !text.startsWith('/') &&
+        !/^#[0-9A-Fa-f]{3,8}$/.test(text) &&
         !text.includes('.apps.googleusercontent.com') &&
         !/^https?:/.test(text)
       ) {
         const item = candidates.get(text) ?? { text, files: new Set() };
-        item.files.add(filename);
+        item.files.add(filename.replaceAll('\\', '/'));
         candidates.set(text, item);
       }
     }
@@ -122,7 +127,7 @@ if (process.argv.includes('--check')) {
         errors.push(`placeholder mismatch ${language}: ${JSON.stringify(text)}`);
     }
   }
-  const brandOnly = new Set(['BirKare', 'BirKare AI', 'AI', 'PRO', 'ΛI']);
+  const brandOnly = new Set(['BirKare', 'BirKare AI', 'BirKare Studio', 'AI', 'PRO', 'ΛI']);
   for (const item of rawJsxText) {
     if (!brandOnly.has(item.text))
       errors.push(`raw JSX copy: ${JSON.stringify(item.text)} (${item.filename})`);

@@ -3,7 +3,7 @@ import { validateGoogleOAuthClients } from './config/google-oauth.cjs';
 import { resolvePublicMobileConfig } from './config/public-env.cjs';
 import { resolveRevenueCatConfig } from './config/revenuecat.cjs';
 
-const appName = 'BirKare AI';
+const appName = 'BirKare Studio';
 const googleClientIdSuffix = '.apps.googleusercontent.com';
 // OAuth client IDs identify the app and are safe to ship. These defaults make
 // EAS builds deterministic; environment values can override them per stage.
@@ -70,13 +70,13 @@ const plugins: NonNullable<ExpoConfig['plugins']> = [
   [
     'expo-splash-screen',
     {
-      image: './assets/onboarding/images/brand/logo-gold-icon.png',
+      image: './assets/brand/birkare-studio-icon-1024-v1.png',
       imageWidth: 196,
       resizeMode: 'contain',
-      backgroundColor: '#000000',
+      backgroundColor: '#0B0F0D',
       dark: {
-        image: './assets/onboarding/images/brand/logo-gold-icon.png',
-        backgroundColor: '#000000',
+        image: './assets/brand/birkare-studio-icon-1024-v1.png',
+        backgroundColor: '#0B0F0D',
       },
     },
   ],
@@ -84,8 +84,8 @@ const plugins: NonNullable<ExpoConfig['plugins']> = [
     'expo-image-picker',
     {
       photosPermission:
-        'BirKare AI, seçtiğiniz fotoğrafı yalnızca oluşturma işleminiz için kullanır.',
-      cameraPermission: 'BirKare AI ile yeni bir kaynak fotoğraf çekebilirsiniz.',
+        'BirKare Studio, seçtiğiniz ürün fotoğrafını yalnızca ürün görseli oluşturma işleminiz için kullanır.',
+      cameraPermission: 'BirKare Studio ile yeni bir ürün kaynak fotoğrafı çekebilirsiniz.',
     },
   ],
   'expo-secure-store',
@@ -111,29 +111,28 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ar: './locales/ar.json',
   },
   version: '1.0',
-  // App icons must be opaque. Keeping the transparent gold mark here makes
-  // iOS flatten it over white, which is why the installed icon looked like a
-  // white tile even though the application itself uses a black theme.
-  icon: './assets/onboarding/images/brand/logo-gold-icon-black.png',
-  orientation: 'portrait',
+  // Opaque, product-specific icon for the focused catalog workspace.
+  // The previous gold assets remain in the repository for rollback/history.
+  icon: './assets/brand/birkare-studio-icon-1024-v1.png',
+  orientation: 'default',
   userInterfaceStyle: 'dark',
   backgroundColor: '#050505',
   ios: {
-    icon: './assets/onboarding/images/brand/logo-gold-icon-black.png',
+    icon: './assets/brand/birkare-studio-icon-1024-v1.png',
     supportsTablet: true,
     bundleIdentifier: 'com.birkareai.mobile',
-    buildNumber: '11',
+    buildNumber: '12',
     usesAppleSignIn: true,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
       CFBundleAllowMixedLocalizations: true,
       UIUserInterfaceStyle: 'Dark',
       NSPhotoLibraryUsageDescription:
-        'BirKare AI, seçtiğiniz fotoğrafı sahne ve filtre önizlemesi oluşturmak için kullanır.',
+        'BirKare Studio, seçtiğiniz ürün fotoğrafını katalog ve kampanya görselleri oluşturmak için kullanır.',
       NSCameraUsageDescription:
-        'BirKare AI, yeni bir kaynak fotoğraf çekebilmeniz için kamerayı kullanır.',
+        'BirKare Studio, yeni bir ürün kaynak fotoğrafı çekebilmeniz için kamerayı kullanır.',
       NSPhotoLibraryAddUsageDescription:
-        'BirKare AI, ürettiğiniz görselleri Fotoğraflarınıza kaydedebilir.',
+        'BirKare Studio, ürettiğiniz ürün görsellerini Fotoğraflarınıza kaydedebilir.',
     },
   },
   android: {
@@ -155,8 +154,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     // New Play upload with R8 code/resource optimization enabled.
     versionCode: 8,
     adaptiveIcon: {
-      foregroundImage: './assets/onboarding/images/brand/logo-gold-icon.png',
-      backgroundColor: '#050505',
+      foregroundImage: './assets/brand/birkare-studio-icon-1024-v1.png',
+      backgroundColor: '#0B0F0D',
     },
   },
   plugins,

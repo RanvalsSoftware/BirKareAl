@@ -1,8 +1,8 @@
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
 import { resetCreateFlow } from '../create/createFlow';
 import { clearSubmissionAttempts } from '../create/server';
-import { clearStudioSubmissionAttempts } from '../studio/server';
-import { resetStudioFlow } from '../studio/studioFlow';
+import { clearProductStudioSubmissionAttempts } from '../studio/productServer';
+import { resetProductStudioFlow } from '../studio/productFlow';
 
 type AccountState = { state: string; user: { id: string } | null };
 type AccountStore = {
@@ -28,8 +28,8 @@ export function bindAccountQueryCache(queryClient: QueryClient, store: AccountSt
       queryClient.clear();
       resetCreateFlow();
       clearSubmissionAttempts();
-      resetStudioFlow();
-      clearStudioSubmissionAttempts();
+      resetProductStudioFlow();
+      clearProductStudioSubmissionAttempts();
     }
   });
 }

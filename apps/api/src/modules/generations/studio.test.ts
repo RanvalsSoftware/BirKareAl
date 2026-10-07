@@ -9,6 +9,7 @@ import {
   STUDIO_PROMPT_VERSION,
   buildStudioPrompt,
   getStudioSelection,
+  listProductStudioCatalog,
   listStudioCatalog,
   normalizeStudioUserInstruction,
 } from '@birkare/ai';
@@ -260,6 +261,21 @@ test('public catalog is prompt-free, versioned and keeps disabled perfume unavai
       }),
     /category generation is disabled/,
   );
+});
+
+test('product studio catalog projection excludes try-on and nail metadata', () => {
+  const catalog = listProductStudioCatalog();
+  assert.equal(catalog.catalogVersion, STUDIO_CATALOG_VERSION);
+  assert.equal(catalog.productScenes.length, 15);
+  assert.ok(catalog.categories.length > 0);
+  assert.ok(
+    catalog.categories.every(
+      (entry) => entry.routeMode === 'PRODUCT_STUDIO' && entry.inputMode === 'SINGLE_PRODUCT',
+    ),
+  );
+  assert.equal('fashionScenes' in catalog, false);
+  assert.equal('nailPresets' in catalog, false);
+  assert.doesNotMatch(JSON.stringify(catalog), /VIRTUAL_TRY_ON|NAIL_PREVIEW|fashion|nail/i);
 });
 
 test('French and minimal-gold-line stay on FAST while six-credit nail art stays PREMIUM', () => {

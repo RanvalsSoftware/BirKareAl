@@ -31,7 +31,7 @@ export const registerSchema = z
       .number({ error: () => translateCopy("Doğum yılınızı girin.") })
       .int({ error: () => translateCopy("Doğum yılı tam sayı olmalı.") })
       .min(1900, { error: () => translateCopy("Geçerli bir doğum yılı girin.") })
-      .max(new Date().getFullYear() - 18, { error: () => translateCopy("BirKare AI için 18 yaşını doldurmuş olmalısınız.") }),
+      .max(new Date().getFullYear() - 18, { error: () => translateCopy("BirKare Studio için 18 yaşını doldurmuş olmalısınız.") }),
     acceptedTerms: z
       .boolean()
       .refine((value) => value, { error: () => translateCopy("Devam etmek için koşulları kabul etmelisiniz.") }),
@@ -71,7 +71,7 @@ export const socialCompleteSchema = z.object({
     .number({ error: () => translateCopy("Doğum yılınızı girin.") })
     .int({ error: () => translateCopy("Doğum yılı tam sayı olmalı.") })
     .min(1900, { error: () => translateCopy("Geçerli bir doğum yılı girin.") })
-    .max(new Date().getFullYear() - 18, { error: () => translateCopy("BirKare AI için 18 yaşını doldurmuş olmalısınız.") }),
+    .max(new Date().getFullYear() - 18, { error: () => translateCopy("BirKare Studio için 18 yaşını doldurmuş olmalısınız.") }),
   acceptedTerms: z
     .boolean()
     .refine((value) => value, { error: () => translateCopy("Devam etmek için koşulları kabul etmelisiniz.") }),

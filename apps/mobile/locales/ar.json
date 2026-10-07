@@ -1,8 +1,8 @@
 {
   "ios": {
-    "NSCameraUsageDescription": "يستخدم BirKare AI الكاميرا لالتقاط صورة مصدر للصورة التي تختار إنشاءها.",
-    "NSPhotoLibraryUsageDescription": "يستخدم BirKare AI الصور التي تحددها فقط لإنشاء الصور وتعديلها.",
-    "NSPhotoLibraryAddUsageDescription": "يمكن لـ BirKare AI حفظ الصور التي تنشئها في مكتبة الصور."
+    "NSCameraUsageDescription": "يستخدم BirKare Studio الكاميرا لالتقاط صورة مصدر لمنتج.",
+    "NSPhotoLibraryUsageDescription": "يستخدم BirKare Studio صور المنتجات التي تختارها فقط لإنشاء صور الكتالوج والحملات.",
+    "NSPhotoLibraryAddUsageDescription": "يمكن لـ BirKare Studio حفظ صور المنتجات التي تنشئها في مكتبة الصور."
   },
-  "android": { "app_name": "BirKare AI" }
+  "android": { "app_name": "BirKare Studio" }
 }

@@ -17,6 +17,6 @@ export function resolveSupportEmail(extra?: { supportEmail?: unknown } | null): 
 /** Opens only a user-controlled email draft; this is not a server-side ticket submission. */
 export function createSupportEmailDraft(email: string, topic: string, message: string): string {
   if (!isEmail(email)) throw new Error(translateCopy("Geçerli bir destek e-posta adresi gerekli."));
-  const subject = `BirKare AI · ${topic.replace(/[\r\n]+/g, ' ').trim()}`;
+  const subject = `BirKare Studio · ${topic.replace(/[\r\n]+/g, ' ').trim()}`;
   return `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message.trim())}`;
 }

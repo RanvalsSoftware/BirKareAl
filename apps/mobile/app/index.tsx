@@ -4,7 +4,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useAuthStore } from '@/features/auth/auth-store';
-import { GuidedSplash, LogoIntro, PhotoPrelude } from '@/features/onboarding/launch-experience';
+import {
+  ProductLogoIntro,
+  ProductOnboarding,
+} from '@/features/onboarding/product-launch-experience';
 import { getOnboardingCompleted, setOnboardingCompleted } from '@/features/onboarding/storage';
 import { clearRefreshToken } from '@/features/auth/token-store';
 import { resetCreateFlow } from '@/features/create/createFlow';
@@ -26,7 +29,6 @@ export default function LaunchScreen() {
   const clearSession = useAuthStore((store) => store.clearSession);
   const [onboarding, setOnboarding] = useState<OnboardingStatus>('loading');
   const [logoFinished, setLogoFinished] = useState(false);
-  const [photoPreludeFinished, setPhotoPreludeFinished] = useState(false);
   const navigated = useRef(false);
 
   useEffect(() => {
@@ -60,7 +62,6 @@ export default function LaunchScreen() {
   );
 
   const finishLogoIntro = useCallback(() => setLogoFinished(true), []);
-  const finishPhotoPrelude = useCallback(() => setPhotoPreludeFinished(true), []);
   const finishGuidedSplash = useCallback(
     () => navigateOnce('/(onboarding)/consent'),
     [navigateOnce],
@@ -85,18 +86,15 @@ export default function LaunchScreen() {
     }
   }, [authState, logoFinished, navigateOnce, onboarding]);
 
-  const readyForOnboarding = logoFinished && authState !== 'booting' && onboarding === 'new';
-  const showPhotoPrelude = readyForOnboarding && !photoPreludeFinished;
-  const showGuidedSplash = readyForOnboarding && photoPreludeFinished;
+  const showProductOnboarding =
+    logoFinished && authState !== 'booting' && onboarding === 'new';
 
   return (
     <View style={styles.screen}>
-      {showGuidedSplash ? (
-        <GuidedSplash onFinished={finishGuidedSplash} onSkipped={skipGuidedSplash} />
-      ) : showPhotoPrelude ? (
-        <PhotoPrelude onFinished={finishPhotoPrelude} />
+      {showProductOnboarding ? (
+        <ProductOnboarding onFinished={finishGuidedSplash} onSkipped={skipGuidedSplash} />
       ) : (
-        <LogoIntro onFinished={finishLogoIntro} />
+        <ProductLogoIntro onFinished={finishLogoIntro} />
       )}
     </View>
   );

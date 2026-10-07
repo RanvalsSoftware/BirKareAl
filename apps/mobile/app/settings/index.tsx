@@ -75,7 +75,7 @@ export default function SettingsScreen() {
           last
         />
       </GlassSettingsPanel>
-      <Text style={styles.version}>{translateCopy("BirKare AI · Sürüm {{p0}}", { p0: Constants.expoConfig?.version ?? '—' })}</Text>
+      <Text style={styles.version}>{translateCopy("BirKare Studio · Sürüm {{p0}}", { p0: Constants.expoConfig?.version ?? '—' })}</Text>
     </SettingsPage>
   );
 }

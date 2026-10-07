@@ -61,7 +61,7 @@ export function useOnboardingPhotoPicker({ onSelected }: Options) {
     try {
       const permission = await ImagePicker.requestCameraPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert('Kamera izni gerekli', translateCopy("Yeni bir fotoğraf çekmek için BirKare AI’ye kamera erişimi ver."));
+        Alert.alert('Kamera izni gerekli', translateCopy("Yeni bir ürün fotoğrafı çekmek için BirKare Studio’ya kamera erişimi ver."));
         return;
       }
       const result = await ImagePicker.launchCameraAsync({

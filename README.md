@@ -1,8 +1,8 @@
-# BirKare AI
+# BirKare Studio
 
-BirKare AI, kullanıcının kendi fotoğrafını sahne, filtre ve özgün kurgusal karakterlerle birleştirebildiği iOS/Android odaklı bir AI fotoğraf stüdyosu MVP’sidir. Bu depo, mobil istemciyi ve server-side AI üretim altyapısını ayrı servisler halinde barındırır.
+BirKare Studio, küçük satıcıların tek bir ürün fotoğrafından katalog, ürün sayfası, sosyal ilan ve web vitrini görselleri üretmesini sağlayan iOS/Android ürün stüdyosudur. Bu depo mobil istemciyi, server-side üretim API’sini ve ayrı üretim worker’ını barındırır.
 
-> Marka adı kullanıcı isteği doğrultusunda **BirKare AI**’dır. Referans tasarımdaki gerçek kişi örnekleri ürüne aktarılmamıştır: MVP kataloğunda yalnızca kurgusal, gerçek bir kişiye benzemeyen karakterler bulunur.
+Ana iş akışı ürün adı, ürün kategorisi, kullanım amacı, ürün sahnesi, kanal oranı, kalite ve 1/2/4 gerçek alternatif seçimini tek bir projede birleştirir. Önceki yaratıcı araçların kaynak kodu ve kullanıcı verileri geri dönüş/migrasyon amacıyla korunur; App Store rota ve asset paketi yalnızca ürün ve katalog üretim deneyimini sunar. Önceki sürümden kalan projeler yalnızca ilgili hesabın arşivinde gösterilir.
 
 ## Yapı
 
@@ -21,7 +21,7 @@ packages/
   shared/     Ortak policy, enum ve response yardımcıları
 ```
 
-Mobil uygulama; animasyonlu splash/onboarding, e-posta kimlik doğrulama ekranları, filtre kataloğu, sahne oluşturma sihirbazı, üretim ilerlemesi, sonuç/revizyon, projeler, kredi ve profil ekranlarını içerir. Formlar React Hook Form + Zod kullanır. Refresh token Expo SecureStore’da, erişim token’ı yalnızca bellekte tutulur.
+Mobil uygulama; ürün odaklı onboarding, satıcı paneli, ürün çekimi planlayıcısı, gerçek zamanlı kredi teklifi, çoklu alternatifler, ürün kataloğu, sonuç/revizyon, dışa aktarma, kredi ve hesap ekranlarını içerir. Refresh token Expo SecureStore’da, erişim token’ı yalnızca bellekte tutulur.
 
 ## Yerelde çalıştırma
 
@@ -52,7 +52,7 @@ adb -s emulator-5554 reverse tcp:8081 tcp:8081
 adb -s emulator-5554 reverse tcp:4000 tcp:4000
 ```
 
-Geliştirme varsayılanı, gerçek bir OpenAI çağrısı yapmayan local/memory provider’dır. Bu sayede ekranlar ve yaratım akışı gizli anahtar olmadan test edilebilir.
+Geliştirme varsayılanı, gerçek bir OpenAI çağrısı yapmayan local/memory provider’dır. Bu sayede altyapı gizli anahtar olmadan test edilebilir. `staging` ve `production` yapılandırmaları sahte provider ile başlamayı reddeder.
 
 ### Docker ile altyapı
 
@@ -85,6 +85,7 @@ pnpm format:check
 - Üretim maliyeti/işi API yerine queue üzerinden yürür; worker modere eder, prompt derler ve çıktıyı saklar.
 - Gerçek, kamusal veya siyasi kişiler başlangıçta kapalıdır. Katalog yalnızca rights engine’in seçilebilir olarak işaretlediği kurgusal/lisanslı kişileri döndürebilir.
 - Production ortamında memory DB, local storage, dev auth ve inline worker geçersizdir; PostgreSQL, Redis/BullMQ ve private Google Cloud Storage zorunlu kılınır.
+- Production ve staging ortamlarında `AI_PROVIDER=fake` geçersizdir; gerçek sağlayıcı veya açıkça kapalı üretim modu seçilmelidir.
 
 ## Gerçek entegrasyonlar için gerekli environment’lar
 

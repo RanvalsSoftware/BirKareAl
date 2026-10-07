@@ -15,6 +15,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,6 +24,7 @@ import { apiBaseUrl, apiRequest, captureSessionRequestScope } from '@/api/client
 import { AppHeader, Icon, Screen } from '@/components';
 import { useAuthStore } from '@/features/auth/auth-store';
 import { uploadSourceAsset } from '@/features/create/server';
+import { shareAspectRatio } from '@/features/sharing/output';
 import { colors, radii, spacing, typography } from '@/theme';
 
 type GenerationOutput = {
@@ -31,7 +33,14 @@ type GenerationOutput = {
   asset: { accessUrl: string | null } | null;
 };
 
-type Generation = { id: string; projectId: string; status: string; outputs: GenerationOutput[] };
+type Generation = {
+  id: string;
+  projectId: string;
+  status: string;
+  aspectRatio: string;
+  outputs: GenerationOutput[];
+};
+type ProjectModeResponse = { project: { mode: string } };
 type ServerMessage = {
   id: string;
   role: 'USER' | 'ASSISTANT' | 'SYSTEM';
@@ -39,7 +48,15 @@ type ServerMessage = {
 };
 type LocalReference = { uri: string; fileName: string };
 
-const starterKeys = [
+const productStarterKeys = [
+  'Ürünü ve etiketi değiştirme',
+  'Arka planı beyazlat',
+  'Gölgeyi yumuşat',
+  'Ürünün sağında metin alanı bırak',
+  'Renk sıcaklığını dengele',
+  'Kadrajı biraz genişlet',
+];
+const legacyStarterKeys = [
   'Daha doğal yap',
   'Biraz uzaklaştır',
   'Işığı düzelt',
@@ -47,10 +64,45 @@ const starterKeys = [
   'Renkleri dengele',
   'Sinematik bir stil uygula',
 ];
-const toolItems = [
-  { get label() { return translateCopy("Yüzü koru"); }, icon: 'person-outline', prompt: 'Yüzümü ve kimliğimi koruyarak düzenle.' },
+const productToolItems = [
+  {
+    get label() {
+      return translateCopy('Ürünü koru');
+    },
+    icon: 'cube-outline',
+    prompt: 'Ürünü, etiketi, logoyu, malzemeyi ve geometriyi değiştirme.',
+  },
+  { label: 'Arka plan', icon: 'image-outline', prompt: 'Arka planı temiz ve beyaz yap.' },
+  {
+    get label() {
+      return translateCopy('Gölge');
+    },
+    icon: 'contrast-outline',
+    prompt: 'Ürünün gölgesini daha yumuşak ve doğal yap.',
+  },
+  { label: 'Kadraj', icon: 'scan-outline', prompt: 'Ürünün sağında metin için boş alan bırak.' },
+  {
+    label: 'Renk',
+    icon: 'color-palette-outline',
+    prompt: 'Ürünü değiştirmeden renk sıcaklığını dengele.',
+  },
+] as const;
+const legacyToolItems = [
+  {
+    get label() {
+      return translateCopy('Yüzü koru');
+    },
+    icon: 'person-outline',
+    prompt: 'Yüzümü ve kimliğimi koruyarak düzenle.',
+  },
   { label: 'Arka plan', icon: 'image-outline', prompt: 'Arka planı sadeleştir' },
-  { get label() { return translateCopy("Işık"); }, icon: 'sunny-outline', prompt: 'Işığı düzelt' },
+  {
+    get label() {
+      return translateCopy('Işık');
+    },
+    icon: 'sunny-outline',
+    prompt: 'Işığı düzelt',
+  },
   { label: 'Renk', icon: 'color-palette-outline', prompt: 'Renkleri dengele' },
   { label: 'Stil', icon: 'sparkles-outline', prompt: 'Sinematik bir stil uygula' },
 ] as const;
@@ -58,12 +110,17 @@ const toolItems = [
 export default function GenerationEditScreen() {
   const languageRevision = useLanguageRevision();
   const insets = useSafeAreaInsets();
+  const viewport = useWindowDimensions();
 
   const router = useRouter();
   const { id: rawId } = useLocalSearchParams<{ id?: string }>();
   const generationId = Array.isArray(rawId) ? rawId[0] : rawId;
   const accessToken = useAuthStore((store) => store.accessToken);
   const [generation, setGeneration] = useState<Generation | null>(null);
+  const [projectMode, setProjectMode] = useState<{
+    generationId: string;
+    mode: string;
+  } | null>(null);
   const [serverMessages, setServerMessages] = useState<ServerMessage[]>([]);
   const [message, setMessage] = useState('');
   const [reference, setReference] = useState<LocalReference | null>(null);
@@ -73,37 +130,61 @@ export default function GenerationEditScreen() {
   const [expanded, setExpanded] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const messagesRef = useRef<ScrollView>(null);
+  const isProductProject =
+    projectMode !== null &&
+    projectMode.generationId === generationId &&
+    projectMode.mode === 'PRODUCT_STUDIO';
   const starters = useMemo(
-    () => starterKeys.map((item) => translateCopy(item)),
-    [languageRevision],
+    () =>
+      (isProductProject ? productStarterKeys : legacyStarterKeys).map((item) =>
+        translateCopy(item),
+      ),
+    [isProductProject, languageRevision],
   );
+  const tools = isProductProject ? productToolItems : legacyToolItems;
 
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
     const show = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
     const hide = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
-    return () => { show.remove(); hide.remove(); };
+    return () => {
+      show.remove();
+      hide.remove();
+    };
   }, []);
 
   useEffect(() => {
     if (!generationId) return;
     let active = true;
-    void Promise.all([
-      apiRequest<Generation>(`/v1/generations/${encodeURIComponent(generationId)}`),
-      apiRequest<{ items: ServerMessage[] }>(
-        `/v1/generations/${encodeURIComponent(generationId)}/messages`,
-      ),
-    ])
-      .then(([generationResult, messageResult]) => {
+    void (async () => {
+      try {
+        const [generationResult, messageResult] = await Promise.all([
+          apiRequest<Generation>(`/v1/generations/${encodeURIComponent(generationId)}`),
+          apiRequest<{ items: ServerMessage[] }>(
+            `/v1/generations/${encodeURIComponent(generationId)}/messages`,
+          ),
+        ]);
         if (!active) return;
         setGeneration(generationResult);
         setServerMessages(messageResult.items);
-      })
-      .catch((reason) => {
+        try {
+          const projectResult = await apiRequest<ProjectModeResponse>(
+            `/v1/projects/${encodeURIComponent(generationResult.projectId)}`,
+          );
+          if (active) {
+            setProjectMode({ generationId, mode: projectResult.project.mode });
+          }
+        } catch {
+          // The editor remains usable with its legacy-safe copy if project
+          // metadata cannot be loaded independently from the generation.
+          if (active) setProjectMode({ generationId, mode: 'UNKNOWN' });
+        }
+      } catch (reason) {
         if (!active) return;
         setError(reason instanceof Error ? reason.message : translateCopy('Düzenleme açılamadı.'));
-      });
+      }
+    })();
     return () => {
       active = false;
     };
@@ -124,6 +205,11 @@ export default function GenerationEditScreen() {
             : undefined,
       }
     : null;
+  const previewAspectRatio = shareAspectRatio(generation?.aspectRatio);
+  const availablePreviewWidth = Math.min(720, Math.max(240, viewport.width - spacing.lg * 2));
+  const targetPreviewHeight = Math.min(420, Math.max(260, viewport.height * 0.38));
+  const previewWidth = Math.min(availablePreviewWidth, targetPreviewHeight * previewAspectRatio);
+  const previewHeight = previewWidth / previewAspectRatio;
 
   const chooseReference = async () => {
     setError(null);
@@ -195,8 +281,12 @@ export default function GenerationEditScreen() {
     >
       <AppHeader
         back
-        title={translateCopy('AI ile düzenle')}
-        subtitle={translateCopy('Doğal dilde değişiklik iste')}
+        title={translateCopy(isProductProject ? 'Ürün çıktısını düzenle' : 'AI ile düzenle')}
+        subtitle={translateCopy(
+          isProductProject
+            ? 'Ürünü koruyan kontrollü bir değişiklik iste'
+            : 'Doğal dilde değişiklik iste',
+        )}
         right={
           <Pressable
             accessibilityRole="button"
@@ -209,9 +299,9 @@ export default function GenerationEditScreen() {
           </Pressable>
         }
       />
-      <View style={styles.preview}>
+      <View style={[styles.preview, { height: previewHeight, width: previewWidth }]}>
         {imageSource ? (
-          <Image source={imageSource} resizeMode="cover" style={styles.previewImage} />
+          <Image source={imageSource} resizeMode="contain" style={styles.previewImage} />
         ) : (
           <View style={styles.previewLoading}>
             <ActivityIndicator color={colors.accentYellow} />
@@ -264,7 +354,11 @@ export default function GenerationEditScreen() {
               <Icon name="sparkles" size={24} color={colors.accentPurple} />
             </View>
             <Text style={[styles.bubbleText, { flex: 1 }]}>
-              {translateCopy('Elbette. Sonucu doğal tutarak neyi değiştirmemi istersin?')}
+              {translateCopy(
+                isProductProject
+                  ? 'Ürünün etiketini, malzemesini ve geometrisini koruyarak neyi değiştirmemi istersin?'
+                  : 'Elbette. Sonucu doğal tutarak neyi değiştirmemi istersin?',
+              )}
             </Text>
           </View>
           {serverMessages
@@ -340,7 +434,7 @@ export default function GenerationEditScreen() {
           </View>
           <Text style={styles.suggestionLabel}>{translateCopy('Akıllı araçlar')}</Text>
           <View style={styles.tools}>
-            {toolItems.map((tool) => (
+            {tools.map((tool) => (
               <Pressable
                 key={tool.label}
                 accessibilityRole="button"
@@ -431,7 +525,13 @@ export default function GenerationEditScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { paddingHorizontal: spacing.lg, paddingBottom: 10 },
+  content: {
+    alignSelf: 'center',
+    maxWidth: 900,
+    paddingBottom: 10,
+    paddingHorizontal: spacing.lg,
+    width: '100%',
+  },
   compare: {
     width: 44,
     height: 44,
@@ -443,7 +543,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   preview: {
-    height: 210,
+    alignSelf: 'center',
+    maxWidth: 720,
     borderRadius: radii.xl,
     overflow: 'hidden',
     position: 'relative',

@@ -12,6 +12,9 @@ describe('studio flow', () => {
     resetStudioFlow('nails');
     expect(getStudioFlow()).toMatchObject({
       mode: 'nails',
+      productTitle: '',
+      commerceGoal: 'marketplace',
+      numberOfImages: 1,
       primaryUri: null,
       secondaryUri: null,
       categoryId: null,

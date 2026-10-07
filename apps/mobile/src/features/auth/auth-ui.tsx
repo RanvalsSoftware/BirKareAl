@@ -31,20 +31,21 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useCopy } from '@/features/settings/language-store';
 
-const brandLogoMark = require('../../../assets/onboarding/images/brand/logo-gold-icon.png');
+const brandLogoMark = require('../../../assets/brand/birkare-studio-icon-1024-v1.png');
+const productHeroImage = require('../../../assets/products/ui/product-shoot.webp');
 
 export const authColors = {
-  background: '#050505',
-  surface: '#101010',
-  surfaceRaised: '#171717',
-  surfaceSoft: '#1A1A1A',
-  text: '#FFFFFF',
-  secondary: '#B2B2B2',
-  muted: '#747474',
-  yellow: '#FFC400',
-  yellowLight: '#FFE17C',
-  purple: '#8755FF',
-  pink: '#D550FF',
+  background: '#0B0F0D',
+  surface: '#111815',
+  surfaceRaised: '#17211B',
+  surfaceSoft: '#1C2821',
+  text: '#F1F7F3',
+  secondary: '#A7B4AC',
+  muted: '#748178',
+  yellow: '#B8F1CD',
+  yellowLight: '#DDF8E7',
+  purple: '#47755A',
+  pink: '#91BBA0',
   border: 'rgba(255,255,255,0.11)',
   borderSoft: 'rgba(255,255,255,0.07)',
   danger: '#FF7065',
@@ -73,17 +74,17 @@ function AmbientGlow() {
     return () => cancelAnimation(pulse);
   }, [pulse, reduceMotion]);
 
-  const purpleGlow = useAnimatedStyle(() => ({
+  const commerceGlow = useAnimatedStyle(() => ({
     opacity: interpolate(pulse.value, [0, 1], [0.11, 0.22]),
   }));
   return (
     <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.ambientLayer]}>
       <LinearGradient
-        colors={['#050506', '#07060A', '#050505', '#070608']}
+        colors={['#0B0F0D', '#0E1611', '#0B0F0D', '#101812']}
         locations={[0, 0.34, 0.74, 1]}
         style={StyleSheet.absoluteFill}
       />
-      <Animated.View style={[styles.backgroundVioletHaze, purpleGlow]} />
+      <Animated.View style={[styles.backgroundCommerceHaze, commerceGlow]} />
     </View>
   );
 }
@@ -134,10 +135,10 @@ export function AuthBrandBar({ actionLabel, onAction, onBack }: BrandBarProps) {
           <View style={styles.brandWordBlock}>
             <View style={styles.brandWordmark}>
               <Text style={styles.brandWordmarkText}>BirKare</Text>
-              <Text style={styles.brandWordmarkAi}> ΛI</Text>
+              <Text style={styles.brandWordmarkStudio}> {translateCopy('Studio')}</Text>
             </View>
             <Text style={styles.brandTagline}>
-              {copy('Hayalindeki kareye gir.', 'Step into your vision.')}
+              {copy('Ürün fotoğrafından satış kanallarına.', 'From product photo to sales channels.')}
             </Text>
           </View>
         </View>
@@ -165,7 +166,7 @@ export function AuthLogo({ compact = false }: { compact?: boolean }) {
     <View style={[styles.logoWrap, compact && styles.logoWrapCompact]}>
       <View style={styles.logoAura}>
         <Image
-          accessibilityLabel={translateCopy("BirKare AI logosu")}
+          accessibilityLabel={translateCopy("BirKare Studio logosu")}
           source={brandLogoMark}
           style={styles.logoImage}
         />
@@ -174,11 +175,11 @@ export function AuthLogo({ compact = false }: { compact?: boolean }) {
         <View style={styles.logoCaption}>
           <View style={styles.logoWordmark}>
             <Text style={styles.logoWordmarkText}>BirKare</Text>
-            <Text style={styles.logoWordmarkAi}> AI</Text>
+            <Text style={styles.logoWordmarkStudio}> {translateCopy('Studio')}</Text>
           </View>
           <View style={styles.logoCaptionLine} />
           <Text style={styles.logoCaptionText}>
-            {copy('Yaratıcı stüdyon', 'Your creative studio')}
+            {copy('Ürün ve katalog stüdyosu', 'Product & catalog studio')}
           </Text>
         </View>
       ) : null}
@@ -187,9 +188,8 @@ export function AuthLogo({ compact = false }: { compact?: boolean }) {
 }
 
 /**
- * Shared visual stage for the login, registration, and password recovery
- * routes. The logo deliberately has no disc or orbit behind it; the only
- * decorative shape lives in the far top-left background.
+ * Shared product-imagery stage for login, registration, and password recovery.
+ * It uses the same catalog-shoot visual language as the signed-in workspace.
  */
 export function AuthHero({
   variant = 'default',
@@ -212,7 +212,7 @@ export function AuthHero({
     return () => cancelAnimation(float);
   }, [float, reduceMotion]);
 
-  const floatingLogo = useAnimatedStyle(() => ({
+  const floatingProduct = useAnimatedStyle(() => ({
     transform: [
       { translateY: interpolate(float.value, [0, 1], [-2, 4]) },
       { scale: interpolate(float.value, [0, 1], [1, 1.025]) },
@@ -222,9 +222,9 @@ export function AuthHero({
   return (
     <View pointerEvents="none" style={[styles.hero, isForgot && styles.heroForgot]}>
       <Animated.Image
-        accessibilityLabel={translateCopy("BirKare AI logosu")}
-        source={brandLogoMark}
-        style={[styles.heroLogo, isForgot && styles.heroLogoForgot, floatingLogo]}
+        accessibilityLabel={translateCopy('BirKare Studio ürün katalog görseli')}
+        source={productHeroImage}
+        style={[styles.heroProductImage, isForgot && styles.heroProductImageForgot, floatingProduct]}
       />
     </View>
   );
@@ -233,7 +233,7 @@ export function AuthHero({
 export function AuthTitle({
   title,
   subtitle,
-  eyebrow = 'BİRKARE AI',
+  eyebrow = 'BİRKARE STUDIO',
 }: {
   title: string;
   subtitle: string;
@@ -485,7 +485,7 @@ export function GradientAuthButton({
       ]}
     >
       <LinearGradient
-        colors={['#FFE67A', '#FFC400', '#E5A900']}
+        colors={['#DDF8E7', '#B8F1CD', '#8CCFA6']}
         end={{ x: 1, y: 0.85 }}
         start={{ x: 0.02, y: 0.1 }}
         style={styles.gradientButton}
@@ -653,8 +653,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   ambientLayer: {},
-  backgroundVioletHaze: {
-    backgroundColor: '#2A0B55',
+  backgroundCommerceHaze: {
+    backgroundColor: '#234633',
     borderRadius: 999,
     height: 820,
     left: -535,
@@ -673,7 +673,7 @@ const styles = StyleSheet.create({
   brandBack: {
     alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.06)',
-    borderColor: 'rgba(255,224,120,0.35)',
+    borderColor: 'rgba(184,241,205,0.35)',
     borderRadius: 18,
     borderWidth: 1,
     height: 36,
@@ -685,34 +685,34 @@ const styles = StyleSheet.create({
   brandWordBlock: { gap: 1 },
   brandWordmark: { alignItems: 'baseline', flexDirection: 'row' },
   brandWordmarkText: {
-    color: '#F8C945',
+    color: '#F1F7F3',
     fontSize: 23,
-    fontWeight: '500',
+    fontWeight: '700',
     letterSpacing: -1,
   },
-  brandWordmarkAi: {
-    color: '#FFE46E',
-    fontSize: 23,
-    fontWeight: '300',
-    letterSpacing: -1,
+  brandWordmarkStudio: {
+    color: '#B8F1CD',
+    fontSize: 18,
+    fontWeight: '600',
+    letterSpacing: -0.6,
   },
   brandTagline: {
-    color: '#D7CCB1',
+    color: '#91A198',
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 0.3,
   },
   topAction: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,196,0,0.065)',
-    borderColor: 'rgba(255,210,63,0.72)',
+    backgroundColor: 'rgba(184,241,205,0.07)',
+    borderColor: 'rgba(184,241,205,0.58)',
     borderRadius: 999,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 7,
     minHeight: 44,
     paddingHorizontal: 15,
-    shadowColor: '#FFC400',
+    shadowColor: '#B8F1CD',
     shadowOffset: { height: 4, width: 0 },
     shadowOpacity: 0.13,
     shadowRadius: 9,
@@ -726,8 +726,16 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   heroForgot: { height: 162, marginBottom: 7 },
-  heroLogo: { height: 122, resizeMode: 'contain', width: 122 },
-  heroLogoForgot: { height: 128, width: 128 },
+  heroProductImage: {
+    borderColor: '#28342D',
+    borderRadius: 22,
+    borderWidth: 1,
+    height: 138,
+    maxWidth: 520,
+    resizeMode: 'cover',
+    width: '100%',
+  },
+  heroProductImageForgot: { height: 146 },
   logoWrap: { alignItems: 'center', marginBottom: 25, marginTop: 23 },
   logoWrapCompact: { marginBottom: 18, marginTop: 16 },
   logoAura: {
@@ -739,8 +747,8 @@ const styles = StyleSheet.create({
   logoImage: { height: '100%', resizeMode: 'contain', width: '100%' },
   logoCaption: { alignItems: 'center', gap: 6, marginTop: 4 },
   logoWordmark: { alignItems: 'baseline', flexDirection: 'row' },
-  logoWordmarkText: { color: '#F6C643', fontSize: 31, fontWeight: '500', letterSpacing: -1.3 },
-  logoWordmarkAi: { color: '#FFE576', fontSize: 31, fontWeight: '300', letterSpacing: -1.3 },
+  logoWordmarkText: { color: '#F1F7F3', fontSize: 31, fontWeight: '700', letterSpacing: -1.3 },
+  logoWordmarkStudio: { color: '#B8F1CD', fontSize: 25, fontWeight: '600', letterSpacing: -0.9 },
   logoCaptionLine: { backgroundColor: authColors.yellow, borderRadius: 99, height: 2, width: 22 },
   logoCaptionText: {
     color: authColors.muted,
@@ -768,10 +776,10 @@ const styles = StyleSheet.create({
     maxWidth: 390,
   },
   cardOuter: {
-    backgroundColor: '#171218',
+    backgroundColor: '#17211B',
     borderRadius: 27,
     padding: 1,
-    shadowColor: '#FFC400',
+    shadowColor: '#47755A',
     shadowOffset: { height: 13, width: 0 },
     shadowOpacity: 0.13,
     shadowRadius: 20,
@@ -792,7 +800,7 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   noteSuccess: { backgroundColor: 'rgba(48,209,88,0.075)', borderColor: 'rgba(48,209,88,0.2)' },
-  noteWarning: { backgroundColor: 'rgba(255,196,0,0.075)', borderColor: 'rgba(255,196,0,0.2)' },
+  noteWarning: { backgroundColor: 'rgba(184,241,205,0.075)', borderColor: 'rgba(184,241,205,0.2)' },
   noteText: { color: authColors.secondary, flex: 1, fontSize: 12, lineHeight: 18 },
   noteTextSuccess: { color: '#B7F4C7' },
   fieldWrap: { marginTop: 16 },
@@ -844,8 +852,8 @@ const styles = StyleSheet.create({
     minHeight: 56,
   },
   inputFocused: {
-    borderColor: 'rgba(255,196,0,0.78)',
-    shadowColor: '#FFC400',
+    borderColor: 'rgba(184,241,205,0.78)',
+    shadowColor: '#B8F1CD',
     shadowOffset: { height: 0, width: 0 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -871,7 +879,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 58,
     paddingHorizontal: 18,
-    shadowColor: '#FFC400',
+    shadowColor: '#B8F1CD',
     shadowOffset: { height: 7, width: 0 },
     shadowOpacity: 0.32,
     shadowRadius: 15,
@@ -917,7 +925,7 @@ const styles = StyleSheet.create({
   divider: { alignItems: 'center', flexDirection: 'row', gap: 10, marginTop: 19 },
   line: { backgroundColor: authColors.border, flex: 1, height: 1 },
   dividerText: { color: authColors.muted, fontSize: 11, fontWeight: '600' },
-  link: { color: '#E0B5FF', fontSize: 13, fontWeight: '800' },
+  link: { color: '#B8F1CD', fontSize: 13, fontWeight: '800' },
   checkRow: { alignItems: 'flex-start', flexDirection: 'row', gap: 10, marginTop: 13 },
   checkbox: {
     alignItems: 'center',

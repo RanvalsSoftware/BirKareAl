@@ -131,7 +131,7 @@ export default function CreditsScreen() {
         <View style={styles.centered}>
           <AppHeader
             title={translateCopy("Krediler")}
-            subtitle={translateCopy("Üretim gücünüz")}
+            subtitle={translateCopy("Ürün görseli üretim bakiyeniz")}
             right={<CreditBadge credits={availableCredits} />}
           />
 
@@ -145,7 +145,7 @@ export default function CreditsScreen() {
               <Text style={styles.balanceEyebrow}>{translateCopy("MEVCUT BAKİYE")}</Text>
               <Text style={styles.balance}>
                 <Text style={styles.balanceNumber}>{availableCredits}</Text>{' '}{translateCopy("kredi")}</Text>
-              <Text style={styles.balanceText}>{translateCopy("Yaklaşık {{p0}} standart üretim için yeterli.", { p0: approximateStandardGenerations })}</Text>
+              <Text style={styles.balanceText}>{translateCopy("Yaklaşık {{p0}} standart ürün alternatifi için yeterli.", { p0: approximateStandardGenerations })}</Text>
             </View>
             <LinearGradient colors={['#21180A', '#5A3A00']} style={styles.balanceIcon}>
               <Icon name="flash" size={38} color={colors.accentYellow} />

@@ -262,9 +262,12 @@ export default function LoginScreen() {
       />
       <AuthHero variant="login" />
       <AuthTitle
-        eyebrow={copy('STÜDYONA DÖN', 'BACK TO YOUR STUDIO')}
+        eyebrow={copy('ÜRÜN STÜDYONA DÖN', 'BACK TO YOUR PRODUCT STUDIO')}
         title={copy('Tekrar hoş geldin.', 'Welcome back.')}
-        subtitle={copy('Hayalindeki kareler seni bekliyor.', 'Your next creation is waiting.')}
+        subtitle={copy(
+          'Ürün projelerin ve kataloğun seni bekliyor.',
+          'Your product projects and catalog are waiting.',
+        )}
       />
       <AuthFormCard>
         {verified ? (
@@ -560,8 +563,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.38)',
   },
   recoverySheet: {
-    marginHorizontal: 10,
+    alignSelf: 'center',
+    maxWidth: 620,
     marginBottom: 10,
+    width: '94%',
     borderRadius: 30,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.15)',

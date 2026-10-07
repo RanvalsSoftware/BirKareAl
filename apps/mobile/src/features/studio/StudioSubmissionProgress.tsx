@@ -9,14 +9,12 @@ import { useReducedMotion } from '@/hooks/useReducedMotion';
 import {
   studioSubmissionLabels,
   type StudioSubmissionStage,
-} from '@/features/studio/server';
+} from '@/features/studio/productServer';
 
 const stages: StudioSubmissionStage[] = [
   'CHECKING',
   'READING_PRIMARY',
   'UPLOADING_PRIMARY',
-  'READING_SECONDARY',
-  'UPLOADING_SECONDARY',
   'CREATING',
   'QUEUEING',
   'QUEUED',
@@ -67,7 +65,9 @@ export function StudioSubmissionProgress({ stage }: { stage: StudioSubmissionSta
           />
         </Animated.View>
       </View>
-      <Text style={styles.detail}>{translateCopy("Her görsel bir kez yüklenir; aynı isteğe tekrar dokunma.")}</Text>
+      <Text style={styles.detail}>
+        {translateCopy('Her görsel bir kez yüklenir; aynı isteğe tekrar dokunma.')}
+      </Text>
     </GlassSurface>
   );
 }

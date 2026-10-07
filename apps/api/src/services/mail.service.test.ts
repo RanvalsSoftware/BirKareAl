@@ -27,7 +27,7 @@ const smtpFixture = {
   SMTP_USER: 'sender@example.test',
   SMTP_PASSWORD: 'fixture-app-password-never-used',
   MAIL_FROM_EMAIL: 'sender@example.test',
-  MAIL_FROM_NAME: 'BirKare AI',
+  MAIL_FROM_NAME: 'BirKare Studio',
 };
 
 test('SMTP config requires credentials and rejects unsafe port/TLS combinations', () => {
@@ -98,7 +98,7 @@ test('mail delivery fixes the sender, logs SMTP acceptance without PII and preve
     subject: 'Support',
     text: 'Hello',
   });
-  assert.deepEqual(sent[0]!.from, { name: 'BirKare AI', address: 'sender@example.test' });
+  assert.deepEqual(sent[0]!.from, { name: 'BirKare Studio', address: 'sender@example.test' });
   assert.equal(sent[0]!.disableFileAccess, true);
   assert.equal(sent[0]!.disableUrlAccess, true);
   const acceptanceLog = JSON.stringify(events);

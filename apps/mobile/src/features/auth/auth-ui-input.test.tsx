@@ -4,25 +4,33 @@ import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FormField } from './auth-ui';
 
 const mocks = await vi.hoisted(async () => {
-  // Metro resolves PNG require() to a numeric asset ID; reproduce that in Node.
+  // Metro resolves image require() calls to numeric asset IDs; reproduce that in Node.
   const { default: Module, createRequire } = await import('node:module');
   const require = createRequire(import.meta.url);
-  const path = require.resolve('../../../assets/onboarding/images/brand/logo-gold-icon.png');
-  const original = require.cache[path];
-  const asset = new Module(path);
-  asset.exports = 1;
-  asset.loaded = true;
-  require.cache[path] = asset;
+  const paths = [
+    require.resolve('../../../assets/brand/birkare-studio-icon-1024-v1.png'),
+    require.resolve('../../../assets/products/ui/product-shoot.webp'),
+  ];
+  const originals = paths.map((path) => require.cache[path]);
+  paths.forEach((path) => {
+    const asset = new Module(path);
+    asset.exports = 1;
+    asset.loaded = true;
+    require.cache[path] = asset;
+  });
   return {
     focused: false,
     setFocused: vi.fn(),
-    restoreAsset: () => {
-      if (original) require.cache[path] = original;
-      else delete require.cache[path];
+    restoreAssets: () => {
+      paths.forEach((path, index) => {
+        const original = originals[index];
+        if (original) require.cache[path] = original;
+        else delete require.cache[path];
+      });
     },
   };
 });
-afterAll(() => mocks.restoreAsset());
+afterAll(() => mocks.restoreAssets());
 vi.mock('react', async (original) => ({
   ...(await original<typeof import('react')>()),
   useState: () => [mocks.focused, mocks.setFocused],

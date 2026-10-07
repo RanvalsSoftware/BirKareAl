@@ -1,6 +1,4 @@
-import { useLanguageRevision } from '@/i18n/use-language';
-import { getLocale as getAppLocale, tr as translateCopy } from '@/i18n/engine';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import {
   ActivityIndicator,
@@ -10,401 +8,482 @@ import {
   StyleSheet,
   Text,
   View,
-  type ImageSourcePropType,
+  useWindowDimensions,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import {
-  AppHeader,
-  CategoryChip,
-  CreditBadge,
-  EmptyState,
-  SectionHeader,
-  VisualTile,
-} from '@/components';
 import { apiBaseUrl } from '@/api/client';
-import { projectCategories } from '@/constants/catalog';
-import { colors, spacing, typography } from '@/theme';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
-import { useAvailableCredits } from '@/features/billing/use-wallet';
+import { CreditBadge, Icon } from '@/components';
 import { useAuthStore } from '@/features/auth/auth-store';
+import { useAvailableCredits } from '@/features/billing/use-wallet';
 import { useUserProjects, type UserProject } from '@/features/projects/use-user-projects';
+import { useCopy } from '@/features/settings/language-store';
+import { getLocale } from '@/i18n/engine';
+import { spacing } from '@/theme';
 
-type ProjectCategory = 'Sahneler' | 'Filtreler' | 'Ürünler' | 'Kıyafet' | 'Tırnak';
+type CatalogView = 'products' | 'all';
 
-const MODE_DISPLAY: Record<
+const modeLabels: Record<
   UserProject['mode'],
-  {
-    category: ProjectCategory;
-    fallbackTitle: string;
-    palette: readonly [string, string];
-    icon: string;
-  }
+  { tr: string; en: string; icon: React.ComponentProps<typeof Icon>['name'] }
 > = {
-  FULL_SCENE: {
-    category: 'Sahneler',
-    fallbackTitle: 'Yeni sahne',
-    palette: ['#27104C', '#135E73'],
-    icon: '◈',
-  },
-  FAN_MOMENT: {
-    category: 'Sahneler',
-    fallbackTitle: 'Kurgusal sahne',
-    palette: ['#183A4E', '#50621B'],
-    icon: '⚽',
-  },
-  AI_FILTER: {
-    category: 'Filtreler',
-    fallbackTitle: 'AI filtre',
-    palette: ['#5F243D', '#B78258'],
-    icon: '◌',
-  },
-  PRO_PORTRAIT: {
-    category: 'Sahneler',
-    fallbackTitle: 'Profesyonel portre',
-    palette: ['#202020', '#565656'],
-    icon: '◐',
-  },
-  BACKGROUND_REPLACE: {
-    category: 'Sahneler',
-    fallbackTitle: 'Arka plan değiştir',
-    palette: ['#2C4559', '#BF8339'],
-    icon: '◈',
-  },
-  PRODUCT_STUDIO: {
-    category: 'Ürünler',
-    fallbackTitle: 'Ürün çekimi',
-    palette: ['#33230E', '#B68738'],
-    icon: '◫',
-  },
-  VIRTUAL_TRY_ON: {
-    category: 'Kıyafet',
-    fallbackTitle: 'Kıyafet deneme',
-    palette: ['#3B2C41', '#9A6F91'],
-    icon: '◇',
-  },
-  NAIL_PREVIEW: {
-    category: 'Tırnak',
-    fallbackTitle: 'Manikür önizleme',
-    palette: ['#4A0D1F', '#B14469'],
-    icon: '✦',
-  },
+  PRODUCT_STUDIO: { tr: 'Ürün çekimi', en: 'Product shoot', icon: 'cube-outline' },
+  FULL_SCENE: { tr: 'Sahne', en: 'Scene', icon: 'image-outline' },
+  FAN_MOMENT: { tr: 'Kurgusal sahne', en: 'Fictional scene', icon: 'sparkles-outline' },
+  AI_FILTER: { tr: 'AI filtre', en: 'AI filter', icon: 'color-filter-outline' },
+  PRO_PORTRAIT: { tr: 'Portre', en: 'Portrait', icon: 'person-outline' },
+  BACKGROUND_REPLACE: { tr: 'Arka plan', en: 'Background', icon: 'layers-outline' },
+  VIRTUAL_TRY_ON: { tr: 'Kıyafet deneme', en: 'Virtual try-on', icon: 'shirt-outline' },
+  NAIL_PREVIEW: { tr: 'Tırnak önizleme', en: 'Nail preview', icon: 'color-palette-outline' },
 };
 
-function formatProjectDate(value: string): string {
+function outputUri(assetId: string | null): string | null {
+  return assetId ? `${apiBaseUrl}/v1/assets/${encodeURIComponent(assetId)}/content` : null;
+}
+
+function formatDate(value: string): string {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return translateCopy('Yakın zamanda');
-
-  const today = new Date();
-  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const startOfProjectDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const daysAgo = Math.round((startOfToday.getTime() - startOfProjectDay.getTime()) / 86_400_000);
-  if (daysAgo === 0) return translateCopy('Bugün');
-  if (daysAgo === 1) return translateCopy('Dün');
-  return new Intl.DateTimeFormat(getAppLocale(), { day: 'numeric', month: 'long' }).format(date);
-}
-
-const emptyProjectArtwork = {
-  hero: require('../../assets/projects/top-1.png'),
-  trend: require('../../assets/projects/click.png'),
-  reference: require('../../assets/projects/add-photo.png'),
-  save: require('../../assets/projects/save.png'),
-} as const;
-
-function FirstProjectEmptyState({
-  onCreate,
-  onExplore,
-}: {
-  onCreate: () => void;
-  onExplore: () => void;
-}) {
-  const languageRevision = useLanguageRevision();
-
-  const reducedMotion = useReducedMotion();
-  const features = [
-    { image: emptyProjectArtwork.trend, label: translateCopy('Trend akımlarını dene') },
-    { image: emptyProjectArtwork.reference, label: translateCopy('Referans görsel ekle') },
-    { image: emptyProjectArtwork.save, label: translateCopy('Sonuçlarını kaydet') },
-  ];
-
-  return (
-    <Animated.View
-      entering={reducedMotion ? FadeIn.duration(160) : FadeInDown.duration(420).springify()}
-      style={styles.firstProject}
-    >
-      <Image
-        accessibilityIgnoresInvertColors
-        resizeMode="contain"
-        source={emptyProjectArtwork.hero}
-        style={styles.firstProjectHero}
-      />
-      <Text style={styles.firstProjectTitle}>{translateCopy('Henüz projen yok')}</Text>
-      <Text style={styles.firstProjectDetail}>
-        {translateCopy('İlk projeni oluşturarak yapay zeka ile harika görseller üretmeye başla.')}
-      </Text>
-      <Pressable
-        accessibilityRole="button"
-        onPress={onCreate}
-        style={({ pressed }) => [styles.primaryButton, pressed && styles.buttonPressed]}
-      >
-        <LinearGradient
-          colors={['#FFE66E', '#FFD51F', '#F5BF00']}
-          end={{ x: 1, y: 1 }}
-          start={{ x: 0, y: 0 }}
-          style={styles.primaryButtonGradient}
-        >
-          <Text style={styles.primaryButtonText}>{translateCopy('İlk Projeyi Oluştur')}</Text>
-        </LinearGradient>
-      </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        onPress={onExplore}
-        style={({ pressed }) => [styles.secondaryButton, pressed && styles.buttonPressed]}
-      >
-        <Text style={styles.secondaryButtonText}>{translateCopy('Örnek projeleri keşfet')}</Text>
-      </Pressable>
-      <View style={styles.featureStrip}>
-        {features.map((feature, index) => (
-          <View key={feature.label} style={[styles.feature, index > 0 && styles.featureDivider]}>
-            <Image
-              accessibilityIgnoresInvertColors
-              resizeMode="contain"
-              source={feature.image}
-              style={styles.featureImage}
-            />
-            <Text style={styles.featureLabel}>{feature.label}</Text>
-          </View>
-        ))}
-      </View>
-    </Animated.View>
-  );
-}
-
-function projectOutputSource(
-  assetId: string | null,
-  accessToken: string | null,
-): ImageSourcePropType | undefined {
-  if (!assetId) return undefined;
-  const uri = `${apiBaseUrl}/v1/assets/${encodeURIComponent(assetId)}/content`;
-  return accessToken ? { uri, headers: { authorization: `Bearer ${accessToken}` } } : { uri };
-}
-
-function queryErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : translateCopy('Projelerin şu anda yüklenemedi.');
+  if (Number.isNaN(date.getTime())) return '—';
+  return new Intl.DateTimeFormat(getLocale(), {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
 }
 
 export default function ProjectsScreen() {
-  const languageRevision = useLanguageRevision();
-
+  const copy = useCopy();
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const availableCredits = useAvailableCredits();
   const accessToken = useAuthStore((store) => store.accessToken);
   const projectsQuery = useUserProjects();
-  const [selected, setSelected] = useState('Tümü');
-  const [visibleError, setVisibleError] = useState<string | null>(null);
-  const projects = projectsQuery.data;
-  const cards = useMemo(
+  const [view, setView] = useState<CatalogView>('products');
+  const projects = projectsQuery.data ?? [];
+  const hasArchivedProjects = useMemo(
+    () => projects.some((project) => project.mode !== 'PRODUCT_STUDIO'),
+    [projects],
+  );
+  const catalogView: CatalogView = hasArchivedProjects ? view : 'products';
+  const visible = useMemo(
     () =>
-      (projects ?? []).map((project) => {
-        const display = MODE_DISPLAY[project.mode];
-        return {
-          ...project,
-          ...display,
-          title: project.title?.trim() || translateCopy(display.fallbackTitle),
-          date: formatProjectDate(project.updatedAt),
-          source: projectOutputSource(project.outputAssetId, accessToken),
-        };
-      }),
-    [accessToken, projects, languageRevision],
+      catalogView === 'products'
+        ? projects.filter((project) => project.mode === 'PRODUCT_STUDIO')
+        : projects,
+    [catalogView, projects],
   );
-  const visible = cards.filter(
-    (project) =>
-      selected === 'Tümü' ||
-      (selected === 'Favoriler' ? project.isFavorite : project.category === selected),
-  );
-
-  useEffect(() => {
-    if (!projectsQuery.error) return;
-    const timeout = setTimeout(() => setVisibleError(queryErrorMessage(projectsQuery.error)), 0);
-    return () => clearTimeout(timeout);
-  }, [projectsQuery.error]);
-
-  useEffect(() => {
-    if (!visibleError) return;
-    const timeout = setTimeout(() => setVisibleError(null), 4_000);
-    return () => clearTimeout(timeout);
-  }, [visibleError]);
+  const pageWidth = Math.min(Math.max(width - spacing.lg * 2, 280), 1080);
+  const columns = pageWidth >= 960 ? 4 : pageWidth >= 680 ? 3 : 2;
+  const gap = 11;
+  const cardWidth = Math.max(136, (pageWidth - gap * (columns - 1)) / columns);
 
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={styles.screen}>
-      <View style={styles.headerArea}>
-        <AppHeader
-          title={translateCopy('Projelerim')}
-          subtitle={translateCopy('Üretimlerin ve versiyonların')}
-          right={<CreditBadge credits={availableCredits} />}
-        />
-      </View>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chips}
-          accessibilityRole="tablist"
-        >
-          {projectCategories.map((category) => (
-            <CategoryChip
-              key={category}
-              label={translateCopy(category)}
-              selected={selected === category}
-              onPress={() => setSelected(category)}
-            />
-          ))}
-        </ScrollView>
-        {visibleError ? (
-          <View style={styles.errorNotice}>
-            <Text style={styles.errorTitle}>{translateCopy('Projeler yüklenemedi')}</Text>
-            <Text style={styles.errorText}>{visibleError}</Text>
-          </View>
-        ) : null}
-        {projectsQuery.isLoading ? (
-          <View accessibilityRole="progressbar" style={styles.loading}>
-            <ActivityIndicator color={colors.accentYellow} />
-            <Text style={styles.loadingText}>{translateCopy('Projelerin yükleniyor…')}</Text>
-          </View>
-        ) : projectsQuery.isError && !(projects?.length ?? 0) ? (
-          <EmptyState
-            icon="cloud-offline-outline"
-            title={translateCopy('Projelerine ulaşılamadı')}
-            detail={translateCopy('Bağlantını kontrol edip tekrar deneyebilirsin.')}
-            action={translateCopy('Tekrar dene')}
-            onAction={() => void projectsQuery.refetch()}
-          />
-        ) : visible.length ? (
-          <>
-            <SectionHeader
-              title={selected === 'Tümü' ? translateCopy('Son projeler') : translateCopy(selected)}
-              accessory={
-                <Text style={styles.count}>
-                  {visible.length} {translateCopy('proje')}
-                </Text>
-              }
-            />
-            <View style={styles.grid}>
-              {visible.map((project) => (
-                <View key={project.id} style={styles.projectWrap}>
-                  <VisualTile
-                    title={project.title}
-                    subtitle={project.date}
-                    palette={project.palette}
-                    icon={project.icon}
-                    imageSource={project.source}
-                    badge={project.isFavorite ? '★' : undefined}
-                    onPress={() => router.push(`/projects/${project.id}` as never)}
-                  />
-                  <Text style={styles.projectMeta}>
-                    {project.outputAssetId
-                      ? translateCopy(project.category)
-                      : project.latestGenerationStatus
-                        ? translateCopy('Üretim hazırlanıyor')
-                        : translateCopy(project.category)}
-                  </Text>
-                </View>
-              ))}
+    <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.page}>
+          <View style={styles.header}>
+            <View style={styles.headerCopy}>
+              <Text style={styles.eyebrow}>{copy('ÜRÜN KÜTÜPHANESİ', 'PRODUCT LIBRARY')}</Text>
+              <Text style={styles.title}>{copy('Katalog', 'Catalog')}</Text>
+              <Text style={styles.subtitle}>
+                {copy(
+                  'Ürün çekimlerin, çıktılar ve yeni versiyonlar.',
+                  'Your product shoots, outputs, and new versions.',
+                )}
+              </Text>
             </View>
-          </>
-        ) : !(projects?.length ?? 0) ? (
-          <FirstProjectEmptyState
-            onCreate={() => router.push('/create' as never)}
-            onExplore={() => router.push('/(tabs)/explore' as never)}
-          />
-        ) : (
-          <EmptyState
-            title={translateCopy('Bu alanda henüz proje yok')}
-            detail={translateCopy('Bir sahne ya da filtre seçerek ilk projenizi oluşturun.')}
-            action={translateCopy('Oluşturmaya başla')}
-            onAction={() => router.push('/create' as never)}
-          />
-        )}
+            <CreditBadge credits={availableCredits} />
+          </View>
+
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push('/studio' as never)}
+            style={({ pressed }) => [styles.newProject, pressed && styles.pressed]}
+          >
+            <View style={styles.newProjectIcon}>
+              <Icon name="add" size={23} color="#0A2118" />
+            </View>
+            <View style={styles.newProjectCopy}>
+              <Text style={styles.newProjectTitle}>
+                {copy('Yeni ürün projesi', 'New product project')}
+              </Text>
+              <Text style={styles.newProjectDetail}>
+                {copy(
+                  'Kaynak fotoğrafla yeni bir çekim planla',
+                  'Plan a new shoot from a source photo',
+                )}
+              </Text>
+            </View>
+            <Icon name="arrow-forward" size={20} color="#B8F1CD" />
+          </Pressable>
+
+          {hasArchivedProjects ? (
+            <View style={styles.segment} accessibilityRole="tablist">
+              <SegmentButton
+                label={copy('Ürün kataloğu', 'Product catalog')}
+                selected={catalogView === 'products'}
+                onPress={() => setView('products')}
+              />
+              <SegmentButton
+                label={copy('Tüm projeler', 'All projects')}
+                selected={catalogView === 'all'}
+                onPress={() => setView('all')}
+              />
+            </View>
+          ) : null}
+
+          <View style={styles.listHeader}>
+            <Text style={styles.listTitle}>
+              {catalogView === 'products'
+                ? copy('Ürün projeleri', 'Product projects')
+                : copy('Tüm projeler', 'All projects')}
+            </Text>
+            <Text style={styles.listCount}>
+              {visible.length} {copy('proje', 'projects')}
+            </Text>
+          </View>
+
+          {projectsQuery.isLoading ? (
+            <View accessibilityRole="progressbar" style={styles.stateBox}>
+              <ActivityIndicator color="#B8F1CD" />
+              <Text style={styles.stateText}>
+                {copy('Katalog yükleniyor…', 'Loading catalog…')}
+              </Text>
+            </View>
+          ) : projectsQuery.isError ? (
+            <View style={styles.stateBox}>
+              <View style={styles.stateIcon}>
+                <Icon name="cloud-offline-outline" size={28} color="#FFB65C" />
+              </View>
+              <Text style={styles.stateTitle}>
+                {copy('Kataloğa ulaşılamadı', 'Catalog unavailable')}
+              </Text>
+              <Text style={styles.stateText}>
+                {copy(
+                  'Bağlantını kontrol edip tekrar deneyebilirsin.',
+                  'Check your connection and try again.',
+                )}
+              </Text>
+              <Pressable onPress={() => void projectsQuery.refetch()} style={styles.retryButton}>
+                <Text style={styles.retryText}>{copy('Tekrar dene', 'Try again')}</Text>
+              </Pressable>
+            </View>
+          ) : visible.length ? (
+            <View style={[styles.grid, { gap }]}>
+              {visible.map((project) => {
+                const source = outputUri(project.outputAssetId);
+                const label = modeLabels[project.mode];
+                return (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={project.title || copy(label.tr, label.en)}
+                    key={project.id}
+                    onPress={() => router.push(`/projects/${project.id}` as never)}
+                    style={({ pressed }) => [
+                      styles.card,
+                      { width: cardWidth },
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <View style={[styles.cardVisual, { height: cardWidth * 1.02 }]}>
+                      {source ? (
+                        <Image
+                          source={{
+                            uri: source,
+                            headers: accessToken
+                              ? { authorization: `Bearer ${accessToken}` }
+                              : undefined,
+                          }}
+                          resizeMode="cover"
+                          style={styles.cardImage}
+                        />
+                      ) : (
+                        <View style={styles.cardPlaceholder}>
+                          <Icon name={label.icon} size={31} color="#68766E" />
+                          <Text style={styles.preparingText}>
+                            {project.latestGenerationStatus
+                              ? copy('Çıktı hazırlanıyor', 'Preparing output')
+                              : copy('Henüz çıktı yok', 'No output yet')}
+                          </Text>
+                        </View>
+                      )}
+                      <View style={styles.modeBadge}>
+                        <Icon name={label.icon} size={12} color="#D7F7E3" />
+                        <Text style={styles.modeBadgeText}>{copy(label.tr, label.en)}</Text>
+                      </View>
+                      {project.isFavorite ? (
+                        <View style={styles.favoriteBadge}>
+                          <Icon name="star" size={13} color="#FFE29A" />
+                        </View>
+                      ) : null}
+                    </View>
+                    <View style={styles.cardBody}>
+                      <Text numberOfLines={1} style={styles.cardTitle}>
+                        {project.title?.trim() || copy(label.tr, label.en)}
+                      </Text>
+                      <Text style={styles.cardDate}>{formatDate(project.updatedAt)}</Text>
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <View style={styles.emptyVisual}>
+                <Icon name="cube-outline" size={36} color="#B8F1CD" />
+                <View style={styles.emptyMiniCard}>
+                  <Icon name="image-outline" size={18} color="#799087" />
+                </View>
+              </View>
+              <Text style={styles.emptyTitle}>
+                {catalogView === 'products'
+                  ? copy('Ürün kataloğun hazır', 'Your product catalog is ready')
+                  : copy('Henüz projen yok', 'No projects yet')}
+              </Text>
+              <Text style={styles.emptyDetail}>
+                {catalogView === 'products'
+                  ? copy(
+                      'İlk ürününü adlandır, fotoğrafını ekle ve kullanım amacına göre çekimini planla.',
+                      'Name your first product, add its photo, and plan the shoot around its intended use.',
+                    )
+                  : copy(
+                      'İlk ürün projenle düzenli bir katalog oluşturmaya başla.',
+                      'Start an organized catalog with your first product project.',
+                    )}
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => router.push('/studio' as never)}
+                style={({ pressed }) => [styles.emptyAction, pressed && styles.pressed]}
+              >
+                <Icon name="add" size={20} color="#0A2118" />
+                <Text style={styles.emptyActionText}>
+                  {copy('İlk ürünü ekle', 'Add first product')}
+                </Text>
+              </Pressable>
+            </View>
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
+function SegmentButton({
+  label,
+  selected,
+  onPress,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="tab"
+      accessibilityState={{ selected }}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.segmentButton,
+        selected && styles.segmentButtonSelected,
+        pressed && styles.pressed,
+      ]}
+    >
+      <Text numberOfLines={1} style={[styles.segmentText, selected && styles.segmentTextSelected]}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  headerArea: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
-  content: { paddingHorizontal: spacing.lg, paddingBottom: 40 },
-  chips: { gap: 8, paddingBottom: 3, paddingRight: spacing.lg },
-  count: { ...typography.caption, color: colors.textMuted },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' },
-  projectWrap: { gap: 5 },
-  projectMeta: { ...typography.caption, color: colors.textMuted, paddingLeft: 2 },
-  loading: { alignItems: 'center', gap: 10, justifyContent: 'center', minHeight: 260 },
-  loadingText: { ...typography.body, color: colors.textSecondary },
-  errorNotice: {
-    backgroundColor: 'rgba(255, 159, 10, 0.10)',
-    borderColor: 'rgba(255, 159, 10, 0.48)',
-    borderRadius: 14,
-    borderWidth: 1,
-    marginTop: spacing.md,
-    padding: 12,
+  safeArea: { backgroundColor: '#0B0F0D', flex: 1 },
+  scrollContent: { paddingBottom: 105, paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
+  page: { alignSelf: 'center', maxWidth: 1080, width: '100%' },
+  header: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'space-between',
   },
-  errorTitle: { ...typography.label, color: colors.warning },
-  errorText: { ...typography.caption, color: colors.textSecondary, lineHeight: 18, marginTop: 3 },
-  firstProject: { alignItems: 'center', paddingTop: 12, paddingBottom: 28 },
-  firstProjectHero: { width: 210, height: 190, marginBottom: 2 },
-  firstProjectTitle: {
-    ...typography.h1,
-    color: colors.textPrimary,
-    fontSize: 28,
-    lineHeight: 34,
-    textAlign: 'center',
-  },
-  firstProjectDetail: {
-    ...typography.body,
-    color: colors.textSecondary,
-    lineHeight: 23,
-    marginTop: 10,
-    maxWidth: 330,
-    textAlign: 'center',
-  },
-  primaryButton: { alignSelf: 'stretch', borderRadius: 28, marginTop: 28, overflow: 'hidden' },
-  primaryButtonGradient: {
+  headerCopy: { flex: 1 },
+  eyebrow: { color: '#8FCFA7', fontSize: 10, fontWeight: '900', letterSpacing: 0.9 },
+  title: { color: '#F4F8F5', fontSize: 31, fontWeight: '900', letterSpacing: -0.8, marginTop: 5 },
+  subtitle: { color: '#87948C', fontSize: 13, lineHeight: 18, marginTop: 4 },
+  newProject: {
     alignItems: 'center',
-    minHeight: 58,
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  primaryButtonText: { color: '#090909', fontSize: 18, fontWeight: '800' },
-  secondaryButton: {
-    alignItems: 'center',
-    alignSelf: 'stretch',
-    borderColor: colors.accentYellow,
-    borderRadius: 25,
-    borderWidth: 1,
-    justifyContent: 'center',
-    marginTop: 14,
-    minHeight: 52,
-    paddingHorizontal: 18,
-  },
-  secondaryButtonText: { color: colors.accentYellow, fontSize: 16, fontWeight: '700' },
-  buttonPressed: { opacity: 0.78, transform: [{ scale: 0.985 }] },
-  featureStrip: {
-    alignSelf: 'stretch',
-    backgroundColor: '#151515',
-    borderColor: colors.border,
-    borderRadius: 22,
+    backgroundColor: '#15221B',
+    borderColor: '#355443',
+    borderRadius: 20,
     borderWidth: 1,
     flexDirection: 'row',
-    marginTop: 30,
-    minHeight: 132,
-    overflow: 'hidden',
-    paddingVertical: 14,
+    gap: 12,
+    marginTop: 20,
+    padding: 14,
   },
-  feature: { alignItems: 'center', flex: 1, justifyContent: 'center', paddingHorizontal: 8 },
-  featureDivider: { borderLeftColor: colors.border, borderLeftWidth: StyleSheet.hairlineWidth },
-  featureImage: { height: 48, marginBottom: 8, width: 48 },
-  featureLabel: { color: colors.textSecondary, fontSize: 12, lineHeight: 17, textAlign: 'center' },
+  newProjectIcon: {
+    alignItems: 'center',
+    backgroundColor: '#B8F1CD',
+    borderRadius: 13,
+    height: 43,
+    justifyContent: 'center',
+    width: 43,
+  },
+  newProjectCopy: { flex: 1 },
+  newProjectTitle: { color: '#ECF5EF', fontSize: 15, fontWeight: '800' },
+  newProjectDetail: { color: '#87948C', fontSize: 11, marginTop: 3 },
+  segment: {
+    backgroundColor: '#101613',
+    borderColor: '#252F29',
+    borderRadius: 16,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 4,
+    marginTop: 17,
+    padding: 4,
+  },
+  segmentButton: {
+    alignItems: 'center',
+    borderRadius: 12,
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 42,
+    paddingHorizontal: 8,
+  },
+  segmentButtonSelected: { backgroundColor: '#1B2B22' },
+  segmentText: { color: '#78857D', fontSize: 12, fontWeight: '700' },
+  segmentTextSelected: { color: '#D9F7E4' },
+  listHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    marginTop: 25,
+  },
+  listTitle: { color: '#EEF4F0', fontSize: 19, fontWeight: '800' },
+  listCount: { color: '#7B8880', fontSize: 11, fontWeight: '700' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap' },
+  card: {
+    backgroundColor: '#111815',
+    borderColor: '#26322B',
+    borderRadius: 18,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  cardVisual: { backgroundColor: '#18211D', overflow: 'hidden', width: '100%' },
+  cardImage: { height: '100%', width: '100%' },
+  cardPlaceholder: { alignItems: 'center', flex: 1, gap: 8, justifyContent: 'center', padding: 12 },
+  preparingText: { color: '#728078', fontSize: 10, textAlign: 'center' },
+  modeBadge: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(8,17,12,0.84)',
+    borderRadius: 9,
+    bottom: 7,
+    flexDirection: 'row',
+    gap: 4,
+    left: 7,
+    maxWidth: '82%',
+    paddingHorizontal: 7,
+    paddingVertical: 5,
+    position: 'absolute',
+  },
+  modeBadgeText: { color: '#D7F7E3', fontSize: 9, fontWeight: '800' },
+  favoriteBadge: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(8,17,12,0.84)',
+    borderRadius: 11,
+    height: 26,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 7,
+    top: 7,
+    width: 26,
+  },
+  cardBody: { padding: 11 },
+  cardTitle: { color: '#E8F0EB', fontSize: 13, fontWeight: '800' },
+  cardDate: { color: '#77837C', fontSize: 10, marginTop: 4 },
+  stateBox: {
+    alignItems: 'center',
+    borderColor: '#28342D',
+    borderRadius: 22,
+    borderWidth: 1,
+    gap: 9,
+    justifyContent: 'center',
+    minHeight: 270,
+    padding: 24,
+  },
+  stateIcon: {
+    alignItems: 'center',
+    backgroundColor: '#21180D',
+    borderRadius: 18,
+    height: 62,
+    justifyContent: 'center',
+    width: 62,
+  },
+  stateTitle: { color: '#EDF4EF', fontSize: 18, fontWeight: '800', marginTop: 4 },
+  stateText: { color: '#839087', fontSize: 12, lineHeight: 18, textAlign: 'center' },
+  retryButton: {
+    backgroundColor: '#1C2D25',
+    borderRadius: 13,
+    marginTop: 7,
+    paddingHorizontal: 18,
+    paddingVertical: 11,
+  },
+  retryText: { color: '#B8F1CD', fontSize: 12, fontWeight: '800' },
+  emptyState: {
+    alignItems: 'center',
+    borderColor: '#2A3830',
+    borderRadius: 24,
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    padding: 26,
+  },
+  emptyVisual: {
+    alignItems: 'center',
+    backgroundColor: '#16241C',
+    borderRadius: 22,
+    height: 92,
+    justifyContent: 'center',
+    width: 92,
+  },
+  emptyMiniCard: {
+    alignItems: 'center',
+    backgroundColor: '#26342D',
+    borderColor: '#3D5045',
+    borderRadius: 8,
+    borderWidth: 1,
+    bottom: 9,
+    height: 32,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 7,
+    width: 35,
+  },
+  emptyTitle: {
+    color: '#F0F5F2',
+    fontSize: 20,
+    fontWeight: '900',
+    marginTop: 18,
+    textAlign: 'center',
+  },
+  emptyDetail: {
+    color: '#839087',
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 7,
+    maxWidth: 430,
+    textAlign: 'center',
+  },
+  emptyAction: {
+    alignItems: 'center',
+    backgroundColor: '#B8F1CD',
+    borderRadius: 15,
+    flexDirection: 'row',
+    gap: 7,
+    marginTop: 20,
+    minHeight: 49,
+    paddingHorizontal: 18,
+  },
+  emptyActionText: { color: '#0A2118', fontSize: 14, fontWeight: '900' },
+  pressed: { opacity: 0.77, transform: [{ scale: 0.99 }] },
 });

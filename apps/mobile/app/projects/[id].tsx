@@ -112,6 +112,7 @@ export default function ProjectDetailScreen() {
     actualImageRatio && Number.isFinite(actualImageRatio) && actualImageRatio > 0
       ? actualImageRatio
       : shareAspectRatio(detail?.project.aspectRatio);
+  const isProductProject = detail?.project.mode === 'PRODUCT_STUDIO';
   const openShare = () => {
     if (!activeGeneration || !activeOutput) return;
     router.push({
@@ -133,8 +134,15 @@ export default function ProjectDetailScreen() {
     <Screen contentContainerStyle={styles.content}>
       <AppHeader
         back
-        title={detail?.project.title?.trim() || translateCopy("Proje ayrıntısı")}
-        subtitle={detail ? dateLabel(detail.project.updatedAt) : translateCopy("Yükleniyor…")}
+        title={
+          detail?.project.title?.trim() ||
+          translateCopy(isProductProject ? 'Ürün projesi' : 'Proje ayrıntısı')
+        }
+        subtitle={
+          detail
+            ? `${isProductProject ? translateCopy('Ürün çalışma alanı') : translateCopy('Proje')} · ${dateLabel(detail.project.updatedAt)}`
+            : translateCopy("Yükleniyor…")
+        }
         right={
           <Pressable
             accessibilityRole="button"
@@ -186,7 +194,9 @@ export default function ProjectDetailScreen() {
               style={({ pressed }) => [styles.editAction, pressed && styles.pressed]}
             >
               <Icon name="sparkles" size={23} color="#050505" />
-              <Text style={styles.editActionText}>{translateCopy("Düzenle")}</Text>
+              <Text style={styles.editActionText}>
+                {translateCopy(isProductProject ? 'Ürünü düzenle' : 'Düzenle')}
+              </Text>
             </Pressable>
             <IconAction
               name="git-compare-outline"
@@ -214,14 +224,24 @@ export default function ProjectDetailScreen() {
                 <Icon name="sparkles" size={25} color={colors.accentPurpleSoft} />
               </View>
               <View style={styles.aiEditCopy}>
-                <Text style={styles.aiEditTitle}>{translateCopy("AI ile düzenle")}</Text>
-                <Text style={styles.aiEditDetail}>{translateCopy("Doğal dilde değişiklik iste veya referans ekle")}</Text>
+                <Text style={styles.aiEditTitle}>
+                  {translateCopy(isProductProject ? 'Ürün güvenli düzenleme' : 'AI ile düzenle')}
+                </Text>
+                <Text style={styles.aiEditDetail}>
+                  {translateCopy(
+                    isProductProject
+                      ? 'Etiketi ve ürün geometrisini koruyan değişiklik iste'
+                      : 'Doğal dilde değişiklik iste veya referans ekle',
+                  )}
+                </Text>
               </View>
               <Icon name="chevron-forward" size={22} color={colors.textSecondary} />
             </GlassSurface>
           </Pressable>
           <View style={styles.sectionHeading}>
-            <Text style={styles.sectionTitle}>{translateCopy("Sürüm geçmişi")}</Text>
+            <Text style={styles.sectionTitle}>
+              {translateCopy(isProductProject ? 'Ürün versiyonları' : 'Sürüm geçmişi')}
+            </Text>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={translateCopy("Tüm sürümleri gör")}
@@ -245,7 +265,7 @@ export default function ProjectDetailScreen() {
                 <Pressable
                   key={generation.id}
                   accessibilityRole="button"
-                  accessibilityLabel={`Varyasyon ${completed.length - index}`}
+                  accessibilityLabel={`${translateCopy(isProductProject ? 'Versiyon' : 'Varyasyon')} ${completed.length - index}`}
                   onPress={() => router.push(`/generations/${generation.id}/results` as never)}
                   style={({ pressed }) => [styles.versionRow, pressed && styles.pressed]}
                 >
@@ -266,7 +286,7 @@ export default function ProjectDetailScreen() {
                     ) : null}
                   </View>
                   <View style={styles.versionCopy}>
-                    <Text style={styles.versionTitle}>{translateCopy("Varyasyon")}{' '}{completed.length - index}
+                    <Text style={styles.versionTitle}>{translateCopy(isProductProject ? 'Versiyon' : 'Varyasyon')}{' '}{completed.length - index}
                     </Text>
                     <Text style={styles.versionDate}>
                       {dateLabel(generation.completedAt ?? generation.createdAt)}
@@ -310,7 +330,7 @@ function IconAction({
 }
 
 const styles = StyleSheet.create({
-  content: { paddingBottom: 46 },
+  content: { maxWidth: 980, paddingBottom: 46 },
   headerMore: {
     width: 44,
     height: 44,

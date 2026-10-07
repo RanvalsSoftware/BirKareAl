@@ -24,7 +24,7 @@ const DefaultedGoogleClientId = (fallback: string) =>
 
 const RawEnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'staging', 'production']).default('development'),
-  APP_NAME: z.string().trim().min(1).max(80).default('BirKare AI'),
+  APP_NAME: z.string().trim().min(1).max(80).default('BirKare Studio'),
   APP_SLUG: z
     .string()
     .regex(/^[a-z0-9-]+$/)
@@ -82,7 +82,7 @@ const RawEnvSchema = z.object({
     .min(1)
     .max(80)
     .regex(/^[^\r\n]+$/)
-    .default('BirKare AI'),
+    .default('BirKare Studio'),
   MAIL_APP_SCHEME: z
     .string()
     .regex(/^[a-z][a-z0-9+.-]{1,40}$/)
@@ -251,6 +251,11 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): BirKareConf
   }
   if (config.AI_PROVIDER === 'openai' && !config.OPENAI_API_KEY) {
     throw new Error('AI_PROVIDER=openai iken OPENAI_API_KEY zorunludur.');
+  }
+  if (isProductionLike && config.AI_PROVIDER === 'fake') {
+    throw new Error(
+      'Production ve staging ortamında AI_PROVIDER=fake kullanılamaz; openai veya disabled seçilmelidir.',
+    );
   }
   if (
     config.REVENUECAT_ENABLED &&

@@ -151,7 +151,7 @@ test('HTTP web deletion request reaches MailService and builds the local BirKare
   assert.equal(mail.sent.length, 1);
   const message = mail.sent[0]!;
   assert.equal(message.to, user.email);
-  assert.equal(message.subject, 'BirKare AI — Hesap silme bağlantın');
+  assert.equal(message.subject, 'BirKare Studio — Hesap silme bağlantın');
   const linkLine = message.text
     .split('\n')
     .find((line) => line.startsWith('http://localhost:3000/'));

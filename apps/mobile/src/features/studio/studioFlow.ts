@@ -3,9 +3,14 @@ import { useCallback, useSyncExternalStore } from 'react';
 export type StudioMode = 'product' | 'fashion' | 'nails';
 export type StudioQuality = 'PREVIEW' | 'STANDARD' | 'HD';
 export type StudioAspectRatio = '1:1' | '4:5' | '9:16' | '16:9';
+export type StudioCommerceGoal = 'marketplace' | 'product-page' | 'social-ad' | 'web-hero';
+export type StudioImageCount = 1 | 2 | 4;
 
 export type StudioFlow = {
   mode: StudioMode;
+  productTitle: string;
+  commerceGoal: StudioCommerceGoal;
+  numberOfImages: StudioImageCount;
   primaryUri: string | null;
   primaryName: string | null;
   secondaryUri: string | null;
@@ -22,6 +27,9 @@ export type StudioFlow = {
 function freshFlow(mode: StudioMode = 'product'): StudioFlow {
   return {
     mode,
+    productTitle: '',
+    commerceGoal: 'marketplace',
+    numberOfImages: mode === 'product' ? 2 : 1,
     primaryUri: null,
     primaryName: null,
     secondaryUri: null,

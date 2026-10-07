@@ -29,7 +29,7 @@ export function BrandWordmark({ compact = false }: { compact?: boolean }) {
   const languageRevision = useLanguageRevision();
 
   return (
-    <View accessibilityLabel="BirKare AI" style={[styles.brand, compact && styles.brandCompact]}>
+    <View accessibilityLabel="BirKare Studio" style={[styles.brand, compact && styles.brandCompact]}>
       <Image source={onboardingImages.brandMark} style={[styles.brandMark, compact && styles.brandMarkCompact]} />
       <Image source={onboardingImages.brandWordmark} style={[styles.brandWordmark, compact && styles.brandWordmarkCompact]} />
     </View>

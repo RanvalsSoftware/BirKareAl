@@ -10,7 +10,7 @@ const englishErrors: Readonly<Record<string, string>> = {
   AUTH_EMAIL_ALREADY_EXISTS: 'An account with this email address already exists.',
   AUTH_EMAIL_EXISTS: 'An account with this email address already exists.',
   AUTH_CONSENT_REQUIRED: 'Accept all required permissions to continue.',
-  AUTH_AGE_RESTRICTED: 'You must be at least 18 years old to use BirKare AI.',
+  AUTH_AGE_RESTRICTED: 'You must be at least 18 years old to use BirKare Studio.',
   AUTH_GOOGLE_NOT_CONFIGURED: 'Google sign-in is not configured for this environment.',
   AUTH_GOOGLE_CLIENT_MISMATCH:
     'Google sign-in does not match the server configuration. Update the app or contact support.',

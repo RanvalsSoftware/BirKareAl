@@ -10,11 +10,10 @@ import { GlassSurface, Icon } from '@/components';
 import { colors } from '@/theme';
 
 const tabs = [
-  { route: '/(tabs)/home', label: translateCopy("Ana Sayfa"), icon: 'home-outline' },
-  { route: '/(tabs)/explore', get label() { return translateCopy("Keşfet"); }, icon: 'compass-outline' },
-  { route: '/(tabs)/projects', get label() { return translateCopy("Projeler"); }, icon: 'images-outline' },
+  { route: '/(tabs)/home', get label() { return translateCopy("Stüdyo"); }, icon: 'storefront-outline' },
+  { route: '/(tabs)/projects', get label() { return translateCopy("Katalog"); }, icon: 'albums-outline' },
   { route: '/(tabs)/credits', get label() { return translateCopy("Krediler"); }, icon: 'flash-outline' },
-  { route: '/(tabs)/profile', get label() { return translateCopy("Profil"); }, icon: 'person' },
+  { route: '/(tabs)/profile', get label() { return translateCopy("Hesap"); }, icon: 'person' },
 ] as const;
 
 /** Real tab destinations for profile subpages outside the tab navigator.

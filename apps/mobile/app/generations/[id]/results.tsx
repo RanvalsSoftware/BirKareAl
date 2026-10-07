@@ -4,7 +4,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   Image,
+  ActivityIndicator,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,22 +15,13 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-
-import {
-  AppHeader,
-  Icon,
-  Notice,
-  PrimaryButton,
-  Screen,
-  SourcePreview,
-  VisualTile,
-} from '@/components';
+import { AppHeader, Icon, Notice, PrimaryButton, Screen, VisualTile } from '@/components';
 import { apiBaseUrl, apiRequest } from '@/api/client';
-import { filters } from '@/constants/catalog';
-import { useCreateFlow } from '@/features/create/createFlow';
 import { useAuthStore } from '@/features/auth/auth-store';
+import { resetCreateFlow } from '@/features/create/createFlow';
+import { resetProductStudioFlow } from '@/features/studio/productFlow';
 import { GeneratedSharePanel } from '@/features/sharing/GeneratedSharePanel';
+import { shareAspectRatio } from '@/features/sharing/output';
 import {
   createContentReportInput,
   newSupportSubmissionKey,
@@ -37,10 +31,30 @@ import {
 import { colors, radii, spacing, typography } from '@/theme';
 
 const variants = [
-  { id: 'a', label: translateCopy("Varyasyon 1"), palette: ['#341D68', '#CA8D24'] as const, icon: '✦' },
-  { id: 'b', label: translateCopy("Varyasyon 2"), palette: ['#1A5264', '#A77535'] as const, icon: '◈' },
-  { id: 'c', label: translateCopy("Varyasyon 3"), palette: ['#5C2148', '#8B81CE'] as const, icon: '◌' },
-  { id: 'd', label: translateCopy("Varyasyon 4"), palette: ['#485C2D', '#213A6B'] as const, icon: '✧' },
+  {
+    id: 'a',
+    label: translateCopy('Varyasyon 1'),
+    palette: ['#341D68', '#CA8D24'] as const,
+    icon: '✦',
+  },
+  {
+    id: 'b',
+    label: translateCopy('Varyasyon 2'),
+    palette: ['#1A5264', '#A77535'] as const,
+    icon: '◈',
+  },
+  {
+    id: 'c',
+    label: translateCopy('Varyasyon 3'),
+    palette: ['#5C2148', '#8B81CE'] as const,
+    icon: '◌',
+  },
+  {
+    id: 'd',
+    label: translateCopy('Varyasyon 4'),
+    palette: ['#485C2D', '#213A6B'] as const,
+    icon: '✧',
+  },
 ];
 
 type GenerationOutput = {
@@ -52,9 +66,12 @@ type GenerationOutput = {
 
 type ResultGeneration = {
   id: string;
+  projectId: string;
   status: string;
+  aspectRatio: string;
   outputs: GenerationOutput[];
 };
+type ProjectModeResponse = { project: { mode: string } };
 
 type DisplayVariant = {
   id: string;
@@ -80,16 +97,18 @@ export default function GenerationResultsScreen() {
   const router = useRouter();
   const { id: rawGenerationId } = useLocalSearchParams<{ id?: string }>();
   const generationId = Array.isArray(rawGenerationId) ? rawGenerationId[0] : rawGenerationId;
-  const { flow, reset } = useCreateFlow();
   const accessToken = useAuthStore((store) => store.accessToken);
   const userId = useAuthStore((store) => store.user?.id);
-  const [selectedId, setSelectedId] = useState('a');
-  const [favorite, setFavorite] = useState(false);
+  const [selectedId, setSelectedId] = useState('');
   const requestScope = `${userId}:${generationId}`;
   const [loadedGeneration, setGeneration] = useState<
     (ResultGeneration & { requestScope: string }) | null
   >(null);
   const generation = loadedGeneration?.requestScope === requestScope ? loadedGeneration : null;
+  const [projectMode, setProjectMode] = useState<{
+    requestScope: string;
+    mode: string;
+  } | null>(null);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
@@ -99,17 +118,21 @@ export default function GenerationResultsScreen() {
   const [reportError, setReportError] = useState<string | null>(null);
   const [reportSending, setReportSending] = useState(false);
   const reportAttempt = useRef<{ fingerprint: string; key: string } | null>(null);
-  const localVariants = useMemo<DisplayVariant[]>(
-    () => variants.map((variant) => ({ ...variant, serverOutput: false })),
-    [languageRevision],
-  );
+  const invalidGenerationError =
+    !generationId || generationId === 'demo'
+      ? translateCopy('Geçerli bir üretim kaydı bulunamadı.')
+      : null;
+  const isProductProject =
+    projectMode !== null &&
+    projectMode.requestScope === requestScope &&
+    projectMode.mode === 'PRODUCT_STUDIO';
   const serverVariants = useMemo<DisplayVariant[]>(
     () =>
       (generation?.outputs ?? [])
         .filter((output) => Boolean(output.asset?.accessUrl))
         .map((output, index) => ({
           id: output.id,
-          label: `Varyasyon ${output.variantIndex + 1}`,
+          label: translateCopy('Varyasyon {{p0}}', { p0: output.variantIndex + 1 }),
           palette: variants[index % variants.length]?.palette ?? variants[0].palette,
           icon: variants[index % variants.length]?.icon ?? '✦',
           sourceUrl: output.asset?.accessUrl,
@@ -117,37 +140,51 @@ export default function GenerationResultsScreen() {
         })),
     [generation, languageRevision],
   );
-  const displayVariants = serverVariants.length ? serverVariants : localVariants;
+  const displayVariants = serverVariants;
   const preferredVariantId = generation?.outputs.find((output) => output.selected)?.id;
   const selected =
     displayVariants.find((variant) => variant.id === selectedId)?.id ??
     displayVariants.find((variant) => variant.id === preferredVariantId)?.id ??
     displayVariants[0]?.id ??
-    'a';
+    '';
   const selectedVariant =
     displayVariants.find((item) => item.id === selected) ?? displayVariants[0];
-  const routeGenerationId = generationId ?? 'demo';
   const sourceUrl = selectedVariant?.sourceUrl;
   const imageUri = sourceUrl?.startsWith('/') ? `${apiBaseUrl}${sourceUrl}` : sourceUrl;
   const imageHeaders =
     sourceUrl?.startsWith('/') && accessToken
       ? { authorization: `Bearer ${accessToken}` }
       : undefined;
-  const styleName = filters.find((item) => item.id === flow.styleId)?.name ?? translateCopy('Doğal Işık');
-
+  const displayGenerationError = invalidGenerationError ?? generationError;
   useEffect(() => {
     if (!generationId || generationId === 'demo') return;
     let active = true;
-    void apiRequest<ResultGeneration>(`/v1/generations/${encodeURIComponent(generationId)}`)
-      .then((result) => {
+    void (async () => {
+      try {
+        const result = await apiRequest<ResultGeneration>(
+          `/v1/generations/${encodeURIComponent(generationId)}`,
+        );
+        let mode = 'UNKNOWN';
+        try {
+          const projectResult = await apiRequest<ProjectModeResponse>(
+            `/v1/projects/${encodeURIComponent(result.projectId)}`,
+          );
+          mode = projectResult.project.mode;
+        } catch {
+          // Real generation results can still be shown if independent project
+          // metadata is temporarily unavailable; generic copy is the safe fallback.
+        }
         if (!active) return;
         setGeneration({ ...result, requestScope });
+        setProjectMode({ requestScope, mode });
         setGenerationError(null);
-      })
-      .catch((error) => {
+      } catch (error) {
         if (active)
-          setGenerationError(error instanceof Error ? error.message : translateCopy('Sonuçlar yüklenemedi.'));
-      });
+          setGenerationError(
+            error instanceof Error ? error.message : translateCopy('Sonuçlar yüklenemedi.'),
+          );
+      }
+    })();
     return () => {
       active = false;
     };
@@ -164,12 +201,6 @@ export default function GenerationResultsScreen() {
     setReportSending(false);
     reportAttempt.current = null;
   }, [requestScope]);
-
-  useEffect(() => {
-    if (!generationError) return;
-    const timeout = setTimeout(() => setGenerationError(null), 4_000);
-    return () => clearTimeout(timeout);
-  }, [generationError]);
 
   useEffect(() => {
     if (!selectionError) return;
@@ -198,7 +229,9 @@ export default function GenerationResultsScreen() {
           : current,
       );
     } catch (error) {
-      setSelectionError(error instanceof Error ? error.message : translateCopy('Varyasyon seçilemedi.'));
+      setSelectionError(
+        error instanceof Error ? error.message : translateCopy('Varyasyon seçilemedi.'),
+      );
     }
   };
 
@@ -229,7 +262,9 @@ export default function GenerationResultsScreen() {
       reportAttempt.current = null;
     } catch (error) {
       setReportError(
-        error instanceof Error ? error.message : translateCopy('Rapor gönderilemedi. Lütfen tekrar dene.'),
+        error instanceof Error
+          ? error.message
+          : translateCopy('Rapor gönderilemedi. Lütfen tekrar dene.'),
       );
     } finally {
       setReportSending(false);
@@ -247,188 +282,207 @@ export default function GenerationResultsScreen() {
     <Screen contentContainerStyle={styles.content}>
       <AppHeader
         back
-        title={translateCopy("Sonuçlar")}
-        subtitle={translateCopy("Oluşturulan görseller")}
-        right={
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={favorite ? translateCopy("Favorilerden çıkar") : translateCopy("Favorilere ekle")}
-            onPress={() => setFavorite((value) => !value)}
-            style={styles.favorite}
-          >
-            <Icon
-              name={favorite ? 'star' : 'star-outline'}
-              size={21}
-              color={favorite ? colors.accentYellow : colors.textPrimary}
-            />
-          </Pressable>
-        }
+        title={translateCopy(isProductProject ? 'Ürün alternatifleri' : 'Sonuçlar')}
+        subtitle={translateCopy(
+          isProductProject ? 'Sunucuda tamamlanan gerçek çıktılar' : 'Oluşturulan görseller',
+        )}
       />
-      <View style={styles.mainPreview}>
-        {imageUri ? (
+      {imageUri ? (
+        <View
+          style={[styles.mainPreview, { aspectRatio: shareAspectRatio(generation?.aspectRatio) }]}
+        >
           <Image
-            accessibilityLabel={translateCopy("{{p0}} AI üretim sonucu", { p0: selectedVariant.label })}
+            accessibilityLabel={translateCopy('{{p0}} AI üretim sonucu', {
+              p0: selectedVariant.label,
+            })}
             source={{ uri: imageUri, headers: imageHeaders }}
             style={styles.generatedImage}
-            resizeMode="cover"
+            resizeMode="contain"
           />
-        ) : (
-          <SourcePreview
-            sourceUri={flow.sourceUri}
-            label={translateCopy("{{p0}} önizlemesi", { p0: selectedVariant?.label ?? translateCopy('Sonuç') })}
-          />
-        )}
-        {!imageUri ? (
-          <LinearGradient
-            colors={selectedVariant?.palette ?? variants[0].palette}
-            style={styles.previewTint}
-          />
-        ) : null}
-        {!imageUri ? (
-          <View style={styles.previewCenter}>
-            <Text style={styles.previewGlyph}>{selectedVariant?.icon ?? '✦'}</Text>
-            <Text style={styles.previewLabel}>{styleName}</Text>
+          <View style={styles.aiTag}>
+            <Icon name="sparkles" size={12} color={colors.accentYellow} />
+            <Text style={styles.aiTagText}>{translateCopy('AI ile oluşturuldu')}</Text>
           </View>
-        ) : null}
-        <View style={styles.aiTag}>
-          <Icon name="sparkles" size={12} color={colors.accentYellow} />
-          <Text style={styles.aiTagText}>{translateCopy("AI ile oluşturuldu")}</Text>
         </View>
-      </View>
-      {generationError ? (
-        <Notice tone="warning" title={translateCopy("Sonuçlar sunucudan alınamadı")}>
-          {generationError}
+      ) : (
+        <View style={styles.resultState}>
+          {displayGenerationError ? (
+            <Icon name="cloud-offline-outline" size={36} color={colors.warning} />
+          ) : generation && generation.status !== 'COMPLETED' ? (
+            <ActivityIndicator color={colors.accentYellow} size="large" />
+          ) : (
+            <Icon name="images-outline" size={36} color={colors.textMuted} />
+          )}
+          <Text style={styles.resultStateTitle}>
+            {displayGenerationError
+              ? translateCopy('Sonuç yüklenemedi')
+              : generation && generation.status !== 'COMPLETED'
+                ? translateCopy('Üretim tamamlanıyor')
+                : translateCopy('Tamamlanmış çıktı bulunamadı')}
+          </Text>
+          <Text style={styles.resultStateDetail}>
+            {displayGenerationError
+              ? translateCopy('Sunucuda kayıtlı gerçek sonuç alınmadan önizleme gösterilmez.')
+              : generation && generation.status !== 'COMPLETED'
+                ? translateCopy('Gerçek çıktılar hazır olduğunda bu ekranda görünecek.')
+                : translateCopy('Bu üretimde indirilebilir bir sunucu çıktısı yok.')}
+          </Text>
+        </View>
+      )}
+      {displayGenerationError ? (
+        <Notice tone="warning" title={translateCopy('Sonuçlar sunucudan alınamadı')}>
+          {displayGenerationError}
         </Notice>
       ) : null}
       {generation && generation.status !== 'COMPLETED' ? (
-        <Notice tone="warning" title={translateCopy("Üretim henüz hazır değil")}>{translateCopy("Güvenli sonuçlar tamamlandığında burada gösterilir.")}</Notice>
+        <Notice tone="warning" title={translateCopy('Üretim henüz hazır değil')}>
+          {translateCopy('Güvenli sonuçlar tamamlandığında burada gösterilir.')}
+        </Notice>
       ) : null}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.variants}
-        accessibilityRole="radiogroup"
-      >
-        {displayVariants.map((variant, index) => (
-          <VisualTile
-            key={variant.id}
-            size="small"
-            title={variant.label}
-            subtitle={index === 0 ? translateCopy("Önerilen") : translateCopy("Alternatif")}
-            palette={variant.palette}
-            icon={variant.icon}
-            imageSource={
-              variant.sourceUrl
-                ? {
-                    uri: variant.sourceUrl.startsWith('/')
-                      ? `${apiBaseUrl}${variant.sourceUrl}`
-                      : variant.sourceUrl,
-                    headers:
-                      variant.sourceUrl.startsWith('/') && accessToken
-                        ? { authorization: `Bearer ${accessToken}` }
-                        : undefined,
-                  }
-                : undefined
-            }
-            selected={selected === variant.id}
-            onPress={() => void chooseVariant(variant)}
-          />
-        ))}
-      </ScrollView>
+      {displayVariants.length ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.variants}
+          accessibilityRole="radiogroup"
+        >
+          {displayVariants.map((variant, index) => (
+            <VisualTile
+              key={variant.id}
+              size="small"
+              title={variant.label}
+              subtitle={index === 0 ? translateCopy('Önerilen') : translateCopy('Alternatif')}
+              palette={variant.palette}
+              icon={variant.icon}
+              imageSource={{
+                uri: variant.sourceUrl!.startsWith('/')
+                  ? `${apiBaseUrl}${variant.sourceUrl}`
+                  : variant.sourceUrl!,
+                headers:
+                  variant.sourceUrl!.startsWith('/') && accessToken
+                    ? { authorization: `Bearer ${accessToken}` }
+                    : undefined,
+              }}
+              selected={selected === variant.id}
+              onPress={() => void chooseVariant(variant)}
+            />
+          ))}
+        </ScrollView>
+      ) : null}
       {selectionError ? (
-        <Notice tone="warning" title={translateCopy("Seçim kaydedilemedi")}>
+        <Notice tone="warning" title={translateCopy('Seçim kaydedilemedi')}>
           {selectionError}
         </Notice>
       ) : null}
-      <View style={styles.actionRow}>
-        <PrimaryButton
-          label={translateCopy("Düzenle")}
-          icon="sparkles-outline"
-          onPress={() => router.push(`/generations/${routeGenerationId}/edit` as never)}
-          style={styles.action}
-        />
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={translateCopy("Önce ve sonra karşılaştır")}
-          onPress={() => router.push(`/generations/${routeGenerationId}/compare` as never)}
-          style={styles.iconAction}
-        >
-          <Icon name="git-compare-outline" size={21} />
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={translateCopy("Dışa aktar ve paylaş")}
-          onPress={() =>
-            router.push({
-              pathname: '/generations/[id]/export',
-              params: {
-                id: routeGenerationId,
-                outputId: selectedVariant?.serverOutput ? selected : undefined,
-              },
-            } as never)
-          }
-          style={styles.iconAction}
-        >
-          <Icon name="share-outline" size={21} />
-        </Pressable>
-      </View>
-      <Notice tone="neutral" title={translateCopy("Seçili sonuç")}>{translateCopy("Seçtiğin gerçek üretimi mevcut kalitesiyle kaydedebilir ve paylaşabilirsin.")}</Notice>
-      <View style={{ marginTop: spacing.lg }}>
-        <GeneratedSharePanel
-          generationId={routeGenerationId}
-          outputId={selectedVariant?.serverOutput ? selected : undefined}
-          ready={generation?.status === 'COMPLETED' && Boolean(imageUri)}
-        />
-      </View>
-      <View style={styles.secondaryActions}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={translateCopy("Yeniden oluştur")}
-          onPress={() => router.push('/create/review' as never)}
-          style={styles.secondary}
-        >
-          <Icon name="refresh-outline" size={18} color={colors.textSecondary} />
-          <Text style={styles.secondaryText}>{translateCopy("Yeniden oluştur")}</Text>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={translateCopy("Seçili görseli kaydet")}
-          onPress={() =>
-            router.push({
-              pathname: '/generations/[id]/export',
-              params: {
-                id: routeGenerationId,
-                outputId: selectedVariant?.serverOutput ? selected : undefined,
-              },
-            } as never)
-          }
-          style={styles.secondary}
-        >
-          <Icon name="download-outline" size={18} color={colors.textSecondary} />
-          <Text style={styles.secondaryText}>{translateCopy("Kaydet ve paylaş")}</Text>
-        </Pressable>
-      </View>
-      {reportReceipt ? (
-        <Notice tone="success" title={translateCopy("Raporun gönderildi")}>{translateCopy("İçerik güvenli inceleme için kaydedildi. Talep numaran: {{p0}}", { p0: reportReceipt.id })}</Notice>
+      {generationId && generation?.status === 'COMPLETED' && imageUri && selectedVariant ? (
+        <>
+          <View style={styles.actionRow}>
+            <PrimaryButton
+              label={translateCopy(isProductProject ? 'Ürünü düzenle' : 'Düzenle')}
+              icon="sparkles-outline"
+              onPress={() => router.push(`/generations/${generationId}/edit` as never)}
+              style={styles.action}
+            />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={translateCopy('Önce ve sonra karşılaştır')}
+              onPress={() => router.push(`/generations/${generationId}/compare` as never)}
+              style={styles.iconAction}
+            >
+              <Icon name="git-compare-outline" size={21} />
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={translateCopy('Dışa aktar ve paylaş')}
+              onPress={() =>
+                router.push({
+                  pathname: '/generations/[id]/export',
+                  params: { id: generationId, outputId: selected },
+                } as never)
+              }
+              style={styles.iconAction}
+            >
+              <Icon name="share-outline" size={21} />
+            </Pressable>
+          </View>
+          <Notice
+            tone="neutral"
+            title={translateCopy(isProductProject ? 'Seçili gerçek çıktı' : 'Seçili sonuç')}
+          >
+            {translateCopy(
+              isProductProject
+                ? 'Seçtiğin sunucu çıktısını mevcut kalitesiyle kaydedebilir ve paylaşabilirsin.'
+                : 'Seçtiğin gerçek üretimi mevcut kalitesiyle kaydedebilir ve paylaşabilirsin.',
+            )}
+          </Notice>
+          <View style={{ marginTop: spacing.lg }}>
+            <GeneratedSharePanel generationId={generationId} outputId={selected} ready />
+          </View>
+          <View style={styles.secondaryActions}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={translateCopy(
+                isProductProject ? 'Yeni versiyon oluştur' : 'Yeniden oluştur',
+              )}
+              onPress={() => router.push(`/generations/${generationId}/edit` as never)}
+              style={styles.secondary}
+            >
+              <Icon name="refresh-outline" size={18} color={colors.textSecondary} />
+              <Text style={styles.secondaryText}>
+                {translateCopy(isProductProject ? 'Yeni versiyon' : 'Yeniden oluştur')}
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={translateCopy('Seçili görseli kaydet')}
+              onPress={() =>
+                router.push({
+                  pathname: '/generations/[id]/export',
+                  params: { id: generationId, outputId: selected },
+                } as never)
+              }
+              style={styles.secondary}
+            >
+              <Icon name="download-outline" size={18} color={colors.textSecondary} />
+              <Text style={styles.secondaryText}>{translateCopy('Kaydet ve paylaş')}</Text>
+            </Pressable>
+          </View>
+        </>
       ) : null}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={translateCopy("Bu içeriği raporla")}
-        onPress={() => {
-          setReportError(null);
-          setReportOpen(true);
-        }}
-        style={({ pressed }) => [styles.reportAction, pressed && styles.pressed]}
-      >
-        <Icon name="flag-outline" size={18} color={colors.danger} />
-        <Text style={styles.reportActionText}>{translateCopy("Raporla")}</Text>
-      </Pressable>
+      {reportReceipt ? (
+        <Notice tone="success" title={translateCopy('Raporun gönderildi')}>
+          {translateCopy('İçerik güvenli inceleme için kaydedildi. Talep numaran: {{p0}}', {
+            p0: reportReceipt.id,
+          })}
+        </Notice>
+      ) : null}
+      {generationId && selectedVariant?.serverOutput ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={translateCopy('Bu içeriği raporla')}
+          onPress={() => {
+            setReportError(null);
+            setReportOpen(true);
+          }}
+          style={({ pressed }) => [styles.reportAction, pressed && styles.pressed]}
+        >
+          <Icon name="flag-outline" size={18} color={colors.danger} />
+          <Text style={styles.reportActionText}>{translateCopy('Raporla')}</Text>
+        </Pressable>
+      ) : null}
       <PrimaryButton
-        accessibilityHint={translateCopy("Yeni bir üretime en baştan başlar")}
+        accessibilityHint={translateCopy(
+          isProductProject ? 'Yeni bir ürün projesi başlatır' : 'Yeni bir üretime en baştan başlar',
+        )}
         icon="add"
-        label={translateCopy("Yeni oluştur")}
+        label={translateCopy(isProductProject ? 'Yeni ürün projesi' : 'Yeni oluştur')}
         onPress={() => {
-          reset();
+          if (isProductProject) {
+            resetProductStudioFlow();
+            router.dismissTo('/studio' as never);
+            return;
+          }
+          resetCreateFlow();
           router.dismissTo('/create' as never);
         }}
         style={styles.newCreateAction}
@@ -481,88 +535,104 @@ function ReportModal({
     >
       <View accessibilityViewIsModal style={styles.modalBackdrop}>
         <Pressable
-          accessibilityLabel={translateCopy("Rapor penceresini kapat")}
+          accessibilityLabel={translateCopy('Rapor penceresini kapat')}
           accessibilityRole="button"
           onPress={onClose}
           style={StyleSheet.absoluteFill}
         />
-        <View style={styles.modalSheet}>
-          <View style={styles.modalHandle} />
-          <View style={styles.modalHeader}>
-            <View>
-              <Text accessibilityRole="header" style={styles.modalTitle}>{translateCopy("İçeriği raporla")}</Text>
-              <Text style={styles.modalIntro}>{translateCopy("Rapor nedenini seç. İnceleme için yalnızca gerekli bilgileri paylaş.")}</Text>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={12}
+          style={styles.modalKeyboard}
+        >
+          <ScrollView
+            contentContainerStyle={styles.modalSheetContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            style={styles.modalSheet}
+          >
+            <View style={styles.modalHandle} />
+            <View style={styles.modalHeader}>
+              <View>
+                <Text accessibilityRole="header" style={styles.modalTitle}>
+                  {translateCopy('İçeriği raporla')}
+                </Text>
+                <Text style={styles.modalIntro}>
+                  {translateCopy(
+                    'Rapor nedenini seç. İnceleme için yalnızca gerekli bilgileri paylaş.',
+                  )}
+                </Text>
+              </View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={translateCopy('Rapor penceresini kapat')}
+                hitSlop={8}
+                onPress={onClose}
+                style={styles.modalClose}
+              >
+                <Icon name="close" size={20} color={colors.textSecondary} />
+              </Pressable>
             </View>
+            <View style={styles.reportReasons}>
+              {reportReasons.map((item) => (
+                <Pressable
+                  key={item}
+                  accessibilityLabel={item}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: reason === item }}
+                  onPress={() => onSelectReason(item)}
+                  style={({ pressed }) => [
+                    styles.reportReason,
+                    reason === item && styles.reportReasonSelected,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <View style={[styles.radio, reason === item && styles.radioSelected]}>
+                    {reason === item ? <View style={styles.radioDot} /> : null}
+                  </View>
+                  <Text style={styles.reportReasonText}>{translateCopy(item)}</Text>
+                </Pressable>
+              ))}
+            </View>
+            <Text style={styles.reportDetailLabel}>
+              {translateCopy('Ek açıklama')}{' '}
+              <Text style={styles.reportOptional}>{translateCopy('opsiyonel')}</Text>
+            </Text>
+            <TextInput
+              accessibilityLabel={translateCopy('Rapor için ek açıklama')}
+              maxLength={500}
+              multiline
+              numberOfLines={3}
+              onChangeText={onChangeDetail}
+              placeholder={translateCopy('İncelemeye yardımcı olabilecek kısa bir açıklama yaz.')}
+              placeholderTextColor={colors.textMuted}
+              style={styles.reportDetailInput}
+              textAlignVertical="top"
+              value={detail}
+            />
+            <Text style={styles.reportCount}>{detail.length} / 500</Text>
+            {error ? (
+              <Text accessibilityLiveRegion="polite" style={styles.reportError}>
+                {error}
+              </Text>
+            ) : null}
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={translateCopy("Rapor penceresini kapat")}
-              hitSlop={8}
-              onPress={onClose}
-              style={styles.modalClose}
+              accessibilityState={{ disabled: !reason || sending, busy: sending }}
+              disabled={!reason || sending}
+              onPress={onSubmit}
+              style={({ pressed }) => [
+                styles.reportSubmit,
+                (!reason || sending) && styles.reportSubmitDisabled,
+                pressed && reason && !sending && styles.pressed,
+              ]}
             >
-              <Icon name="close" size={20} color={colors.textSecondary} />
+              <Text style={styles.reportSubmitText}>
+                {sending ? translateCopy('Rapor gönderiliyor…') : translateCopy('Raporu gönder')}
+              </Text>
             </Pressable>
-          </View>
-          <ScrollView
-            contentContainerStyle={styles.reportReasons}
-            showsVerticalScrollIndicator={false}
-          >
-            {reportReasons.map((item) => (
-              <Pressable
-                key={item}
-                accessibilityLabel={item}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: reason === item }}
-                onPress={() => onSelectReason(item)}
-                style={({ pressed }) => [
-                  styles.reportReason,
-                  reason === item && styles.reportReasonSelected,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <View style={[styles.radio, reason === item && styles.radioSelected]}>
-                  {reason === item ? <View style={styles.radioDot} /> : null}
-                </View>
-                <Text style={styles.reportReasonText}>{translateCopy(item)}</Text>
-              </Pressable>
-            ))}
           </ScrollView>
-          <Text style={styles.reportDetailLabel}>{translateCopy("Ek açıklama")}{' '}<Text style={styles.reportOptional}>{translateCopy("opsiyonel")}</Text>
-          </Text>
-          <TextInput
-            accessibilityLabel={translateCopy("Rapor için ek açıklama")}
-            maxLength={500}
-            multiline
-            numberOfLines={3}
-            onChangeText={onChangeDetail}
-            placeholder={translateCopy("İncelemeye yardımcı olabilecek kısa bir açıklama yaz.")}
-            placeholderTextColor={colors.textMuted}
-            style={styles.reportDetailInput}
-            textAlignVertical="top"
-            value={detail}
-          />
-          <Text style={styles.reportCount}>{detail.length} / 500</Text>
-          {error ? (
-            <Text accessibilityLiveRegion="polite" style={styles.reportError}>
-              {error}
-            </Text>
-          ) : null}
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ disabled: !reason || sending, busy: sending }}
-            disabled={!reason || sending}
-            onPress={onSubmit}
-            style={({ pressed }) => [
-              styles.reportSubmit,
-              (!reason || sending) && styles.reportSubmitDisabled,
-              pressed && reason && !sending && styles.pressed,
-            ]}
-          >
-            <Text style={styles.reportSubmitText}>
-              {sending ? translateCopy("Rapor gönderiliyor…") : translateCopy("Raporu gönder")}
-            </Text>
-          </Pressable>
-        </View>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );
@@ -581,13 +651,41 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   mainPreview: {
-    height: 320,
+    alignSelf: 'center',
     borderRadius: radii.xl,
+    maxHeight: 640,
+    minHeight: 320,
     overflow: 'hidden',
     position: 'relative',
     marginTop: spacing.sm,
+    width: '100%',
   },
-  generatedImage: { ...StyleSheet.absoluteFill },
+  resultState: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    justifyContent: 'center',
+    marginTop: spacing.sm,
+    minHeight: 280,
+    padding: spacing.xl,
+  },
+  resultStateTitle: {
+    ...typography.h3,
+    color: colors.textPrimary,
+    marginTop: spacing.md,
+    textAlign: 'center',
+  },
+  resultStateDetail: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    lineHeight: 19,
+    marginTop: spacing.xs,
+    maxWidth: 330,
+    textAlign: 'center',
+  },
+  generatedImage: { ...StyleSheet.absoluteFill, backgroundColor: '#080B09' },
   previewTint: { ...StyleSheet.absoluteFill, opacity: 0.3 },
   previewCenter: {
     position: 'absolute',
@@ -660,6 +758,13 @@ const styles = StyleSheet.create({
   newCreateAction: { marginTop: spacing.xl },
   pressed: { opacity: 0.78 },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.68)', justifyContent: 'flex-end' },
+  modalKeyboard: {
+    alignSelf: 'center',
+    flex: 1,
+    justifyContent: 'flex-end',
+    maxWidth: 680,
+    width: '100%',
+  },
   modalSheet: {
     backgroundColor: colors.surfaceElevated,
     borderTopLeftRadius: radii.xl,
@@ -668,6 +773,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0,
     borderColor: colors.border,
     maxHeight: '86%',
+    overflow: 'hidden',
+  },
+  modalSheetContent: {
     paddingHorizontal: spacing.lg,
     paddingBottom: 28,
   },

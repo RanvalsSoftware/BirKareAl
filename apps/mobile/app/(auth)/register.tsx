@@ -213,11 +213,11 @@ export default function RegisterScreen() {
       />
       <AuthHero variant="register" />
       <AuthTitle
-        eyebrow={copy('YENİ STÜDYO', 'NEW STUDIO')}
+        eyebrow={copy('YENİ ÜRÜN STÜDYOSU', 'NEW PRODUCT STUDIO')}
         title={copy('Hesabını oluştur.', 'Create your account.')}
         subtitle={copy(
-          'Hayalindeki kareleri saklayacağın kişisel stüdyona hoş geldin.',
-          'Welcome to your personal studio for every image you imagine.',
+          'Ürün projelerini ve gerçek çıktıları tek katalogda yönet.',
+          'Manage product projects and real outputs in one catalog.',
         )}
       />
       <AuthFormCard>

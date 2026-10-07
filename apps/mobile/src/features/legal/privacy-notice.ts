@@ -1,7 +1,7 @@
 export const privacyNoticeSections = [
   {
     heading: 'Veri sorumlusu ve iletişim',
-    body: 'Ranvals Games Yazılım Bilişim San. ve Tic. Ltd. Şti. · Ticaret Sicil No: 0734251388300001 · ZİYA GÖKALP MAH. SÜLEYMAN DEMİREL BLV. THE OFFICE NO: 7 E İÇ KAPI NO: 136 BAŞAKŞEHİR/İSTANBUL · birkare@ranvals.com. Bu Aydınlatma Metni, 6698 sayılı KVKK m.10 uyarınca BirKare AI mobil uygulamasında kişisel verilerinizin işlenmesi hakkında bilgi vermek amacıyla hazırlanmıştır.',
+    body: 'Ranvals Games Yazılım Bilişim San. ve Tic. Ltd. Şti. · Ticaret Sicil No: 0734251388300001 · ZİYA GÖKALP MAH. SÜLEYMAN DEMİREL BLV. THE OFFICE NO: 7 E İÇ KAPI NO: 136 BAŞAKŞEHİR/İSTANBUL · birkare@ranvals.com. Bu Aydınlatma Metni, 6698 sayılı KVKK m.10 uyarınca BirKare Studio mobil uygulamasında kişisel verilerinizin işlenmesi hakkında bilgi vermek amacıyla hazırlanmıştır.',
   },
   {
     heading: '1. İşlenen kişisel verileriniz',
@@ -36,7 +36,7 @@ export const explicitConsentSections = [
   },
   {
     heading: 'İznin kapsamı dışında kalanlar',
-    body: 'Verilerim reklam, pazarlama, kullanıcı profili oluşturma veya veri satışı amacıyla kullanılmaz. Biyometrik yüz şablonu, yüz geometrisi haritası veya yüz embedding’i oluşturulmaz. Verilerim BirKare AI modellerini eğitmek için kullanılmaz.',
+    body: 'Verilerim reklam, pazarlama, kullanıcı profili oluşturma veya veri satışı amacıyla kullanılmaz. Biyometrik yüz şablonu, yüz geometrisi haritası veya yüz embedding’i oluşturulmaz. Verilerim BirKare Studio modellerini eğitmek için kullanılmaz.',
   },
   {
     heading: 'Geri alma hakkı',
@@ -47,7 +47,7 @@ export const explicitConsentSections = [
 export const privacyPolicySections = [
   {
     heading: 'Veri sorumlusu ve iletişim',
-    body: 'Ranvals Games Yazılım Bilişim San. ve Tic. Ltd. Şti. · Ticaret Sicil No: 0734251388300001 · ZİYA GÖKALP MAH. SÜLEYMAN DEMİREL BLV. THE OFFICE NO: 7 E İÇ KAPI NO: 136 BAŞAKŞEHİR/İSTANBUL · birkare@ranvals.com. Bu politika BirKare AI mobil uygulamasını ve ilgili tanıtım/destek sayfalarını açıklar.',
+    body: 'Ranvals Games Yazılım Bilişim San. ve Tic. Ltd. Şti. · Ticaret Sicil No: 0734251388300001 · ZİYA GÖKALP MAH. SÜLEYMAN DEMİREL BLV. THE OFFICE NO: 7 E İÇ KAPI NO: 136 BAŞAKŞEHİR/İSTANBUL · birkare@ranvals.com. Bu politika BirKare Studio mobil uygulamasını ve ilgili tanıtım/destek sayfalarını açıklar.',
   },
   {
     heading: '1. İşlenen bilgiler',
@@ -55,7 +55,7 @@ export const privacyPolicySections = [
   },
   {
     heading: '2. Fotoğraflar, yüz özellikleri ve AI',
-    body: 'Yalnızca sizin seçtiğiniz kaynak görseller, başlattığınız görsel üretme/düzenleme ve güvenlik kontrolleri için işlenir. Fotoğrafın görünür yüz içeriği AI hizmetlerine gönderilebilir. Face ID/TrueDepth verisine erişilmez; ayrı yüz şablonu, embedding veya yüz tanıma veritabanı oluşturulmaz. Fotoğraflar reklam, profil çıkarma, veri satışı veya BirKare AI modellerini eğitme amacıyla kullanılmaz.',
+    body: 'Yalnızca sizin seçtiğiniz kaynak görseller, başlattığınız görsel üretme/düzenleme ve güvenlik kontrolleri için işlenir. Fotoğrafın görünür yüz içeriği AI hizmetlerine gönderilebilir. Face ID/TrueDepth verisine erişilmez; ayrı yüz şablonu, embedding veya yüz tanıma veritabanı oluşturulmaz. Fotoğraflar reklam, profil çıkarma, veri satışı veya BirKare Studio modellerini eğitme amacıyla kullanılmaz.',
   },
   {
     heading: '3. Sağlayıcılar ve aktarım',
@@ -82,15 +82,15 @@ export const privacyPolicySections = [
 export const termsSections = [
   {
     heading: 'Hizmet sağlayıcı',
-    body: 'Ranvals Games Yazılım Bilişim San. ve Tic. Ltd. Şti. · Ticaret Sicil No: 0734251388300001 · ZİYA GÖKALP MAH. SÜLEYMAN DEMİREL BLV. THE OFFICE NO: 7 E İÇ KAPI NO: 136 BAŞAKŞEHİR/İSTANBUL · birkare@ranvals.com. Bu Kullanım Koşulları ("Koşullar"), şirket tarafından sunulan BirKare AI mobil uygulamasının ("Uygulama") kullanım şartlarını düzenler.',
+    body: 'Ranvals Games Yazılım Bilişim San. ve Tic. Ltd. Şti. · Ticaret Sicil No: 0734251388300001 · ZİYA GÖKALP MAH. SÜLEYMAN DEMİREL BLV. THE OFFICE NO: 7 E İÇ KAPI NO: 136 BAŞAKŞEHİR/İSTANBUL · birkare@ranvals.com. Bu Kullanım Koşulları ("Koşullar"), şirket tarafından sunulan BirKare Studio mobil uygulamasının ("Uygulama") kullanım şartlarını düzenler.',
   },
   {
     heading: '1. Hizmetin tanımı',
-    body: 'BirKare AI, kullanıcıların seçtiği fotoğrafları yapay zekâ destekli araçlarla düzenlemesine, dönüştürmesine ve yeni görseller üretmesine olanak tanıyan bir mobil uygulamadır. Kullanıcının talep ettiği görsel işlemler için üçüncü taraf yapay zekâ hizmetlerinden yararlanılabilir.',
+    body: 'BirKare Studio, kullanıcıların seçtiği ürün fotoğraflarını yapay zekâ destekli araçlarla katalog ve kampanya görsellerine dönüştürmesine olanak tanıyan bir mobil uygulamadır. Kullanıcının talep ettiği görsel işlemler için üçüncü taraf yapay zekâ hizmetlerinden yararlanılabilir.',
   },
   {
     heading: '2. Lisans',
-    body: "Şirket, Uygulama'yı kişisel ve ticari olmayan amaçlarla kullanmanız için sınırlı, devredilemez, münhasır olmayan ve geri alınabilir bir lisans verir. Bu lisans; kaynak kodunu kopyalama, değiştirme, dağıtma, tersine mühendislik yapma veya türev çalışmalar oluşturma hakkını içermez.",
+    body: "Şirket, Uygulama'yı kişisel amaçlarla veya kendi işletmeniz ya da temsil etmeye yetkili olduğunuz bir işletme için katalog, ürün sayfası, reklam ve diğer hukuka uygun ticari amaçlarla kullanmanız için sınırlı, devredilemez, münhasır olmayan ve geri alınabilir bir lisans verir. Bu lisans; Uygulamanın kaynak kodunu kopyalama, değiştirme, dağıtma, tersine mühendislik yapma veya Uygulamadan türev çalışmalar oluşturma hakkını içermez.",
   },
   {
     heading: '3. Kullanıcı yükümlülükleri',
@@ -98,7 +98,7 @@ export const termsSections = [
   },
   {
     heading: '4. Fikri mülkiyet',
-    body: 'Uygulamanın tasarımı, yazılımı, logosu, ticari markaları ve içeriği Şirkete aittir ve fikri mülkiyet mevzuatıyla korunur. Kullanıcıların oluşturduğu görsellerin mülkiyetinde ilgili mevzuat ve üçüncü taraf sağlayıcı koşulları saklıdır.',
+    body: 'Uygulamanın tasarımı, yazılımı, logosu, ticari markaları ve Şirkete ait içeriği fikri mülkiyet mevzuatıyla korunur. Yüklediğiniz ürün görsellerindeki haklar size veya ilgili hak sahibine aittir. İlgili mevzuat, üçüncü taraf sağlayıcı koşulları ve başkalarının hakları saklı kalmak üzere, oluşturduğunuz çıktıları kişisel veya hukuka uygun ticari ürün tanıtımı amaçlarıyla kullanabilirsiniz. Bir çıktıyı yayımlamadan önce ürün, marka, ambalaj, kişi ve diğer üçüncü taraf haklarını kontrol etmek sizin sorumluluğunuzdadır.',
   },
   {
     heading: '5. Ödeme koşulları',

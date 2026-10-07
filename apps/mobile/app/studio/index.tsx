@@ -1,182 +1,217 @@
-import { useLanguageRevision } from '@/i18n/use-language';
-import { tr as translateCopy } from '@/i18n/engine';
-import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+  type ImageSourcePropType,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { GlassSurface, Icon, Screen } from '@/components';
-import { CreateHeader } from '@/features/create/components';
-import { resetStudioFlow, updateStudioFlow, type StudioMode } from '@/features/studio/studioFlow';
-import { useStudioCatalog } from '@/features/studio/useStudioCatalog';
-import { colors, radii, spacing, typography } from '@/theme';
+import { Icon } from '@/components';
+import { useCopy } from '@/features/settings/language-store';
+import {
+  commerceGoals,
+  commerceGoalById,
+  type CommerceGoalDefinition,
+} from '@/features/studio/commerceGoals';
+import { resetProductStudioFlow, updateProductStudioFlow } from '@/features/studio/productFlow';
+import { spacing } from '@/theme';
+
+const goalArtwork: Record<CommerceGoalDefinition['id'], ImageSourcePropType> = {
+  marketplace: require('../../assets/products/ui/scenes/white-studio.webp'),
+  'product-page': require('../../assets/products/ui/scenes/beige-premium.webp'),
+  'social-ad': require('../../assets/products/ui/scenes/ad-poster.webp'),
+  'web-hero': require('../../assets/products/ui/scenes/desktop.webp'),
+};
 
 export default function StudioHomeScreen() {
-  const languageRevision = useLanguageRevision();
-
   const router = useRouter();
-  const { fontScale } = useWindowDimensions();
-  const { previewCredits, studioModeCards } = useStudioCatalog();
-  const cardHeight = Math.round(250 + Math.max(0, fontScale - 1) * 88);
+  const copy = useCopy();
+  const { width } = useWindowDimensions();
+  const tablet = width >= 768;
 
-  function openMode(
-    entry: string,
-    mode: StudioMode,
-    defaults: { defaultSceneId?: string; defaultPresetId?: string },
-  ) {
-    resetStudioFlow(mode);
-    updateStudioFlow({
-      sceneId: defaults.defaultSceneId ?? null,
-      presetId: defaults.defaultPresetId ?? null,
+  function openGoal(goalId: CommerceGoalDefinition['id']) {
+    const goal = commerceGoalById(goalId);
+    resetProductStudioFlow();
+    updateProductStudioFlow({
+      commerceGoal: goal.id,
+      sceneId: goal.sceneId,
+      aspectRatio: goal.aspectRatio,
+      numberOfImages: 2,
     });
-    router.push({ pathname: `/studio/${mode}`, params: { entry } } as never);
+    router.push({ pathname: '/studio/product', params: { entry: goal.id } } as never);
   }
 
   return (
-    <Screen contentContainerStyle={styles.content}>
-      <CreateHeader
-        fallback="/(tabs)/home"
-        title={translateCopy("BirKare Stüdyo")}
-        subtitle={translateCopy("Ürününü gerçeğine sadık kalarak sun")}
-      />
-
-      <LinearGradient colors={['#2B2006', '#111114', '#221235']} style={styles.hero}>
-        <View style={styles.heroIcon}>
-          <Icon name="camera-outline" size={29} color={colors.accentYellow} />
-        </View>
-        <View style={styles.heroCopy}>
-          <Text style={styles.heroTitle}>{translateCopy("Doğru ürün. Doğru sahne. Kontrollü üretim.")}</Text>
-          <Text style={styles.heroBody}>{translateCopy("Prompt, model ve kredi hesabı sunucuda seçilir; yüklediğin ürün yeniden tasarlanmaz.")}</Text>
-        </View>
-      </LinearGradient>
-
-      <Text style={styles.heading}>{translateCopy("Ne hazırlamak istersin?")}</Text>
-      <View style={styles.cards}>
-        {studioModeCards.map((item) => (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`${item.name}. ${item.description}`}
-            key={item.id}
-            onPress={() => openMode(item.id, item.mode, item)}
-            style={({ pressed }) => [
-              styles.card,
-              { height: cardHeight },
-              pressed && styles.pressed,
-            ]}
-          >
-            <GlassSurface
-              contentStyle={styles.cardInner}
-              glow={false}
-              radius={radii.xl}
-              tone={item.mode === 'fashion' ? 'iridescent' : 'gold'}
-              style={StyleSheet.absoluteFill}
+    <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.page}>
+          <View style={styles.header}>
+            <Pressable
+              accessibilityLabel={copy('Geri', 'Back')}
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={() =>
+                router.canGoBack() ? router.back() : router.replace('/(tabs)/home' as never)
+              }
+              style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
             >
-              <View style={styles.cardImageWrap}>
-                <LinearGradient colors={item.palette} style={StyleSheet.absoluteFill} />
-                {item.imageSource ? (
-                  <Image source={item.imageSource} resizeMode="cover" style={styles.cardImage} />
-                ) : null}
-                <LinearGradient
-                  colors={['rgba(5,5,5,0)', 'rgba(5,5,5,0.74)']}
-                  style={StyleSheet.absoluteFill}
-                />
-                <View style={styles.imageBadge}>
-                  <Icon name={item.icon} size={16} color={colors.accentYellow} />
-                  <Text style={styles.imageBadgeText}>{translateCopy("{{p0}} krediden başlayan", { p0: item.creditCost })}</Text>
-                </View>
-              </View>
-              <View style={styles.cardCopy}>
-                <View style={styles.cardText}>
-                  <Text style={styles.cardTitle}>{item.name}</Text>
-                  <Text style={styles.cardDescription}>{item.description}</Text>
-                </View>
-                <View style={styles.arrow}>
-                  <Icon name="arrow-forward" size={20} color={colors.textPrimary} />
-                </View>
-              </View>
-            </GlassSurface>
-          </Pressable>
-        ))}
-      </View>
+              <Icon name="chevron-back" size={24} color="#EEF5F0" />
+            </Pressable>
+            <View style={styles.headerCopy}>
+              <Text style={styles.headerTitle}>
+                {copy('Yeni ürün projesi', 'New product project')}
+              </Text>
+              <Text style={styles.headerSubtitle}>
+                {copy('Önce kullanım amacını seç', 'Start with the intended use')}
+              </Text>
+            </View>
+          </View>
 
-      <View style={styles.assurance}>
-        <Icon name="shield-checkmark-outline" size={22} color="#EFD57B" />
-        <Text style={styles.assuranceText}>{translateCopy("Önizleme {{p0}} kredi. Üretim başlamazsa veya sonuç teslim edilmezse ayrılan kredi iade edilir.", { p0: previewCredits })}</Text>
-      </View>
-    </Screen>
+          <View style={styles.intro}>
+            <View style={styles.introIcon}>
+              <Icon name="scan-outline" size={28} color="#B8F1CD" />
+            </View>
+            <View style={styles.introCopy}>
+              <Text style={styles.introTitle}>
+                {copy(
+                  'Bir fotoğraf, düzenli bir ürün akışı',
+                  'One photo, one organized product workflow',
+                )}
+              </Text>
+              <Text style={styles.introBody}>
+                {copy(
+                  'Seçimin ilk sahneyi ve oranı hazırlar. Sonraki adımda her ayarı değiştirebilirsin.',
+                  'Your choice prepares the first scene and ratio. You can change every setting next.',
+                )}
+              </Text>
+            </View>
+          </View>
+
+          <View style={[styles.grid, tablet && styles.gridTablet]}>
+            {commerceGoals.map((goal) => (
+              <Pressable
+                accessibilityRole="button"
+                key={goal.id}
+                onPress={() => openGoal(goal.id)}
+                style={({ pressed }) => [
+                  styles.card,
+                  tablet && styles.cardTablet,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Image source={goalArtwork[goal.id]} resizeMode="cover" style={styles.cardImage} />
+                <View style={styles.cardBody}>
+                  <View style={styles.cardIcon}>
+                    <Icon name={goal.icon} size={19} color="#B8F1CD" />
+                  </View>
+                  <View style={styles.cardCopy}>
+                    <Text style={styles.cardTitle}>{copy(goal.titleTr, goal.titleEn)}</Text>
+                    <Text style={styles.cardDescription}>
+                      {copy(goal.descriptionTr, goal.descriptionEn)}
+                    </Text>
+                    <Text style={styles.cardMeta}>
+                      {copy('Başlangıç formatı', 'Starting format')} · {goal.aspectRatio}
+                    </Text>
+                  </View>
+                  <Icon name="arrow-forward" size={20} color="#839087" />
+                </View>
+              </Pressable>
+            ))}
+          </View>
+
+          <View style={styles.assurance}>
+            <Icon name="shield-checkmark-outline" size={21} color="#B8F1CD" />
+            <Text style={styles.assuranceText}>
+              {copy(
+                'Ürün kategorisi, sahne, kalite, alternatif sayısı ve kredi tutarı oluşturma öncesinde açıkça gösterilir.',
+                'Category, scene, quality, alternative count, and credit cost are shown before generation.',
+              )}
+            </Text>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { paddingBottom: 48 },
-  hero: {
-    borderColor: 'rgba(255,215,95,0.42)',
-    borderRadius: radii.xl,
+  safeArea: { backgroundColor: '#0B0F0D', flex: 1 },
+  scrollContent: { paddingBottom: 50, paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
+  page: { alignSelf: 'center', maxWidth: 1040, width: '100%' },
+  header: { alignItems: 'center', flexDirection: 'row', gap: 12, minHeight: 58 },
+  backButton: {
+    alignItems: 'center',
+    borderColor: '#29332E',
+    borderRadius: 14,
+    borderWidth: 1,
+    height: 44,
+    justifyContent: 'center',
+    width: 44,
+  },
+  headerCopy: { flex: 1 },
+  headerTitle: { color: '#F2F7F4', fontSize: 21, fontWeight: '800' },
+  headerSubtitle: { color: '#849088', fontSize: 12, marginTop: 2 },
+  intro: {
+    alignItems: 'center',
+    backgroundColor: '#15201B',
+    borderColor: '#2A3D33',
+    borderRadius: 22,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 14,
-    marginTop: spacing.lg,
-    overflow: 'hidden',
+    marginTop: 20,
     padding: 17,
   },
-  heroIcon: {
+  introIcon: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,196,0,0.10)',
-    borderColor: 'rgba(255,196,0,0.36)',
-    borderRadius: 19,
-    borderWidth: 1,
-    height: 56,
+    backgroundColor: '#1D3026',
+    borderRadius: 16,
+    height: 54,
     justifyContent: 'center',
-    width: 56,
+    width: 54,
   },
-  heroCopy: { flex: 1, minWidth: 0 },
-  heroTitle: { ...typography.h3, color: colors.textPrimary, marginTop: 4 },
-  heroBody: { ...typography.caption, color: '#C7C2B8', lineHeight: 18, marginTop: 5 },
-  heading: { ...typography.h2, color: colors.textPrimary, marginTop: spacing.xl },
-  cards: { gap: 12, marginTop: spacing.md },
-  card: { borderRadius: radii.xl, minHeight: 218, overflow: 'hidden' },
-  cardInner: { flex: 1, padding: 7 },
-  cardImageWrap: { aspectRatio: 12 / 5, borderRadius: 21, overflow: 'hidden' },
-  cardImage: { height: '100%', width: '100%' },
-  imageBadge: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(5,5,5,0.70)',
-    borderColor: 'rgba(255,255,255,0.14)',
-    borderRadius: radii.pill,
+  introCopy: { flex: 1 },
+  introTitle: { color: '#EDF5F0', fontSize: 17, fontWeight: '800' },
+  introBody: { color: '#96A39B', fontSize: 13, lineHeight: 19, marginTop: 4 },
+  grid: { gap: 12, marginTop: 18 },
+  gridTablet: { flexDirection: 'row', flexWrap: 'wrap' },
+  card: {
+    backgroundColor: '#111815',
+    borderColor: '#28342D',
+    borderRadius: 22,
     borderWidth: 1,
-    flexDirection: 'row',
-    gap: 6,
-    left: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    position: 'absolute',
-    top: 10,
+    overflow: 'hidden',
   },
-  imageBadgeText: { ...typography.caption, color: colors.textPrimary, fontWeight: '800' },
-  cardCopy: { alignItems: 'center', flexDirection: 'row', gap: 12, padding: 12 },
-  cardText: { flex: 1, minWidth: 0 },
-  cardTitle: { ...typography.h3, color: colors.textPrimary },
-  cardDescription: { ...typography.caption, color: colors.textSecondary, marginTop: 2 },
-  arrow: {
+  cardTablet: { flexBasis: '48%', flexGrow: 1, minWidth: 360 },
+  cardImage: { height: 150, width: '100%' },
+  cardBody: { alignItems: 'center', flexDirection: 'row', gap: 12, padding: 15 },
+  cardIcon: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.07)',
-    borderColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 19,
-    borderWidth: 1,
-    height: 40,
+    backgroundColor: '#1C2D25',
+    borderRadius: 13,
+    height: 42,
     justifyContent: 'center',
-    width: 40,
+    width: 42,
   },
+  cardCopy: { flex: 1 },
+  cardTitle: { color: '#EEF5F0', fontSize: 16, fontWeight: '800' },
+  cardDescription: { color: '#909D95', fontSize: 12, lineHeight: 17, marginTop: 3 },
+  cardMeta: { color: '#B8F1CD', fontSize: 11, fontWeight: '700', marginTop: 7 },
   assurance: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,196,0,0.045)',
-    borderColor: 'rgba(255,196,0,0.18)',
-    borderRadius: radii.lg,
+    borderColor: '#28342D',
+    borderRadius: 18,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 10,
-    marginTop: spacing.lg,
-    padding: 14,
+    gap: 11,
+    marginTop: 20,
+    padding: 15,
   },
-  assuranceText: { ...typography.caption, color: colors.textSecondary, flex: 1, lineHeight: 18 },
-  pressed: { opacity: 0.84, transform: [{ scale: 0.988 }] },
+  assuranceText: { color: '#909D95', flex: 1, fontSize: 12, lineHeight: 18 },
+  pressed: { opacity: 0.78, transform: [{ scale: 0.99 }] },
 });

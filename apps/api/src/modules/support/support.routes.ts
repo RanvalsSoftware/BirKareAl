@@ -148,7 +148,7 @@ export function createSupportRouter(deps: ApiDependencies): Router {
         await deps.mailService.send({
           to: deps.config.SUPPORT_EMAIL,
           replyTo: email.data,
-          subject: `[BirKare AI Destek ${ticket.id}] ${ticket.subject}`,
+          subject: `[BirKare Studio Destek ${ticket.id}] ${ticket.subject}`,
           text: [
             `Talep numarası: ${ticket.id}`,
             `Kategori: ${ticket.category}`,

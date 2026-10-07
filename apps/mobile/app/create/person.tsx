@@ -1,18 +1,9 @@
-import { useEffect } from 'react';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { resetCreateFlow, updateCreateFlow } from '@/features/create/createFlow';
+import { Redirect } from 'expo-router';
 
-/** Old catalogue links now open the source alternative, not a mandatory second person. */
-export default function PersonScreen() {
-  const router = useRouter();
-  const { selected } = useLocalSearchParams<{ selected?: string }>();
-  useEffect(() => {
-    resetCreateFlow();
-    updateCreateFlow({ sourceKind: 'fictional', mode: 'scene', personId: null });
-    router.replace({
-      pathname: '/create/upload',
-      params: { source: 'fictional', ...(selected ? { selected } : {}) },
-    } as never);
-  }, [router, selected]);
-  return null;
+/**
+ * App Store build 12 is intentionally focused on the product/catalog workflow.
+ * The previous implementation is preserved under src/features/legacy/routes.
+ */
+export default function LegacyRouteRedirect() {
+  return <Redirect href="/studio" />;
 }

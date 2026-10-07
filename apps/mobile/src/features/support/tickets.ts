@@ -39,7 +39,7 @@ export function createContentReportInput({
     generationId,
     subject: `İçerik raporu: ${trimmedReason}`,
     message: [
-      'BirKare AI üretim sonucu kullanıcı tarafından raporlandı.',
+      'BirKare Studio üretim sonucu kullanıcı tarafından raporlandı.',
       `Neden: ${trimmedReason}`,
       outputId ? `Raporlanan çıktı: ${outputId}` : null,
       trimmedDetail ? `Açıklama: ${trimmedDetail}` : 'Açıklama: Ek açıklama verilmedi.',

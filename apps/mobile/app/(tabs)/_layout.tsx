@@ -1,38 +1,27 @@
-import { useLanguageRevision } from '@/i18n/use-language';
 import * as Haptics from 'expo-haptics';
 import { Redirect, Tabs } from 'expo-router';
 import { useEffect, useState, type ComponentProps } from 'react';
 import { Keyboard, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
 
-import { GlassSurface, Icon } from '@/components';
-import { useAuthStore } from '@/features/auth/auth-store';
+import { Icon } from '@/components';
 import { AuthBootScreen } from '@/features/auth/auth-boot-screen';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useAuthStore } from '@/features/auth/auth-store';
 import { useCopy } from '@/features/settings/language-store';
-import { colors } from '@/theme';
 
 const tabIcons = {
-  home: ['home-outline', 'home'] as const,
-  explore: ['compass-outline', 'compass'] as const,
-  projects: ['images-outline', 'images'] as const,
+  home: ['storefront-outline', 'storefront'] as const,
+  projects: ['albums-outline', 'albums'] as const,
   credits: ['flash-outline', 'flash'] as const,
-  profile: ['person-outline', 'person'] as const,
+  profile: ['person-circle-outline', 'person-circle'] as const,
 };
 
-type GlassTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
+type CommerceTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
 
-function GlassTabBar({ state, descriptors, navigation }: GlassTabBarProps) {
-  const languageRevision = useLanguageRevision();
-
+function CommerceTabBar({ state, descriptors, navigation }: CommerceTabBarProps) {
   const insets = useSafeAreaInsets();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+
   useEffect(() => {
     const show = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
     const hide = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
@@ -41,159 +30,114 @@ function GlassTabBar({ state, descriptors, navigation }: GlassTabBarProps) {
       hide.remove();
     };
   }, []);
+
   if (keyboardVisible) return null;
+  const activeRouteKey = state.routes[state.index]?.key;
+  const visibleRoutes = state.routes.filter((route) => route.name !== 'explore');
+
   return (
-    <View style={[styles.barArea, { paddingBottom: Math.max(insets.bottom - 5, 8) }]}>
-      <GlassSurface radius={32} tone="gold" contentStyle={styles.bar} accessibilityRole="tablist">
-        {state.routes.map((route, index) => {
+    <View style={[styles.barArea, { paddingBottom: Math.max(insets.bottom, 9) }]}>
+      <View style={styles.bar} accessibilityRole="tablist">
+        {visibleRoutes.map((route) => {
           const options = descriptors[route.key]?.options;
+          const focused = activeRouteKey === route.key;
           const label =
             typeof options?.tabBarLabel === 'string'
               ? options.tabBarLabel
               : (options?.title ?? route.name);
+          const [inactiveIcon, activeIcon] =
+            tabIcons[route.name as keyof typeof tabIcons] ?? tabIcons.home;
           return (
-            <GlassTabButton
+            <Pressable
+              accessibilityRole="tab"
+              accessibilityState={{ selected: focused }}
+              accessibilityLabel={options?.tabBarAccessibilityLabel ?? label}
               key={route.key}
-              name={route.name as keyof typeof tabIcons}
-              label={label}
-              focused={state.index === index}
-              accessibilityLabel={options?.tabBarAccessibilityLabel}
-              testID={options?.tabBarButtonTestID}
               onLongPress={() => navigation.emit({ type: 'tabLongPress', target: route.key })}
               onPress={() => {
+                void Haptics.selectionAsync().catch(() => undefined);
                 const event = navigation.emit({
                   type: 'tabPress',
                   target: route.key,
                   canPreventDefault: true,
                 });
-                if (state.index !== index && !event.defaultPrevented)
+                if (!focused && !event.defaultPrevented)
                   navigation.navigate(route.name, route.params);
               }}
-            />
+              style={({ pressed }) => [
+                styles.tab,
+                focused && styles.tabSelected,
+                pressed && styles.tabPressed,
+              ]}
+              testID={options?.tabBarButtonTestID}
+            >
+              <Icon
+                name={focused ? activeIcon : inactiveIcon}
+                size={22}
+                color={focused ? '#B8F1CD' : '#76817B'}
+              />
+              <Text numberOfLines={1} style={[styles.label, focused && styles.labelSelected]}>
+                {label}
+              </Text>
+            </Pressable>
           );
         })}
-      </GlassSurface>
+      </View>
     </View>
   );
 }
 
-function GlassTabButton({
-  name,
-  label,
-  focused,
-  onPress,
-  onLongPress,
-  accessibilityLabel,
-  testID,
-}: {
-  name: keyof typeof tabIcons;
-  label: string;
-  focused: boolean;
-  onPress: () => void;
-  onLongPress: () => void;
-  accessibilityLabel?: string;
-  testID?: string;
-}) {
-  const languageRevision = useLanguageRevision();
-
-  const reducedMotion = useReducedMotion();
-  const selection = useSharedValue(focused ? 1 : 0);
-  const scale = useSharedValue(1);
-  useEffect(() => {
-    selection.set(
-      reducedMotion ? (focused ? 1 : 0) : withTiming(focused ? 1 : 0, { duration: 220 }),
-    );
-  }, [focused, reducedMotion, selection]);
-  const orbStyle = useAnimatedStyle(() => ({
-    opacity: selection.value,
-    transform: [{ scale: 0.85 + selection.value * 0.15 }],
-  }));
-  const pressStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-  const [inactive, active] = tabIcons[name] ?? tabIcons.home;
-  return (
-    <Animated.View style={[styles.tab, pressStyle]}>
-      <Pressable
-        accessibilityRole="tab"
-        accessibilityState={{ selected: focused }}
-        accessibilityLabel={accessibilityLabel ?? label}
-        testID={testID}
-        onLongPress={onLongPress}
-        onPressIn={() => {
-          if (!reducedMotion) scale.set(withSpring(0.94));
-        }}
-        onPressOut={() => {
-          scale.set(reducedMotion ? 1 : withSpring(1));
-        }}
-        onPress={() => {
-          void Haptics.selectionAsync().catch(() => undefined);
-          onPress();
-        }}
-        style={styles.tabPressable}
-      >
-        <View style={styles.iconSlot}>
-          <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, orbStyle]}>
-            <GlassSurface radius={22} tone="gold" selected style={styles.orb} />
-          </Animated.View>
-          <Icon
-            name={focused ? active : inactive}
-            size={24}
-            color={focused ? colors.accentYellow : '#858584'}
-          />
-        </View>
-        <Text
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.85}
-          style={[styles.label, focused && styles.selectedLabel]}
-        >
-          {label}
-        </Text>
-      </Pressable>
-    </Animated.View>
-  );
-}
-
 export default function TabsLayout() {
-  const languageRevision = useLanguageRevision();
-
   const copy = useCopy();
   const authState = useAuthStore((store) => store.state);
   if (authState === 'booting') return <AuthBootScreen />;
   if (authState !== 'authenticated') return <Redirect href="/(auth)/login" />;
+
   return (
     <Tabs
-      tabBar={(props) => <GlassTabBar {...props} />}
-      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.background } }}
+      tabBar={(props) => <CommerceTabBar {...props} />}
+      screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: '#0B0F0D' } }}
     >
-      <Tabs.Screen name="home" options={{ title: copy('Ana Sayfa', 'Home') }} />
-      <Tabs.Screen name="explore" options={{ title: copy('Keşfet', 'Explore') }} />
-      <Tabs.Screen name="projects" options={{ title: copy('Projeler', 'Projects') }} />
+      <Tabs.Screen name="home" options={{ title: copy('Stüdyo', 'Studio') }} />
+      <Tabs.Screen name="projects" options={{ title: copy('Katalog', 'Catalog') }} />
       <Tabs.Screen name="credits" options={{ title: copy('Krediler', 'Credits') }} />
-      <Tabs.Screen name="profile" options={{ title: copy('Profil', 'Profile') }} />
+      <Tabs.Screen name="profile" options={{ title: copy('Hesap', 'Account') }} />
+      <Tabs.Screen name="explore" options={{ href: null, title: copy('Diğer araçlar', 'Other tools') }} />
     </Tabs>
   );
 }
 
 const styles = StyleSheet.create({
-  barArea: { backgroundColor: colors.background, paddingHorizontal: 12, paddingTop: 7 },
+  barArea: {
+    backgroundColor: '#0B0F0D',
+    borderTopColor: '#202A24',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+  },
   bar: {
+    alignSelf: 'center',
+    backgroundColor: '#111815',
+    borderColor: '#27322C',
+    borderRadius: 22,
+    borderWidth: 1,
     flexDirection: 'row',
+    maxWidth: 680,
+    minHeight: 62,
+    padding: 5,
+    width: '100%',
+  },
+  tab: {
     alignItems: 'center',
-    minHeight: 76,
-    paddingHorizontal: 4,
-    paddingVertical: 6,
+    borderRadius: 17,
+    flex: 1,
+    gap: 3,
+    justifyContent: 'center',
+    minHeight: 50,
+    minWidth: 0,
   },
-  tab: { flex: 1, minWidth: 0 },
-  tabPressable: { alignItems: 'center', justifyContent: 'center', minHeight: 62 },
-  iconSlot: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center' },
-  orb: { width: 42, height: 42 },
-  label: {
-    fontSize: 10,
-    lineHeight: 14,
-    fontWeight: '600',
-    color: '#858584',
-    marginTop: 1,
-    paddingHorizontal: 2,
-  },
-  selectedLabel: { color: colors.accentYellow, fontWeight: '700' },
+  tabSelected: { backgroundColor: '#1B2A22' },
+  tabPressed: { opacity: 0.72 },
+  label: { color: '#76817B', fontSize: 10, fontWeight: '700', lineHeight: 13 },
+  labelSelected: { color: '#D7F7E3' },
 });

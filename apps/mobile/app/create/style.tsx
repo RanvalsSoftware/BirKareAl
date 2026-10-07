@@ -1,9 +1,9 @@
-import { useLanguageRevision } from '@/i18n/use-language';
 import { Redirect } from 'expo-router';
 
-/** Filters now live directly below the source photo in the single editor. */
-export default function StyleScreen() {
-  const languageRevision = useLanguageRevision();
-
-  return <Redirect href="/create/settings" />;
+/**
+ * App Store build 12 is intentionally focused on the product/catalog workflow.
+ * The previous implementation is preserved under src/features/legacy/routes.
+ */
+export default function LegacyRouteRedirect() {
+  return <Redirect href="/studio" />;
 }

@@ -58,7 +58,7 @@ export function SubscriptionCard() {
     ? translateCopy("Aboneliğiniz iptal edildi.")
     : billing.isPro
       ? translateCopy("Pro hesabınız hazır.")
-      : translateCopy("Premium sahnelerin kilidini açın.");
+      : translateCopy("Ürün üretim kredilerinizi planlayın.");
 
   const description = cancelled
     ? expiresText

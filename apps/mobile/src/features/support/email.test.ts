@@ -26,7 +26,7 @@ describe('support email', () => {
     );
     const url = new URL(draft);
     expect(url.pathname).toBe('birkareal@ranvals.com');
-    expect(url.searchParams.get('subject')).toBe('BirKare AI · Üretim sorunu');
+    expect(url.searchParams.get('subject')).toBe('BirKare Studio · Üretim sorunu');
     expect(url.searchParams.get('body')).toBe('Fotoğraf: &bcc=x@example.com\nİkinci satır');
     expect([...url.searchParams.keys()]).toEqual(['subject', 'body']);
   });

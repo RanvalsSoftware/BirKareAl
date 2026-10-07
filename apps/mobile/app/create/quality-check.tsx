@@ -1,12 +1,9 @@
-import { useLanguageRevision } from '@/i18n/use-language';
 import { Redirect } from 'expo-router';
-import { useCreateFlow } from '@/features/create/createFlow';
-import { afterSourcePath } from '@/features/create/workflow';
 
-/** No fabricated quality checks: source validation happens on upload at the API. */
-export default function QualityCheckScreen() {
-  const languageRevision = useLanguageRevision();
-
-  const { flow } = useCreateFlow();
-  return <Redirect href={afterSourcePath(flow)} />;
+/**
+ * App Store build 12 is intentionally focused on the product/catalog workflow.
+ * The previous implementation is preserved under src/features/legacy/routes.
+ */
+export default function LegacyRouteRedirect() {
+  return <Redirect href="/studio" />;
 }

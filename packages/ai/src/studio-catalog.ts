@@ -86,6 +86,22 @@ export type StudioPublicCatalog = Readonly<{
   nailPresets: readonly NailPresetDescriptor[];
 }>;
 
+export type ProductStudioCategoryDescriptor = StudioCategoryDescriptor &
+  Readonly<{
+    inputMode: 'SINGLE_PRODUCT';
+    routeMode: 'PRODUCT_STUDIO';
+  }>;
+
+export type ProductStudioPublicCatalog = Readonly<{
+  catalogVersion: typeof STUDIO_CATALOG_VERSION;
+  promptVersion: typeof STUDIO_PROMPT_VERSION;
+  pricingVersion: typeof STUDIO_PRICING_VERSION;
+  previewCredits: typeof STUDIO_PREVIEW_CREDITS;
+  hdExtraCredits: typeof STUDIO_HD_EXTRA_CREDITS;
+  categories: readonly ProductStudioCategoryDescriptor[];
+  productScenes: readonly ProductSceneDescriptor[];
+}>;
+
 type InternalCategoryDescriptor = StudioCategoryDescriptor &
   Readonly<{ prompt: string | null; generationEnabled: boolean }>;
 type InternalProductScene = ProductSceneDescriptor & Readonly<{ prompt: string }>;
@@ -1286,6 +1302,24 @@ export function listStudioCatalog(): StudioPublicCatalog {
     productScenes: PRODUCT_SCENE_IDS.map((id) => publicProductScene(PRODUCT_SCENE_REGISTRY[id])),
     fashionScenes: FASHION_SCENE_IDS.map((id) => publicFashionScene(FASHION_SCENE_REGISTRY[id])),
     nailPresets: NAIL_PRESET_IDS.map((id) => publicNailPreset(NAIL_PRESET_REGISTRY[id])),
+  };
+}
+
+/** Focused public projection used by the product-only App Store client. */
+export function listProductStudioCatalog(): ProductStudioPublicCatalog {
+  const catalog = listStudioCatalog();
+  const categories = catalog.categories.filter(
+    (item): item is ProductStudioCategoryDescriptor =>
+      item.routeMode === 'PRODUCT_STUDIO' && item.inputMode === 'SINGLE_PRODUCT',
+  );
+  return {
+    catalogVersion: catalog.catalogVersion,
+    promptVersion: catalog.promptVersion,
+    pricingVersion: catalog.pricingVersion,
+    previewCredits: catalog.previewCredits,
+    hdExtraCredits: catalog.hdExtraCredits,
+    categories,
+    productScenes: catalog.productScenes,
   };
 }
 

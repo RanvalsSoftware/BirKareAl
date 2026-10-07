@@ -49,13 +49,13 @@ export type ProPaywallViewProps = {
 const GOLD = '#F7D778';
 const BLACK = '#050505';
 const assets = {
-  logo: require('../../../assets/onboarding/images/brand/logo-gold-icon.png'),
-  city: require('../../../assets/paywall/reference/scene-galata.webp'),
-  balloons: require('../../../assets/paywall/reference/scene-cappadocia.webp'),
-  portrait: require('../../../assets/paywall/reference/scene-portrait.webp'),
-  infinity: require('../../../assets/paywall/reference/icon-infinity.webp'),
-  people: require('../../../assets/paywall/reference/icon-people.webp'),
-  wand: require('../../../assets/paywall/reference/icon-wand.webp'),
+  logo: require('../../../assets/brand/birkare-studio-icon-1024-v1.png'),
+  city: require('../../../assets/products/ui/scenes/white-studio.webp'),
+  balloons: require('../../../assets/products/ui/scenes/ad-poster.webp'),
+  portrait: require('../../../assets/products/ui/scenes/glass-surface.webp'),
+  infinity: require('../../../assets/products/ui/categories/cosmetics.webp'),
+  people: require('../../../assets/products/ui/categories/handbag.webp'),
+  wand: require('../../../assets/products/ui/categories/electronics.webp'),
 };
 
 export function ProPaywallView(props: ProPaywallViewProps) {
@@ -67,14 +67,14 @@ export function ProPaywallView(props: ProPaywallViewProps) {
   const stacked = maxWidth < 360 || fontScale > 1.25;
   const heroHeight = Math.round((maxWidth - 32) * 0.48);
   const features = [
-    { image: assets.infinity, title: translateCopy('Krediyle AI'), detail: translateCopy("üretimi") },
-    { image: assets.people, title: translateCopy('Premium'), detail: translateCopy('karakterler ve sahneler') },
-    { image: assets.wand, title: translateCopy("Pro araçlar"), detail: translateCopy("ve daha fazlası") },
+    { image: assets.infinity, title: translateCopy('Plan kredileri'), detail: translateCopy("hesabına tanımlanır") },
+    { image: assets.people, title: translateCopy('Ürün projelerinde'), detail: translateCopy('kullanılır') },
+    { image: assets.wand, title: translateCopy("Aboneliğini"), detail: translateCopy("mağazadan yönet") },
   ];
   const scenes = [
-    { image: assets.city, label: translateCopy("Hayal Et"), rotate: '-3deg' },
-    { image: assets.balloons, label: translateCopy("Keşfet"), rotate: '0deg' },
-    { image: assets.portrait, label: translateCopy("Yarat"), rotate: '3deg' },
+    { image: assets.city, label: translateCopy("Katalog"), rotate: '-3deg' },
+    { image: assets.balloons, label: translateCopy("Kampanya"), rotate: '0deg' },
+    { image: assets.portrait, label: translateCopy("Vitrin"), rotate: '3deg' },
   ];
   return (
     <SafeAreaView
@@ -96,7 +96,7 @@ export function ProPaywallView(props: ProPaywallViewProps) {
               <Text style={[s.brand, compact && s.brandCompact]}>
                 BirKare <Text style={s.gold}>PRO</Text>
               </Text>
-              <Text style={s.tagline}>{translateCopy("hayalindeki kareye adım at")}</Text>
+              <Text style={s.tagline}>{translateCopy("ürün görsel çalışma alanın")}</Text>
             </View>
             <Pressable
               onPress={props.onClose}
@@ -110,9 +110,9 @@ export function ProPaywallView(props: ProPaywallViewProps) {
           </View>
 
           <Text accessibilityRole="header" style={[s.title, compact && s.titleCompact]}>
-            BirKare <Text style={s.gold}>{translateCopy("Pro’yu aç")}</Text>
+            {translateCopy("Üretim kredilerini")} <Text style={s.gold}>{translateCopy("planla")}</Text>
           </Text>
-          <Text style={s.subtitle}>{translateCopy("Sahneleri, karakterleri ve premium üretim{{p0}}araçlarını keşfet.", { p0: '\n' })}</Text>
+          <Text style={s.subtitle}>{translateCopy("Planına göre tanımlanan kredileri ürün{{p0}}projelerinde kullan.", { p0: '\n' })}</Text>
 
           <View style={[s.scenes, { height: heroHeight + 10 }]}>
             {scenes.map((scene) => (

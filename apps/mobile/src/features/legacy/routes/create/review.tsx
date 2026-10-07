@@ -1,0 +1,735 @@
+import { displayOption } from '@/i18n/display-options';
+import { useLanguageRevision } from '@/i18n/use-language';
+import { tr as translateCopy } from '@/i18n/engine';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Redirect, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
+
+import { CreditBadge, Icon, Notice, Screen } from '@/components';
+import { fictionalPeople, filters } from '@/constants/catalog';
+import { useCreateFlow } from '@/features/create/createFlow';
+import { CreateHeader, WizardFooter } from '@/features/create/components';
+import {
+  quoteCreateFlow,
+  startCreateGeneration,
+  createSubmissionKey,
+  submissionStageLabels,
+  type SubmissionStage,
+  type GenerationQuote,
+} from '@/features/create/server';
+import { SubmissionProgress } from '@/features/create/SubmissionProgress';
+import { modeName } from '@/features/create/workflow';
+import { colors, radii, spacing, typography } from '@/theme';
+import { CREDIT_WALLET_QUERY_KEY } from '@/features/billing/use-wallet';
+import { beautyOptions } from '@/features/beauty/catalog';
+import { beautyIntensity } from '@/features/beauty/settings';
+import { getTrendPreset } from '@/features/trends/presets';
+import { ensureImageProcessingConsent } from '@/features/legal/image-processing-consent';
+
+function getName<T extends { id: string; name: string }>(
+  items: T[],
+  id: string | null,
+  fallback: string,
+) {
+  return items.find((item) => item.id === id)?.name ?? fallback;
+}
+
+type QuoteState = {
+  requestKey: string;
+  status: 'loading' | 'ready' | 'error';
+  quote: GenerationQuote | null;
+  error: string | null;
+};
+
+export default function ReviewScreen() {
+  const languageRevision = useLanguageRevision();
+
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const { autoStart: rawAutoStart } = useLocalSearchParams<{ autoStart?: string }>();
+  const autoStart = Array.isArray(rawAutoStart) ? rawAutoStart[0] : rawAutoStart;
+  const autoStartAttempted = useRef(false);
+  const consentRouteOpened = useRef(false);
+  const { flow, reset } = useCreateFlow();
+  const [quoteRefresh, setQuoteRefresh] = useState(0);
+  const [quoteState, setQuoteState] = useState<QuoteState>({
+    requestKey: '',
+    status: 'loading',
+    quote: null,
+    error: null,
+  });
+  const [isStarting, setIsStarting] = useState(false);
+  const startingRef = useRef(false);
+  const attemptRef = useRef<{ fingerprint: string; key: string } | null>(null);
+  const [retryFingerprint, setRetryFingerprint] = useState<string | null>(null);
+  const [submissionStage, setSubmissionStage] = useState<SubmissionStage>('CHECKING');
+  const [explicitConsent, setExplicitConsent] = useState(false);
+  const flowFingerprint = useMemo(() => JSON.stringify(flow), [flow, languageRevision]);
+  const retryingSameSubmission = retryFingerprint === flowFingerprint;
+  const [startError, setStartError] = useState<string | null>(null);
+  const [quoteErrorVisible, setQuoteErrorVisible] = useState(true);
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      void ensureImageProcessingConsent()
+        .then((result) => {
+          if (active) setExplicitConsent(result.granted);
+        })
+        .catch(() => {
+          if (active) setExplicitConsent(false);
+        });
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
+  const quoteInputKey = useMemo(
+    () =>
+      [
+        flow.mode,
+        flow.quality,
+        flow.numberOfImages,
+        flow.sceneId,
+        flow.personId,
+        flow.styleId,
+        JSON.stringify(flow.beauty),
+        JSON.stringify(flow.transformation),
+        flow.trendPreset,
+        flow.secondarySourceUri ? 'secondary-person' : 'single-person',
+      ].join('|'),
+    [
+      flow.mode,
+      flow.numberOfImages,
+      flow.personId,
+      flow.quality,
+      flow.sceneId,
+      flow.styleId,
+      flow.beauty,
+      flow.transformation,
+      flow.trendPreset,
+      flow.secondarySourceUri,
+      languageRevision,
+    ],
+  );
+  const quoteRequestKey = `${quoteInputKey}:${quoteRefresh}`;
+  const quote = quoteState.requestKey === quoteRequestKey ? quoteState.quote : null;
+  const quoteError = quoteState.requestKey === quoteRequestKey ? quoteState.error : null;
+  const isQuoting = quoteState.requestKey !== quoteRequestKey || quoteState.status === 'loading';
+
+  useEffect(() => {
+    let active = true;
+    void quoteCreateFlow(flow)
+      .then((result) => {
+        if (active) {
+          setQuoteErrorVisible(true);
+          setQuoteState({
+            requestKey: quoteRequestKey,
+            status: 'ready',
+            quote: result.quote,
+            error: null,
+          });
+        }
+      })
+      .catch((error) => {
+        if (active) {
+          setQuoteErrorVisible(true);
+          setQuoteState({
+            requestKey: quoteRequestKey,
+            status: 'error',
+            quote: null,
+            error: error instanceof Error ? error.message : translateCopy('Kredi özeti alınamadı.'),
+          });
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [flow, quoteRequestKey]);
+
+  const startGeneration = useCallback(async () => {
+    if (
+      isStarting ||
+      startingRef.current ||
+      !explicitConsent ||
+      (!quote?.canGenerate && !retryingSameSubmission)
+    )
+      return;
+    startingRef.current = true;
+    if (attemptRef.current?.fingerprint !== flowFingerprint) {
+      attemptRef.current = { fingerprint: flowFingerprint, key: createSubmissionKey() };
+    }
+    setStartError(null);
+    setSubmissionStage('CHECKING');
+    setIsStarting(true);
+    try {
+      const result = await startCreateGeneration(flow, {
+        idempotencyKey: attemptRef.current.key,
+        onProgress: setSubmissionStage,
+      });
+      setRetryFingerprint(null);
+      // A cache refresh failure must never make an accepted generation look failed.
+      await Promise.allSettled([
+        queryClient.invalidateQueries({ queryKey: CREDIT_WALLET_QUERY_KEY }),
+        queryClient.invalidateQueries({ queryKey: ['me'] }),
+      ]);
+      router.replace({
+        pathname: '/create/progress',
+        params: { generationId: result.generation.generationId },
+      } as never);
+    } catch (error) {
+      setRetryFingerprint(flowFingerprint);
+      setStartError(
+        error instanceof Error
+          ? error.message
+          : translateCopy('Üretim güvenle başlatılamadı. Lütfen tekrar dene.'),
+      );
+    } finally {
+      startingRef.current = false;
+      setIsStarting(false);
+    }
+  }, [
+    flow,
+    flowFingerprint,
+    explicitConsent,
+    isStarting,
+    queryClient,
+    quote?.canGenerate,
+    retryingSameSubmission,
+    router,
+  ]);
+
+  const person = getName(fictionalPeople, flow.personId, translateCopy('Yok'));
+  const style = getName(
+    filters,
+    flow.styleId,
+    translateCopy(flow.mode === 'portrait' ? 'Sıcak Stüdyo' : 'Doğal Işık'),
+  );
+  const cost = quote?.creditCost ?? 0;
+  const availableCredits = quote?.availableCredits ?? 0;
+  const unlimitedCredits = Boolean(quote?.unlimitedCredits);
+  const remainingCredits = unlimitedCredits ? '∞' : Math.max(0, availableCredits - cost);
+  const secondarySourceReady =
+    !flow.secondarySourceUri || Boolean(flow.secondarySourceRightsConfirmed);
+  const readyToStart = Boolean(
+    flow.sourceUri &&
+    flow.sourceRightsConfirmed &&
+    explicitConsent &&
+    secondarySourceReady &&
+    (retryingSameSubmission || (quote?.canGenerate && !isQuoting)) &&
+    !isStarting,
+  );
+
+  useEffect(() => {
+    if (
+      autoStart !== 'onboarding' ||
+      !flow.sourceUri ||
+      explicitConsent ||
+      consentRouteOpened.current
+    )
+      return;
+    consentRouteOpened.current = true;
+    router.push('/legal/grant-consent' as never);
+  }, [autoStart, explicitConsent, flow.sourceUri, router]);
+
+  useEffect(() => {
+    if (autoStart !== 'onboarding' || !readyToStart || autoStartAttempted.current) return;
+    autoStartAttempted.current = true;
+    void startGeneration();
+  }, [autoStart, readyToStart, startGeneration]);
+
+  useEffect(() => {
+    if (!startError) return;
+    const timeout = setTimeout(() => setStartError(null), 4_000);
+    return () => clearTimeout(timeout);
+  }, [startError]);
+
+  useEffect(() => {
+    if (!quoteError) return;
+    const timeout = setTimeout(() => setQuoteErrorVisible(false), 4_000);
+    return () => clearTimeout(timeout);
+  }, [quoteError]);
+  if (!flow.sourceUri || !flow.sourceRightsConfirmed) return <Redirect href="/create/upload" />;
+  return (
+    <Screen contentContainerStyle={styles.content}>
+      <CreateHeader
+        title={translateCopy('Üretim özeti')}
+        subtitle={translateCopy('Oluşturmadan önce son kontrol')}
+        step={3}
+        right={
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={translateCopy('Yeni oluştur')}
+            onPress={() => {
+              reset();
+              router.dismissTo('/create' as never);
+            }}
+            style={styles.newCreate}
+          >
+            <Text style={styles.newCreateText}>{translateCopy('Yeni oluştur')}</Text>
+            <Icon name="add" size={18} color={colors.textPrimary} />
+          </Pressable>
+        }
+      />
+      <View style={styles.summaryCard}>
+        <View style={styles.summaryPreview}>
+          <Image source={{ uri: flow.sourceUri }} resizeMode="cover" style={styles.summaryImage} />
+          <View style={styles.sourceBadge}>
+            <Icon name="sparkles" size={12} color={colors.accentYellow} />
+            <Text style={styles.sourceBadgeText}>{translateCopy('Kaynak')}</Text>
+          </View>
+        </View>
+        <View style={styles.summaryDetails}>
+          <Detail
+            label={translateCopy('Mod')}
+            value={
+              flow.beauty
+                ? translateCopy('Güzellik Stüdyosu')
+                : flow.transformation
+                  ? translateCopy('Cinsiyet değiştirme')
+                  : flow.trendPreset
+                    ? translateCopy('Akımlar')
+                    : modeName(flow.mode)
+            }
+            icon="sparkles-outline"
+          />
+          {flow.trendPreset ? (
+            <Detail
+              label={translateCopy('Akım')}
+              value={`${getTrendPreset(flow.trendPreset)?.name ?? translateCopy('Akım')} · %${flow.filterIntensity}`}
+              icon="sparkles-outline"
+            />
+          ) : (
+            <Detail
+              label={translateCopy('Tarz')}
+              value={`${style} · %${flow.filterIntensity}`}
+              icon="color-filter-outline"
+            />
+          )}
+          <Detail
+            label={translateCopy('Kompozisyon')}
+            value={`${flow.trendPreset ? translateCopy('Akıma uygun kadraj') : flow.mode === 'filter' || flow.mode === 'background' ? translateCopy('Kaynak kadrajı') : flow.composition} · ${flow.aspectRatio}`}
+            icon="scan-outline"
+          />
+          <Detail
+            label={translateCopy('Çıktı')}
+            value={translateCopy('{{p0}} görsel · {{p1}}', {
+              p0: flow.numberOfImages,
+              p1: displayOption(flow.quality),
+            })}
+            icon="image-outline"
+          />
+        </View>
+      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled: explicitConsent }}
+        onPress={() => {
+          if (!explicitConsent) router.push('/legal/grant-consent' as never);
+        }}
+        style={[styles.consentCard, explicitConsent && styles.consentCardAccepted]}
+      >
+        <Icon
+          name={explicitConsent ? 'checkmark-circle' : 'document-text-outline'}
+          size={23}
+          color={explicitConsent ? colors.accentYellow : colors.textSecondary}
+        />
+        <View style={styles.consentCopy}>
+          <Text style={styles.consentTitle}>
+            {explicitConsent
+              ? translateCopy('Açık rıza kayıtlı')
+              : translateCopy('Açık Rıza Metnini oku ve izin ver')}
+          </Text>
+          <Text style={styles.consentDetail}>
+            {translateCopy(
+              'Fotoğrafı sunucuya yüklemeden ve üretimi başlatmadan önce ayrı izin gerekir.',
+            )}
+          </Text>
+        </View>
+      </Pressable>
+      {flow.secondarySourceUri ? (
+        <View style={styles.secondarySummary}>
+          <Image
+            source={{ uri: flow.secondarySourceUri }}
+            resizeMode="cover"
+            style={styles.secondarySummaryImage}
+          />
+          <View style={styles.secondarySummaryCopy}>
+            <Text style={styles.secondarySummaryTitle}>{translateCopy('İkinci kişi kaynağı')}</Text>
+            <Text style={styles.secondarySummaryText}>
+              {translateCopy('Ayrı fotoğraftaki kişinin kimliği korunarak aynı sahneye eklenir.')}
+            </Text>
+          </View>
+          <Icon name="people-outline" size={20} color={colors.accentYellow} />
+        </View>
+      ) : null}
+      {flow.mode === 'character' ? (
+        <View style={styles.details}>
+          <Detail label={translateCopy('Karakter')} value={person} icon="person-outline" />
+        </View>
+      ) : null}
+      {flow.beauty ? (
+        <View style={styles.details}>
+          {beautyOptions
+            .filter((option) => beautyIntensity(flow.beauty!, option.id) > 0)
+            .map((option) => (
+              <Detail
+                key={option.id}
+                label={option.name}
+                value={`%${beautyIntensity(flow.beauty!, option.id)}`}
+                icon="sparkles-outline"
+              />
+            ))}
+        </View>
+      ) : null}
+      {flow.trendPreset ? (
+        <Notice tone="neutral" title={translateCopy('Akım dönüşümü')}>
+          {translateCopy(
+            'Yukarıdaki görsel kaynak fotoğrafındır, oluşturulmuş sonuç değildir. Yüz kimliğin korunarak kıyafet, poz, saçın şekillendirilmesi, makyaj ve ortam akıma göre değişebilir.',
+          )}
+        </Notice>
+      ) : null}
+      {flow.customInstruction ? (
+        <View style={styles.instruction}>
+          <Text style={styles.instructionLabel}>{translateCopy('ÖZEL TALİMAT')}</Text>
+          <Text style={styles.instructionText}>{flow.customInstruction}</Text>
+        </View>
+      ) : null}
+      <View style={styles.reviewStack}>
+        <View style={styles.costCard}>
+          <Text style={styles.costLabel}>
+            {translateCopy('SUNUCU TARAFINDAN HESAPLANAN MALİYET')}
+          </Text>
+          <View style={styles.costRow}>
+            <Text style={styles.cost}>
+              <Text style={styles.costNumber}>{isQuoting ? '…' : quote ? cost : '—'}</Text>{' '}
+              {translateCopy('kredi')}
+            </Text>
+            {quote ? <CreditBadge credits={unlimitedCredits ? '∞' : availableCredits} /> : null}
+          </View>
+          <Text style={styles.remaining}>
+            {quote ? (
+              <>
+                {translateCopy('Üretimden sonra tahmini')}{' '}
+                <Text style={styles.remainingStrong}>
+                  {remainingCredits} {translateCopy('kredi')}
+                </Text>{' '}
+                {translateCopy('kalır.')}
+              </>
+            ) : quoteError ? (
+              translateCopy('Kredi tutarı alınamadı; bakiye değişmedi.')
+            ) : (
+              translateCopy('Kredi özeti güvenle doğrulanıyor.')
+            )}
+          </Text>
+          {quote ? (
+            <View style={styles.breakdown}>
+              {quote.breakdown.map((item) => (
+                <View key={item.label} style={styles.breakdownRow}>
+                  <Text style={styles.breakdownLabel}>{item.label}</Text>
+                  <Text style={styles.breakdownValue}>+{item.credits}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
+        </View>
+        {quoteError && quoteErrorVisible ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={translateCopy('Kredi özetini yeniden dene')}
+            onPress={() => setQuoteRefresh((value) => value + 1)}
+          >
+            <Notice tone="warning" title={translateCopy('Kredi özeti alınamadı')}>
+              {translateCopy('{{p0}} Yeniden denemek için dokun.', { p0: quoteError })}
+            </Notice>
+          </Pressable>
+        ) : null}
+        {quoteError && !quoteErrorVisible ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={translateCopy('Kredi özetini yeniden dene')}
+            onPress={() => setQuoteRefresh((value) => value + 1)}
+            style={styles.retryQuote}
+          >
+            <Icon name="refresh" size={18} color={colors.accentYellow} />
+            <Text style={styles.retryQuoteText}>{translateCopy('Kredi özetini yeniden dene')}</Text>
+          </Pressable>
+        ) : null}
+        {quote && !quote.canGenerate ? (
+          <Notice tone="warning" title={translateCopy('Yetersiz kredi')}>
+            {translateCopy(
+              'Bu üretim için {{p0}} kredi gerekir; kullanılabilir bakiyen {{p1}} kredi.',
+              { p0: cost, p1: availableCredits },
+            )}
+          </Notice>
+        ) : null}
+        {!explicitConsent ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={translateCopy('Açık Rıza Metnini oku ve izin ver')}
+            onPress={() => router.push('/legal/grant-consent' as never)}
+          >
+            <Notice tone="warning" title={translateCopy('Üretim başlatılamadı')}>
+              <>
+                {translateCopy(
+                  'Fotoğrafı sunucuya yüklemeden ve üretimi başlatmadan önce ayrı izin gerekir.',
+                )}{' '}
+                <Text style={styles.consentNoticeAction}>
+                  {translateCopy('Açık Rıza Metnini oku ve izin ver')}
+                </Text>
+              </>
+            </Notice>
+          </Pressable>
+        ) : null}
+        {startError && explicitConsent ? (
+          <Notice tone="warning" title={translateCopy('Üretim başlatılamadı')}>
+            {startError}
+          </Notice>
+        ) : null}
+        <Notice tone="neutral" title={translateCopy('Başlatmadan önce')}>
+          {translateCopy(
+            'Üretim, gönderdiğin kaynak fotoğrafı ve seçimlerini kullanır. Sonuçlar AI içeriği olarak işaretlenir.',
+          )}
+        </Notice>
+        {isStarting ? <SubmissionProgress stage={submissionStage} /> : null}
+      </View>
+      <WizardFooter
+        label={
+          isStarting
+            ? `${submissionStageLabels[submissionStage]}…`
+            : retryingSameSubmission
+              ? translateCopy('Aynı işlemi yeniden dene')
+              : isQuoting
+                ? translateCopy('Kredi özeti hazırlanıyor…')
+                : !quote
+                  ? translateCopy('Kredi özeti gerekli')
+                  : translateCopy('{{p0}} krediyle oluştur', { p0: cost })
+        }
+        disabled={!readyToStart}
+        loading={isStarting}
+        onPress={() => void startGeneration()}
+        hint={
+          flow.sourceRightsConfirmed
+            ? translateCopy('Fiyat, yükleme ve kredi rezervasyonu API tarafından doğrulanır.')
+            : translateCopy('Devam etmek için kaynak fotoğraf kullanım hakkını onayla.')
+        }
+      />
+    </Screen>
+  );
+}
+
+function Detail({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: string;
+  icon: React.ComponentProps<typeof Icon>['name'];
+}) {
+  const languageRevision = useLanguageRevision();
+
+  return (
+    <View style={styles.detail}>
+      <View style={styles.detailIcon}>
+        <Icon name={icon} size={18} color={colors.accentYellow} />
+      </View>
+      <Text style={styles.detailLabel}>{label}</Text>
+      <Text numberOfLines={1} style={styles.detailValue}>
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  content: { paddingBottom: 42 },
+  newCreate: {
+    alignItems: 'center',
+    borderColor: 'rgba(255,196,0,0.44)',
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 5,
+    minHeight: 40,
+    paddingHorizontal: 12,
+  },
+  newCreateText: { ...typography.caption, color: colors.textPrimary, fontWeight: '800' },
+  summaryCard: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: spacing.lg,
+    overflow: 'hidden',
+    padding: 12,
+  },
+  summaryPreview: {
+    aspectRatio: 4 / 5,
+    borderRadius: radii.md,
+    overflow: 'hidden',
+    position: 'relative',
+    width: 116,
+  },
+  summaryImage: { ...StyleSheet.absoluteFill },
+  sourceBadge: {
+    alignItems: 'center',
+    backgroundColor: colors.overlay,
+    borderRadius: radii.pill,
+    bottom: 8,
+    flexDirection: 'row',
+    gap: 4,
+    left: 8,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    position: 'absolute',
+  },
+  sourceBadgeText: { ...typography.caption, color: colors.textPrimary, fontSize: 10 },
+  summaryDetails: { flex: 1, justifyContent: 'center' },
+  details: {
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    paddingHorizontal: 13,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginTop: spacing.md,
+  },
+  detail: {
+    minHeight: 53,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  detailIcon: {
+    width: 27,
+    height: 27,
+    borderRadius: 9,
+    backgroundColor: colors.accentYellowSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 9,
+  },
+  detailLabel: { ...typography.caption, color: colors.textMuted, width: 88 },
+  detailValue: { flex: 1, ...typography.label, color: colors.textPrimary, textAlign: 'right' },
+  instruction: {
+    marginTop: spacing.md,
+    backgroundColor: colors.surfaceElevated,
+    borderRadius: radii.md,
+    padding: 13,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  instructionLabel: { ...typography.overline, color: colors.textMuted, fontSize: 10 },
+  instructionText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: 5,
+    lineHeight: 18,
+  },
+  costCard: {
+    minHeight: 124,
+    borderRadius: radii.lg,
+    padding: 14,
+    backgroundColor: colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: 'rgba(255,196,0,0.30)',
+    position: 'relative',
+  },
+  reviewStack: { gap: spacing.md, marginTop: spacing.md },
+  consentCard: {
+    alignItems: 'flex-start',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: spacing.md,
+    padding: 14,
+  },
+  consentCardAccepted: { borderColor: 'rgba(255,196,0,0.60)', backgroundColor: '#15130D' },
+  consentCopy: { flex: 1 },
+  consentTitle: {
+    ...typography.label,
+    color: colors.textPrimary,
+    fontWeight: '800',
+    lineHeight: 19,
+  },
+  consentDetail: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    lineHeight: 17,
+    marginTop: 5,
+  },
+  consentNoticeAction: {
+    color: colors.accentYellow,
+    fontWeight: '800',
+    textDecorationLine: 'underline',
+  },
+  consentDocumentLink: {
+    alignSelf: 'flex-start',
+    minHeight: 40,
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  costLabel: { ...typography.overline, color: colors.accentYellow, fontSize: 10 },
+  costRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 8,
+  },
+  cost: { ...typography.h3, color: colors.textPrimary, marginTop: 4 },
+  costNumber: { fontSize: 32, lineHeight: 37, fontWeight: '900' },
+  remaining: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: 12,
+  },
+  remainingStrong: { color: colors.textPrimary, fontWeight: '800' },
+  retryQuote: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    flexDirection: 'row',
+    gap: 7,
+    minHeight: 44,
+    paddingHorizontal: spacing.md,
+  },
+  retryQuoteText: { ...typography.label, color: colors.accentYellow },
+  secondarySummary: {
+    marginTop: spacing.md,
+    minHeight: 78,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: '#F5C8423D',
+    backgroundColor: colors.surface,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    padding: 10,
+  },
+  secondarySummaryImage: { width: 48, height: 58, borderRadius: 10 },
+  secondarySummaryCopy: { flex: 1 },
+  secondarySummaryTitle: { ...typography.label, color: colors.textPrimary, fontWeight: '800' },
+  secondarySummaryText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    lineHeight: 17,
+    marginTop: 2,
+  },
+  breakdown: {
+    marginTop: 10,
+    paddingTop: 9,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+    gap: 5,
+  },
+  breakdownRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
+  breakdownLabel: { ...typography.caption, color: colors.textMuted },
+  breakdownValue: { ...typography.caption, color: colors.textPrimary, fontWeight: '700' },
+});

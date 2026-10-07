@@ -1,10 +1,6 @@
-import { useLanguageRevision } from '@/i18n/use-language';
 import { getLocale as getAppLocale } from '@/i18n/engine';
-import { tr as translateCopy } from '@/i18n/engine';
-import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useLanguageRevision } from '@/i18n/use-language';
 import { useRouter } from 'expo-router';
-import { useRef, useState, type ComponentProps } from 'react';
 import {
   Image,
   Pressable,
@@ -14,889 +10,513 @@ import {
   View,
   useWindowDimensions,
   type ImageSourcePropType,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
-import {
-  CategoryChip,
-  CharacterTile,
-  CreditBadge,
-  GlassSurface,
-  Icon,
-  LogoMark,
-  SectionHeader,
-  VisualTile,
-} from '@/components';
-import { fictionalPeople, filters, scenes } from '@/constants/catalog';
-import { experienceScenes } from '@/constants/experience-scenes';
-import { beautySceneImage } from '@/features/trends/catalog';
-import { TrendRail } from '@/features/trends/TrendRail';
-import {
-  useCreateFlow,
-  type Composition,
-  type CreateFlow,
-  type CreateMode,
-} from '@/features/create/createFlow';
+import { apiBaseUrl } from '@/api/client';
+import { CreditBadge, Icon } from '@/components';
 import { useAuthStore, type AuthUser } from '@/features/auth/auth-store';
 import { useAvailableCredits } from '@/features/billing/use-wallet';
-import type { StudioModeCard } from '@/features/studio/catalog';
-import { resetStudioFlow, updateStudioFlow } from '@/features/studio/studioFlow';
-import { useStudioCatalog } from '@/features/studio/useStudioCatalog';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useUserProjects } from '@/features/projects/use-user-projects';
+import {
+  commerceGoals,
+  commerceGoalById,
+  type CommerceGoalDefinition,
+} from '@/features/studio/commerceGoals';
+import {
+  resetProductStudioFlow,
+  updateProductStudioFlow,
+} from '@/features/studio/productFlow';
 import { useCopy } from '@/features/settings/language-store';
-import { colors, gradients, radii, spacing, typography } from '@/theme';
+import { colors, radii, spacing, typography } from '@/theme';
 
-type IconName = ComponentProps<typeof Icon>['name'];
-
-type HomeSlide = {
-  id: string;
-  eyebrow: string;
-  title: string;
-  description: string;
-  action: string;
-  icon: IconName;
-  palette: readonly [string, string];
-  source?: ImageSourcePropType;
-  route: string;
-  createPreset?: CreatePreset;
-};
-
-type CreatePreset = {
-  mode: CreateMode;
-  sceneId: string | null;
-  personId: string | null;
-  composition: Composition;
-} & Partial<Pick<CreateFlow, 'styleId' | 'preserveFace' | 'preserveClothes' | 'customInstruction'>>;
-
-const stadiumScene = scenes.find((scene) => scene.id === 'scene-stadium-lights') ?? scenes[0]!;
-
-const homeSlides: HomeSlide[] = [
-  {
-    id: 'football-scene',
-    get eyebrow() {
-      return translateCopy('KURGUSAL SAHNE');
-    },
-    get title() {
-      return translateCopy('Stadyumda futbol anı');
-    },
-    get description() {
-      return translateCopy('Işıklar altında, futbol enerjisini taşıyan özgün bir sahne oluştur.');
-    },
-    get action() {
-      return translateCopy('Sahneyi seç');
-    },
-    icon: 'football',
-    palette: ['#0B2939', '#52731D'],
-    source: require('../../assets/home/images/slider/football.webp'),
-    route: '/create/upload',
-    createPreset: {
-      mode: 'scene',
-      sceneId: stadiumScene.id,
-      personId: null,
-      composition: 'Selfie',
-    },
-  },
-  {
-    id: 'beauty-filter',
-    get eyebrow() {
-      return translateCopy('GÜZELLİK STÜDYOSU');
-    },
-    get title() {
-      return translateCopy('Işıltını öne çıkar');
-    },
-    get description() {
-      return translateCopy('10 görünüm, sana özel yoğunluk. Doğal rötuş ve makyajı birlikte seç.');
-    },
-    get action() {
-      return translateCopy('Güzelliği keşfet');
-    },
-    icon: 'color-filter',
-    palette: ['#6B3240', '#D28A75'],
-    source: require('../../assets/home/images/slider/beauty.webp'),
-    route: '/beauty',
-  },
-  {
-    id: 'background-transform',
-    get eyebrow() {
-      return translateCopy('ARKA PLAN DÖNÜŞÜMÜ');
-    },
-    get title() {
-      return translateCopy('Manzaranı yeniden kur');
-    },
-    get description() {
-      return translateCopy('Pozunu korurken fotoğrafını yeni bir şehir atmosferine taşı.');
-    },
-    get action() {
-      return translateCopy('Arka planı seç');
-    },
-    icon: 'layers',
-    palette: ['#3A251F', '#D88835'],
-    source: require('../../assets/home/images/slider/background.webp'),
-    route: '/create/upload',
-    createPreset: {
-      mode: 'background',
-      sceneId: 'scene-sunset-terrace',
-      personId: null,
-      composition: 'Orta',
-    },
-  },
-];
-
-// Home and onboarding step 2 intentionally render the very same canonical
-// cards so their names, artwork, order and production presets cannot diverge.
-const popularSceneCards = experienceScenes;
-
-// The home rail intentionally keeps the compact, familiar artwork. The Studio
-// landing page owns the newer wide campaign covers, so changing one surface no
-// longer unexpectedly changes the other.
-const homeStudioArtwork: Record<StudioModeCard['id'], ImageSourcePropType> = {
-  'product-shoot': require('../../assets/products/ui/categories/cosmetics-alt.webp'),
-  'product-catalog': require('../../assets/products/ui/scenes/glass-surface.webp'),
-  'virtual-try-on': require('../../assets/products/ui/fashion/modest-premium.webp'),
-  'nail-preview': require('../../assets/products/ui/nails/classic-red.webp'),
+const goalArtwork: Record<CommerceGoalDefinition['id'], ImageSourcePropType> = {
+  marketplace: require('../../assets/products/ui/scenes/white-studio.webp'),
+  'product-page': require('../../assets/products/ui/product-shoot.webp'),
+  'social-ad': require('../../assets/products/ui/scenes/ad-poster.webp'),
+  'web-hero': require('../../assets/products/ui/scenes/desktop.webp'),
 };
 
 function displayFirstName(user: AuthUser | null): string | null {
   const firstName = user?.firstName?.trim();
   if (firstName) return firstName;
-
-  const emailPrefix = user?.email
-    .split('@')[0]
-    ?.replace(/[._-]+/g, ' ')
-    .trim();
+  const emailPrefix = user?.email.split('@')[0]?.replace(/[._-]+/g, ' ').trim();
   return emailPrefix
     ? emailPrefix.charAt(0).toLocaleUpperCase(getAppLocale()) + emailPrefix.slice(1)
     : null;
 }
 
-export default function HomeScreen() {
-  const languageRevision = useLanguageRevision();
+function projectOutputUri(assetId: string | null): string | null {
+  return assetId ? `${apiBaseUrl}/v1/assets/${encodeURIComponent(assetId)}/content` : null;
+}
 
+export default function HomeScreen() {
+  useLanguageRevision();
   const copy = useCopy();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+  const tablet = width >= 768;
   const user = useAuthStore((store) => store.user);
+  const accessToken = useAuthStore((store) => store.accessToken);
   const availableCredits = useAvailableCredits();
-  const { studioModeCards } = useStudioCatalog();
-  const { reset: resetCreateFlow, set: setCreateFlow } = useCreateFlow();
-  const sliderRef = useRef<ScrollView>(null);
-  const [activeSlide, setActiveSlide] = useState(0);
+  const projectsQuery = useUserProjects();
   const firstName = displayFirstName(user);
-  const slideWidth = Math.min(Math.max(width - spacing.lg * 2, 300), 500);
-  const slideStep = slideWidth + spacing.sm;
+  const recentProducts = (projectsQuery.data ?? [])
+    .filter((project) => project.mode === 'PRODUCT_STUDIO')
+    .slice(0, tablet ? 4 : 3);
 
-  function selectSlide(index: number) {
-    setActiveSlide(index);
-    sliderRef.current?.scrollTo({ x: index * slideStep, animated: true });
-  }
-
-  function handleSliderEnd(event: NativeSyntheticEvent<NativeScrollEvent>) {
-    const nextIndex = Math.max(
-      0,
-      Math.min(homeSlides.length - 1, Math.round(event.nativeEvent.contentOffset.x / slideStep)),
-    );
-    setActiveSlide(nextIndex);
-  }
-
-  function startCreatePreset(preset: CreatePreset, route: string) {
-    // Begin each curated card from a clean draft, so a prior filter/person
-    // selection cannot silently change the selected scene's server prompt.
-    resetCreateFlow();
-    setCreateFlow({
-      ...preset,
-      mode: preset.mode === 'character' ? 'scene' : preset.mode,
-      personId: null,
-      ...(preset.mode === 'character'
-        ? {
-            customInstruction:
-              'Seçilen kaynak kişiyi gece stadyumunda tek ana kişi olarak göster. Yüzünü, yaşını ve kıyafetini koru; tribünleri ve projektör ışığını arka planda kullan. Yanına başka bir kişi veya sporcu ekleme.',
-          }
-        : {}),
+  function startGoal(goalId: CommerceGoalDefinition['id']) {
+    const goal = commerceGoalById(goalId);
+    resetProductStudioFlow();
+    updateProductStudioFlow({
+      commerceGoal: goal.id,
+      sceneId: goal.sceneId,
+      aspectRatio: goal.aspectRatio,
+      numberOfImages: 2,
     });
-    router.push(route as never);
-  }
-
-  function openSlide(slide: HomeSlide) {
-    if (slide.createPreset) {
-      startCreatePreset(slide.createPreset, slide.route);
-      return;
-    }
-    if (slide.route === '/beauty') resetCreateFlow();
-    router.push(slide.route as never);
+    router.push({ pathname: '/studio/product', params: { entry: goal.id } } as never);
   }
 
   return (
     <ScrollView
       style={styles.screen}
       contentContainerStyle={[
-        styles.content,
+        styles.scrollContent,
         {
-          paddingTop: insets.top + spacing.xs,
-          paddingBottom: Math.max(insets.bottom, spacing.md) + 48,
+          paddingTop: insets.top + spacing.sm,
+          paddingBottom: Math.max(insets.bottom, spacing.md) + 92,
         },
       ]}
       showsVerticalScrollIndicator={false}
     >
-      <GlassSurface tone="gold" radius={30} contentStyle={styles.topBar}>
-        <LogoMark size={43} withWordmark />
-        <CreditBadge credits={availableCredits} />
-      </GlassSurface>
+      <View style={styles.page}>
+        <View style={styles.topBar}>
+          <View style={styles.brand}>
+            <View style={styles.brandMark}>
+              <Icon name="cube-outline" size={22} color="#0A2118" />
+            </View>
+            <View>
+              <Text style={styles.brandName}>BirKare Studio</Text>
+              <Text style={styles.brandCaption}>
+                {copy('Ürün görsel çalışma alanın', 'Your product-image workspace')}
+              </Text>
+            </View>
+          </View>
+          <CreditBadge credits={availableCredits} />
+        </View>
 
-      <View style={styles.greetingBlock}>
-        <Text style={styles.greeting}>
-          {firstName ? `${copy('Merhaba', 'Hello')}, ${firstName}` : copy('Merhaba', 'Hello')}
-        </Text>
-        <Text style={styles.greetingHint}>
-          {copy('Bugün ne yaratmak istersin?', 'What would you like to create today?')}
-        </Text>
-      </View>
+        <View style={[styles.hero, tablet && styles.heroTablet]}>
+          <View style={styles.heroCopy}>
+            <Text style={styles.eyebrow}>{copy('ÜRÜN STÜDYOSU', 'PRODUCT STUDIO')}</Text>
+            <Text style={styles.heroTitle}>
+              {firstName
+                ? copy(
+                    `${firstName}, ürününü satışa hazırla.`,
+                    `${firstName}, get your product ready to sell.`,
+                  )
+                : copy('Ürününü satışa hazırla.', 'Get your product ready to sell.')}
+            </Text>
+            <Text style={styles.heroBody}>
+              {copy(
+                'Tek bir ürün fotoğrafından katalog, ürün sayfası ve kampanya alternatifleri üret.',
+                'Turn one product photo into catalog, product-page, and campaign alternatives.',
+              )}
+            </Text>
+            <View style={styles.heroActions}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => startGoal('marketplace')}
+                style={({ pressed }) => [styles.primaryAction, pressed && styles.pressed]}
+              >
+                <Icon name="add" size={21} color="#0A2118" />
+                <Text style={styles.primaryActionText}>
+                  {copy('Yeni ürün çekimi', 'New product shoot')}
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => router.push('/(tabs)/projects' as never)}
+                style={({ pressed }) => [styles.secondaryAction, pressed && styles.pressed]}
+              >
+                <Text style={styles.secondaryActionText}>
+                  {copy('Kataloğu aç', 'Open catalog')}
+                </Text>
+                <Icon name="arrow-forward" size={18} color={colors.textPrimary} />
+              </Pressable>
+            </View>
+          </View>
+          <View style={[styles.heroVisual, tablet && styles.heroVisualTablet]}>
+            <Image
+              accessibilityIgnoresInvertColors
+              source={require('../../assets/products/ui/catalog-shoot.webp')}
+              resizeMode="cover"
+              style={styles.heroImage}
+            />
+            <View style={styles.heroImageBadge}>
+              <Icon name="shield-checkmark-outline" size={16} color="#C8F6D9" />
+              <Text style={styles.heroImageBadgeText}>
+                {copy('Ürün kimliğini koruyan akış', 'Product-preserving workflow')}
+              </Text>
+            </View>
+          </View>
+        </View>
 
-      <View style={styles.modeRow} accessibilityRole="tablist">
-        <CategoryChip label={copy('Görsel', 'Image')} selected icon="image-outline" />
-        <CategoryChip
-          label={copy('Kurgusal', 'Fictional')}
-          onPress={() => router.push('/create/person' as never)}
-          icon="sparkles-outline"
-        />
-        <CategoryChip
-          label={copy('AI Araçları', 'AI Tools')}
-          onPress={() => router.push('/(tabs)/explore' as never)}
-          icon="construct-outline"
-        />
-      </View>
+        <View style={styles.steps}>
+          {[
+            [copy('1 · Yükle', '1 · Upload'), copy('Net bir ürün fotoğrafı', 'One clear product photo')],
+            [copy('2 · Planla', '2 · Plan'), copy('Amaç, sahne ve format', 'Goal, scene, and format')],
+            [copy('3 · Üret', '3 · Generate'), copy('1, 2 veya 4 alternatif', '1, 2, or 4 alternatives')],
+          ].map(([title, detail]) => (
+            <View key={title} style={styles.step}>
+              <Text style={styles.stepTitle}>{title}</Text>
+              <Text style={styles.stepDetail}>{detail}</Text>
+            </View>
+          ))}
+        </View>
 
-      <ScrollView
-        ref={sliderRef}
-        horizontal
-        bounces={false}
-        decelerationRate="fast"
-        disableIntervalMomentum
-        onMomentumScrollEnd={handleSliderEnd}
-        showsHorizontalScrollIndicator={false}
-        snapToAlignment="start"
-        snapToInterval={slideStep}
-        contentContainerStyle={styles.sliderContent}
-      >
-        {homeSlides.map((slide) => (
-          <HomeSlideCard
-            key={slide.id}
-            slide={slide}
-            width={slideWidth}
-            onPress={() => openSlide(slide)}
-          />
-        ))}
-      </ScrollView>
+        <View style={styles.sectionHeading}>
+          <View>
+            <Text style={styles.sectionTitle}>
+              {copy('Nerede kullanacaksın?', 'Where will you use it?')}
+            </Text>
+            <Text style={styles.sectionSubtitle}>
+              {copy(
+                'Seçimin sahne ve format için başlangıç ayarını yapar.',
+                'Your choice sets a starting scene and format.',
+              )}
+            </Text>
+          </View>
+        </View>
 
-      <View style={styles.pagination} accessibilityRole="tablist">
-        {homeSlides.map((slide, index) => (
-          <Pressable
-            key={slide.id}
-            accessibilityRole="tab"
-            accessibilityLabel={translateCopy('{{p0}}, {{p1}}. kart', {
-              p0: slide.title,
-              p1: index + 1,
+        <View style={[styles.goalGrid, tablet && styles.goalGridTablet]}>
+          {commerceGoals.map((goal) => (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={copy(goal.titleTr, goal.titleEn)}
+              key={goal.id}
+              onPress={() => startGoal(goal.id)}
+              style={({ pressed }) => [
+                styles.goalCard,
+                tablet && styles.goalCardTablet,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Image source={goalArtwork[goal.id]} resizeMode="cover" style={styles.goalImage} />
+              <View style={styles.goalCopy}>
+                <View style={styles.goalIcon}>
+                  <Icon name={goal.icon} size={18} color="#C8F6D9" />
+                </View>
+                <View style={styles.goalText}>
+                  <Text style={styles.goalTitle}>{copy(goal.titleTr, goal.titleEn)}</Text>
+                  <Text numberOfLines={2} style={styles.goalDescription}>
+                    {copy(goal.descriptionTr, goal.descriptionEn)}
+                  </Text>
+                  <Text style={styles.goalMeta}>
+                    {goal.aspectRatio} · {copy('2 alternatifle başla', 'Start with 2 alternatives')}
+                  </Text>
+                </View>
+                <Icon name="chevron-forward" size={19} color={colors.textMuted} />
+              </View>
+            </Pressable>
+          ))}
+        </View>
+
+        <View style={styles.sectionHeading}>
+          <View>
+            <Text style={styles.sectionTitle}>
+              {copy('Son ürün projeleri', 'Recent product projects')}
+            </Text>
+            <Text style={styles.sectionSubtitle}>
+              {copy(
+                'Çekimlerine ve versiyonlarına kaldığın yerden devam et.',
+                'Continue your shoots and versions where you left off.',
+              )}
+            </Text>
+          </View>
+          <Pressable onPress={() => router.push('/(tabs)/projects' as never)} hitSlop={8}>
+            <Text style={styles.inlineAction}>{copy('Tümü', 'See all')}</Text>
+          </Pressable>
+        </View>
+
+        {recentProducts.length ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.projectRail}
+          >
+            {recentProducts.map((project) => {
+              const outputUri = projectOutputUri(project.outputAssetId);
+              return (
+                <Pressable
+                  accessibilityRole="button"
+                  key={project.id}
+                  onPress={() => router.push(`/projects/${project.id}` as never)}
+                  style={({ pressed }) => [styles.projectCard, pressed && styles.pressed]}
+                >
+                  {outputUri ? (
+                    <Image
+                      source={{
+                        uri: outputUri,
+                        headers: accessToken
+                          ? { authorization: `Bearer ${accessToken}` }
+                          : undefined,
+                      }}
+                      resizeMode="cover"
+                      style={styles.projectImage}
+                    />
+                  ) : (
+                    <View style={styles.projectPlaceholder}>
+                      <Icon name="hourglass-outline" size={26} color={colors.textMuted} />
+                    </View>
+                  )}
+                  <Text numberOfLines={1} style={styles.projectTitle}>
+                    {project.title || copy('Ürün çekimi', 'Product shoot')}
+                  </Text>
+                  <Text style={styles.projectStatus}>
+                    {project.outputAssetId
+                      ? copy('Çıktı hazır', 'Output ready')
+                      : copy('Hazırlanıyor', 'In progress')}
+                  </Text>
+                </Pressable>
+              );
             })}
-            accessibilityState={{ selected: index === activeSlide }}
-            onPress={() => selectSlide(index)}
-            style={[styles.paginationDot, index === activeSlide && styles.paginationDotActive]}
-          />
-        ))}
+          </ScrollView>
+        ) : (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => startGoal('product-page')}
+            style={({ pressed }) => [styles.emptyCatalog, pressed && styles.pressed]}
+          >
+            <View style={styles.emptyIcon}>
+              <Icon name="albums-outline" size={24} color="#C8F6D9" />
+            </View>
+            <View style={styles.emptyCopy}>
+              <Text style={styles.emptyTitle}>
+                {copy('İlk ürününü kataloğa ekle', 'Add your first product to the catalog')}
+              </Text>
+              <Text style={styles.emptyDetail}>
+                {copy(
+                  'Ürün adı, kaynak fotoğrafı, sahne ve çıktı formatıyla düzenli bir proje oluştur.',
+                  'Create an organized project with a product name, source photo, scene, and output format.',
+                )}
+              </Text>
+            </View>
+            <Icon name="arrow-forward" size={20} color={colors.textSecondary} />
+          </Pressable>
+        )}
+
       </View>
-
-      <View style={styles.quickActions}>
-        <QuickAction
-          icon="camera-outline"
-          title={translateCopy('Fotoğraf yükle')}
-          onPress={() => {
-            resetCreateFlow();
-            router.push('/create/upload' as never);
-          }}
-        />
-        <QuickAction
-          icon="people-outline"
-          title={translateCopy('Kurgusal karakter')}
-          onPress={() => {
-            resetCreateFlow();
-            setCreateFlow({ mode: 'scene', sourceKind: 'fictional' });
-            router.push('/create/upload?source=fictional' as never);
-          }}
-        />
-        <QuickAction
-          icon="color-filter-outline"
-          title={translateCopy('Filtre dene')}
-          onPress={() => router.push('/filters' as never)}
-        />
-        <QuickAction
-          icon="sparkles-outline"
-          title={translateCopy('AI araçları')}
-          onPress={() => router.push('/(tabs)/explore' as never)}
-        />
-      </View>
-
-      <SectionHeader title={copy('Popüler sahneler', 'Popular scenes')} />
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.horizontalList}
-      >
-        {popularSceneCards.map((item) => (
-          <PopularSceneCard
-            key={item.id}
-            title={item.id === 'face' ? translateCopy('Güzellik') : item.title}
-            subtitle={
-              item.id === 'face'
-                ? translateCopy('Doğal rötuş, makyaj ve sana özel yoğunluk')
-                : item.description
-            }
-            source={item.id === 'face' ? beautySceneImage : item.source}
-            palette={item.palette}
-            badge={
-              item.id === 'face'
-                ? translateCopy('10 görünüm')
-                : translateCopy('{{p0}} kredi', { p0: item.creditCost })
-            }
-            onPress={() => {
-              if (item.id === 'face') {
-                resetCreateFlow();
-                router.push('/beauty' as never);
-              } else startCreatePreset(item.preset, '/create/upload');
-            }}
-          />
-        ))}
-      </ScrollView>
-
-      <SectionHeader title={copy('Akımlar', 'Trends')} />
-      <TrendRail
-        onSelect={(id) => {
-          resetCreateFlow();
-          router.push(`/trends/${id}` as never);
-        }}
-      />
-
-      <SectionHeader
-        title={copy('Ürün & Stil Stüdyosu', 'Product & Style Studio')}
-        action={copy('Tümünü aç', 'View all')}
-        onActionPress={() => router.push('/studio' as never)}
-      />
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.horizontalList}
-      >
-        {studioModeCards.map((item) => (
-          <StudioHomeCard
-            key={item.id}
-            item={item}
-            imageSource={homeStudioArtwork[item.id]}
-            onPress={() => {
-              resetStudioFlow(item.mode);
-              updateStudioFlow({
-                sceneId: 'defaultSceneId' in item ? item.defaultSceneId : null,
-                presetId: 'defaultPresetId' in item ? item.defaultPresetId : null,
-              });
-              router.push(`/studio/${item.mode}` as never);
-            }}
-          />
-        ))}
-      </ScrollView>
-
-      <SectionHeader
-        title={copy('AI filtreler', 'AI filters')}
-        action={copy('Filtreleri aç', 'View filters')}
-        onActionPress={() => router.push('/filters' as never)}
-      />
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.horizontalList}
-      >
-        {filters.slice(0, 5).map((item) => (
-          <VisualTile
-            key={item.id}
-            title={item.name}
-            subtitle={translateCopy('AI ile uygulanır')}
-            palette={item.palette}
-            icon={item.icon}
-            imageSource={item.previewSource}
-            badge={item.isPro ? 'PRO' : undefined}
-            onPress={() => router.push(`/filters/${item.slug}` as never)}
-          />
-        ))}
-      </ScrollView>
-
-      <SectionHeader
-        title={copy('Kurgusal karakterler', 'Fictional characters')}
-        action={copy('Keşfet', 'Explore')}
-        onActionPress={() => router.push('/create/person' as never)}
-      />
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.horizontalList}
-      >
-        {fictionalPeople.map((item) => (
-          <CharacterTile
-            key={item.id}
-            name={item.name}
-            subtitle={translateCopy('Kurgusal karakter')}
-            initials={item.icon}
-            palette={item.palette}
-            imageSource={item.previewSource}
-            onPress={() =>
-              router.push({ pathname: '/create/person', params: { selected: item.id } } as never)
-            }
-          />
-        ))}
-      </ScrollView>
-
-      <LinearGradient colors={gradients.midnight} style={styles.bottomCard}>
-        <View style={styles.bottomCardIcon}>
-          <Icon name="shield-checkmark-outline" size={23} color={colors.accentYellow} />
-        </View>
-        <View style={styles.bottomCardCopy}>
-          <Text style={styles.bottomCardTitle}>
-            {translateCopy('Senin fotoğrafın, senin kontrolün.')}
-          </Text>
-          <Text style={styles.bottomCardText}>
-            {translateCopy('Her üretim AI etiketiyle ve izin odaklı hazırlanır.')}
-          </Text>
-        </View>
-      </LinearGradient>
     </ScrollView>
   );
 }
 
-function HomeSlideCard({
-  slide,
-  width,
-  onPress,
-}: {
-  slide: HomeSlide;
-  width: number;
-  onPress: () => void;
-}) {
-  const languageRevision = useLanguageRevision();
-
-  // iOS can resolve a percentage-based absolute image before an aspect-ratio
-  // only parent has settled. Give campaign cards an explicit 3:2 canvas so
-  // the supplied artwork is present on the first render as well as after HMR.
-  const height = Math.round((width * 2) / 3);
-
-  return (
-    <Pressable
-      accessibilityLabel={`${slide.title}. ${slide.action}`}
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => [styles.slide, { height, width }, pressed && styles.pressed]}
-    >
-      <LinearGradient colors={slide.palette} style={StyleSheet.absoluteFill} />
-      {slide.source ? <FittedCoverImage source={slide.source} /> : null}
-      <LinearGradient
-        colors={['rgba(5,5,5,0)', 'rgba(5,5,5,0.08)', 'rgba(5,5,5,0.76)']}
-        locations={[0, 0.5, 1]}
-        style={StyleSheet.absoluteFill}
-      />
-      <View pointerEvents="none" style={styles.slideCopy}>
-        <View style={styles.slideEyebrow}>
-          <Icon name={slide.icon} size={13} color={colors.accentYellow} />
-          <Text style={styles.slideEyebrowText}>{slide.eyebrow}</Text>
-        </View>
-        <Text style={styles.slideTitle}>{slide.title}</Text>
-        <Text style={styles.slideDescription}>{slide.description}</Text>
-        <View style={styles.slideAction}>
-          <Text style={styles.slideActionText}>{slide.action}</Text>
-          <Icon name="arrow-forward" size={17} color={colors.textPrimary} />
-        </View>
-      </View>
-    </Pressable>
-  );
-}
-
-/**
- * On iOS a directly absolute static Image can remain blank after a hot reload.
- * A regular 100% × 100% child keeps campaign and popular-scene artwork visible.
- */
-function FittedCoverImage({ source }: { source: ImageSourcePropType }) {
-  const languageRevision = useLanguageRevision();
-
-  return (
-    <View pointerEvents="none" style={styles.coverImageCanvas}>
-      <Image fadeDuration={0} source={source} style={styles.coverImage} />
-    </View>
-  );
-}
-
-function QuickAction({
-  icon,
-  title,
-  onPress,
-}: {
-  icon: React.ComponentProps<typeof Icon>['name'];
-  title: string;
-  onPress: () => void;
-}) {
-  const languageRevision = useLanguageRevision();
-
-  const { fontScale } = useWindowDimensions();
-  const reducedMotion = useReducedMotion();
-  const scale = useSharedValue(1);
-  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-  const accessibleHeight = Math.round(124 + Math.max(0, fontScale - 1) * 54);
-  function animate(pressed: boolean) {
-    scale.set(reducedMotion ? 1 : withSpring(pressed ? 0.965 : 1, { damping: 18, stiffness: 320 }));
-  }
-  return (
-    <Animated.View style={[styles.quickAction, { height: accessibleHeight }, animatedStyle]}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={title}
-        onPress={() => {
-          void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
-          onPress();
-        }}
-        onPressIn={() => animate(true)}
-        onPressOut={() => animate(false)}
-        style={styles.quickActionPressable}
-      >
-        <GlassSurface
-          radius={23}
-          tone="iridescent"
-          style={styles.quickActionSurface}
-          contentStyle={styles.quickActionInner}
-        >
-          <GlassSurface
-            radius={25}
-            tone="iridescent"
-            style={styles.quickActionIcon}
-            contentStyle={styles.quickIconContent}
-          >
-            <Icon name={icon} size={26} color={colors.textPrimary} />
-          </GlassSurface>
-          <Text numberOfLines={2} style={styles.quickActionText}>
-            {title}
-          </Text>
-          <LinearGradient
-            colors={['#8146D9', '#B15DC0', '#E78D3D']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.quickUnderline}
-          />
-        </GlassSurface>
-      </Pressable>
-    </Animated.View>
-  );
-}
-
-function StudioHomeCard({
-  item,
-  imageSource,
-  onPress,
-}: {
-  item: StudioModeCard;
-  imageSource: ImageSourcePropType;
-  onPress: () => void;
-}) {
-  const languageRevision = useLanguageRevision();
-
-  return (
-    <Pressable
-      accessibilityLabel={translateCopy('{{p0}}, {{p1}} krediden başlayan', {
-        p0: item.name,
-        p1: item.creditCost,
-      })}
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => [styles.studioCard, pressed && styles.pressed]}
-    >
-      <LinearGradient colors={item.palette} style={StyleSheet.absoluteFill} />
-      <Image
-        source={imageSource}
-        resizeMode="cover"
-        style={[styles.studioCardImage, item.mode === 'fashion' && styles.studioFashionImage]}
-      />
-      <LinearGradient
-        colors={['rgba(5,5,5,0.02)', 'rgba(5,5,5,0.82)']}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={styles.studioCardBadge}>
-        <Icon name="flash" size={13} color={colors.accentYellow} />
-        <Text style={styles.studioCardBadgeText}>
-          {item.creditCost}
-          {translateCopy('+ kredi')}
-        </Text>
-      </View>
-      <View style={styles.studioCardCopy}>
-        <Text numberOfLines={1} style={styles.studioCardTitle}>
-          {item.name}
-        </Text>
-        <Text numberOfLines={2} style={styles.studioCardDescription}>
-          {item.description}
-        </Text>
-      </View>
-    </Pressable>
-  );
-}
-
-function PopularSceneCard({
-  title,
-  subtitle,
-  source,
-  palette,
-  badge,
-  onPress,
-}: {
-  title: string;
-  subtitle: string;
-  source: ImageSourcePropType;
-  palette: readonly [string, string];
-  badge: string;
-  onPress: () => void;
-}) {
-  const languageRevision = useLanguageRevision();
-
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={`${title}, ${badge}`}
-      onPress={onPress}
-      style={({ pressed }) => [styles.sceneCard, pressed && styles.pressed]}
-    >
-      <LinearGradient colors={palette} style={StyleSheet.absoluteFill} />
-      <FittedCoverImage source={source} />
-      <LinearGradient
-        colors={['rgba(5,5,5,0.02)', 'rgba(5,5,5,0.66)']}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={styles.sceneBadge}>
-        <Icon name="sparkles" size={11} color={colors.accentYellow} />
-        <Text style={styles.sceneBadgeText}>{badge}</Text>
-      </View>
-      <View style={styles.sceneCopy}>
-        <Text numberOfLines={1} style={styles.sceneTitle}>
-          {title}
-        </Text>
-        <Text numberOfLines={1} style={styles.sceneSubtitle}>
-          {subtitle}
-        </Text>
-      </View>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  content: { paddingHorizontal: spacing.lg, paddingBottom: 40 },
+  screen: { flex: 1, backgroundColor: '#0B0F0D' },
+  scrollContent: { paddingHorizontal: spacing.lg },
+  page: { alignSelf: 'center', maxWidth: 1080, width: '100%' },
   topBar: {
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    minHeight: 58,
+  },
+  brand: { alignItems: 'center', flexDirection: 'row', flexShrink: 1, gap: 11 },
+  brandMark: {
     alignItems: 'center',
-    minHeight: 78,
-    padding: 12,
-    gap: 8,
-  },
-  greetingBlock: { marginTop: spacing.lg },
-  greeting: { ...typography.h2, color: colors.textPrimary },
-  greetingHint: { ...typography.caption, color: colors.textMuted, marginTop: 1 },
-  modeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: spacing.md },
-  sliderContent: {
-    marginTop: spacing.lg,
-    gap: spacing.sm,
-  },
-  slide: {
-    borderRadius: radii.xl,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.26)',
-    justifyContent: 'flex-end',
-  },
-  coverImageCanvas: {
-    alignItems: 'center',
-    bottom: 0,
+    backgroundColor: '#A9EBC2',
+    borderRadius: 14,
+    height: 42,
     justifyContent: 'center',
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0,
+    width: 42,
   },
-  coverImage: {
-    height: '100%',
-    resizeMode: 'cover',
+  brandName: { color: '#F5F8F6', fontSize: 17, fontWeight: '800', letterSpacing: -0.2 },
+  brandCaption: { color: '#89958E', fontSize: 11, lineHeight: 15, marginTop: 1 },
+  hero: {
+    backgroundColor: '#15201B',
+    borderColor: '#263A30',
+    borderRadius: 28,
+    borderWidth: 1,
+    marginTop: spacing.lg,
+    overflow: 'hidden',
+  },
+  heroTablet: { flexDirection: 'row', minHeight: 390 },
+  heroCopy: { flex: 1, justifyContent: 'center', padding: 24 },
+  eyebrow: { ...typography.overline, color: '#A9EBC2' },
+  heroTitle: {
+    color: '#F5F8F6',
+    fontSize: 34,
+    fontWeight: '800',
+    letterSpacing: -1.1,
+    lineHeight: 40,
+    marginTop: 13,
+    maxWidth: 540,
+  },
+  heroBody: { color: '#B7C2BC', fontSize: 16, lineHeight: 24, marginTop: 13, maxWidth: 520 },
+  heroActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 24 },
+  primaryAction: {
+    alignItems: 'center',
+    backgroundColor: '#A9EBC2',
+    borderRadius: 15,
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+    minHeight: 50,
+    paddingHorizontal: 18,
+  },
+  primaryActionText: { color: '#0A2118', fontSize: 15, fontWeight: '800' },
+  secondaryAction: {
+    alignItems: 'center',
+    borderColor: '#3C5046',
+    borderRadius: 15,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 8,
+    justifyContent: 'center',
+    minHeight: 50,
+    paddingHorizontal: 17,
+  },
+  secondaryActionText: { color: '#F5F8F6', fontSize: 15, fontWeight: '700' },
+  heroVisual: {
+    borderRadius: 22,
+    height: 245,
+    margin: 8,
+    marginTop: 0,
+    overflow: 'hidden',
+  },
+  heroVisualTablet: { flex: 0.78, height: undefined, marginLeft: 0, marginTop: 8 },
+  heroImage: { height: '100%', width: '100%' },
+  heroImageBadge: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(8,18,13,0.84)',
+    borderColor: 'rgba(200,246,217,0.20)',
+    borderRadius: 14,
+    borderWidth: 1,
+    bottom: 12,
+    flexDirection: 'row',
+    gap: 7,
+    left: 12,
+    paddingHorizontal: 11,
+    paddingVertical: 9,
+    position: 'absolute',
+    right: 12,
+  },
+  heroImageBadgeText: { color: '#E6F1EA', flex: 1, fontSize: 12, fontWeight: '700' },
+  steps: {
+    backgroundColor: '#101613',
+    borderColor: '#232E28',
+    borderRadius: 20,
+    borderWidth: 1,
+    flexDirection: 'row',
+    marginTop: 12,
+    overflow: 'hidden',
+  },
+  step: { flex: 1, minWidth: 0, paddingHorizontal: 12, paddingVertical: 15 },
+  stepTitle: { color: '#D9E3DD', fontSize: 12, fontWeight: '800' },
+  stepDetail: { color: '#75837B', fontSize: 11, lineHeight: 15, marginTop: 3 },
+  sectionHeading: {
+    alignItems: 'flex-end',
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'space-between',
+    marginBottom: 13,
+    marginTop: 30,
+  },
+  sectionTitle: { color: '#F5F8F6', fontSize: 22, fontWeight: '800', letterSpacing: -0.5 },
+  sectionSubtitle: { color: '#89958E', fontSize: 13, lineHeight: 18, marginTop: 4 },
+  inlineAction: { color: '#A9EBC2', fontSize: 14, fontWeight: '800', paddingBottom: 2 },
+  goalGrid: { gap: 11 },
+  goalGridTablet: { flexDirection: 'row', flexWrap: 'wrap' },
+  goalCard: {
+    backgroundColor: '#111815',
+    borderColor: '#25322B',
+    borderRadius: 21,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  goalCardTablet: { flexBasis: '48%', flexGrow: 1, minWidth: 340 },
+  goalImage: { height: 126, width: '100%' },
+  goalCopy: { alignItems: 'center', flexDirection: 'row', gap: 11, padding: 14 },
+  goalIcon: {
+    alignItems: 'center',
+    backgroundColor: '#1C2D25',
+    borderRadius: 12,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  goalText: { flex: 1, minWidth: 0 },
+  goalTitle: { color: '#EEF4F0', fontSize: 16, fontWeight: '800' },
+  goalDescription: { color: '#909C95', fontSize: 12, lineHeight: 17, marginTop: 3 },
+  goalMeta: { color: '#A9EBC2', fontSize: 11, fontWeight: '700', marginTop: 7 },
+  projectRail: { gap: 11, paddingRight: spacing.lg },
+  projectCard: {
+    backgroundColor: '#111815',
+    borderColor: '#25322B',
+    borderRadius: 18,
+    borderWidth: 1,
+    overflow: 'hidden',
+    paddingBottom: 12,
+    width: 174,
+  },
+  projectImage: { height: 145, width: '100%' },
+  projectPlaceholder: {
+    alignItems: 'center',
+    backgroundColor: '#18211D',
+    height: 145,
+    justifyContent: 'center',
     width: '100%',
   },
-  slideCopy: {
-    bottom: 0,
-    left: 0,
-    padding: 16,
-    position: 'absolute',
-    right: 0,
-  },
-  slideEyebrow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  slideEyebrowText: { ...typography.overline, color: colors.accentYellow, fontSize: 10 },
-  slideTitle: { ...typography.h2, color: colors.textPrimary, marginTop: 5 },
-  slideDescription: {
-    ...typography.caption,
-    color: '#E7E3EA',
-    lineHeight: 17,
-    marginTop: 3,
-    maxWidth: 310,
-  },
-  slideAction: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 9,
-  },
-  slideActionText: {
-    ...typography.caption,
-    color: colors.textPrimary,
-    fontWeight: '800',
-    textDecorationLine: 'underline',
-  },
-  pagination: { flexDirection: 'row', alignSelf: 'center', gap: 6, marginTop: 10 },
-  paginationDot: {
-    height: 7,
-    width: 7,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.28)',
-  },
-  paginationDotActive: { width: 22, backgroundColor: colors.accentYellow },
-  quickActions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginTop: spacing.lg,
-  },
-  quickAction: {
-    flexBasis: '47%',
-    flexGrow: 1,
-    minHeight: 124,
-    borderRadius: 23,
-  },
-  quickActionPressable: { flex: 1, borderRadius: 23 },
-  quickActionSurface: { flex: 1 },
-  quickActionInner: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 5,
-    paddingVertical: 12,
-  },
-  quickActionIcon: {
-    width: 47,
-    height: 47,
-  },
-  quickIconContent: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  quickActionText: {
-    color: colors.textPrimary,
+  projectTitle: {
+    color: '#EEF4F0',
     fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: -0.15,
-    lineHeight: 18,
-    marginTop: 7,
-    textAlign: 'center',
+    fontWeight: '800',
+    marginTop: 10,
+    paddingHorizontal: 11,
   },
-  quickUnderline: {
-    borderRadius: 2,
-    height: 2,
-    marginTop: 9,
-    width: 22,
-  },
-  horizontalList: { gap: 12, paddingRight: spacing.lg },
-  studioCard: {
-    backgroundColor: colors.surface,
-    borderColor: 'rgba(255,206,64,0.28)',
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    height: 210,
-    overflow: 'hidden',
-    width: 158,
-  },
-  studioCardImage: { height: '100%', width: '100%' },
-  studioFashionImage: { transform: [{ scale: 1.08 }, { translateY: 10 }] },
-  studioCardBadge: {
+  projectStatus: { color: '#849088', fontSize: 11, marginTop: 3, paddingHorizontal: 11 },
+  emptyCatalog: {
     alignItems: 'center',
-    backgroundColor: 'rgba(5,5,5,0.68)',
-    borderRadius: radii.pill,
-    flexDirection: 'row',
-    gap: 4,
-    left: 9,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    position: 'absolute',
-    top: 9,
-  },
-  studioCardBadgeText: { color: '#FFE69B', fontSize: 10, fontWeight: '800' },
-  studioCardCopy: { bottom: 10, left: 10, position: 'absolute', right: 10 },
-  studioCardTitle: { ...typography.label, color: colors.textPrimary, fontWeight: '900' },
-  studioCardDescription: {
-    ...typography.caption,
-    color: '#DED9D0',
-    lineHeight: 15,
-    marginTop: 2,
-  },
-  sceneCard: {
-    // The shared category artwork is 1122 × 1402. Matching that 4:5 canvas
-    // keeps the same full composition visible here and in onboarding step 2.
-    width: 166,
-    aspectRatio: 1122 / 1402,
-    borderRadius: radii.lg,
-    overflow: 'hidden',
+    backgroundColor: '#111815',
+    borderColor: '#2A3B32',
+    borderRadius: 20,
+    borderStyle: 'dashed',
     borderWidth: 1,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surface,
-  },
-  sceneBadge: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
     flexDirection: 'row',
+    gap: 13,
+    padding: 17,
+  },
+  emptyIcon: {
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 7,
-    paddingVertical: 4,
-    borderRadius: radii.pill,
-    backgroundColor: 'rgba(5,5,5,0.56)',
-  },
-  sceneBadgeText: {
-    ...typography.caption,
-    fontSize: 10,
-    color: colors.textPrimary,
-    fontWeight: '700',
-  },
-  sceneCopy: { position: 'absolute', left: 11, right: 11, bottom: 10 },
-  sceneTitle: { ...typography.label, color: colors.textPrimary, fontWeight: '800' },
-  sceneSubtitle: { ...typography.caption, color: '#E6E2E8', marginTop: 2 },
-  pressed: { opacity: 0.82, transform: [{ scale: 0.985 }] },
-  bottomCard: {
-    minHeight: 84,
-    borderRadius: radii.lg,
-    marginTop: spacing.xl,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 11,
-  },
-  bottomCardIcon: {
-    width: 43,
-    height: 43,
+    backgroundColor: '#1C2D25',
     borderRadius: 14,
-    alignItems: 'center',
+    height: 48,
     justifyContent: 'center',
-    backgroundColor: colors.accentYellowSoft,
+    width: 48,
   },
-  bottomCardCopy: { flex: 1 },
-  bottomCardTitle: { ...typography.label, color: colors.textPrimary },
-  bottomCardText: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginTop: 3,
-    lineHeight: 17,
+  emptyCopy: { flex: 1 },
+  emptyTitle: { color: '#EDF4EF', fontSize: 15, fontWeight: '800' },
+  emptyDetail: { color: '#87948C', fontSize: 12, lineHeight: 17, marginTop: 4 },
+  legacyTools: {
+    alignItems: 'center',
+    borderColor: '#222B26',
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 30,
+    padding: 15,
   },
+  legacyIcon: {
+    alignItems: 'center',
+    backgroundColor: '#171D1A',
+    borderRadius: 12,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  legacyCopy: { flex: 1 },
+  legacyTitle: { color: '#C1CBC5', fontSize: 14, fontWeight: '700' },
+  legacyDetail: { color: '#707C75', fontSize: 11, lineHeight: 16, marginTop: 3 },
+  pressed: { opacity: 0.78, transform: [{ scale: 0.99 }] },
 });

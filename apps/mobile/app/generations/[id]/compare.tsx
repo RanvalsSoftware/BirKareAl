@@ -16,7 +16,6 @@ import {
 import { apiBaseUrl, apiRequest } from '@/api/client';
 import { AppHeader, Icon, Notice, Screen } from '@/components';
 import { useAuthStore } from '@/features/auth/auth-store';
-import { useCreateFlow } from '@/features/create/createFlow';
 import { colors, radii, spacing, typography } from '@/theme';
 
 type CompareOutput = {
@@ -76,13 +75,16 @@ export default function CompareScreen() {
   const requestedProjectId = firstParam(params.projectId);
   const accessToken = useAuthStore((store) => store.accessToken);
   const userId = useAuthStore((store) => store.user?.id);
-  const { flow } = useCreateFlow();
   const [generation, setGeneration] = useState<CompareGeneration | null>(null);
   const [sourceAssetId, setSourceAssetId] = useState<string | null>(null);
   const [loading, setLoading] = useState(Boolean(generationId && generationId !== 'demo'));
   const [error, setError] = useState<string | null>(null);
   const [frameWidth, setFrameWidth] = useState(0);
   const [split, setSplit] = useState(0.5);
+  const invalidGenerationError =
+    !generationId || generationId === 'demo'
+      ? translateCopy('Geçerli bir üretim kaydı bulunamadı.')
+      : null;
 
   useEffect(() => {
     if (!generationId || generationId === 'demo') return;
@@ -149,10 +151,9 @@ export default function CompareScreen() {
   const afterSource = remoteImageSource(selectedOutput?.asset?.accessUrl, accessToken);
   const beforeSource = sourceAssetId
     ? remoteImageSource(`/v1/assets/${encodeURIComponent(sourceAssetId)}/content`, accessToken)
-    : flow.sourceUri
-      ? ({ uri: flow.sourceUri } as ImageSourcePropType)
-      : null;
+    : null;
   const ready = Boolean(beforeSource && afterSource);
+  const displayError = invalidGenerationError ?? error;
 
   return (
     <Screen contentContainerStyle={styles.content}>
@@ -163,9 +164,9 @@ export default function CompareScreen() {
           <Text style={styles.loadingText}>{translateCopy("Orijinal ve sonuç hazırlanıyor…")}</Text>
         </View>
       ) : null}
-      {error ? (
+      {displayError ? (
         <Notice tone="warning" title={translateCopy("Karşılaştırma açılamadı")}>
-          {error}
+          {displayError}
         </Notice>
       ) : null}
       {!loading && ready ? (
@@ -219,7 +220,7 @@ export default function CompareScreen() {
           <Notice tone="neutral" title={translateCopy("Kaydırarak karşılaştır")}>{translateCopy("Solda seçili AI sonucu, sağda yüklediğin ilk kaynak fotoğraf bulunur. Ayıracı tutup sürükleyerek ayrıntıları inceleyebilirsin.")}</Notice>
         </>
       ) : null}
-      {!loading && !ready && !error ? (
+      {!loading && !ready && !displayError ? (
         <Notice tone="warning" title={translateCopy("Karşılaştırma için görseller eksik")}>{translateCopy("Orijinal kaynak veya tamamlanmış sonuç bulunamadı. Projelerden tamamlanan bir üretimi açıp yeniden deneyebilirsin.")}</Notice>
       ) : null}
       <Pressable

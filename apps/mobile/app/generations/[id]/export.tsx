@@ -40,6 +40,10 @@ export default function ExportScreen() {
   const generation = loadedGeneration?.requestScope === requestScope ? loadedGeneration : null;
   const [error, setError] = useState<string | null>(null);
   const [actualImageRatio, setActualImageRatio] = useState<number | null>(null);
+  const invalidGenerationError =
+    !generationId || generationId === 'demo'
+      ? translateCopy('Geçerli bir üretim kaydı bulunamadı.')
+      : null;
 
   useEffect(() => {
     let active = true;
@@ -85,6 +89,7 @@ export default function ExportScreen() {
     actualImageRatio && Number.isFinite(actualImageRatio) && actualImageRatio > 0
       ? actualImageRatio
       : shareAspectRatio(generation?.aspectRatio);
+  const displayError = invalidGenerationError ?? error;
   const shareOther = async () => {
     if (!generationId || !selection) return;
     try {
@@ -142,7 +147,7 @@ export default function ExportScreen() {
         ) : (
           <View style={styles.previewEmpty}>
             <Icon name="image-outline" size={46} color={colors.textMuted} />
-            <Text style={styles.previewEmptyText}>{translateCopy("Görsel hazırlanıyor…")}</Text>
+            <Text style={styles.previewEmptyText}>{translateCopy("Tamamlanmış sunucu çıktısı bulunamadı")}</Text>
           </View>
         )}
         {selection ? (
@@ -152,17 +157,19 @@ export default function ExportScreen() {
         ) : null}
       </View>
 
-      {error ? (
+      {displayError ? (
         <Notice tone="warning" title={translateCopy("Görsel açılamadı")}>
-          {error}
+          {displayError}
         </Notice>
       ) : null}
 
-      <GeneratedSharePanel
-        generationId={generationId ?? 'demo'}
-        outputId={selection?.id ?? outputId}
-        ready={Boolean(selection)}
-      />
+      {generationId && selection ? (
+        <GeneratedSharePanel
+          generationId={generationId}
+          outputId={selection.id}
+          ready
+        />
+      ) : null}
 
       <View style={styles.integrityNote}>
         <Icon name="resize-outline" size={17} color={colors.accentYellow} />

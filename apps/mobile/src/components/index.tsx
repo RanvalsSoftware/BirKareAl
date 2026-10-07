@@ -32,7 +32,7 @@ export { GlassSurface } from './GlassSurface';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
-const brandLogoMark = require('../../assets/onboarding/images/brand/logo-gold-icon.png');
+const brandLogoMark = require('../../assets/brand/birkare-studio-icon-1024-v1.png');
 
 export function Icon({
   name,
@@ -120,7 +120,7 @@ export function LogoMark({
     <View
       style={withWordmark ? styles.logoWithWordmark : undefined}
       accessible
-      accessibilityLabel="BirKare AI"
+      accessibilityLabel="BirKare Studio"
     >
       <Animated.View
         style={[styles.logoOuter, { width: size, height: size, transform: [{ scale: pulse }] }]}
@@ -130,9 +130,9 @@ export function LogoMark({
       {withWordmark ? (
         <View style={styles.wordmarkCopy}>
           <Text numberOfLines={1} adjustsFontSizeToFit style={styles.wordmarkText}>
-            BirKare <Text style={styles.wordmarkAi}>AI</Text>
+            BirKare <Text style={styles.wordmarkAi}>{translateCopy('Studio')}</Text>
           </Text>
-          <Text numberOfLines={1} adjustsFontSizeToFit style={styles.wordmarkCaption}>{translateCopy("hayalindeki kareye adım at")}</Text>
+          <Text numberOfLines={1} adjustsFontSizeToFit style={styles.wordmarkCaption}>{translateCopy("ürün görsel çalışma alanın")}</Text>
         </View>
       ) : null}
     </View>

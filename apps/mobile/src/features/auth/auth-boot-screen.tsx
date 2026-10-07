@@ -9,7 +9,7 @@ export function AuthBootScreen() {
   return (
     <View style={styles.screen} accessibilityLiveRegion="polite">
       <ActivityIndicator color="#FFC400" size="large" accessibilityLabel={translateCopy("Oturum yükleniyor")} />
-      <Text style={styles.title}>BirKare AI</Text>
+      <Text style={styles.title}>BirKare Studio</Text>
       <Text style={styles.detail}>{translateCopy("Oturumun hazırlanıyor…")}</Text>
     </View>
   );

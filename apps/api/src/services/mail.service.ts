@@ -161,7 +161,7 @@ export function authMail(input: {
   const title = verification ? 'E-posta adresini doğrula' : 'Şifreni yenile';
   const validity = verification ? '10 dakika' : '1 saat';
   const text = [
-    `BirKare AI — ${title}`,
+    `BirKare Studio — ${title}`,
     '',
     `Uygulamayı açmak için: ${link.toString()}`,
     '',
@@ -171,9 +171,9 @@ export function authMail(input: {
     '',
     `Bu bağlantı ve kod ${validity} geçerlidir ve yalnızca bir kez kullanılabilir.`,
     'Bu talebi sen başlatmadıysan e-postayı yok say. Kodunu kimseyle paylaşma.',
-    'BirKare AI hiçbir zaman e-postayla şifreni istemez.',
+    'BirKare Studio hiçbir zaman e-postayla şifreni istemez.',
   ].join('\n');
-  return localizeAuthMail({ to: input.email, subject: `BirKare AI — ${title}`, text }, { ...input, link: link.toString() });
+  return localizeAuthMail({ to: input.email, subject: `BirKare Studio — ${title}`, text }, { ...input, link: link.toString() });
 }
 
 export function accountDeletionMail(input: {
@@ -201,18 +201,18 @@ export function accountDeletionMail(input: {
   }
   link.searchParams.set('token', input.token);
   const text = [
-    'BirKare AI — Hesap silme talebi',
+    'BirKare Studio — Hesap silme talebi',
     '',
     'Hesabını kalıcı olarak silme işlemine devam etmek için aşağıdaki tek kullanımlık bağlantıyı aç:',
     link.toString(),
     '',
     'Bu bağlantı 30 dakika geçerlidir ve yalnızca bir kez kullanılabilir.',
     'Bağlantıyı sen istemediysen bu e-postayı yok say; hesabında hiçbir değişiklik yapılmaz.',
-    'BirKare AI hiçbir zaman bu işlem için e-postayla şifreni istemez.',
+    'BirKare Studio hiçbir zaman bu işlem için e-postayla şifreni istemez.',
   ].join('\n');
   return localizeDeletionMail({
     to: input.email,
-    subject: 'BirKare AI — Hesap silme bağlantın',
+    subject: 'BirKare Studio — Hesap silme bağlantın',
     text,
   }, { locale: input.locale, link: link.toString() });
 }

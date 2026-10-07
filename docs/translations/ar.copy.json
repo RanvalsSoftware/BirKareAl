@@ -43,6 +43,11 @@
       "translation": "- لقد قرأت وقبلت ذلك."
     },
     {
+      "key": "’nı okudum ve kabul ediyorum. Ayrıca 18 yaşından büyük olduğumu beyan ederim.",
+      "source": " — I have read and accept them. I also declare that I am at least 18 years old.",
+      "translation": " — قرأتها وأوافق عليها. وأقر أيضاً بأن عمري 18 عاماً على الأقل."
+    },
+    {
       "key": "’nı ve topluluk güvenliği kurallarını kabul etmiş olursun.",
       "source": "and the community safety guidelines.",
       "translation": "وإرشادات سلامة المجتمع."
@@ -86,6 +91,11 @@
       "key": "{{p0}} aktif dokunuş",
       "source": "{{p0}} active adjustments",
       "translation": "{{p0}} التعديلات النشطة"
+    },
+    {
+      "key": "{{p0}} ayrı sonuç",
+      "source": "{{p0}} separate result",
+      "translation": "{{p0}} نتائج منفصلة"
     },
     {
       "key": "{{p0}} görsel",
@@ -173,14 +183,14 @@
       "translation": "خيارات {{p0}}"
     },
     {
-      "key": "{{p0}} üyelik",
-      "source": "{{p0}} membership",
-      "translation": "عضوية {{p0}}"
-    },
-    {
       "key": "{{p0}} uygulamasını paylaşım menüsünden seç",
       "source": "Select the {{p0}} app from the sharing menu",
       "translation": "حدد التطبيق {{p0}} من قائمة المشاركة"
+    },
+    {
+      "key": "{{p0}} üyelik",
+      "source": "{{p0}} membership",
+      "translation": "عضوية {{p0}}"
     },
     {
       "key": "{{p0}} Yeniden denemek için dokun.",
@@ -218,9 +228,19 @@
       "translation": "{{p0}}، فئة المنتج"
     },
     {
+      "key": "{{p0}}, ürününü satışa hazırla.",
+      "source": "{{p0}}, prepare your product for sale.",
+      "translation": "{{p0}}، قم بإعداد منتجك للبيع."
+    },
+    {
       "key": "{{p0}}: {{p1}}",
       "source": "{{p0}}: {{p1}}",
       "translation": "{{p0}}: {{p1}}"
+    },
+    {
+      "key": "{{p0}}. adım",
+      "source": "{{p0}}. my name",
+      "translation": "{{p0}}. اسمي"
     },
     {
       "key": "{{p0}}. Yoğunluğu değiştirdiğinde ton ve ışık önizlemesi anında güncellenir. Gerçek AI dokusu ve detayları üretim onayından sonra oluşturulur.",
@@ -268,6 +288,21 @@
       "translation": "+1 الائتمان / الصورة"
     },
     {
+      "key": "1 · Yükle",
+      "source": "1 · Install",
+      "translation": "1 · التثبيت"
+    },
+    {
+      "key": "1, 2 veya 4 alternatif",
+      "source": "1, 2 or 4 alternatives",
+      "translation": "1 أو 2 أو 4 بدائل"
+    },
+    {
+      "key": "1, 2 veya 4 sonucu aynı ürün projesinde karşılaştır.",
+      "source": "Compare 1, 2 or 4 results in the same product project.",
+      "translation": "قارن 1 أو 2 أو 4 نتائج في نفس مشروع المنتج."
+    },
+    {
       "key": "1. Kapsam ve kabul",
       "source": "1. Scope and acceptance",
       "translation": "1. النطاق والقبول"
@@ -298,6 +333,11 @@
       "translation": "11 مجموعات الاتجاه"
     },
     {
+      "key": "15 ürün sahnesi",
+      "source": "15 product scenes",
+      "translation": "15 مشاهد المنتج"
+    },
+    {
       "key": "18 yaşını doldurduğumu onaylıyorum.",
       "source": "I confirm that I am at least 18.",
       "translation": "أؤكد أن عمري لا يقل عن 18 عامًا."
@@ -311,6 +351,21 @@
       "key": "18 yaşını doldurdum",
       "source": "I am at least 18 years old",
       "translation": "عمري 18 سنة على الأقل"
+    },
+    {
+      "key": "2 · Planla",
+      "source": "2 · Plan",
+      "translation": "2 · الخطة"
+    },
+    {
+      "key": "2 alternatifle başla",
+      "source": "Start with 2 alternatives",
+      "translation": "ابدأ ببديلين"
+    },
+    {
+      "key": "2 Ekim 2026",
+      "source": "October 2, 2026",
+      "translation": "2 أكتوبر 2026"
     },
     {
       "key": "2 Eylül 2026",
@@ -336,6 +391,11 @@
       "key": "200 başlangıç kredisi · Kalıcı Pro",
       "source": "200 starting credits · Persistent Pro",
       "translation": "200 نقطة بداية · Persistent Pro"
+    },
+    {
+      "key": "3 · Üret",
+      "source": "3 · Produce",
+      "translation": "3 · إنتاج"
     },
     {
       "key": "3 Eylül 2026",
@@ -368,9 +428,9 @@
       "translation": "يمكن استعادتها خلال 30 يومًا."
     },
     {
-      "key": "30 günlük geri alma süresi sonunda verilerin kalıcı olarak silineceğini anladım.",
-      "source": "I understand that my data will be permanently deleted after the 30-day recovery period.",
-      "translation": "أدرك أنه سيتم حذف بياناتي نهائيًا بعد فترة الاسترداد البالغة 30 يومًا."
+      "key": "30 günlük geri alma süresi sonunda verilerimin silinmeye başlanacağını anladım.",
+      "source": "I understand that deletion of my data will begin after the 30-day recovery period.",
+      "translation": "أفهم أن حذف بياناتي سيبدأ بعد انتهاء فترة الاسترداد البالغة 30 يومًا."
     },
     {
       "key": "4:5 mobil önizleme · seçim değiştirilebilir",
@@ -473,6 +533,11 @@
       "translation": "إدارة / إلغاء الاشتراك"
     },
     {
+      "key": "Aboneliğini",
+      "source": "Subscription",
+      "translation": "الاشتراك"
+    },
+    {
       "key": "Aboneliğiniz iptal edildi.",
       "source": "Your subscription has been canceled.",
       "translation": "لقد تم إلغاء اشتراكك."
@@ -503,19 +568,79 @@
       "translation": "تم إلغاء الاشتراك. يستمر الوصول الاحترافي حتى {{p0}}."
     },
     {
-      "key": "Aç",
-      "source": "Open",
-      "translation": "مفتوح"
-    },
-    {
       "key": "Acil olmayan talepler",
       "source": "Non-urgent requests",
       "translation": "الطلبات غير العاجلة"
     },
     {
+      "key": "Aç",
+      "source": "Open",
+      "translation": "مفتوح"
+    },
+    {
       "key": "Açık AI bildirimi",
       "source": "Clear AI disclosure",
       "translation": "الكشف الواضح عن الذكاء الاصطناعي"
+    },
+    {
+      "key": "Açık rıza geri çekilemedi.",
+      "source": "Could not withdraw explicit consent.",
+      "translation": "تعذر سحب الموافقة الصريحة."
+    },
+    {
+      "key": "Açık rıza kaydedilemedi.",
+      "source": "Could not save explicit consent.",
+      "translation": "تعذر حفظ الموافقة الصريحة."
+    },
+    {
+      "key": "Açık rıza kaydedilemedi. Lütfen tekrar dene.",
+      "source": "Could not save your explicit consent. Please try again.",
+      "translation": "تعذّر حفظ الموافقة الصريحة. يُرجى المحاولة مرة أخرى."
+    },
+    {
+      "key": "Açık rıza kayıtlı",
+      "source": "Explicit consent recorded",
+      "translation": "تم تسجيل الموافقة الصريحة"
+    },
+    {
+      "key": "Açık Rıza Metni",
+      "source": "Explicit Consent Notice",
+      "translation": "إشعار الموافقة الصريحة"
+    },
+    {
+      "key": "Açık Rıza Metni'ni okudum, izin veriyorum.",
+      "source": "I have read the Explicit Consent Notice and give permission.",
+      "translation": "قرأت إشعار الموافقة الصريحة وأمنح الإذن."
+    },
+    {
+      "key": "Açık Rıza Metnini oku ve izin ver",
+      "source": "Read the Explicit Consent Notice and give permission",
+      "translation": "اقرأ إشعار الموافقة الصريحة وامنح الإذن"
+    },
+    {
+      "key": "Açık Rıza Metninin tamamını oku",
+      "source": "Read the full Explicit Consent Notice",
+      "translation": "اقرأ إشعار الموافقة الصريحة كاملاً"
+    },
+    {
+      "key": "Açık rıza, yalnızca bu metni okuyup ayrı olarak izin verdiğinde alınır. Onay vermemen hesap açmanı engellemez; bu izne bağlı görsel üretim kullanılamayabilir.",
+      "source": "Explicit consent is requested only if you separately agree after reading this notice. Declining will not prevent account creation, but image generation that depends on this consent may be unavailable.",
+      "translation": "لا تُطلب الموافقة الصريحة إلا إذا وافقت بشكل منفصل بعد قراءة هذا الإشعار. لن يمنع رفضك إنشاء الحساب، لكن قد لا تتوفر ميزة إنشاء الصور التي تعتمد على هذه الموافقة."
+    },
+    {
+      "key": "Açık rıza: fotoğrafımı AI ile işlemeye izin veriyorum",
+      "source": "Explicit consent: I allow my photo to be processed with AI",
+      "translation": "موافقة صريحة: أسمح بمعالجة صورتي بالذكاء الاصطناعي"
+    },
+    {
+      "key": "Açık rızamı geri çek",
+      "source": "Withdraw my explicit consent",
+      "translation": "سحب موافقتي الصريحة"
+    },
+    {
+      "key": "Açık rızanı geri çekmek istiyor musun?",
+      "source": "Do you want to withdraw your explicit consent?",
+      "translation": "هل تريد سحب موافقتك الصريحة؟"
     },
     {
       "key": "Açık stüdyo fonunda güçlü oturma pozu ve hacimli siyah kumaş. Dergi yazısı veya logo eklenmez.",
@@ -683,14 +808,14 @@
       "translation": "تم إنشاؤها بواسطة الذكاء الاصطناعي"
     },
     {
-      "key": "AI ile üretilen veya önemli ölçüde düzenlenen sonuçlar, paylaşım akışında AI içeriği olarak işaretlenir.",
-      "source": "Results generated or substantially edited with AI are labeled as AI content in the sharing flow.",
-      "translation": "يتم تصنيف النتائج التي تم إنشاؤها أو تحريرها بشكل كبير باستخدام الذكاء الاصطناعي على أنها محتوى الذكاء الاصطناعي في تدفق المشاركة."
-    },
-    {
       "key": "AI ile uygulanır",
       "source": "Applied with AI",
       "translation": "تطبق مع الذكاء الاصطناعي"
+    },
+    {
+      "key": "AI ile üretilen veya önemli ölçüde düzenlenen sonuçlar, paylaşım akışında AI içeriği olarak işaretlenir.",
+      "source": "Results generated or substantially edited with AI are labeled as AI content in the sharing flow.",
+      "translation": "يتم تصنيف النتائج التي تم إنشاؤها أو تحريرها بشكل كبير باستخدام الذكاء الاصطناعي على أنها محتوى الذكاء الاصطناعي في تدفق المشاركة."
     },
     {
       "key": "AI önizlemesi",
@@ -708,13 +833,13 @@
       "translation": "مشهد الذكاء الاصطناعي"
     },
     {
-      "key": "AI SONUÇ",
-      "source": "AI RESULT",
+      "key": "AI sonucu",
+      "source": "AI result",
       "translation": "نتيجة الذكاء الاصطناعي"
     },
     {
-      "key": "AI sonucu",
-      "source": "AI result",
+      "key": "AI SONUÇ",
+      "source": "AI RESULT",
       "translation": "نتيجة الذكاء الاصطناعي"
     },
     {
@@ -818,14 +943,44 @@
       "translation": "معلومات خادعة أو كاذبة"
     },
     {
+      "key": "alternatif",
+      "source": "alternative",
+      "translation": "بديل"
+    },
+    {
       "key": "Alternatif",
       "source": "Alternative",
       "translation": "بديل"
     },
     {
+      "key": "Alternatif sayısı",
+      "source": "Number of alternatives",
+      "translation": "عدد البدائل"
+    },
+    {
+      "key": "Alternatifleri, yeni versiyonları ve dışa aktarılan görselleri ürün kataloğunda birlikte yönet.",
+      "source": "Manage alternatives, new versions and exported images together in the product catalogue.",
+      "translation": "إدارة البدائل والإصدارات الجديدة والصور المصدرة معًا في كتالوج المنتجات."
+    },
+    {
       "key": "Altın vurgulu premium reklam karesi.",
       "source": "A premium advertising shot with gold accents.",
       "translation": "لقطة إعلانية متميزة مع لمسات ذهبية."
+    },
+    {
+      "key": "Amaç seçimi sahne ve oran için anlaşılır bir başlangıç ayarı hazırlar; tüm ayarlar değiştirilebilir.",
+      "source": "The choice of objective prepares a clear initial setting for scene and proportion; All settings can be changed.",
+      "translation": "يؤدي اختيار الهدف إلى إعداد إعداد أولي واضح للمشهد والنسبة؛ يمكن تغيير كافة الإعدادات."
+    },
+    {
+      "key": "Amaç seçimi yalnızca başlangıç ayarlarını hazırlar.",
+      "source": "Purpose selection only prepares the initial settings.",
+      "translation": "يؤدي اختيار الغرض إلى إعداد الإعدادات الأولية فقط."
+    },
+    {
+      "key": "Amaç, sahne ve format",
+      "source": "Purpose, scene and format",
+      "translation": "الغرض والمشهد والشكل"
     },
     {
       "key": "Ambalaj, kapak ve etiketi koruyan temiz beauty çekimi.",
@@ -978,6 +1133,11 @@
       "translation": "التحول في الخلفية"
     },
     {
+      "key": "Arka planı beyazlat",
+      "source": "whiten the background",
+      "translation": "تبييض الخلفية"
+    },
+    {
       "key": "Arka planı sadeleştir",
       "source": "Simplify the background",
       "translation": "تبسيط الخلفية"
@@ -986,6 +1146,11 @@
       "key": "Arka planı seç",
       "source": "Choose background",
       "translation": "اختر الخلفية"
+    },
+    {
+      "key": "Arka planı temiz ve beyaz yap.",
+      "source": "Make the background clean and white.",
+      "translation": "جعل الخلفية نظيفة وبيضاء."
     },
     {
       "key": "Arka planı, ortamı veya küçük stil ayrıntılarını değiştirebilirsin. Kimlik ve doğal anatomi her zaman korunur.",
@@ -1003,6 +1168,11 @@
       "translation": "حدد إحدى الصور التجريبية أدناه لتجربة التدفق."
     },
     {
+      "key": "Atla",
+      "source": "skip",
+      "translation": "تخطي"
+    },
+    {
       "key": "Ayakkabı",
       "source": "Shoes",
       "translation": "أحذية"
@@ -1011,6 +1181,36 @@
       "key": "Ayarlar",
       "source": "Settings",
       "translation": "الإعدادات"
+    },
+    {
+      "key": "Aydınlatma Metni",
+      "source": "Privacy Notice",
+      "translation": "إشعار الخصوصية"
+    },
+    {
+      "key": "Aydınlatma Metni ve Kullanım Koşulları kayıt sırasında ayrı olarak sunulur.",
+      "source": "The Privacy Notice and Terms of Use are presented separately during registration.",
+      "translation": "يُعرض إشعار الخصوصية وشروط الاستخدام بشكل منفصل أثناء التسجيل."
+    },
+    {
+      "key": "Aydınlatma Metni ve Kullanım Koşulları kayıt sırasında ayrı sunulur.",
+      "source": "The Privacy Notice and Terms of Use are presented separately during registration.",
+      "translation": "يُعرض إشعار الخصوصية وشروط الاستخدام بشكل منفصل أثناء التسجيل."
+    },
+    {
+      "key": "Aydınlatma Metni'ni okuduğunuzu onaylamalısınız.",
+      "source": "Please confirm that you have read the Privacy Notice.",
+      "translation": "يرجى تأكيد قراءة إشعار الخصوصية."
+    },
+    {
+      "key": "Aydınlatma Metni’ni okudum ve anladım",
+      "source": "I have read and understood the Privacy Notice",
+      "translation": "قرأت إشعار الخصوصية وفهمته"
+    },
+    {
+      "key": "Aydınlatma Metninin tam metnini oku",
+      "source": "Read the full Privacy Notice",
+      "translation": "اقرأ إشعار الخصوصية كاملاً"
     },
     {
       "key": "Aydınlık ve sade lifestyle moda karesi.",
@@ -1148,6 +1348,11 @@
       "translation": "حاول إجراء بحث آخر أو استكشف المجموعة الكاملة."
     },
     {
+      "key": "Başka ürün veya kişi yok",
+      "source": "No other products or people",
+      "translation": "لا توجد منتجات أو أشخاص آخرين"
+    },
+    {
       "key": "Başkalarına ait fotoğrafları, kimliği veya kişilik haklarını izinsiz kullanma. Paylaşımlarda açık, dürüst ve saygılı ol.",
       "source": "Do not use other people’s photos or identity without permission or violate their personal rights. Share openly, honestly and respectfully.",
       "translation": "لا تستخدم صور الآخرين أو هويتهم دون إذن أو تنتهك حقوقهم الشخصية. شارك بصراحة وصدق واحترام."
@@ -1166,6 +1371,16 @@
       "key": "Başlangıç",
       "source": "Getting started",
       "translation": "البدء"
+    },
+    {
+      "key": "Başlangıç formatı",
+      "source": "Startup format",
+      "translation": "تنسيق بدء التشغيل"
+    },
+    {
+      "key": "Başlangıç onayı kaydedilemedi. Lütfen tekrar dene.",
+      "source": "Failed to save initial confirmation. Please try again.",
+      "translation": "فشل في حفظ التأكيد الأولي. يرجى المحاولة مرة أخرى."
     },
     {
       "key": "Başlatmadan önce",
@@ -1293,6 +1508,11 @@
       "translation": "اختر صورة"
     },
     {
+      "key": "Bir fotoğraf, düzenli bir ürün akışı",
+      "source": "One photo, a steady flow of products",
+      "translation": "صورة واحدة، تدفق مستمر للمنتجات"
+    },
+    {
       "key": "Bir fotoğrafa özgün bir stil ver.",
       "source": "Give a photo an original style.",
       "translation": "إعطاء الصورة النمط الأصلي."
@@ -1373,6 +1593,11 @@
       "translation": "فتح BirKare AI"
     },
     {
+      "key": "BirKare AI gizlilik politikası tek bir güncel kaynaktan yayınlanır. Bu bağlantı uygulama diline uygun sürümü açar.",
+      "source": "BirKare AI's privacy policy is published from one current source. This link opens the version for your app language.",
+      "translation": "تُنشر سياسة خصوصية BirKare AI من مصدر واحد ومحدّث. يفتح هذا الرابط النسخة المناسبة للغة التطبيق."
+    },
+    {
       "key": "BirKare AI hesabı oluşturarak bu örnek Kullanım Koşulları’nı kabul etmiş olursun. Koşulları kabul etmiyorsan hesap oluşturmamalı veya hizmeti kullanmamalısın.",
       "source": "By creating a BirKare AI account, you accept these draft Terms of Use. Do not create an account or use the service if you do not accept the terms.",
       "translation": "من خلال إنشاء حساب BirKare AI، فإنك توافق على مسودة شروط الاستخدام هذه. لا تقم بإنشاء حساب أو استخدام الخدمة إذا كنت لا تقبل الشروط."
@@ -1433,6 +1658,56 @@
       "translation": "BirKare الخطط الاحترافية"
     },
     {
+      "key": "BİRKARE STUDIO",
+      "source": "BİRKARE STUDIO",
+      "translation": "BİRKARE STUDIO"
+    },
+    {
+      "key": "BirKare Studio",
+      "source": "BirKare Studio",
+      "translation": "BirKare Studio"
+    },
+    {
+      "key": "BirKare Studio · Sürüm {{p0}}",
+      "source": "BirKare Studio · Version {{p0}}",
+      "translation": "BirKare Studio · الإصدار {{p0}}"
+    },
+    {
+      "key": "BirKare Studio açılıyor",
+      "source": "BirKare Studio is opening",
+      "translation": "جارٍ فتح BirKare Studio"
+    },
+    {
+      "key": "BirKare Studio için 18 yaşını doldurmuş olmalısınız.",
+      "source": "You must be over 18 years old to use BirKare Studio.",
+      "translation": "يجب أن يكون عمرك 18 عامًا على الأقل لاستخدام BirKare Studio."
+    },
+    {
+      "key": "BirKare Studio ile yapay zekâ kullanılarak oluşturuldu. Ürün görseli yayımlanmadan önce kullanıcı tarafından incelenmelidir. #AIileOlusturuldu",
+      "source": "Created using artificial intelligence with BirKare Studio. The product image must be reviewed by the user before being published. #CreatedWithAI",
+      "translation": "تم إنشاؤه باستخدام الذكاء الاصطناعي في BirKare Studio. يجب على المستخدم مراجعة صورة المنتج قبل نشرها. #تم_إنشاؤه_بالذكاء_الاصطناعي"
+    },
+    {
+      "key": "BirKare Studio logosu",
+      "source": "BirKare Studio logo",
+      "translation": "شعار BirKare Studio"
+    },
+    {
+      "key": "BirKare Studio üretim sonucu kullanıcı tarafından raporlandı.",
+      "source": "BirKare Studio production result reported by the user.",
+      "translation": "أبلغ المستخدم عن نتيجة إنشاء من BirKare Studio."
+    },
+    {
+      "key": "BirKare Studio ürün katalog görseli",
+      "source": "BirKare Studio product catalog image",
+      "translation": "صورة كتالوج منتجات BirKare Studio"
+    },
+    {
+      "key": "BirKare Studio’ya yalnızca kullanma hakkına sahip olduğun ürün görsellerini yüklemelisin.",
+      "source": "You should only upload product images to BirKare Studio that you have the right to use.",
+      "translation": "يجب ألا تحمّل إلى BirKare Studio سوى صور المنتجات التي يحق لك استخدامها."
+    },
+    {
       "key": "BirKare Stüdyo",
       "source": "BirKare Studio",
       "translation": "BirKare الاستوديو"
@@ -1456,6 +1731,16 @@
       "key": "Bokeh",
       "source": "bokeh",
       "translation": "خوخه"
+    },
+    {
+      "key": "Bu ad katalogda proje başlığı olarak görünür.",
+      "source": "This name appears as the project title in the catalogue.",
+      "translation": "يظهر هذا الاسم كعنوان المشروع في الكتالوج."
+    },
+    {
+      "key": "Bu adım yüz verisi işlemeye izin vermez. Yüz içeren bir aracı seçersen açık rızan ilgili işlemden hemen önce ayrıca istenir; onay vermemen hesap açmanı engellemez.",
+      "source": "This step does not allow facial data processing. If you choose a tool that contains a face, your express consent will also be requested immediately before the relevant action; Not giving consent will not prevent you from opening an account.",
+      "translation": "لا تسمح هذه الخطوة بمعالجة بيانات الوجه. إذا اخترت أداة تحتوي على وجه، فسيتم أيضًا طلب موافقتك الصريحة على الفور قبل الإجراء ذي الصلة؛ عدم إعطاء الموافقة لن يمنعك من فتح حساب."
     },
     {
       "key": "Bu adımları atla",
@@ -1643,6 +1928,11 @@
       "translation": "هذه الحزمة لم تعد في العرض الحالي. قم بتحديث قائمة الحزم."
     },
     {
+      "key": "Bu plan {{p0}} kredi gerektiriyor; hesabında {{p1}} kredi var.",
+      "source": "This plan requires {{p0}} credit; There is {{p1}} credit in your account.",
+      "translation": "تتطلب هذه الخطة رصيدًا بقيمة {{p0}}؛ يوجد رصيد {{p1}} في حسابك."
+    },
+    {
       "key": "Bu premium görünümü kullanmak için BirKare Pro gerekir.",
       "source": "BirKare Pro is required to use this premium look.",
       "translation": "BirKare مطلوب محترف لاستخدام هذا المظهر المتميز."
@@ -1668,6 +1958,11 @@
       "translation": "لم يتم تمكين إشعارات الدفع في هذا الإصدار حتى الآن. يمكنك حفظ تفضيلاتك، ولكن لن تصل الإشعارات حتى يتم تمكين التسليم."
     },
     {
+      "key": "Bu uygulamadaki karakter örnekleri tamamen hayal ürünüdür; gerçek kişiler, gerçek buluşmalar veya gerçek onaylar anlamına gelmez.",
+      "source": "The sample characters in this app are entirely fictional. They do not represent real people, meetings or endorsements.",
+      "translation": "الشخصيات النموذجية في هذا التطبيق خيالية تمامًا. إنهم لا يمثلون أشخاصًا حقيقيين أو اجتماعات أو موافقات."
+    },
+    {
       "key": "Bu üretim için {{p0}} kredi gerekir; kullanılabilir bakiyen {{p1}} kredi.",
       "source": "This generation requires {{p0}} credits. Your available balance is {{p1}} credits.",
       "translation": "يتطلب هذا الجيل {{p0}} رصيدًا. الرصيد المتاح لديك هو {{p1}} رصيد."
@@ -1676,6 +1971,11 @@
       "key": "Bu üretim için yeterli kredin bulunmuyor.",
       "source": "You do not have enough credits for this generation.",
       "translation": "ليس لديك ما يكفي من الاعتمادات لهذا الجيل."
+    },
+    {
+      "key": "Bu üretimde indirilebilir bir sunucu çıktısı yok.",
+      "source": "There is no downloadable server output in this production.",
+      "translation": "لا يوجد مخرج خادم قابل للتنزيل في هذا الإنتاج."
     },
     {
       "key": "Bu üretimin hata kodu ve teknik istek numarası sunucudan eklenir. Fotoğrafın ve üretim promptun destek e-postasına eklenmez.",
@@ -1688,9 +1988,9 @@
       "translation": "لا يمكن تحميل هذا المنتج من كتالوج App Store / RevenueCat. تحقق من معرف المنتج وحالة المتجر."
     },
     {
-      "key": "Bu uygulamadaki karakter örnekleri tamamen hayal ürünüdür; gerçek kişiler, gerçek buluşmalar veya gerçek onaylar anlamına gelmez.",
-      "source": "The sample characters in this app are entirely fictional. They do not represent real people, meetings or endorsements.",
-      "translation": "الشخصيات النموذجية في هذا التطبيق خيالية تمامًا. إنهم لا يمثلون أشخاصًا حقيقيين أو اجتماعات أو موافقات."
+      "key": "Bu ürün görselini kullanma hakkım var",
+      "source": "I have the right to use this product image",
+      "translation": "لدي الحق في استخدام صورة المنتج هذه"
     },
     {
       "key": "Bugün",
@@ -1733,24 +2033,9 @@
       "translation": "أسلوب الذكاء الاصطناعي الأصلي بألوان زاهية"
     },
     {
-      "key": "Çanta",
-      "source": "Bag",
-      "translation": "حقيبة"
-    },
-    {
       "key": "Cartoon",
       "source": "cartoon",
       "translation": "رسوم متحركة"
-    },
-    {
-      "key": "Çekim sahnesi",
-      "source": "Photo setting",
-      "translation": "إعداد الصورة"
-    },
-    {
-      "key": "Çerçeve çıktı oranını gösterir; kaynak esnetilmez. AI, seçtiğin orana göre görüntüyü yeniden düzenler.",
-      "source": "The frame shows the output ratio; the source is not stretched. AI recomposes the image for your chosen ratio.",
-      "translation": "يظهر الإطار نسبة الإخراج؛ لا يمتد المصدر. يقوم الذكاء الاصطناعي بإعادة تكوين الصورة وفقًا للنسبة التي اخترتها."
     },
     {
       "key": "Cihaz izinlerini aç",
@@ -1783,6 +2068,46 @@
       "translation": "تحول المظهر بين الجنسين"
     },
     {
+      "key": "Cyberpunk",
+      "source": "cyberpunk",
+      "translation": "cyberpunk"
+    },
+    {
+      "key": "Çanta",
+      "source": "Bag",
+      "translation": "حقيبة"
+    },
+    {
+      "key": "Çekim notu",
+      "source": "shooting note",
+      "translation": "مذكرة اطلاق النار"
+    },
+    {
+      "key": "Çekim notu (isteğe bağlı)",
+      "source": "Shooting note (optional)",
+      "translation": "ملاحظة التصوير (اختياري)"
+    },
+    {
+      "key": "Çekim sahnesi",
+      "source": "Photo setting",
+      "translation": "إعداد الصورة"
+    },
+    {
+      "key": "Çekimi planla",
+      "source": "Plan the shoot",
+      "translation": "خطط للتصوير"
+    },
+    {
+      "key": "Çekimlerine ve versiyonlarına kaldığın yerden devam et.",
+      "source": "Continue your shots and versions where you left off.",
+      "translation": "تابع اللقطات والإصدارات من حيث توقفت."
+    },
+    {
+      "key": "Çerçeve çıktı oranını gösterir; kaynak esnetilmez. AI, seçtiğin orana göre görüntüyü yeniden düzenler.",
+      "source": "The frame shows the output ratio; the source is not stretched. AI recomposes the image for your chosen ratio.",
+      "translation": "يظهر الإطار نسبة الإخراج؛ لا يمتد المصدر. يقوم الذكاء الاصطناعي بإعادة تكوين الصورة وفقًا للنسبة التي اخترتها."
+    },
+    {
       "key": "Çıkış yap",
       "source": "Sign out",
       "translation": "تسجيل الخروج"
@@ -1798,6 +2123,16 @@
       "translation": "إعدادات الإخراج"
     },
     {
+      "key": "Çıktı hazır",
+      "source": "Output ready",
+      "translation": "الإخراج جاهز"
+    },
+    {
+      "key": "Çıktı hazırlanıyor",
+      "source": "Output is being prepared",
+      "translation": "يجري إعداد الإخراج"
+    },
+    {
       "key": "Çıktı kalitesi",
       "source": "Output quality",
       "translation": "جودة الإخراج"
@@ -1808,14 +2143,14 @@
       "translation": "نسبة الإخراج"
     },
     {
+      "key": "Çıktıları ayarla",
+      "source": "Set outputs",
+      "translation": "تعيين المخرجات"
+    },
+    {
       "key": "Çok hafif",
       "source": "Very subtle",
       "translation": "خفية جدا"
-    },
-    {
-      "key": "Cyberpunk",
-      "source": "cyberpunk",
-      "translation": "cyberpunk"
     },
     {
       "key": "Dağ Gölü",
@@ -1998,6 +2333,16 @@
       "translation": "للمتابعة، يجب عليك تأكيد حقك في استخدام الصور التي قمت بتحميلها."
     },
     {
+      "key": "Dışa aktar ve paylaş",
+      "source": "Export and share",
+      "translation": "تصدير ومشاركة"
+    },
+    {
+      "key": "Dışa aktarma şu an hesap bilgilerini, kredi hareketlerini ve en fazla 50 projeyi içerir. Görsel dosyaları dahil değildir; görsellerini Projeler bölümünden kaydedebilirsin.",
+      "source": "The export currently includes account details, credit activity and up to 50 projects. Image files are not included; save them from Projects.",
+      "translation": "تتضمن عملية التصدير حاليًا تفاصيل الحساب والنشاط الائتماني وما يصل إلى 50 مشروعًا. لا يتم تضمين ملفات الصور. احفظهم من المشاريع"
+    },
+    {
       "key": "Diğer",
       "source": "More",
       "translation": "المزيد"
@@ -2013,24 +2358,24 @@
       "translation": "يتم الاحتفاظ بتعديلاتك النشطة الأخرى. اختر بطاقة أخرى للمتابعة."
     },
     {
+      "key": "Diğer araçlar",
+      "source": "Other tools",
+      "translation": "أدوات أخرى"
+    },
+    {
       "key": "Diğer paylaşım seçenekleri",
       "source": "More sharing options",
       "translation": "المزيد من خيارات المشاركة"
     },
     {
+      "key": "Diğer yaratıcı araçlar",
+      "source": "Other creative tools",
+      "translation": "أدوات إبداعية أخرى"
+    },
+    {
       "key": "Dil",
       "source": "Language",
       "translation": "اللغة"
-    },
-    {
-      "key": "Dışa aktar ve paylaş",
-      "source": "Export and share",
-      "translation": "تصدير ومشاركة"
-    },
-    {
-      "key": "Dışa aktarma şu an hesap bilgilerini, kredi hareketlerini ve en fazla 50 projeyi içerir. Görsel dosyaları dahil değildir; görsellerini Projeler bölümünden kaydedebilirsin.",
-      "source": "The export currently includes account details, credit activity and up to 50 projects. Image files are not included; save them from Projects.",
-      "translation": "تتضمن عملية التصدير حاليًا تفاصيل الحساب والنشاط الائتماني وما يصل إلى 50 مشروعًا. لا يتم تضمين ملفات الصور. احفظهم من المشاريع"
     },
     {
       "key": "Doğa",
@@ -2143,6 +2488,11 @@
       "translation": "تمت إزالة التعديل"
     },
     {
+      "key": "Dosya büyük",
+      "source": "File too large",
+      "translation": "الملف كبير جدًا"
+    },
+    {
       "key": "Döndürme kaydedilemedi. Kaynak görsel değişmedi; tekrar deneyebilirsin.",
       "source": "Rotation could not be saved. Your source image is unchanged; you can try again.",
       "translation": "لا يمكن حفظ التدوير. الصورة المصدر الخاصة بك لم تتغير. يمكنك المحاولة مرة أخرى."
@@ -2158,24 +2508,14 @@
       "translation": "التحول"
     },
     {
-      "key": "Dosya büyük",
-      "source": "File too large",
-      "translation": "الملف كبير جدًا"
+      "key": "Dört kanal formatı",
+      "source": "Four channel format",
+      "translation": "تنسيق أربع قنوات"
     },
     {
       "key": "Drip Art",
       "source": "drip art",
       "translation": "فن بالتنقيط"
-    },
-    {
-      "key": "Düğün / Özel Gün",
-      "source": "Wedding / Special Occasion",
-      "translation": "زفاف / مناسبة خاصة"
-    },
-    {
-      "key": "Dün",
-      "source": "Yesterday",
-      "translation": "أمس"
     },
     {
       "key": "Durdu",
@@ -2191,6 +2531,16 @@
       "key": "Durum alınamadı",
       "source": "Could not load status",
       "translation": "تعذر تحميل الحالة"
+    },
+    {
+      "key": "Düğün / Özel Gün",
+      "source": "Wedding / Special Occasion",
+      "translation": "زفاف / مناسبة خاصة"
+    },
+    {
+      "key": "Dün",
+      "source": "Yesterday",
+      "translation": "أمس"
     },
     {
       "key": "Düşük",
@@ -2413,6 +2763,16 @@
       "translation": "رسم"
     },
     {
+      "key": "Etiket ve kenarlar okunaklı",
+      "source": "Labels and edges are legible",
+      "translation": "التسميات والحواف مقروءة"
+    },
+    {
+      "key": "Etiketi ve ürün geometrisini koruyan değişiklik iste",
+      "source": "Request changes that preserve the label and product geometry",
+      "translation": "اطلب التغييرات التي تحافظ على الملصق وهندسة المنتج"
+    },
+    {
       "key": "Facebook",
       "source": "Facebook",
       "translation": "الفيسبوك"
@@ -2613,6 +2973,16 @@
       "translation": "تحضير صورتك"
     },
     {
+      "key": "Fotoğraf işlemeden önce ayrı izin",
+      "source": "Separate permission before photo processing",
+      "translation": "إذن منفصل قبل معالجة الصورة"
+    },
+    {
+      "key": "Fotoğraf Kullanım Hakkı",
+      "source": "Photo Usage Rights",
+      "translation": "حقوق استخدام الصورة"
+    },
+    {
       "key": "Fotoğraf kullanım hakkım var",
       "source": "I have permission to use the photo",
       "translation": "لدي إذن لاستخدام الصورة"
@@ -2698,9 +3068,19 @@
       "translation": "قم بتوسيع الصورة"
     },
     {
+      "key": "Fotoğrafı sunucuya yüklemeden ve üretimi başlatmadan önce ayrı izin gerekir.",
+      "source": "Separate permission is required before your photo is uploaded or generation begins.",
+      "translation": "يلزم الحصول على إذن منفصل قبل رفع الصورة إلى الخادم أو بدء الإنشاء."
+    },
+    {
       "key": "Fotoğrafım",
       "source": "My photo",
       "translation": "صورتي"
+    },
+    {
+      "key": "Fotoğrafın AI işlemede kullanımı için ayrı izin",
+      "source": "Separate permission for AI processing of your photo",
+      "translation": "موافقة منفصلة على معالجة صورتك بالذكاء الاصطناعي"
     },
     {
       "key": "Fotoğrafın hazır",
@@ -2716,6 +3096,11 @@
       "key": "Fotoğrafın sahne için hazır",
       "source": "Your photo is ready for the scene",
       "translation": "صورتك جاهزة للمشهد"
+    },
+    {
+      "key": "Fotoğrafın ve görünür yüz içeriğin, yalnızca başlattığın üretim için güvenli bağlantıyla işlenir. Rızanı istediğin zaman Ayarlar’dan geri çekebilirsin.",
+      "source": "Your photo and visible facial content are processed over a secure connection only for the generation you start. You can withdraw your consent at any time in Settings.",
+      "translation": "تُعالَج صورتك وملامح الوجه الظاهرة عبر اتصال آمن فقط لإنشاء الصورة التي تبدأها. يمكنك سحب موافقتك في أي وقت من الإعدادات."
     },
     {
       "key": "Fotoğrafın ve talebin güvenlik açısından inceleniyor.",
@@ -2848,11 +3233,6 @@
       "translation": "أعد فتح المعرض وجرب صورة أخرى."
     },
     {
-      "key": "Geç",
-      "source": "Skip",
-      "translation": "تخطي"
-    },
-    {
       "key": "Gece araçtan inerken omuz üzerinden bakış, gümüş stil ve parlak fotoğraf flaşları.",
       "source": "An over-the-shoulder look while stepping out of a car at night, silver styling and bright camera flashes.",
       "translation": "مظهر من فوق الكتف أثناء الخروج من السيارة ليلاً، تصميم فضي وفلاشات الكاميرا الساطعة."
@@ -2861,16 +3241,6 @@
       "key": "Gece ışıkları ve güçlü sahne atmosferi.",
       "source": "Night lights and a striking stage atmosphere.",
       "translation": "أضواء ليلية وأجواء مسرحية مذهلة."
-    },
-    {
-      "key": "Gece Şehir",
-      "source": "City at Night",
-      "translation": "المدينة في الليل"
-    },
-    {
-      "key": "Gece şehir dokusu",
-      "source": "Nighttime city atmosphere",
-      "translation": "جو المدينة ليلا"
     },
     {
       "key": "Gece sokaklarında güçlü bir moda karesi.",
@@ -2883,9 +3253,24 @@
       "translation": "ملعب الليل"
     },
     {
+      "key": "Gece Şehir",
+      "source": "City at Night",
+      "translation": "المدينة في الليل"
+    },
+    {
+      "key": "Gece şehir dokusu",
+      "source": "Nighttime city atmosphere",
+      "translation": "جو المدينة ليلا"
+    },
+    {
       "key": "Gece ve davet kareleri için belirgin makyaj.",
       "source": "Defined makeup for evenings and special occasions.",
       "translation": "مكياج محدد للسهرات والمناسبات الخاصة."
+    },
+    {
+      "key": "Geç",
+      "source": "Skip",
+      "translation": "تخطي"
     },
     {
       "key": "Geçerli bir ad gir.",
@@ -2908,6 +3293,11 @@
       "translation": "أدخل عنوان بريد إلكتروني صالحًا."
     },
     {
+      "key": "Geçerli bir üretim kaydı bulunamadı.",
+      "source": "No valid production record found.",
+      "translation": "لم يتم العثور على سجل إنتاج صالح."
+    },
+    {
       "key": "Geçici sivilce ve kızarıklıkları azaltır.",
       "source": "Reduces temporary blemishes and redness.",
       "translation": "يقلل من العيوب المؤقتة والاحمرار."
@@ -2926,6 +3316,21 @@
       "key": "Gerçeğine sadık üretim",
       "source": "True-to-source generation",
       "translation": "الجيل الحقيقي للمصدر"
+    },
+    {
+      "key": "GERÇEK ALTERNATİFLER ÜRET",
+      "source": "CREATE REAL ALTERNATIVES",
+      "translation": "إنشاء بدائل حقيقية"
+    },
+    {
+      "key": "Gerçek çıktılar hazır olduğunda bu ekranda görünecek.",
+      "source": "The actual printouts will appear on this screen when ready.",
+      "translation": "ستظهر المطبوعات الفعلية على هذه الشاشة عندما تكون جاهزة."
+    },
+    {
+      "key": "Gerçek çoklu çıktı",
+      "source": "True multiple output",
+      "translation": "صحيح إخراج متعددة"
     },
     {
       "key": "Gerçek dönüşümü kaydırarak karşılaştır",
@@ -2951,6 +3356,16 @@
       "key": "Geri alındı",
       "source": "Reverted",
       "translation": "عادت"
+    },
+    {
+      "key": "Geri çek",
+      "source": "Withdraw",
+      "translation": "سحب"
+    },
+    {
+      "key": "Geri çekme yeni fotoğraf işlemlerini durdurur",
+      "source": "Withdrawing consent stops new photo processing.",
+      "translation": "يؤدي سحب الموافقة إلى إيقاف معالجة الصور الجديدة."
     },
     {
       "key": "Geri getirmezsen süre sonunda kalıcı silme başlar. Bu ekranı kapatmak silme tarihini değiştirmez.",
@@ -3003,6 +3418,21 @@
       "translation": "سياسة الخصوصية"
     },
     {
+      "key": "Gizlilik politikası açılamadı. Lütfen daha sonra tekrar dene.",
+      "source": "Privacy policy could not be opened. Please try again later.",
+      "translation": "تعذر فتح سياسة الخصوصية. يُرجى المحاولة لاحقاً."
+    },
+    {
+      "key": "Gizlilik politikasını aç",
+      "source": "Open privacy policy",
+      "translation": "فتح سياسة الخصوصية"
+    },
+    {
+      "key": "Gizlilik politikasının web sürümünü aç",
+      "source": "Open the web version of the Privacy Policy",
+      "translation": "افتح نسخة سياسة الخصوصية على الويب"
+    },
+    {
       "key": "Gizlilik ve güvenlik",
       "source": "Privacy and security",
       "translation": "الخصوصية والأمان"
@@ -3021,21 +3451,6 @@
       "key": "Gmail, Outlook/Hotmail, Yandex, iCloud, Yahoo, Proton ve desteklenen diğer kalıcı sağlayıcılar. Yeni kayıtlarda kurumsal adresler desteklenmiyor.",
       "source": "Gmail, Outlook/Hotmail, Yandex, iCloud, Yahoo, Proton and other supported providers. Custom domains are not supported for new accounts.",
       "translation": "Gmail وOutlook/Hotmail وYandex وiCloud وYahoo وProton وغيرهم من مقدمي الخدمات المدعومين. المجالات المخصصة غير مدعومة للحسابات الجديدة."
-    },
-    {
-      "key": "Gölgeleri ve sıcaklığı dengeleyin",
-      "source": "Balance shadows and warmth",
-      "translation": "توازن الظلال والدفء"
-    },
-    {
-      "key": "Gönderiliyor…",
-      "source": "Sending…",
-      "translation": "جارٍ الإرسال..."
-    },
-    {
-      "key": "Gönderim durumunu kontrol et",
-      "source": "Check submission status",
-      "translation": "التحقق من حالة التقديم"
     },
     {
       "key": "Google açılıyor…",
@@ -3153,6 +3568,31 @@
       "translation": "لم يتم تكوين عميل ويب Google. افتح أحدث إصدار تطويري للتطبيق."
     },
     {
+      "key": "Gölge",
+      "source": "Shadow",
+      "translation": "الظل"
+    },
+    {
+      "key": "Gölgeleri ve sıcaklığı dengeleyin",
+      "source": "Balance shadows and warmth",
+      "translation": "توازن الظلال والدفء"
+    },
+    {
+      "key": "Gölgeyi yumuşat",
+      "source": "soften the shadow",
+      "translation": "تخفيف الظل"
+    },
+    {
+      "key": "Gönderiliyor…",
+      "source": "Sending…",
+      "translation": "جارٍ الإرسال..."
+    },
+    {
+      "key": "Gönderim durumunu kontrol et",
+      "source": "Check submission status",
+      "translation": "التحقق من حالة التقديم"
+    },
+    {
       "key": "Görsel",
       "source": "Image",
       "translation": "صورة"
@@ -3268,6 +3708,11 @@
       "translation": "تتم معالجة صورتك ومراجعتها للتأكد من سلامتها."
     },
     {
+      "key": "Görselin yapay zekâ ile işlenmesine izin veriyorum.",
+      "source": "I allow the image to be processed by artificial intelligence.",
+      "translation": "أسمح بمعالجة الصورة بواسطة الذكاء الاصطناعي."
+    },
+    {
       "key": "Görseline uygun atmosferi bul",
       "source": "Find the right atmosphere for your image",
       "translation": "ابحث عن الجو المناسب لصورتك"
@@ -3356,6 +3801,16 @@
       "key": "Gün ışıklı gerçekçi çalışma masası.",
       "source": "A realistic desk in natural daylight.",
       "translation": "مكتب واقعي في ضوء النهار الطبيعي."
+    },
+    {
+      "key": "Güncel metni webde aç",
+      "source": "Open the current text on the website",
+      "translation": "افتح النص المحدّث على الموقع الإلكتروني"
+    },
+    {
+      "key": "Güncel ve yayımlanmış metin web sitesinde",
+      "source": "The current published text is on the website",
+      "translation": "النص المنشور والمحدّث موجود على الموقع الإلكتروني"
     },
     {
       "key": "Günlük, hafif ve doğal makyaj görünümü.",
@@ -3473,6 +3928,11 @@
       "translation": "خفية"
     },
     {
+      "key": "Hangi verilerin işlendiği, neden işlendiği ve hakların hakkında bilgi aldım.",
+      "source": "I have been informed about which data is processed, why it is processed, and my rights.",
+      "translation": "تم إبلاغي بالبيانات التي تتم معالجتها وأسباب ذلك وحقوقي."
+    },
+    {
       "key": "Harcanan",
       "source": "Spent",
       "translation": "قضى"
@@ -3578,6 +4038,11 @@
       "translation": "لا يمكن تحويل صورة HEIC. حدده مرة أخرى بتنسيق JPEG أو PNG."
     },
     {
+      "key": "Henüz çıktı yok",
+      "source": "No output yet",
+      "translation": "لا يوجد إخراج حتى الآن"
+    },
+    {
       "key": "Henüz hesabın yok mu?",
       "source": "New here? ",
       "translation": "جديد هنا؟"
@@ -3596,6 +4061,11 @@
       "key": "Her AI düzenlemesi yeni bir sürüm oluşturur; önceki sonucunu her zaman geri alabilirsin.",
       "source": "Each AI edit creates a new version, so you can always return to a previous result.",
       "translation": "يقوم كل تعديل يعمل بالذكاء الاصطناعي بإنشاء إصدار جديد، بحيث يمكنك دائمًا العودة إلى النتيجة السابقة."
+    },
+    {
+      "key": "Her alternatif aynı seçili sahne ve ayarlarla ayrı bir sonuçtur.",
+      "source": "Each alternative is a separate outcome with the same selected scene and settings.",
+      "translation": "كل بديل هو نتيجة منفصلة بنفس المشهد والإعدادات المحددة."
     },
     {
       "key": "Her ay 80 kredi",
@@ -3623,11 +4093,6 @@
       "translation": "يتم تصنيف كل جيل على أنه محتوى للذكاء الاصطناعي ويتم إنشاؤه مع أخذ الإذن في الاعتبار."
     },
     {
-      "key": "HESABIM",
-      "source": "MY ACCOUNT",
-      "translation": "حسابي"
-    },
-    {
       "key": "Hesabı geri getir",
       "source": "Restore account",
       "translation": "استعادة الحساب"
@@ -3641,6 +4106,11 @@
       "key": "Hesabı silmek mağaza aboneliğini otomatik iptal etmez.",
       "source": "Deleting your account does not automatically cancel your store subscription.",
       "translation": "لا يؤدي حذف حسابك إلى إلغاء اشتراك متجرك تلقائيًا."
+    },
+    {
+      "key": "HESABIM",
+      "source": "MY ACCOUNT",
+      "translation": "حسابي"
     },
     {
       "key": "Hesabımı sil",
@@ -3713,19 +4183,24 @@
       "translation": "الوصول إلى حسابك ينتهي على الفور. قم بتسجيل الدخول مرة أخرى خلال 30 يومًا لإلغاء طلب الحذف."
     },
     {
-      "key": "Hesabına erişim hemen kapanır. Silme isteğinden sonraki 30 gün boyunca hesabın geri getirilebilir durumda tutulur. Bu sürede yeniden giriş yapıp silme isteğinden vazgeçebilirsin. Süre dolunca dosyalar ve hesap verileri kalıcı olarak temizlenir. Hoş geldin hakkının tekrar verilmesini önlemek için geri döndürülemeyen, anahtarlı kimlik özetleri saklanabilir.",
-      "source": "Access ends immediately. Your account remains recoverable for 30 days after the deletion request. During that time, sign in again to cancel deletion. After the deadline, files and account data are permanently removed. Irreversible keyed identity hashes may be retained to prevent repeated welcome rewards.",
-      "translation": "ينتهي الوصول على الفور. يظل حسابك قابلاً للاسترداد لمدة 30 يومًا بعد طلب الحذف. خلال ذلك الوقت، قم بتسجيل الدخول مرة أخرى لإلغاء الحذف. وبعد الموعد النهائي، تتم إزالة الملفات وبيانات الحساب نهائيًا. قد يتم الاحتفاظ بتجزئة الهوية ذات المفاتيح التي لا يمكن الرجوع عنها لمنع تكرار مكافآت الترحيب."
+      "key": "Hesabına erişim hemen kapanır. Silme isteğinden sonraki 30 gün boyunca hesabın geri getirilebilir durumda tutulur. Bu sürede yeniden giriş yapıp silme isteğinden vazgeçebilirsin. Süre dolunca dosyalarının ve hesap verilerinin silinmesi başlar; geçici hatalar yeniden denenir. Depolama hizmetinin ayrı bir kurtarma süresi varsa fiziksel silme daha sonra tamamlanabilir. Hoş geldin hakkının tekrar verilmesini önlemek için geri döndürülemeyen, anahtarlı kimlik özetleri saklanabilir.",
+      "source": "Access ends immediately. Your account remains recoverable for 30 days after the deletion request. During that time, sign in again to cancel deletion. After the deadline, deletion of your files and account data begins; temporary errors are retried. If the storage service has a separate recovery period, physical deletion may finish later. Irreversible keyed identity hashes may be retained to prevent repeated welcome rewards.",
+      "translation": "يُغلق الوصول فورًا. يبقى حسابك قابلًا للاستعادة لمدة 30 يومًا بعد طلب الحذف. يمكنك تسجيل الدخول خلال هذه المدة لإلغاء الطلب. بعد ذلك يبدأ حذف ملفاتك وبيانات حسابك، وتُعاد محاولة العمليات التي تفشل مؤقتًا. إذا كانت لخدمة التخزين فترة استعادة منفصلة، فقد يكتمل الحذف الفعلي لاحقًا. قد تُحتفظ ببصمات هوية غير قابلة للعكس ومحمية بمفتاح لمنع تكرار رصيد الترحيب."
     },
     {
-      "key": "Hesabına erişim kapatıldı. 30 gün içinde yeniden giriş yaparsan hesabını geri getirebilirsin. Süre dolunca veriler kalıcı olarak silinir.",
-      "source": "Account access has ended. Sign in within 30 days to restore your account. After the deadline, your data is permanently deleted.",
-      "translation": "انتهى الوصول إلى الحساب. قم بتسجيل الدخول خلال 30 يومًا لاستعادة حسابك. وبعد الموعد النهائي، سيتم حذف بياناتك نهائيًا."
+      "key": "Hesabına erişim kapatıldı. 30 gün içinde yeniden giriş yaparak hesabını geri getirebilirsin. Süre dolunca verilerinin silinmesi başlar; geçici hatalar yeniden denenir.",
+      "source": "Account access has ended. Sign in within 30 days to restore your account. After the deadline, deletion of your data begins; temporary errors are retried.",
+      "translation": "أُغلق الوصول إلى حسابك. سجّل الدخول خلال 30 يومًا لاستعادته. بعد ذلك يبدأ حذف بياناتك، وتُعاد محاولة العمليات التي تفشل مؤقتًا."
     },
     {
       "key": "Hesabına erişimi yönet",
       "source": "Manage account access",
       "translation": "إدارة الوصول إلى الحساب"
+    },
+    {
+      "key": "hesabına tanımlanır",
+      "source": "is defined on account",
+      "translation": "يتم تعريفه على الحساب"
     },
     {
       "key": "Hesabındaki ad ve soyadını güncelle",
@@ -3823,14 +4298,14 @@
       "translation": "جارٍ تحميل نشاط الحساب…"
     },
     {
-      "key": "Hesap şifren",
-      "source": "Your account password",
-      "translation": "كلمة مرور حسابك"
-    },
-    {
       "key": "HESAP SİLME BEKLEMEDE",
       "source": "ACCOUNT DELETION PENDING",
       "translation": "حذف الحساب معلق"
+    },
+    {
+      "key": "Hesap şifren",
+      "source": "Your account password",
+      "translation": "كلمة مرور حسابك"
     },
     {
       "key": "Hesap tercihlerin alınamadı. İnternet bağlantını kontrol edip yeniden aç.",
@@ -3858,6 +4333,11 @@
       "translation": "بالنسبة لتقارير الحساب أو الدفع أو المحتوى، قم بتضمين تفاصيل المشروع أو المعاملة عندما يكون ذلك ممكنًا."
     },
     {
+      "key": "Hızlı",
+      "source": "Fast",
+      "translation": "سريع"
+    },
+    {
       "key": "HIZLI DÜZENLEME",
       "source": "QUICK EDIT",
       "translation": "تحرير سريع"
@@ -3873,14 +4353,54 @@
       "translation": "قواعد استخدام الخدمة"
     },
     {
-      "key": "Hızlı",
-      "source": "Fast",
-      "translation": "سريع"
-    },
-    {
       "key": "Hoş geldin kredisi",
       "source": "Welcome credits",
       "translation": "مرحبا الاعتمادات"
+    },
+    {
+      "key": "Instagram",
+      "source": "Instagram",
+      "translation": "انستغرام"
+    },
+    {
+      "key": "Islak zemin ve kontrollü neon bokeh.",
+      "source": "Wet ground and controlled neon bokeh.",
+      "translation": "أرض رطبة وخوخية نيون يمكن التحكم فيها."
+    },
+    {
+      "key": "Işığı düzelt",
+      "source": "Adjust lighting",
+      "translation": "ضبط الإضاءة"
+    },
+    {
+      "key": "Işığı görseline bırak.",
+      "source": "Let your image shine.",
+      "translation": "دع صورتك تتألق."
+    },
+    {
+      "key": "Işık",
+      "source": "Lighting",
+      "translation": "الإضاءة"
+    },
+    {
+      "key": "Işık ve beyaz dengesine doğal bir dokunuş.",
+      "source": "A natural adjustment to lighting and white balance.",
+      "translation": "تعديل طبيعي للإضاءة وتوازن اللون الأبيض."
+    },
+    {
+      "key": "Işıklar altında güçlü bir kare",
+      "source": "A striking shot under the lights",
+      "translation": "لقطة مذهلة تحت الأضواء"
+    },
+    {
+      "key": "Işıklar altında, futbol enerjisini taşıyan özgün bir sahne oluştur.",
+      "source": "Create an original scene under the lights with the energy of football.",
+      "translation": "قم بإنشاء مشهد أصلي تحت الأضواء باستخدام طاقة كرة القدم."
+    },
+    {
+      "key": "Işıltını öne çıkar",
+      "source": "Bring out your glow",
+      "translation": "أخرج توهجك"
     },
     {
       "key": "İadeler",
@@ -4013,6 +4533,26 @@
       "translation": "أنشئ مشروعك الأول"
     },
     {
+      "key": "İlk ürün projenle düzenli bir katalog oluşturmaya başla.",
+      "source": "Start creating an organized catalog with your first product project.",
+      "translation": "ابدأ في إنشاء كتالوج منظم لمشروع المنتج الأول الخاص بك."
+    },
+    {
+      "key": "İlk ürünü ekle",
+      "source": "Add first product",
+      "translation": "أضف المنتج الأول"
+    },
+    {
+      "key": "İlk ürününü adlandır, fotoğrafını ekle ve kullanım amacına göre çekimini planla.",
+      "source": "Name your first product, add a photo and plan your shoot according to its intended use.",
+      "translation": "قم بتسمية منتجك الأول، وأضف صورة وخطط للتصوير وفقًا للاستخدام المقصود."
+    },
+    {
+      "key": "İlk ürününü kataloğa ekle",
+      "source": "Add your first product to the catalog",
+      "translation": "أضف منتجك الأول إلى الكتالوج"
+    },
+    {
       "key": "İnce beyaz uçlu klasik salon görünümü.",
       "source": "A classic salon look with fine white tips.",
       "translation": "مظهر صالون كلاسيكي مع أطراف بيضاء ناعمة."
@@ -4031,11 +4571,6 @@
       "key": "İndirilen dosya geçerli bir görsel değil.",
       "source": "The downloaded file is not a valid image.",
       "translation": "الملف الذي تم تنزيله ليس صورة صالحة."
-    },
-    {
-      "key": "Instagram",
-      "source": "Instagram",
-      "translation": "انستغرام"
     },
     {
       "key": "İptal edildi",
@@ -4058,44 +4593,39 @@
       "translation": "جارٍ الإلغاء…"
     },
     {
-      "key": "Işığı düzelt",
-      "source": "Adjust lighting",
-      "translation": "ضبط الإضاءة"
+      "key": "İstanbul Sokak",
+      "source": "Istanbul Street",
+      "translation": "شارع اسطنبول"
     },
     {
-      "key": "Işığı görseline bırak.",
-      "source": "Let your image shine.",
-      "translation": "دع صورتك تتألق."
+      "key": "İstediğin değişikliği yaz…",
+      "source": "Describe the change you want…",
+      "translation": "وصف التغيير الذي تريده..."
     },
     {
-      "key": "Işık",
-      "source": "Lighting",
-      "translation": "الإضاءة"
+      "key": "İsteğe bağlı sahne notu",
+      "source": "Optional scene note",
+      "translation": "ملاحظة مشهد اختيارية"
     },
     {
-      "key": "Işık ve beyaz dengesine doğal bir dokunuş.",
-      "source": "A natural adjustment to lighting and white balance.",
-      "translation": "تعديل طبيعي للإضاءة وتوازن اللون الأبيض."
+      "key": "İstek alındı",
+      "source": "Request accepted",
+      "translation": "تم قبول الطلب"
     },
     {
-      "key": "Işıklar altında güçlü bir kare",
-      "source": "A striking shot under the lights",
-      "translation": "لقطة مذهلة تحت الأضواء"
+      "key": "İstek gönderilemedi.",
+      "source": "Could not send the request.",
+      "translation": "لا يمكن إرسال الطلب."
     },
     {
-      "key": "Işıklar altında, futbol enerjisini taşıyan özgün bir sahne oluştur.",
-      "source": "Create an original scene under the lights with the energy of football.",
-      "translation": "قم بإنشاء مشهد أصلي تحت الأضواء باستخدام طاقة كرة القدم."
+      "key": "İstek iptal edildi.",
+      "source": "The request was canceled.",
+      "translation": "تم إلغاء الطلب."
     },
     {
-      "key": "Işıltını öne çıkar",
-      "source": "Bring out your glow",
-      "translation": "أخرج توهجك"
-    },
-    {
-      "key": "Islak zemin ve kontrollü neon bokeh.",
-      "source": "Wet ground and controlled neon bokeh.",
-      "translation": "أرض رطبة وخوخية نيون يمكن التحكم فيها."
+      "key": "İstek: {{p0}}",
+      "source": "Request: {{p0}}",
+      "translation": "الطلب: {{p0}}"
     },
     {
       "key": "İşlem geçmişi",
@@ -4163,39 +4693,9 @@
       "translation": "تصوير الطعام والشراب اللذيذ الذي يظل صادقًا مع المنتج."
     },
     {
-      "key": "İstanbul Sokak",
-      "source": "Istanbul Street",
-      "translation": "شارع اسطنبول"
-    },
-    {
-      "key": "İstediğin değişikliği yaz…",
-      "source": "Describe the change you want…",
-      "translation": "وصف التغيير الذي تريده..."
-    },
-    {
-      "key": "İsteğe bağlı sahne notu",
-      "source": "Optional scene note",
-      "translation": "ملاحظة مشهد اختيارية"
-    },
-    {
-      "key": "İstek alındı",
-      "source": "Request accepted",
-      "translation": "تم قبول الطلب"
-    },
-    {
-      "key": "İstek gönderilemedi.",
-      "source": "Could not send the request.",
-      "translation": "لا يمكن إرسال الطلب."
-    },
-    {
-      "key": "İstek iptal edildi.",
-      "source": "The request was canceled.",
-      "translation": "تم إلغاء الطلب."
-    },
-    {
-      "key": "İstek: {{p0}}",
-      "source": "Request: {{p0}}",
-      "translation": "الطلب: {{p0}}"
+      "key": "İyi kaynak fotoğrafı",
+      "source": "Good source photo",
+      "translation": "صورة مصدر جيد"
     },
     {
       "key": "İzinli ve saygılı paylaşım",
@@ -4233,6 +4733,11 @@
       "translation": "مسافة التأطير"
     },
     {
+      "key": "Kadrajı biraz genişlet",
+      "source": "Expand the frame a bit",
+      "translation": "قم بتوسيع الإطار قليلاً"
+    },
+    {
       "key": "Kadrajı düzenle",
       "source": "Adjust framing",
       "translation": "ضبط التأطير"
@@ -4241,11 +4746,6 @@
       "key": "Kadrajı uygula",
       "source": "Apply framing",
       "translation": "تطبيق التأطير"
-    },
-    {
-      "key": "Kalite",
-      "source": "Quality",
-      "translation": "الجودة"
     },
     {
       "key": "Kalıcı işlem ve veri yönetimi",
@@ -4273,6 +4773,11 @@
       "translation": "تم الحفاظ عليه."
     },
     {
+      "key": "Kalite",
+      "source": "Quality",
+      "translation": "الجودة"
+    },
+    {
       "key": "Kamera açılamadı",
       "source": "Could not open camera",
       "translation": "لا يمكن فتح الكاميرا"
@@ -4298,6 +4803,11 @@
       "translation": "التقط صورة"
     },
     {
+      "key": "Kampanya",
+      "source": "Offer",
+      "translation": "العرض"
+    },
+    {
       "key": "Kampanya e-posta izni",
       "source": "Marketing emails",
       "translation": "رسائل البريد الإلكتروني التسويقية"
@@ -4311,6 +4821,11 @@
       "key": "Kampanya kullanımı için güçlü hero sahnesi.",
       "source": "A striking hero scene for a campaign.",
       "translation": "مشهد بطل ملفت للنظر في إحدى الحملات."
+    },
+    {
+      "key": "Kanal formatı",
+      "source": "Channel format",
+      "translation": "تنسيق القناة"
     },
     {
       "key": "Kapalı",
@@ -4393,9 +4908,39 @@
       "translation": "البطاقات هي أمثلة. قم بتحميل صورتك الخاصة للجيل. لا يتم نسخ ملابس المرجع ووجهه على صورتك."
     },
     {
+      "key": "Katalog",
+      "source": "Catalog",
+      "translation": "كتالوج"
+    },
+    {
       "key": "Katalog Çekimi",
       "source": "Catalog Shoot",
       "translation": "تبادل لاطلاق النار الكتالوج"
+    },
+    {
+      "key": "Katalog ve mağaza",
+      "source": "Catalog and store",
+      "translation": "كتالوج ومخزن"
+    },
+    {
+      "key": "Katalog yükleniyor…",
+      "source": "Catalog loading…",
+      "translation": "جارٍ تحميل الكتالوج…"
+    },
+    {
+      "key": "Katalog, ürün sayfası, sosyal ilan veya web vitrini.",
+      "source": "Catalog, product page, social posting or web showcase.",
+      "translation": "الكتالوج أو صفحة المنتج أو النشر الاجتماعي أو عرض الويب."
+    },
+    {
+      "key": "Kataloğa ulaşılamadı",
+      "source": "Catalog could not be found",
+      "translation": "لا يمكن العثور على الكتالوج"
+    },
+    {
+      "key": "Kataloğu aç",
+      "source": "Open catalog",
+      "translation": "فتح الكتالوج"
     },
     {
       "key": "Kategori ve görünüm seçimini tamamla.",
@@ -4403,12 +4948,27 @@
       "translation": "الانتهاء من تحديد الفئة والبحث."
     },
     {
+      "key": "Kategori ve sahneyi seç.",
+      "source": "Select category and scene.",
+      "translation": "حدد الفئة والمشهد."
+    },
+    {
       "key": "Katmanlı, özgün boya dokusu",
       "source": "Original, layered paint texture",
       "translation": "نسيج الطلاء الأصلي ذو الطبقات"
     },
     {
+      "key": "Kaydediliyor…",
+      "source": "Saving…",
+      "translation": "جارٍ الحفظ…"
+    },
+    {
       "key": "Kaydet ve paylaş",
+      "source": "Save and share",
+      "translation": "حفظ ومشاركة"
+    },
+    {
+      "key": "Kaydetme ve paylaşma",
       "source": "Save and share",
       "translation": "حفظ ومشاركة"
     },
@@ -4498,6 +5058,11 @@
       "translation": "تتم معالجة الصورة المصدر في مخزن آمن لأغراض الإنتاج فقط. يمكنك تغيير تفضيلات الحذف بعد الإنتاج في الإعدادات."
     },
     {
+      "key": "Kaynak fotoğrafla yeni bir çekim planla",
+      "source": "Schedule a new shoot with the source photo",
+      "translation": "حدد موعدًا لجلسة تصوير جديدة باستخدام الصورة المصدر"
+    },
+    {
       "key": "Kaynak fotoğraflar, yüz içeren görseller ve üretilen sonuçlar hesabındaki projeleri sunmak için saklanır. Doğrulanmış hesap silme isteğinde erişim hemen kapatılır. İstek tarihinden itibaren 30 gün içinde aynı hesapla doğrulanıp geri alma işlemini onaylayabilirsin; giriş yapmak tek başına silmeyi iptal etmez. 30 gün sonunda dosya ve hesap verilerinin kalıcı temizliği başlar; geçici hatalar yeniden denenir. Tamamlanan silmeye ait sınırlı işlem kaydı 30 gün sonra kaldırılır. Promosyon kötüye kullanımını önleyen anahtarlı kimlik özetleri saklanabilir; bunlarda fotoğraf, yüz verisi veya açık kimlik bilgisi bulunmaz. Mağaza aboneliğini ayrıca mağazadan yönetmelisin.",
       "source": "Source photos, images containing faces and generated results are retained to provide your account's projects. Access is disabled immediately after a verified account deletion request. Within 30 days of the request, you can authenticate with the same account and explicitly confirm recovery; signing in alone does not cancel deletion. After 30 days, permanent cleanup of files and account data begins; temporary failures are retried. A limited completed-deletion audit record is removed after 30 days. Keyed identity hashes may remain to prevent promotional abuse; they contain no photos, face data or plaintext identity details. Manage your store subscription separately through the store.",
       "translation": "يتم الاحتفاظ بالصور المصدر والصور التي تحتوي على الوجوه والنتائج التي تم إنشاؤها لتوفير مشاريع حسابك. يتم تعطيل الوصول فورًا بعد طلب حذف الحساب الذي تم التحقق منه. وفي غضون 30 يومًا من الطلب، يمكنك المصادقة بنفس الحساب وتأكيد الاسترداد بشكل صريح؛ تسجيل الدخول وحده لا يلغي الحذف. وبعد 30 يومًا، يبدأ التنظيف الدائم للملفات وبيانات الحساب؛ تتم إعادة محاولة حالات الفشل المؤقتة. تتم إزالة سجل تدقيق الحذف المحدود المكتمل بعد 30 يومًا. قد تبقى تجزئات الهوية ذات المفاتيح لمنع إساءة الاستخدام الترويجية؛ أنها لا تحتوي على صور أو بيانات وجه أو تفاصيل هوية نصية عادية. إدارة اشتراك متجرك بشكل منفصل من خلال المتجر."
@@ -4506,6 +5071,11 @@
       "key": "Kaynak fotoğrafları",
       "source": "Source photos",
       "translation": "صور المصدر"
+    },
+    {
+      "key": "Kaynak görsel hakları",
+      "source": "Source image rights",
+      "translation": "حقوق الصورة المصدر"
     },
     {
       "key": "Kaynak görseldeki yüz ayrıntılarına öncelik ver.",
@@ -4548,9 +5118,24 @@
       "translation": "تم تحديد المصدر. سيتم تحميله عند بدء الإنتاج."
     },
     {
+      "key": "Kaynak ürün fotoğrafı",
+      "source": "Source product photo",
+      "translation": "صورة المنتج المصدر"
+    },
+    {
+      "key": "Kaynak ürün fotoğrafını seç.",
+      "source": "Select the source product photo.",
+      "translation": "حدد صورة المنتج المصدر."
+    },
+    {
       "key": "Kaynak yüz ve baş-boyun hizasını koruyan klasik okuma odası portresi; krem-lacivert tonlar, doğal pencere ışığı ve 50–85 mm portre hissi.",
       "source": "A classic reading-room portrait that preserves the source face and head-neck alignment, with cream and navy tones, natural window light and a 50–85 mm portrait feel.",
       "translation": "صورة كلاسيكية لغرفة القراءة تحافظ على محاذاة الوجه المصدر والرقبة، مع درجات اللون الكريمي والأزرق البحري، وإضاءة نافذة طبيعية وإحساس صورة بحجم 50-85 مم."
+    },
+    {
+      "key": "Kaynak, kullanım amacı ve çıktılar tek yerde",
+      "source": "Source, intended use and outputs in one place",
+      "translation": "المصدر والاستخدام المقصود والمخرجات في مكان واحد"
     },
     {
       "key": "Kenar ayrıntısını koruyan parlak siyah.",
@@ -4586,41 +5171,6 @@
       "key": "Keşfet",
       "source": "Explore",
       "translation": "استكشاف"
-    },
-    {
-      "key": "Kimlikler ayrı ayrı korunur; yüzler karıştırılmaz. İkinci kişi yalnızca bu iki 80’ler görünümünde desteklenir.",
-      "source": "Each identity is kept separate; faces are not blended. A second person is supported only in these two ’80s looks.",
-      "translation": "يتم الاحتفاظ بكل هوية منفصلة. الوجوه ليست ممزوجة. يتم دعم الشخص الثاني فقط في مظهري الثمانينات."
-    },
-    {
-      "key": "Kişi fotoğrafını seç",
-      "source": "Select contact photo",
-      "translation": "حدد صورة جهة الاتصال"
-    },
-    {
-      "key": "Kişi ve kıyafet görselini seç.",
-      "source": "Choose the person and clothing images.",
-      "translation": "اختيار صور الشخص والملابس."
-    },
-    {
-      "key": "Kişi ve kıyafet görsellerinin işlenmesi için gerekli izinlere sahibim.",
-      "source": "I have the necessary permission to process the person and clothing images.",
-      "translation": "لدي الإذن اللازم لمعالجة صور الأشخاص والملابس."
-    },
-    {
-      "key": "Kişi ve kıyafet iki ayrı kaynak olarak işlenir",
-      "source": "The person and clothing are processed as two separate sources",
-      "translation": "تتم معالجة الشخص والملابس كمصدرين منفصلين"
-    },
-    {
-      "key": "Kişinin yüz kimliğini ve doğal cilt dokusunu koruyarak yumuşak ışıklı, dengeli bir yakın plan bakım portresi oluştur.",
-      "source": "Create a balanced close-up care portrait with soft lighting, preserving the subject's facial identity and natural skin texture.",
-      "translation": "أنشئ صورة عناية قريبة ومتوازنة باستخدام إضاءة ناعمة، مع الحفاظ على هوية وجه الهدف وملمس البشرة الطبيعي."
-    },
-    {
-      "key": "Kişinin yüzünü, pozunu ve kıyafetini koruyarak arka planı sıcak gün batımı ışığında zarif bir şehir terasına dönüştür.",
-      "source": "Preserve the subject's face, pose and clothing, transforming the background into an elegant city terrace in warm sunset light.",
-      "translation": "حافظ على وجه الشخص ووضعيته وملابسه، وحوّل الخلفية إلى شرفة مدينة أنيقة في ضوء غروب الشمس الدافئ."
     },
     {
       "key": "Kırmızı Halı",
@@ -4691,6 +5241,56 @@
       "key": "Kıyafeti koru",
       "source": "Keep clothing",
       "translation": "احتفظ بالملابس"
+    },
+    {
+      "key": "Kimlikler ayrı ayrı korunur; yüzler karıştırılmaz. İkinci kişi yalnızca bu iki 80’ler görünümünde desteklenir.",
+      "source": "Each identity is kept separate; faces are not blended. A second person is supported only in these two ’80s looks.",
+      "translation": "يتم الاحتفاظ بكل هوية منفصلة. الوجوه ليست ممزوجة. يتم دعم الشخص الثاني فقط في مظهري الثمانينات."
+    },
+    {
+      "key": "Kişi fotoğrafını seç",
+      "source": "Select contact photo",
+      "translation": "حدد صورة جهة الاتصال"
+    },
+    {
+      "key": "Kişi ve kıyafet görselini seç.",
+      "source": "Choose the person and clothing images.",
+      "translation": "اختيار صور الشخص والملابس."
+    },
+    {
+      "key": "Kişi ve kıyafet görsellerinin işlenmesi için gerekli izinlere sahibim.",
+      "source": "I have the necessary permission to process the person and clothing images.",
+      "translation": "لدي الإذن اللازم لمعالجة صور الأشخاص والملابس."
+    },
+    {
+      "key": "Kişi ve kıyafet iki ayrı kaynak olarak işlenir",
+      "source": "The person and clothing are processed as two separate sources",
+      "translation": "تتم معالجة الشخص والملابس كمصدرين منفصلين"
+    },
+    {
+      "key": "Kişinin yüz kimliğini ve doğal cilt dokusunu koruyarak yumuşak ışıklı, dengeli bir yakın plan bakım portresi oluştur.",
+      "source": "Create a balanced close-up care portrait with soft lighting, preserving the subject's facial identity and natural skin texture.",
+      "translation": "أنشئ صورة عناية قريبة ومتوازنة باستخدام إضاءة ناعمة، مع الحفاظ على هوية وجه الهدف وملمس البشرة الطبيعي."
+    },
+    {
+      "key": "Kişinin yüzünü, pozunu ve kıyafetini koruyarak arka planı sıcak gün batımı ışığında zarif bir şehir terasına dönüştür.",
+      "source": "Preserve the subject's face, pose and clothing, transforming the background into an elegant city terrace in warm sunset light.",
+      "translation": "حافظ على وجه الشخص ووضعيته وملابسه، وحوّل الخلفية إلى شرفة مدينة أنيقة في ضوء غروب الشمس الدافئ."
+    },
+    {
+      "key": "Kişisel veriler ve uygulama kullanımı",
+      "source": "Personal data and app use",
+      "translation": "البيانات الشخصية واستخدام التطبيق"
+    },
+    {
+      "key": "Kişisel verilerin nasıl işlendiği ve hakların",
+      "source": "How your personal data is processed and your rights",
+      "translation": "كيفية معالجة بياناتك الشخصية وحقوقك"
+    },
+    {
+      "key": "Kişisel verilerin ve uygulama kullanımının açıklaması",
+      "source": "Information about personal data and app use",
+      "translation": "معلومات حول البيانات الشخصية واستخدام التطبيق"
     },
     {
       "key": "Klavyeyi kapat",
@@ -4878,6 +5478,11 @@
       "translation": "شراء الاعتمادات"
     },
     {
+      "key": "Kredi teklifi hesaplanıyor…",
+      "source": "Calculating the loan offer…",
+      "translation": "جارٍ احتساب عرض القرض..."
+    },
+    {
       "key": "Kredi tutarı alınamadı; bakiye değişmedi.",
       "source": "The credit amount could not be loaded. Your balance is unchanged.",
       "translation": "لا يمكن تحميل مبلغ الائتمان. رصيدك لم يتغير."
@@ -4928,19 +5533,24 @@
       "translation": "الذكاء الاصطناعي مع الائتمان"
     },
     {
-      "key": "Küçük dokunuşlar",
-      "source": "Small adjustments",
-      "translation": "تعديلات صغيرة"
-    },
-    {
       "key": "Kullanılabilir ve ayrılmış krediler",
       "source": "Available and reserved credits",
       "translation": "الاعتمادات المتاحة والمحفوظة"
     },
     {
+      "key": "kullanılır",
+      "source": "is used",
+      "translation": "يستخدم"
+    },
+    {
       "key": "Kullanılmamış bakiyene erişim sona erer.",
       "source": "Access to your unused balance ends.",
       "translation": "ينتهي الوصول إلى رصيدك غير المستخدم."
+    },
+    {
+      "key": "Kullanım amacı",
+      "source": "Intended use",
+      "translation": "الاستخدام المقصود"
     },
     {
       "key": "Kullanım koşulları",
@@ -4951,6 +5561,11 @@
       "key": "Kullanım Koşulları",
       "source": "Terms of Use",
       "translation": "شروط الاستخدام"
+    },
+    {
+      "key": "Kullanım Koşulları'nı okudum ve kabul ediyorum. Ayrıca 18 yaşından büyük olduğumu beyan ederim.",
+      "source": "I have read and accept the Terms of Use. I also declare that I am at least 18 years old.",
+      "translation": "قرأت شروط الاستخدام وأوافق عليها. وأقر أيضاً بأن عمري 18 عاماً على الأقل."
     },
     {
       "key": "Kurgusal",
@@ -5068,6 +5683,11 @@
       "translation": "لقطة الاحتفال"
     },
     {
+      "key": "Küçük dokunuşlar",
+      "source": "Small adjustments",
+      "translation": "تعديلات صغيرة"
+    },
+    {
       "key": "language.subtitle",
       "source": "language.subtitle",
       "translation": "language.subtitle"
@@ -5148,9 +5768,19 @@
       "translation": "منتجات المتجر ليست جاهزة. تحقق من روابط المنتج والاستحقاق والعرض في RevenueCat."
     },
     {
+      "key": "Mağaza ve kampanya sayfaları için yatay kompozisyon.",
+      "source": "Horizontal composition for store and campaign pages.",
+      "translation": "التكوين الأفقي لصفحات المتجر والحملة."
+    },
+    {
       "key": "Mağazada yok",
       "source": "not in store",
       "translation": "ليس في المتجر"
+    },
+    {
+      "key": "mağazadan yönet",
+      "source": "manage from store",
+      "translation": "إدارة من المتجر"
     },
     {
       "key": "Mağazaya bağlanılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.",
@@ -5171,6 +5801,11 @@
       "key": "Makyaj 3 · Gece",
       "source": "Makeup 3 · Evening",
       "translation": "مكياج 3 · مساء"
+    },
+    {
+      "key": "Malzeme ve formu koruyan premium ürün karesi.",
+      "source": "Premium product frame that preserves material and form.",
+      "translation": "إطار منتج ممتاز يحافظ على المادة والشكل."
     },
     {
       "key": "Manikür görünümü",
@@ -5201,6 +5836,11 @@
       "key": "Metalik moda ve 2000’ler flaş estetiği.",
       "source": "Metallic fashion and 2000s flash photography.",
       "translation": "الأزياء المعدنية والتصوير الفوتوغرافي فلاش 2000s."
+    },
+    {
+      "key": "Metin alanı bırakabilen, dikkat çekici kampanya görseli.",
+      "source": "Attractive campaign visual that can leave text space.",
+      "translation": "صورة جذابة للحملة يمكنها ترك مساحة نصية."
     },
     {
       "key": "MEVCUT BAKİYE",
@@ -5293,6 +5933,21 @@
       "translation": "سيارة سينمائية مصورة في مدينة النيون"
     },
     {
+      "key": "Nerede kullanacaksın?",
+      "source": "Where will you use it?",
+      "translation": "أين ستستخدمه؟"
+    },
+    {
+      "key": "Net bir ürün fotoğrafı",
+      "source": "A clear product photo",
+      "translation": "صورة واضحة للمنتج"
+    },
+    {
+      "key": "Net kaynak fotoğraf kontrolü",
+      "source": "Net source photo control",
+      "translation": "صافي التحكم في الصور المصدر"
+    },
+    {
       "key": "Nötr gri fonda dengeli ışık.",
       "source": "Balanced lighting on a neutral gray backdrop.",
       "translation": "إضاءة متوازنة على خلفية رمادية محايدة."
@@ -5306,26 +5961,6 @@
       "key": "Odaklı podyum ışığında tam görünüm.",
       "source": "A complete look under focused runway lighting.",
       "translation": "نظرة كاملة تحت إضاءة المدرج المركزة."
-    },
-    {
-      "key": "Ödeme iptali",
-      "source": "Payment cancellation",
-      "translation": "إلغاء الدفع"
-    },
-    {
-      "key": "Ödeme onay bekliyor. Onaylanana kadar satın alma tamamlanmaz; tekrar satın almayın.",
-      "source": "Payment is awaiting approval. The purchase will not complete until approved; do not purchase again.",
-      "translation": "الدفع في انتظار الموافقة. لن تكتمل عملية الشراء حتى تتم الموافقة عليها؛ لا تشتري مرة أخرى."
-    },
-    {
-      "key": "Ödül Gecesi",
-      "source": "Awards Night",
-      "translation": "ليلة الجوائز"
-    },
-    {
-      "key": "Ölçek, malzeme ve perspektifi koruyan iç mekân sunumu.",
-      "source": "An interior presentation that preserves scale, materials and perspective.",
-      "translation": "عرض تقديمي داخلي يحافظ على الحجم والمواد والمنظور."
     },
     {
       "key": "Oluştur",
@@ -5368,11 +6003,6 @@
       "translation": "توليد"
     },
     {
-      "key": "Ömür Boyu",
-      "source": "Lifetime",
-      "translation": "مدى الحياة"
-    },
-    {
       "key": "Onay bekleniyor",
       "source": "Awaiting approval",
       "translation": "في انتظار الموافقة"
@@ -5398,134 +6028,14 @@
       "translation": "ابدأ المقدمة"
     },
     {
-      "key": "Önce",
-      "source": "Before",
-      "translation": "قبل"
-    },
-    {
-      "key": "Önce / sonra",
-      "source": "Before / after",
-      "translation": "قبل / بعد"
-    },
-    {
-      "key": "Önce ana görseli seçmelisin.",
-      "source": "You must first select the main image.",
-      "translation": "يجب عليك أولا تحديد الصورة الرئيسية."
-    },
-    {
-      "key": "Önce bir kaynak fotoğraf seçmelisin.",
-      "source": "Choose a source photo first.",
-      "translation": "اختر صورة المصدر أولاً."
-    },
-    {
-      "key": "Önce el fotoğrafını seçmelisin.",
-      "source": "First you need to select the hand photo.",
-      "translation": "تحتاج أولاً إلى تحديد صورة اليد."
-    },
-    {
-      "key": "Önce görünümünü genişlet",
-      "source": "Start by expanding your look",
-      "translation": "ابدأ بتوسيع مظهرك"
-    },
-    {
-      "key": "Önce kaynak fotoğrafını seçmeye yönlendirir.",
-      "source": "Takes you to choose a source photo first.",
-      "translation": "يأخذك إلى اختيار الصورة المصدر أولا."
-    },
-    {
-      "key": "Önce kıyafet sahnesini seçmelisin.",
-      "source": "First you need to choose the outfit scene.",
-      "translation": "تحتاج أولاً إلى اختيار مشهد الزي."
-    },
-    {
-      "key": "Önce manikür görünümünü seçmelisin.",
-      "source": "First you need to choose the look of the manicure.",
-      "translation": "تحتاج أولاً إلى اختيار شكل مانيكير."
-    },
-    {
-      "key": "Önce RevenueCat’te ürünleri bir offering’e bağlayın.",
-      "source": "First, link the products to an offering in RevenueCat.",
-      "translation": "أولاً، قم بربط المنتجات بعرض في RevenueCat."
-    },
-    {
-      "key": "Önce ürün kategorisini seçmelisin.",
-      "source": "First you need to choose the product category.",
-      "translation": "تحتاج أولاً إلى اختيار فئة المنتج."
-    },
-    {
-      "key": "Önce ürün sahnesini seçmelisin.",
-      "source": "You should choose the product scene first.",
-      "translation": "يجب عليك اختيار مشهد المنتج أولاً."
-    },
-    {
-      "key": "Önce ve sonra görünümünü değiştir",
-      "source": "Switch between before and after",
-      "translation": "التبديل بين قبل وبعد"
-    },
-    {
-      "key": "Önce ve sonra görünümünü karşılaştırmak için yatay kaydır.",
-      "source": "Slide horizontally to compare before and after.",
-      "translation": "قم بالتمرير أفقيًا للمقارنة قبل وبعد."
-    },
-    {
-      "key": "Önce ve sonra karşılaştır",
-      "source": "Compare before and after",
-      "translation": "قارن قبل وبعد"
-    },
-    {
-      "key": "Önce ve sonra karşılaştırması",
-      "source": "Before and after comparison",
-      "translation": "قبل وبعد المقارنة"
-    },
-    {
-      "key": "Önceki adıma dön",
-      "source": "Back to previous step",
-      "translation": "العودة إلى الخطوة السابقة"
-    },
-    {
-      "key": "Önceki sonuçlara her zaman geri dönebilirsin.",
-      "source": "You can always return to previous results.",
-      "translation": "يمكنك دائمًا العودة إلى النتائج السابقة."
-    },
-    {
-      "key": "Öne çıkanlar",
-      "source": "Featured",
-      "translation": "مميز"
-    },
-    {
-      "key": "Önerilen",
-      "source": "Recommended",
-      "translation": "موصى به"
-    },
-    {
-      "key": "Önerilen düzenlemeler",
-      "source": "Suggested edits",
-      "translation": "التعديلات المقترحة"
-    },
-    {
-      "key": "Önizleme",
-      "source": "Preview",
-      "translation": "معاينة"
-    },
-    {
-      "key": "Önizleme {{p0}} kredi. Üretim başlamazsa veya sonuç teslim edilmezse ayrılan kredi iade edilir.",
-      "source": "Preview costs {{p0}} credits. Reserved credits are returned if generation does not start or a result is not delivered.",
-      "translation": "تكلف المعاينة {{p0}} رصيدًا. يتم إرجاع الاعتمادات المحجوزة إذا لم يبدأ الإنشاء أو لم يتم تسليم النتيجة."
-    },
-    {
-      "key": "Önizleme ücretsizdir",
-      "source": "Preview is free",
-      "translation": "المعاينة مجانية"
-    },
-    {
-      "key": "Önizleme yaklaşık renk ve ışık etkisini gösterir. Sahne ve AI dönüşümü, oluşturduğunda uygulanır.",
-      "source": "The preview shows an approximate color and lighting effect. The scene and AI transformation are applied when you generate.",
-      "translation": "تعرض المعاينة لونًا تقريبيًا وتأثير الإضاءة. يتم تطبيق المشهد وتحويل الذكاء الاصطناعي عند الإنشاء."
-    },
-    {
       "key": "opsiyonel",
       "source": "optional",
       "translation": "اختياري"
+    },
+    {
+      "key": "Oran, kalite ve gerçek alternatif sayısını seç.",
+      "source": "Choose rate, quality and actual number of alternatives.",
+      "translation": "اختر المعدل والجودة والعدد الفعلي للبدائل."
     },
     {
       "key": "Orijinal",
@@ -5608,51 +6118,6 @@
       "translation": "عرض الأصلي"
     },
     {
-      "key": "Örn. arka planı yağmurlu İstanbul gecesi yap…",
-      "source": "For example, make the background a rainy night in Istanbul…",
-      "translation": "على سبيل المثال، اجعل الخلفية ليلة ممطرة في اسطنبول…"
-    },
-    {
-      "key": "Örn. doğal, dik bir duruş kullan",
-      "source": "For example, use a natural, upright posture",
-      "translation": "على سبيل المثال، استخدمي وضعية طبيعية ومستقيمة"
-    },
-    {
-      "key": "Örn. Işık daha yumuşak, kamerayı biraz uzak tut.",
-      "source": "For example, use softer light and move the camera back a little.",
-      "translation": "على سبيل المثال، استخدم ضوءًا أكثر نعومة وحرك الكاميرا للخلف قليلاً."
-    },
-    {
-      "key": "Örn. mevcut tırnak uzunluğunu koru",
-      "source": "For example, keep the current nail length",
-      "translation": "على سبيل المثال، احتفظ بطول الظفر الحالي"
-    },
-    {
-      "key": "Örn. ürün kameranın soluna hafif dönük olsun",
-      "source": "For example, angle the product slightly to the left of the camera",
-      "translation": "على سبيل المثال، قم بتوجيه المنتج قليلاً إلى يسار الكاميرا"
-    },
-    {
-      "key": "Örnek fan görselleri kurgusal kişileri temsil eder. Gerçek buluşma, onay veya sponsorluk kanıtı olarak sunulamaz.",
-      "source": "Sample fan images depict fictional people. They cannot be presented as evidence of a real meeting, endorsement or sponsorship.",
-      "translation": "نماذج من صور المعجبين تصور أشخاصًا خياليين. ولا يمكن تقديمها كدليل على اجتماع حقيقي أو تأييد أو رعاية."
-    },
-    {
-      "key": "Örnek kareyle başla",
-      "source": "Start with a sample image",
-      "translation": "ابدأ بصورة عينة"
-    },
-    {
-      "key": "Örnek projeleri keşfet",
-      "source": "Explore sample projects",
-      "translation": "استكشاف نماذج المشاريع"
-    },
-    {
-      "key": "Örnek yüz kopyalanmaz. Önizleme yalnız renk fikri verir; kıyafet, poz ve ortam dönüşümü AI üretiminde uygulanır.",
-      "source": "The sample face is not copied. The preview only suggests the colors; clothing, pose and setting changes are applied during AI generation.",
-      "translation": "لم يتم نسخ وجه العينة. تقترح المعاينة الألوان فقط؛ يتم تطبيق تغييرات الملابس والوضعية والإعدادات أثناء إنشاء الذكاء الاصطناعي."
-    },
-    {
       "key": "ornek@eposta.com",
       "source": "name@example.com",
       "translation": "name@example.com"
@@ -5706,6 +6171,231 @@
       "key": "Oturumun hazırlanıyor…",
       "source": "Preparing your session…",
       "translation": "جارٍ تحضير جلستك…"
+    },
+    {
+      "key": "Ödeme iptali",
+      "source": "Payment cancellation",
+      "translation": "إلغاء الدفع"
+    },
+    {
+      "key": "Ödeme onay bekliyor. Onaylanana kadar satın alma tamamlanmaz; tekrar satın almayın.",
+      "source": "Payment is awaiting approval. The purchase will not complete until approved; do not purchase again.",
+      "translation": "الدفع في انتظار الموافقة. لن تكتمل عملية الشراء حتى تتم الموافقة عليها؛ لا تشتري مرة أخرى."
+    },
+    {
+      "key": "Ödül Gecesi",
+      "source": "Awards Night",
+      "translation": "ليلة الجوائز"
+    },
+    {
+      "key": "Ölçek, malzeme ve perspektifi koruyan iç mekân sunumu.",
+      "source": "An interior presentation that preserves scale, materials and perspective.",
+      "translation": "عرض تقديمي داخلي يحافظ على الحجم والمواد والمنظور."
+    },
+    {
+      "key": "Ömür Boyu",
+      "source": "Lifetime",
+      "translation": "مدى الحياة"
+    },
+    {
+      "key": "Önce",
+      "source": "Before",
+      "translation": "قبل"
+    },
+    {
+      "key": "Önce / sonra",
+      "source": "Before / after",
+      "translation": "قبل / بعد"
+    },
+    {
+      "key": "Önce ana görseli seçmelisin.",
+      "source": "You must first select the main image.",
+      "translation": "يجب عليك أولا تحديد الصورة الرئيسية."
+    },
+    {
+      "key": "Önce bir kaynak fotoğraf seçmelisin.",
+      "source": "Choose a source photo first.",
+      "translation": "اختر صورة المصدر أولاً."
+    },
+    {
+      "key": "Önce el fotoğrafını seçmelisin.",
+      "source": "First you need to select the hand photo.",
+      "translation": "تحتاج أولاً إلى تحديد صورة اليد."
+    },
+    {
+      "key": "Önce görünümünü genişlet",
+      "source": "Start by expanding your look",
+      "translation": "ابدأ بتوسيع مظهرك"
+    },
+    {
+      "key": "Önce kaynak fotoğrafını seçmeye yönlendirir.",
+      "source": "Takes you to choose a source photo first.",
+      "translation": "يأخذك إلى اختيار الصورة المصدر أولا."
+    },
+    {
+      "key": "Önce kıyafet sahnesini seçmelisin.",
+      "source": "First you need to choose the outfit scene.",
+      "translation": "تحتاج أولاً إلى اختيار مشهد الزي."
+    },
+    {
+      "key": "Önce kullanım amacını seç",
+      "source": "First choose your intended use",
+      "translation": "اختر أولاً الاستخدام المقصود"
+    },
+    {
+      "key": "Önce manikür görünümünü seçmelisin.",
+      "source": "First you need to choose the look of the manicure.",
+      "translation": "تحتاج أولاً إلى اختيار شكل مانيكير."
+    },
+    {
+      "key": "Önce RevenueCat’te ürünleri bir offering’e bağlayın.",
+      "source": "First, link the products to an offering in RevenueCat.",
+      "translation": "أولاً، قم بربط المنتجات بعرض في RevenueCat."
+    },
+    {
+      "key": "Önce ürün kategorisini seçmelisin.",
+      "source": "First you need to choose the product category.",
+      "translation": "تحتاج أولاً إلى اختيار فئة المنتج."
+    },
+    {
+      "key": "Önce ürün sahnesini seçmelisin.",
+      "source": "You should choose the product scene first.",
+      "translation": "يجب عليك اختيار مشهد المنتج أولاً."
+    },
+    {
+      "key": "Önce ve sonra görünümünü değiştir",
+      "source": "Switch between before and after",
+      "translation": "التبديل بين قبل وبعد"
+    },
+    {
+      "key": "Önce ve sonra görünümünü karşılaştırmak için yatay kaydır.",
+      "source": "Slide horizontally to compare before and after.",
+      "translation": "قم بالتمرير أفقيًا للمقارنة قبل وبعد."
+    },
+    {
+      "key": "Önce ve sonra karşılaştır",
+      "source": "Compare before and after",
+      "translation": "قارن قبل وبعد"
+    },
+    {
+      "key": "Önce ve sonra karşılaştırması",
+      "source": "Before and after comparison",
+      "translation": "قبل وبعد المقارنة"
+    },
+    {
+      "key": "Önceki adıma dön",
+      "source": "Back to previous step",
+      "translation": "العودة إلى الخطوة السابقة"
+    },
+    {
+      "key": "Önceki sahne, filtre ve stil araçlarına buradan ulaşabilirsin.",
+      "source": "You can access previous scene, filter and style tools here.",
+      "translation": "يمكنك الوصول إلى المشهد السابق وأدوات التصفية والنمط هنا."
+    },
+    {
+      "key": "Önceki sonuçlara her zaman geri dönebilirsin.",
+      "source": "You can always return to previous results.",
+      "translation": "يمكنك دائمًا العودة إلى النتائج السابقة."
+    },
+    {
+      "key": "Öne çıkanlar",
+      "source": "Featured",
+      "translation": "مميز"
+    },
+    {
+      "key": "Önerilen",
+      "source": "Recommended",
+      "translation": "موصى به"
+    },
+    {
+      "key": "Önerilen düzenlemeler",
+      "source": "Suggested edits",
+      "translation": "التعديلات المقترحة"
+    },
+    {
+      "key": "Önizleme",
+      "source": "Preview",
+      "translation": "معاينة"
+    },
+    {
+      "key": "Önizleme {{p0}} kredi. Üretim başlamazsa veya sonuç teslim edilmezse ayrılan kredi iade edilir.",
+      "source": "Preview costs {{p0}} credits. Reserved credits are returned if generation does not start or a result is not delivered.",
+      "translation": "تكلف المعاينة {{p0}} رصيدًا. يتم إرجاع الاعتمادات المحجوزة إذا لم يبدأ الإنشاء أو لم يتم تسليم النتيجة."
+    },
+    {
+      "key": "Önizleme ücretsizdir",
+      "source": "Preview is free",
+      "translation": "المعاينة مجانية"
+    },
+    {
+      "key": "Önizleme üretiminde en fazla 2 alternatif seçebilirsin.",
+      "source": "You can choose a maximum of 2 alternatives in preview production.",
+      "translation": "يمكنك اختيار بديلين كحد أقصى في إنتاج المعاينة."
+    },
+    {
+      "key": "Önizleme yaklaşık renk ve ışık etkisini gösterir. Sahne ve AI dönüşümü, oluşturduğunda uygulanır.",
+      "source": "The preview shows an approximate color and lighting effect. The scene and AI transformation are applied when you generate.",
+      "translation": "تعرض المعاينة لونًا تقريبيًا وتأثير الإضاءة. يتم تطبيق المشهد وتحويل الذكاء الاصطناعي عند الإنشاء."
+    },
+    {
+      "key": "Önizlemede en fazla 2",
+      "source": "Up to 2 in preview",
+      "translation": "ما يصل إلى 2 في المعاينة"
+    },
+    {
+      "key": "Örn. arka planı yağmurlu İstanbul gecesi yap…",
+      "source": "For example, make the background a rainy night in Istanbul…",
+      "translation": "على سبيل المثال، اجعل الخلفية ليلة ممطرة في اسطنبول…"
+    },
+    {
+      "key": "Örn. doğal, dik bir duruş kullan",
+      "source": "For example, use a natural, upright posture",
+      "translation": "على سبيل المثال، استخدمي وضعية طبيعية ومستقيمة"
+    },
+    {
+      "key": "Örn. Işık daha yumuşak, kamerayı biraz uzak tut.",
+      "source": "For example, use softer light and move the camera back a little.",
+      "translation": "على سبيل المثال، استخدم ضوءًا أكثر نعومة وحرك الكاميرا للخلف قليلاً."
+    },
+    {
+      "key": "Örn. mevcut tırnak uzunluğunu koru",
+      "source": "For example, keep the current nail length",
+      "translation": "على سبيل المثال، احتفظ بطول الظفر الحالي"
+    },
+    {
+      "key": "Örn. ürün kameranın soluna hafif dönük olsun",
+      "source": "For example, angle the product slightly to the left of the camera",
+      "translation": "على سبيل المثال، قم بتوجيه المنتج قليلاً إلى يسار الكاميرا"
+    },
+    {
+      "key": "Örn. Ürün kameranın soluna hafif dönük olsun",
+      "source": "Ex. The product should be slightly turned to the left of the camera.",
+      "translation": "على سبيل المثال. يجب أن يتم توجيه المنتج قليلاً إلى يسار الكاميرا."
+    },
+    {
+      "key": "Örn. Yeni sezon deri çanta",
+      "source": "Ex. New season leather bag",
+      "translation": "على سبيل المثال. حقيبة جلدية للموسم الجديد"
+    },
+    {
+      "key": "Örnek fan görselleri kurgusal kişileri temsil eder. Gerçek buluşma, onay veya sponsorluk kanıtı olarak sunulamaz.",
+      "source": "Sample fan images depict fictional people. They cannot be presented as evidence of a real meeting, endorsement or sponsorship.",
+      "translation": "نماذج من صور المعجبين تصور أشخاصًا خياليين. ولا يمكن تقديمها كدليل على اجتماع حقيقي أو تأييد أو رعاية."
+    },
+    {
+      "key": "Örnek kareyle başla",
+      "source": "Start with a sample image",
+      "translation": "ابدأ بصورة عينة"
+    },
+    {
+      "key": "Örnek projeleri keşfet",
+      "source": "Explore sample projects",
+      "translation": "استكشاف نماذج المشاريع"
+    },
+    {
+      "key": "Örnek yüz kopyalanmaz. Önizleme yalnız renk fikri verir; kıyafet, poz ve ortam dönüşümü AI üretiminde uygulanır.",
+      "source": "The sample face is not copied. The preview only suggests the colors; clothing, pose and setting changes are applied during AI generation.",
+      "translation": "لم يتم نسخ وجه العينة. تقترح المعاينة الألوان فقط؛ يتم تطبيق تغييرات الملابس والوضعية والإعدادات أثناء إنشاء الذكاء الاصطناعي."
     },
     {
       "key": "Özel talimat",
@@ -5793,9 +6483,29 @@
       "translation": "تعذر فتح Paywall أو تعذر إكمال المعاملة. يمكنك المحاولة مرة أخرى باستخدام بطاقات الحزمة."
     },
     {
+      "key": "Pazaryeri kataloğu",
+      "source": "Marketplace catalog",
+      "translation": "كتالوج السوق"
+    },
+    {
       "key": "Pencere ışığında doğal portre",
       "source": "A natural portrait in window light",
       "translation": "صورة طبيعية في ضوء النافذة"
+    },
+    {
+      "key": "Plan kredileri",
+      "source": "Plan loans",
+      "translation": "خطة القروض"
+    },
+    {
+      "key": "Planına göre tanımlanan kredileri ürün{{p0}}projelerinde kullan.",
+      "source": "Use the credits defined according to your plan in your product{{p0}}projects.",
+      "translation": "استخدم الاعتمادات المحددة وفقًا لخطتك في منتجك{{p0}}مشاريعك."
+    },
+    {
+      "key": "planla",
+      "source": "plan",
+      "translation": "خطة"
     },
     {
       "key": "Politika güncellendiğinde yeni tarih bu ekranda gösterilir. Gizlilik soruların için uygulamadaki Destek ve Gizlilik bölümünü kullanabilirsin.",
@@ -6003,6 +6713,11 @@
       "translation": "خيارات مشاركة المشروع"
     },
     {
+      "key": "Proje ve versiyon geçmişi",
+      "source": "Project and version history",
+      "translation": "تاريخ المشروع والإصدار"
+    },
+    {
       "key": "Proje yüklenemedi.",
       "source": "The project could not be loaded.",
       "translation": "لا يمكن تحميل المشروع."
@@ -6158,6 +6873,11 @@
       "translation": "اللون"
     },
     {
+      "key": "Renk sıcaklığını dengele",
+      "source": "Balance color temperature",
+      "translation": "توازن درجة حرارة اللون"
+    },
+    {
       "key": "Retro lokanta atmosferinde doğal yakın plan; ikinci fotoğraf eklenirse iki kişiyi yüz ve beden kimliklerini karıştırmadan aynı karede birleştirir.",
       "source": "A natural close-up in a retro diner. Adding a second photo brings both people into one image without blending their facial or physical identities.",
       "translation": "لقطة طبيعية قريبة في مطعم قديم. تؤدي إضافة صورة ثانية إلى جلب كلا الشخصين إلى صورة واحدة دون مزج هويتيهما الجسدية أو الوجهية."
@@ -6186,6 +6906,11 @@
       "key": "RevenueCat’te bu uygulama için geçerli bir offering bulunamadı. Ürünleri bağlayıp current offering seçin.",
       "source": "No valid offering was found for this application on RevenueCat. Connect the products and select the current offering.",
       "translation": "لم يتم العثور على عرض صالح لهذا التطبيق على RevenueCat. قم بتوصيل المنتجات وحدد العرض الحالي."
+    },
+    {
+      "key": "Rızaya dayalı yeni fotoğraf üretimleri durur. Daha önce tamamlanan işlemler geri alınmaz.",
+      "source": "New consent-based photo generations will stop. Completed processing cannot be undone.",
+      "translation": "ستتوقف عمليات إنشاء الصور الجديدة المعتمدة على الموافقة. لا يمكن التراجع عن المعالجة المكتملة سابقاً."
     },
     {
       "key": "Rötuş",
@@ -6231,6 +6956,11 @@
       "key": "Sahil Günü",
       "source": "Beach Day",
       "translation": "يوم الشاطئ"
+    },
+    {
+      "key": "Sahne",
+      "source": "Scene",
+      "translation": "المشهد"
     },
     {
       "key": "SAHNE",
@@ -6283,6 +7013,11 @@
       "translation": "اختر المشهد الخاص بك."
     },
     {
+      "key": "Sahneye göre",
+      "source": "by scene",
+      "translation": "حسب المشهد"
+    },
+    {
       "key": "Sahneyi seç",
       "source": "Choose scene",
       "translation": "اختر المشهد"
@@ -6311,11 +7046,6 @@
       "key": "Sanatsal",
       "source": "Artistic",
       "translation": "فني"
-    },
-    {
-      "key": "Şartlar",
-      "source": "Terms",
-      "translation": "الشروط"
     },
     {
       "key": "Satın al",
@@ -6418,6 +7148,11 @@
       "translation": "نغمة الفلتر التقريبية على الصورة المحددة"
     },
     {
+      "key": "Seçili gerçek çıktı",
+      "source": "Selected actual output",
+      "translation": "الناتج الفعلي المحدد"
+    },
+    {
       "key": "Seçili görsel kullanılamıyor. Sonuçları yenileyip tekrar dene.",
       "source": "The selected image is unavailable. Refresh the results and try again.",
       "translation": "الصورة المحددة غير متوفرة. قم بتحديث النتائج وحاول مرة أخرى."
@@ -6471,6 +7206,16 @@
       "key": "Seçimin final önizlemene aktarılır.",
       "source": "Your selection carries over to the final preview.",
       "translation": "ينتقل اختيارك إلى المعاينة النهائية."
+    },
+    {
+      "key": "Seçimin ilk sahneyi ve oranı hazırlar. Sonraki adımda her ayarı değiştirebilirsin.",
+      "source": "It prepares the initial stage and proportion of the election. You can change each setting in the next step.",
+      "translation": "يقوم بإعداد المرحلة الأولية ونسبة الانتخابات. يمكنك تغيير كل إعداد في الخطوة التالية."
+    },
+    {
+      "key": "Seçimin sahne ve format için başlangıç ayarını yapar.",
+      "source": "Sets the initial setting for the scene and format of the selection.",
+      "translation": "يضبط الإعداد الأولي للمشهد وتنسيق التحديد."
     },
     {
       "key": "Seçimin yerel önizlemene anında uygulanır. Asıl AI üretimi yalnızca onayından sonra başlar.",
@@ -6563,6 +7308,491 @@
       "translation": "المشهد الذي حددته هو مرجع إبداعي، وليس سجلاً لموقع فعلي."
     },
     {
+      "key": "Seçtiğin sunucu çıktısını mevcut kalitesiyle kaydedebilir ve paylaşabilirsin.",
+      "source": "You can save and share the server output of your choice with its current quality.",
+      "translation": "يمكنك حفظ ومشاركة مخرجات الخادم التي تختارها بجودتها الحالية."
+    },
+    {
+      "key": "Selfie veya portre fotoğrafını seç; görüntü oranını koruyarak ilk kareni hazırla.",
+      "source": "Choose a selfie or portrait and prepare your first image while preserving its aspect ratio.",
+      "translation": "اختر صورة ذاتية أو صورة وقم بإعداد صورتك الأولى مع الحفاظ على نسبة العرض إلى الارتفاع."
+    },
+    {
+      "key": "Sen seçersin",
+      "source": "You choose",
+      "translation": "اخترت"
+    },
+    {
+      "key": "Senin fotoğrafın, senin kontrolün.",
+      "source": "Your photo, your control.",
+      "translation": "صورتك، سيطرتك."
+    },
+    {
+      "key": "Senin profilin.",
+      "source": "Your profile.",
+      "translation": "ملفك الشخصي."
+    },
+    {
+      "key": "Sıcak arka ışıklı açık hava çekimi.",
+      "source": "An outdoor shot with warm backlighting.",
+      "translation": "لقطة خارجية بإضاءة خلفية دافئة."
+    },
+    {
+      "key": "Sıcak raf ışıklı premium moda kampanyası.",
+      "source": "A premium fashion campaign with warm shelf lighting.",
+      "translation": "حملة أزياء متميزة مع إضاءة رف دافئة."
+    },
+    {
+      "key": "Sıcak Stüdyo",
+      "source": "Warm Studio",
+      "translation": "استوديو دافئ"
+    },
+    {
+      "key": "Sıcak taş tonlarında rafine sunum.",
+      "source": "A refined presentation in warm stone tones.",
+      "translation": "عرض راقي بألوان الحجر الدافئة."
+    },
+    {
+      "key": "Sıcak ve zamansız doku",
+      "source": "Warm, timeless texture",
+      "translation": "ملمس دافئ وخالد"
+    },
+    {
+      "key": "Sıfırla",
+      "source": "Reset",
+      "translation": "إعادة تعيين"
+    },
+    {
+      "key": "Sıfırlama bağlantısı geçersiz veya süresi dolmuş.",
+      "source": "The reset link is invalid or has expired.",
+      "translation": "رابط إعادة التعيين غير صالح أو انتهت صلاحيته."
+    },
+    {
+      "key": "Sıfırlama kodu",
+      "source": "Reset code",
+      "translation": "إعادة تعيين الرمز"
+    },
+    {
+      "key": "Sık sorulanlar",
+      "source": "Frequently asked questions",
+      "translation": "الأسئلة المتداولة"
+    },
+    {
+      "key": "Sık sorulanlara göz at ya da destek ekibine bir talep gönder.",
+      "source": "Browse frequently asked questions or send a request to our support team.",
+      "translation": "تصفح الأسئلة المتداولة أو أرسل طلبًا إلى فريق الدعم لدينا."
+    },
+    {
+      "key": "Sıra bekleme uzadı",
+      "source": "The queue is taking longer than expected",
+      "translation": "قائمة الانتظار تستغرق وقتًا أطول من المتوقع"
+    },
+    {
+      "key": "Silme başlatılamadı. Hesabın değişmedi.",
+      "source": "Deletion could not be started. Your account is unchanged.",
+      "translation": "لا يمكن بدء الحذف. حسابك لم يتغير."
+    },
+    {
+      "key": "Silme işlemi planlandı",
+      "source": "Deletion scheduled",
+      "translation": "تمت جدولة الحذف"
+    },
+    {
+      "key": "Silme işlemine devam et",
+      "source": "Keep deletion scheduled",
+      "translation": "حافظ على جدولة الحذف"
+    },
+    {
+      "key": "Silmeden önce",
+      "source": "Before you delete",
+      "translation": "قبل أن تحذف"
+    },
+    {
+      "key": "Sinematik",
+      "source": "Cinematic",
+      "translation": "سينمائية"
+    },
+    {
+      "key": "Sinematik bir stil uygula",
+      "source": "Apply a cinematic style",
+      "translation": "تطبيق النمط السينمائي"
+    },
+    {
+      "key": "Sinematik Sahne",
+      "source": "Cinematic Scene",
+      "translation": "مشهد سينمائي"
+    },
+    {
+      "key": "Sistemin Hareketi Azalt ve Saydamlığı Azalt tercihleri her zaman korunur.",
+      "source": "System Reduce Motion and Reduce Transparency preferences are always respected.",
+      "translation": "يتم دائمًا احترام تفضيلات نظام تقليل الحركة وتقليل الشفافية."
+    },
+    {
+      "key": "Sivilce & Leke",
+      "source": "Blemish Removal",
+      "translation": "إزالة العيب"
+    },
+    {
+      "key": "Siyah Beyaz",
+      "source": "Black and White",
+      "translation": "أبيض وأسود"
+    },
+    {
+      "key": "Siyah ve altın detaylı lüks sahne.",
+      "source": "A luxurious scene with black and gold details.",
+      "translation": "مشهد فاخر بتفاصيل باللونين الأسود والذهبي."
+    },
+    {
+      "key": "Sketch",
+      "source": "sketch",
+      "translation": "رسم"
+    },
+    {
+      "key": "Sofistike koyu bordo parlaklık.",
+      "source": "A sophisticated dark burgundy gloss.",
+      "translation": "لمعان بورجوندي داكن متطور."
+    },
+    {
+      "key": "Sokak Stili Gündüz",
+      "source": "Daytime Street Style",
+      "translation": "نمط الشارع النهاري"
+    },
+    {
+      "key": "Solda seçili AI sonucu, sağda yüklediğin ilk kaynak fotoğraf bulunur. Ayıracı tutup sürükleyerek ayrıntıları inceleyebilirsin.",
+      "source": "Your selected AI result is on the left, and your original uploaded photo is on the right. Drag the divider to explore the details.",
+      "translation": "تظهر نتيجة الذكاء الاصطناعي التي حددتها على اليسار، والصورة الأصلية التي تم تحميلها على اليمين. اسحب الفاصل لاستكشاف التفاصيل."
+    },
+    {
+      "key": "Son geri alma tarihi:",
+      "source": "Recovery deadline: ",
+      "translation": "الموعد النهائي للاسترداد:"
+    },
+    {
+      "key": "Son güncelleme: {{p0}}",
+      "source": "Last updated: {{p0}}",
+      "translation": "آخر تحديث: {{p0}}"
+    },
+    {
+      "key": "Son kontroller",
+      "source": "Final checks",
+      "translation": "الشيكات النهائية"
+    },
+    {
+      "key": "Son maliyet üretimden önce sunucuda tekrar doğrulanır.",
+      "source": "The final cost is validated again on the server before production.",
+      "translation": "يتم التحقق من صحة التكلفة النهائية مرة أخرى على الخادم قبل الإنتاج."
+    },
+    {
+      "key": "Son projeler",
+      "source": "Recent projects",
+      "translation": "المشاريع الأخيرة"
+    },
+    {
+      "key": "Son ürün projeleri",
+      "source": "Final product projects",
+      "translation": "مشاريع المنتج النهائي"
+    },
+    {
+      "key": "Sonra",
+      "source": "After",
+      "translation": "بعد"
+    },
+    {
+      "key": "Sonra görünümünü genişlet",
+      "source": "Then expand your look",
+      "translation": "ثم قم بتوسيع مظهرك"
+    },
+    {
+      "key": "Sonraki",
+      "source": "Next",
+      "translation": "التالي"
+    },
+    {
+      "key": "Sonuca dön",
+      "source": "Back to result",
+      "translation": "العودة إلى النتيجة"
+    },
+    {
+      "key": "Sonucu gör",
+      "source": "View result",
+      "translation": "عرض النتيجة"
+    },
+    {
+      "key": "Sonucun kaydedildi. Şimdi görseline geçiyoruz.",
+      "source": "Your result has been saved. Now we move on to the visual.",
+      "translation": "تم حفظ النتيجة الخاصة بك. الآن ننتقل إلى البصرية."
+    },
+    {
+      "key": "Sonuç",
+      "source": "Result",
+      "translation": "النتيجة"
+    },
+    {
+      "key": "Sonuç bulunamadı",
+      "source": "Result not found",
+      "translation": "لم يتم العثور على النتيجة"
+    },
+    {
+      "key": "Sonuç ekranındaki raporla seçeneğini veya destek talebini kullanabilirsin. İnceleme için gerekli bağlam istenir.",
+      "source": "You can use the report option or support request on the result screen. Necessary context for review is requested.",
+      "translation": "يمكنك استخدام خيار التقرير أو طلب الدعم على شاشة النتائج. مطلوب السياق اللازم للمراجعة."
+    },
+    {
+      "key": "Sonuç hazır olduğunda bildirim alma tercihi",
+      "source": "Preference for notifications when results are ready",
+      "translation": "تفضيل الإخطارات عندما تكون النتائج جاهزة"
+    },
+    {
+      "key": "Sonuç yüklenemedi",
+      "source": "Result could not be loaded",
+      "translation": "لا يمكن تحميل النتيجة"
+    },
+    {
+      "key": "Sonuçlar",
+      "source": "Results",
+      "translation": "النتائج"
+    },
+    {
+      "key": "Sonuçlar hazır",
+      "source": "Results are ready",
+      "translation": "النتائج جاهزة"
+    },
+    {
+      "key": "Sonuçlar sunucudan alınamadı",
+      "source": "Could not load results from the server",
+      "translation": "لا يمكن تحميل النتائج من الخادم"
+    },
+    {
+      "key": "Sonuçlar yüklenemedi.",
+      "source": "Results could not be loaded.",
+      "translation": "لا يمكن تحميل النتائج."
+    },
+    {
+      "key": "Sonuçları görüntüle",
+      "source": "View results",
+      "translation": "عرض النتائج"
+    },
+    {
+      "key": "Sonuçların AI ile oluşturulabileceğini ve etiketleneceğini kabul ediyorum.",
+      "source": "I understand that results may be AI-generated and labeled.",
+      "translation": "أدرك أن النتائج قد يتم إنشاؤها بواسطة الذكاء الاصطناعي وتصنيفها."
+    },
+    {
+      "key": "Sonuçların AI ile üretildiğini ve yanıltıcı kullanımın yasak olduğunu anlıyorum.",
+      "source": "I understand that results are AI-generated and misleading use is prohibited.",
+      "translation": "أدرك أن النتائج يتم إنشاؤها بواسطة الذكاء الاصطناعي وأن الاستخدام المضلل محظور."
+    },
+    {
+      "key": "Sonuçlarını kaydet",
+      "source": "Save your results",
+      "translation": "احفظ نتائجك"
+    },
+    {
+      "key": "Sorunu birkaç kelimeyle özetle",
+      "source": "Summarize the issue in a few words",
+      "translation": "لخص الموضوع في بضع كلمات"
+    },
+    {
+      "key": "Sosyal giriş",
+      "source": "social login",
+      "translation": "تسجيل الدخول الاجتماعي"
+    },
+    {
+      "key": "Sosyal girişini tamamlamak için profil bilgilerini kontrol et.",
+      "source": "Review your profile details to complete social sign-in.",
+      "translation": "قم بمراجعة تفاصيل ملفك الشخصي لإكمال تسجيل الدخول عبر وسائل التواصل الاجتماعي."
+    },
+    {
+      "key": "Sosyal kayıt oturumun bulunamadı. Giriş ekranından yeniden devam et.",
+      "source": "Your social registration session was not found. Continue again from the sign-in screen.",
+      "translation": "لم يتم العثور على جلسة التسجيل الاجتماعي الخاصة بك. تابع مرة أخرى من شاشة تسجيل الدخول."
+    },
+    {
+      "key": "Sosyal kayıt tamamlanamadı. Lütfen tekrar deneyin.",
+      "source": "Social registration could not be completed. Please try again.",
+      "translation": "لا يمكن إكمال التسجيل الاجتماعي. يرجى المحاولة مرة أخرى."
+    },
+    {
+      "key": "Sosyal medya ilanı",
+      "source": "social media posting",
+      "translation": "نشر وسائل الاعلام الاجتماعية"
+    },
+    {
+      "key": "Soyad",
+      "source": "Last name",
+      "translation": "الاسم الأخير"
+    },
+    {
+      "key": "Soyadın",
+      "source": "Your last name",
+      "translation": "اسمك الأخير"
+    },
+    {
+      "key": "Soyadın (isteğe bağlı)",
+      "source": "Last name (optional)",
+      "translation": "الاسم الأخير (اختياري)"
+    },
+    {
+      "key": "Soyadını gir",
+      "source": "Enter your last name",
+      "translation": "أدخل اسمك الأخير"
+    },
+    {
+      "key": "Soyadınız en az 2 karakter olmalı.",
+      "source": "Your last name must contain at least 2 characters.",
+      "translation": "يجب أن يحتوي اسمك الأخير على حرفين على الأقل."
+    },
+    {
+      "key": "Stadyum Selfie",
+      "source": "Stadium Selfie",
+      "translation": "ملعب سيلفي"
+    },
+    {
+      "key": "Stadyumda futbol anı",
+      "source": "A football moment at the stadium",
+      "translation": "لحظة كرة قدم في الملعب"
+    },
+    {
+      "key": "Stadyumda, ışıklar altında, kurgusal veya kullanım hakkı doğrulanmış bir spor karakteriyle doğal ve enerjik bir selfie karesi.",
+      "source": "A natural and energetic selfie shot in the stadium, under the lights, with a fictional or verified sports character.",
+      "translation": "صورة سيلفي طبيعية وحيوية في الملعب، تحت الأضواء، بشخصية رياضية خيالية أو محققة."
+    },
+    {
+      "key": "Standart",
+      "source": "Standard",
+      "translation": "قياسي"
+    },
+    {
+      "key": "Standart +{{p0}}",
+      "source": "Standard +{{p0}}",
+      "translation": "قياسي +{{p0}}"
+    },
+    {
+      "key": "Stil",
+      "source": "Style",
+      "translation": "النمط"
+    },
+    {
+      "key": "Studio",
+      "source": "Studio",
+      "translation": "Studio"
+    },
+    {
+      "key": "Stüdyo",
+      "source": "Studio",
+      "translation": "استوديو"
+    },
+    {
+      "key": "Stüdyo Işığı",
+      "source": "Studio Light",
+      "translation": "استوديو لايت"
+    },
+    {
+      "key": "Stüdyo ışığında temiz bir portre görünümü.",
+      "source": "A clean portrait look in studio light.",
+      "translation": "مظهر صورة نظيف في ضوء الاستوديو."
+    },
+    {
+      "key": "Stüdyo portreleri için dengeli glam makyaj.",
+      "source": "Balanced glam makeup for studio portraits.",
+      "translation": "مكياج جلام متوازن لصور الاستوديو."
+    },
+    {
+      "key": "Stüdyo projesi hazırlanıyor",
+      "source": "Preparing studio project",
+      "translation": "إعداد مشروع الاستوديو"
+    },
+    {
+      "key": "Stüdyo projesi oluşturulamadı. Lütfen tekrar dene.",
+      "source": "The studio project could not be created. Please try again.",
+      "translation": "لا يمكن إنشاء مشروع الاستوديو. يرجى المحاولة مرة أخرى."
+    },
+    {
+      "key": "STÜDYONA DÖN",
+      "source": "BACK TO YOUR STUDIO",
+      "translation": "العودة إلى الاستوديو الخاص بك"
+    },
+    {
+      "key": "Suluboya",
+      "source": "Watercolor",
+      "translation": "ألوان مائية"
+    },
+    {
+      "key": "Sunburst hassas üretim",
+      "source": "Sunburst precision generation",
+      "translation": "توليد الدقة Sunburst"
+    },
+    {
+      "key": "Sunucu onaylı kredi teklifi",
+      "source": "Server approved credit offer",
+      "translation": "عرض الائتمان المعتمد من الخادم"
+    },
+    {
+      "key": "SUNUCU ONAYLI MALİYET",
+      "source": "SERVER-VERIFIED COST",
+      "translation": "تكلفة التحقق من الخادم"
+    },
+    {
+      "key": "Sunucu profil yanıtı doğrulanamadı.",
+      "source": "The server’s profile response could not be verified.",
+      "translation": "لا يمكن التحقق من استجابة الملف الشخصي للخادم."
+    },
+    {
+      "key": "SUNUCU TARAFINDAN HESAPLANAN MALİYET",
+      "source": "SERVER-CALCULATED COST",
+      "translation": "التكلفة المحسوبة على الخادم"
+    },
+    {
+      "key": "Sunucu zamanında yanıt vermedi. Bağlantını kontrol edip yeniden deneyebilirsin.",
+      "source": "The server did not respond in time. Check your connection and try again.",
+      "translation": "لم يستجب الخادم في الوقت المناسب. تحقق من اتصالك وحاول مرة أخرى."
+    },
+    {
+      "key": "Sunucuda kayıtlı gerçek sonuç alınmadan önizleme gösterilmez.",
+      "source": "The preview will not be shown until the actual result saved on the server is received.",
+      "translation": "لن يتم عرض المعاينة حتى يتم استلام النتيجة الفعلية المحفوظة على الخادم."
+    },
+    {
+      "key": "Sunucuda kayıtlı olmayan bir önizleme raporlanamaz.",
+      "source": "A preview that is not registered on the server cannot be reported.",
+      "translation": "لا يمكن الإبلاغ عن المعاينة غير المسجلة على الخادم."
+    },
+    {
+      "key": "Sunucuda tamamlanan gerçek çıktılar",
+      "source": "Actual outputs completed on the server",
+      "translation": "تم الانتهاء من المخرجات الفعلية على الخادم"
+    },
+    {
+      "key": "Sunucuya şu anda ulaşılamıyor. İnternet bağlantını kontrol edip tekrar dene.",
+      "source": "Unable to reach the server. Check your internet connection and try again.",
+      "translation": "غير قادر على الوصول إلى الخادم. تحقق من اتصالك بالإنترنت وحاول مرة أخرى."
+    },
+    {
+      "key": "Sunucuyla iletişim kurulamadı.",
+      "source": "Could not communicate with the server.",
+      "translation": "لا يمكن التواصل مع الخادم."
+    },
+    {
+      "key": "Süresiz Pro erişimi · Otomatik yenileme yok.",
+      "source": "Lifetime Pro access · No auto-renewal.",
+      "translation": "وصول مدى الحياة للمحترفين · لا يوجد تجديد تلقائي."
+    },
+    {
+      "key": "Sürüm geçmişi",
+      "source": "Version history",
+      "translation": "تاريخ الإصدار"
+    },
+    {
+      "key": "Sürümleri gör",
+      "source": "View versions",
+      "translation": "عرض الإصدارات"
+    },
+    {
+      "key": "Şartlar",
+      "source": "Terms",
+      "translation": "الشروط"
+    },
+    {
       "key": "Şeffaflık",
       "source": "Transparency",
       "translation": "الشفافية"
@@ -6588,24 +7818,9 @@
       "translation": "حدث متلألئ في المدينة على الواجهة البحرية"
     },
     {
-      "key": "Selfie veya portre fotoğrafını seç; görüntü oranını koruyarak ilk kareni hazırla.",
-      "source": "Choose a selfie or portrait and prepare your first image while preserving its aspect ratio.",
-      "translation": "اختر صورة ذاتية أو صورة وقم بإعداد صورتك الأولى مع الحفاظ على نسبة العرض إلى الارتفاع."
-    },
-    {
-      "key": "Sen seçersin",
-      "source": "You choose",
-      "translation": "اخترت"
-    },
-    {
-      "key": "Senin fotoğrafın, senin kontrolün.",
-      "source": "Your photo, your control.",
-      "translation": "صورتك، سيطرتك."
-    },
-    {
-      "key": "Senin profilin.",
-      "source": "Your profile.",
-      "translation": "ملفك الشخصي."
+      "key": "Şık Akşam Yemeği",
+      "source": "Elegant Dinner",
+      "translation": "عشاء أنيق"
     },
     {
       "key": "Şiddet veya nefret",
@@ -6698,421 +7913,6 @@
       "translation": "تحديث كلمة المرور"
     },
     {
-      "key": "Silme başlatılamadı. Hesabın değişmedi.",
-      "source": "Deletion could not be started. Your account is unchanged.",
-      "translation": "لا يمكن بدء الحذف. حسابك لم يتغير."
-    },
-    {
-      "key": "Silme işlemi planlandı",
-      "source": "Deletion scheduled",
-      "translation": "تمت جدولة الحذف"
-    },
-    {
-      "key": "Silme işlemine devam et",
-      "source": "Keep deletion scheduled",
-      "translation": "حافظ على جدولة الحذف"
-    },
-    {
-      "key": "Silmeden önce",
-      "source": "Before you delete",
-      "translation": "قبل أن تحذف"
-    },
-    {
-      "key": "Sinematik",
-      "source": "Cinematic",
-      "translation": "سينمائية"
-    },
-    {
-      "key": "Sinematik bir stil uygula",
-      "source": "Apply a cinematic style",
-      "translation": "تطبيق النمط السينمائي"
-    },
-    {
-      "key": "Sinematik Sahne",
-      "source": "Cinematic Scene",
-      "translation": "مشهد سينمائي"
-    },
-    {
-      "key": "Sistemin Hareketi Azalt ve Saydamlığı Azalt tercihleri her zaman korunur.",
-      "source": "System Reduce Motion and Reduce Transparency preferences are always respected.",
-      "translation": "يتم دائمًا احترام تفضيلات نظام تقليل الحركة وتقليل الشفافية."
-    },
-    {
-      "key": "Sivilce & Leke",
-      "source": "Blemish Removal",
-      "translation": "إزالة العيب"
-    },
-    {
-      "key": "Siyah Beyaz",
-      "source": "Black and White",
-      "translation": "أبيض وأسود"
-    },
-    {
-      "key": "Siyah ve altın detaylı lüks sahne.",
-      "source": "A luxurious scene with black and gold details.",
-      "translation": "مشهد فاخر بتفاصيل باللونين الأسود والذهبي."
-    },
-    {
-      "key": "Sıcak arka ışıklı açık hava çekimi.",
-      "source": "An outdoor shot with warm backlighting.",
-      "translation": "لقطة خارجية بإضاءة خلفية دافئة."
-    },
-    {
-      "key": "Sıcak raf ışıklı premium moda kampanyası.",
-      "source": "A premium fashion campaign with warm shelf lighting.",
-      "translation": "حملة أزياء متميزة مع إضاءة رف دافئة."
-    },
-    {
-      "key": "Sıcak Stüdyo",
-      "source": "Warm Studio",
-      "translation": "استوديو دافئ"
-    },
-    {
-      "key": "Sıcak taş tonlarında rafine sunum.",
-      "source": "A refined presentation in warm stone tones.",
-      "translation": "عرض راقي بألوان الحجر الدافئة."
-    },
-    {
-      "key": "Sıcak ve zamansız doku",
-      "source": "Warm, timeless texture",
-      "translation": "ملمس دافئ وخالد"
-    },
-    {
-      "key": "Sıfırla",
-      "source": "Reset",
-      "translation": "إعادة تعيين"
-    },
-    {
-      "key": "Sıfırlama bağlantısı geçersiz veya süresi dolmuş.",
-      "source": "The reset link is invalid or has expired.",
-      "translation": "رابط إعادة التعيين غير صالح أو انتهت صلاحيته."
-    },
-    {
-      "key": "Sıfırlama kodu",
-      "source": "Reset code",
-      "translation": "إعادة تعيين الرمز"
-    },
-    {
-      "key": "Şık Akşam Yemeği",
-      "source": "Elegant Dinner",
-      "translation": "عشاء أنيق"
-    },
-    {
-      "key": "Sık sorulanlar",
-      "source": "Frequently asked questions",
-      "translation": "الأسئلة المتداولة"
-    },
-    {
-      "key": "Sık sorulanlara göz at ya da destek ekibine bir talep gönder.",
-      "source": "Browse frequently asked questions or send a request to our support team.",
-      "translation": "تصفح الأسئلة المتداولة أو أرسل طلبًا إلى فريق الدعم لدينا."
-    },
-    {
-      "key": "Sıra bekleme uzadı",
-      "source": "The queue is taking longer than expected",
-      "translation": "قائمة الانتظار تستغرق وقتًا أطول من المتوقع"
-    },
-    {
-      "key": "Sketch",
-      "source": "sketch",
-      "translation": "رسم"
-    },
-    {
-      "key": "Sofistike koyu bordo parlaklık.",
-      "source": "A sophisticated dark burgundy gloss.",
-      "translation": "لمعان بورجوندي داكن متطور."
-    },
-    {
-      "key": "Sokak Stili Gündüz",
-      "source": "Daytime Street Style",
-      "translation": "نمط الشارع النهاري"
-    },
-    {
-      "key": "Solda seçili AI sonucu, sağda yüklediğin ilk kaynak fotoğraf bulunur. Ayıracı tutup sürükleyerek ayrıntıları inceleyebilirsin.",
-      "source": "Your selected AI result is on the left, and your original uploaded photo is on the right. Drag the divider to explore the details.",
-      "translation": "تظهر نتيجة الذكاء الاصطناعي التي حددتها على اليسار، والصورة الأصلية التي تم تحميلها على اليمين. اسحب الفاصل لاستكشاف التفاصيل."
-    },
-    {
-      "key": "Son geri alma tarihi:",
-      "source": "Recovery deadline: ",
-      "translation": "الموعد النهائي للاسترداد:"
-    },
-    {
-      "key": "Son güncelleme: {{p0}}",
-      "source": "Last updated: {{p0}}",
-      "translation": "آخر تحديث: {{p0}}"
-    },
-    {
-      "key": "Son kontroller",
-      "source": "Final checks",
-      "translation": "الشيكات النهائية"
-    },
-    {
-      "key": "Son projeler",
-      "source": "Recent projects",
-      "translation": "المشاريع الأخيرة"
-    },
-    {
-      "key": "Sonra",
-      "source": "After",
-      "translation": "بعد"
-    },
-    {
-      "key": "Sonra görünümünü genişlet",
-      "source": "Then expand your look",
-      "translation": "ثم قم بتوسيع مظهرك"
-    },
-    {
-      "key": "Sonuç",
-      "source": "Result",
-      "translation": "النتيجة"
-    },
-    {
-      "key": "Sonuç bulunamadı",
-      "source": "Result not found",
-      "translation": "لم يتم العثور على النتيجة"
-    },
-    {
-      "key": "Sonuç ekranındaki raporla seçeneğini veya destek talebini kullanabilirsin. İnceleme için gerekli bağlam istenir.",
-      "source": "You can use the report option or support request on the result screen. Necessary context for review is requested.",
-      "translation": "يمكنك استخدام خيار التقرير أو طلب الدعم على شاشة النتائج. مطلوب السياق اللازم للمراجعة."
-    },
-    {
-      "key": "Sonuç hazır olduğunda bildirim alma tercihi",
-      "source": "Preference for notifications when results are ready",
-      "translation": "تفضيل الإخطارات عندما تكون النتائج جاهزة"
-    },
-    {
-      "key": "Sonuca dön",
-      "source": "Back to result",
-      "translation": "العودة إلى النتيجة"
-    },
-    {
-      "key": "Sonuçlar",
-      "source": "Results",
-      "translation": "النتائج"
-    },
-    {
-      "key": "Sonuçlar hazır",
-      "source": "Results are ready",
-      "translation": "النتائج جاهزة"
-    },
-    {
-      "key": "Sonuçlar sunucudan alınamadı",
-      "source": "Could not load results from the server",
-      "translation": "لا يمكن تحميل النتائج من الخادم"
-    },
-    {
-      "key": "Sonuçlar yüklenemedi.",
-      "source": "Results could not be loaded.",
-      "translation": "لا يمكن تحميل النتائج."
-    },
-    {
-      "key": "Sonuçları görüntüle",
-      "source": "View results",
-      "translation": "عرض النتائج"
-    },
-    {
-      "key": "Sonuçların AI ile oluşturulabileceğini ve etiketleneceğini kabul ediyorum.",
-      "source": "I understand that results may be AI-generated and labeled.",
-      "translation": "أدرك أن النتائج قد يتم إنشاؤها بواسطة الذكاء الاصطناعي وتصنيفها."
-    },
-    {
-      "key": "Sonuçların AI ile üretildiğini ve yanıltıcı kullanımın yasak olduğunu anlıyorum.",
-      "source": "I understand that results are AI-generated and misleading use is prohibited.",
-      "translation": "أدرك أن النتائج يتم إنشاؤها بواسطة الذكاء الاصطناعي وأن الاستخدام المضلل محظور."
-    },
-    {
-      "key": "Sonuçlarını kaydet",
-      "source": "Save your results",
-      "translation": "احفظ نتائجك"
-    },
-    {
-      "key": "Sonucu gör",
-      "source": "View result",
-      "translation": "عرض النتيجة"
-    },
-    {
-      "key": "Sonucun kaydedildi. Şimdi görseline geçiyoruz.",
-      "source": "Your result has been saved. Now we move on to the visual.",
-      "translation": "تم حفظ النتيجة الخاصة بك. الآن ننتقل إلى البصرية."
-    },
-    {
-      "key": "Sorunu birkaç kelimeyle özetle",
-      "source": "Summarize the issue in a few words",
-      "translation": "لخص الموضوع في بضع كلمات"
-    },
-    {
-      "key": "Sosyal giriş",
-      "source": "social login",
-      "translation": "تسجيل الدخول الاجتماعي"
-    },
-    {
-      "key": "Sosyal girişini tamamlamak için profil bilgilerini kontrol et.",
-      "source": "Review your profile details to complete social sign-in.",
-      "translation": "قم بمراجعة تفاصيل ملفك الشخصي لإكمال تسجيل الدخول عبر وسائل التواصل الاجتماعي."
-    },
-    {
-      "key": "Sosyal kayıt oturumun bulunamadı. Giriş ekranından yeniden devam et.",
-      "source": "Your social registration session was not found. Continue again from the sign-in screen.",
-      "translation": "لم يتم العثور على جلسة التسجيل الاجتماعي الخاصة بك. تابع مرة أخرى من شاشة تسجيل الدخول."
-    },
-    {
-      "key": "Sosyal kayıt tamamlanamadı. Lütfen tekrar deneyin.",
-      "source": "Social registration could not be completed. Please try again.",
-      "translation": "لا يمكن إكمال التسجيل الاجتماعي. يرجى المحاولة مرة أخرى."
-    },
-    {
-      "key": "Soyad",
-      "source": "Last name",
-      "translation": "الاسم الأخير"
-    },
-    {
-      "key": "Soyadın",
-      "source": "Your last name",
-      "translation": "اسمك الأخير"
-    },
-    {
-      "key": "Soyadın (isteğe bağlı)",
-      "source": "Last name (optional)",
-      "translation": "الاسم الأخير (اختياري)"
-    },
-    {
-      "key": "Soyadını gir",
-      "source": "Enter your last name",
-      "translation": "أدخل اسمك الأخير"
-    },
-    {
-      "key": "Soyadınız en az 2 karakter olmalı.",
-      "source": "Your last name must contain at least 2 characters.",
-      "translation": "يجب أن يحتوي اسمك الأخير على حرفين على الأقل."
-    },
-    {
-      "key": "Stadyum Selfie",
-      "source": "Stadium Selfie",
-      "translation": "ملعب سيلفي"
-    },
-    {
-      "key": "Stadyumda futbol anı",
-      "source": "A football moment at the stadium",
-      "translation": "لحظة كرة قدم في الملعب"
-    },
-    {
-      "key": "Stadyumda, ışıklar altında, kurgusal veya kullanım hakkı doğrulanmış bir spor karakteriyle doğal ve enerjik bir selfie karesi.",
-      "source": "A natural and energetic selfie shot in the stadium, under the lights, with a fictional or verified sports character.",
-      "translation": "صورة سيلفي طبيعية وحيوية في الملعب، تحت الأضواء، بشخصية رياضية خيالية أو محققة."
-    },
-    {
-      "key": "Standart",
-      "source": "Standard",
-      "translation": "قياسي"
-    },
-    {
-      "key": "Standart +{{p0}}",
-      "source": "Standard +{{p0}}",
-      "translation": "قياسي +{{p0}}"
-    },
-    {
-      "key": "Stil",
-      "source": "Style",
-      "translation": "النمط"
-    },
-    {
-      "key": "Stüdyo",
-      "source": "Studio",
-      "translation": "استوديو"
-    },
-    {
-      "key": "Stüdyo Işığı",
-      "source": "Studio Light",
-      "translation": "استوديو لايت"
-    },
-    {
-      "key": "Stüdyo ışığında temiz bir portre görünümü.",
-      "source": "A clean portrait look in studio light.",
-      "translation": "مظهر صورة نظيف في ضوء الاستوديو."
-    },
-    {
-      "key": "Stüdyo portreleri için dengeli glam makyaj.",
-      "source": "Balanced glam makeup for studio portraits.",
-      "translation": "مكياج جلام متوازن لصور الاستوديو."
-    },
-    {
-      "key": "Stüdyo projesi hazırlanıyor",
-      "source": "Preparing studio project",
-      "translation": "إعداد مشروع الاستوديو"
-    },
-    {
-      "key": "Stüdyo projesi oluşturulamadı. Lütfen tekrar dene.",
-      "source": "The studio project could not be created. Please try again.",
-      "translation": "لا يمكن إنشاء مشروع الاستوديو. يرجى المحاولة مرة أخرى."
-    },
-    {
-      "key": "STÜDYONA DÖN",
-      "source": "BACK TO YOUR STUDIO",
-      "translation": "العودة إلى الاستوديو الخاص بك"
-    },
-    {
-      "key": "Suluboya",
-      "source": "Watercolor",
-      "translation": "ألوان مائية"
-    },
-    {
-      "key": "Sunburst hassas üretim",
-      "source": "Sunburst precision generation",
-      "translation": "توليد الدقة Sunburst"
-    },
-    {
-      "key": "SUNUCU ONAYLI MALİYET",
-      "source": "SERVER-VERIFIED COST",
-      "translation": "تكلفة التحقق من الخادم"
-    },
-    {
-      "key": "Sunucu profil yanıtı doğrulanamadı.",
-      "source": "The server’s profile response could not be verified.",
-      "translation": "لا يمكن التحقق من استجابة الملف الشخصي للخادم."
-    },
-    {
-      "key": "SUNUCU TARAFINDAN HESAPLANAN MALİYET",
-      "source": "SERVER-CALCULATED COST",
-      "translation": "التكلفة المحسوبة على الخادم"
-    },
-    {
-      "key": "Sunucu zamanında yanıt vermedi. Bağlantını kontrol edip yeniden deneyebilirsin.",
-      "source": "The server did not respond in time. Check your connection and try again.",
-      "translation": "لم يستجب الخادم في الوقت المناسب. تحقق من اتصالك وحاول مرة أخرى."
-    },
-    {
-      "key": "Sunucuda kayıtlı olmayan bir önizleme raporlanamaz.",
-      "source": "A preview that is not registered on the server cannot be reported.",
-      "translation": "لا يمكن الإبلاغ عن المعاينة غير المسجلة على الخادم."
-    },
-    {
-      "key": "Sunucuya şu anda ulaşılamıyor. İnternet bağlantını kontrol edip tekrar dene.",
-      "source": "Unable to reach the server. Check your internet connection and try again.",
-      "translation": "غير قادر على الوصول إلى الخادم. تحقق من اتصالك بالإنترنت وحاول مرة أخرى."
-    },
-    {
-      "key": "Sunucuyla iletişim kurulamadı.",
-      "source": "Could not communicate with the server.",
-      "translation": "لا يمكن التواصل مع الخادم."
-    },
-    {
-      "key": "Süresiz Pro erişimi · Otomatik yenileme yok.",
-      "source": "Lifetime Pro access · No auto-renewal.",
-      "translation": "وصول مدى الحياة للمحترفين · لا يوجد تجديد تلقائي."
-    },
-    {
-      "key": "Sürüm geçmişi",
-      "source": "Version history",
-      "translation": "تاريخ الإصدار"
-    },
-    {
-      "key": "Sürümleri gör",
-      "source": "View versions",
-      "translation": "عرض الإصدارات"
-    },
-    {
       "key": "Taban, bağcık ve çift simetrisini koruyan katalog karesi.",
       "source": "A catalog shot that preserves soles, laces and symmetry between the pair.",
       "translation": "لقطة كتالوج تحافظ على النعال والأربطة والتماثل بين الزوجين."
@@ -7183,6 +7983,16 @@
       "translation": "مكتمل"
     },
     {
+      "key": "Tamamlanmış çıktı bulunamadı",
+      "source": "No completed output found",
+      "translation": "لم يتم العثور على مخرجات مكتملة"
+    },
+    {
+      "key": "Tamamlanmış sunucu çıktısı bulunamadı",
+      "source": "No completed server output found",
+      "translation": "لم يتم العثور على مخرجات خادم مكتملة"
+    },
+    {
       "key": "Tarih bilgisi yok",
       "source": "No date available",
       "translation": "لا يوجد تاريخ متاح"
@@ -7213,6 +8023,21 @@
       "translation": "اختر أسلوبك،{{p0}}دع الذكاء الاصطناعي ينبض بالحياة."
     },
     {
+      "key": "Tasarım önizlemesi",
+      "source": "Design preview",
+      "translation": "معاينة التصميم"
+    },
+    {
+      "key": "TASARIM ÖNİZLEMESİ · ÖRNEK FİYATLAR · ÖDEME YAPMAZ",
+      "source": "DESIGN PREVIEW · SAMPLE PRICES · NO PAYMENT",
+      "translation": "معاينة التصميم · أسعار العينات · عدم الدفع"
+    },
+    {
+      "key": "Taslaklar, kaynaklar ve kayıtlı üretimler kaldırılır.",
+      "source": "Drafts, sources and saved generations will be removed.",
+      "translation": "ستتم إزالة المسودات والمصادر والأجيال المحفوظة."
+    },
+    {
       "key": "Taş sayısı, kesim ve metal rengini koruyan makro çekim.",
       "source": "A macro shot that preserves stone count, cut and metal color.",
       "translation": "لقطة ماكرو تحافظ على عدد الأحجار وقطعها ولون المعدن."
@@ -7228,19 +8053,14 @@
       "translation": "افتتاحية فاخرة بتفاصيل من الحجر والنحاس."
     },
     {
-      "key": "TASARIM ÖNİZLEMESİ · ÖRNEK FİYATLAR · ÖDEME YAPMAZ",
-      "source": "DESIGN PREVIEW · SAMPLE PRICES · NO PAYMENT",
-      "translation": "معاينة التصميم · أسعار العينات · عدم الدفع"
+      "key": "Tek bir ürün fotoğrafından katalog, ürün sayfası ve kampanya alternatifleri üret.",
+      "source": "Generate catalogs, product pages and campaign alternatives from a single product photo.",
+      "translation": "قم بإنشاء كتالوجات وصفحات المنتجات وبدائل الحملة من صورة منتج واحدة."
     },
     {
-      "key": "Tasarım önizlemesi",
-      "source": "Design preview",
-      "translation": "معاينة التصميم"
-    },
-    {
-      "key": "Taslaklar, kaynaklar ve kayıtlı üretimler kaldırılır.",
-      "source": "Drafts, sources and saved generations will be removed.",
-      "translation": "ستتم إزالة المسودات والمصادر والأجيال المحفوظة."
+      "key": "Tek kareyi düzenli bir ürün projesine dönüştür.",
+      "source": "Turn a single frame into a neat product project.",
+      "translation": "تحويل إطار واحد إلى مشروع منتج أنيق."
     },
     {
       "key": "Tek kişilik şık yemek portresi ya da iki ayrı kaynak fotoğraftaki kişiyi kimliklerini koruyarak aynı masada birleştiren doğal 80’ler gecesi.",
@@ -7256,6 +8076,11 @@
       "key": "Tek seferlik · Süresiz kredi",
       "source": "One-time · Indefinite credit",
       "translation": "لمرة واحدة · رصيد غير محدد"
+    },
+    {
+      "key": "Tek sonuç",
+      "source": "single result",
+      "translation": "نتيجة واحدة"
     },
     {
       "key": "Teknoloji ürünleri için neon gece ışığı.",
@@ -7281,6 +8106,11 @@
       "key": "Temiz e-ticaret kataloğu.",
       "source": "A clean e-commerce catalog.",
       "translation": "كتالوج التجارة الإلكترونية النظيفة."
+    },
+    {
+      "key": "Temiz fonda, ürünü öne çıkaran listeleme görseli.",
+      "source": "Listing image that highlights the product on a clean background.",
+      "translation": "صورة القائمة التي تسلط الضوء على المنتج على خلفية نظيفة."
     },
     {
       "key": "Temizle",
@@ -7388,9 +8218,19 @@
       "translation": "جرب الأنماط الشائعة"
     },
     {
+      "key": "Turkuaz koyda Akdeniz terası",
+      "source": "A Mediterranean terrace overlooking a turquoise bay",
+      "translation": "شرفة متوسطية مطلة على الخليج الفيروزي"
+    },
+    {
       "key": "Tüm cihazlardan çıkış yap",
       "source": "Sign out of all devices",
       "translation": "تسجيل الخروج من جميع الأجهزة"
+    },
+    {
+      "key": "Tüm eski projeler",
+      "source": "All old projects",
+      "translation": "جميع المشاريع القديمة"
     },
     {
       "key": "Tüm filtreler",
@@ -7411,6 +8251,11 @@
       "key": "Tüm oturumları kapat",
       "source": "End all sessions",
       "translation": "إنهاء كافة الجلسات"
+    },
+    {
+      "key": "Tüm projeler",
+      "source": "All projects",
+      "translation": "جميع المشاريع"
     },
     {
       "key": "Tüm sürümleri gör",
@@ -7448,9 +8293,44 @@
       "translation": "تركي"
     },
     {
-      "key": "Turkuaz koyda Akdeniz terası",
-      "source": "A Mediterranean terrace overlooking a turquoise bay",
-      "translation": "شرفة متوسطية مطلة على الخليج الفيروزي"
+      "key": "Uygula ve dön",
+      "source": "Apply and return",
+      "translation": "تطبيق والعودة"
+    },
+    {
+      "key": "Uygulamaya dön",
+      "source": "Return to the app",
+      "translation": "العودة إلى التطبيق"
+    },
+    {
+      "key": "Uygulamayı sana göre düzenle",
+      "source": "Customize the app for you",
+      "translation": "تخصيص التطبيق بالنسبة لك"
+    },
+    {
+      "key": "Uygulanabilir mevzuat kapsamında verilerine erişme, düzeltme, silme, işlemeyi sınırlandırma veya itiraz etme hakların olabilir. Taleplerini Destek bölümünden iletebilirsin.",
+      "source": "Under applicable law, you may have rights to access, correct or delete your data, restrict processing or object to it. Submit requests through Support.",
+      "translation": "بموجب القانون المعمول به، قد يكون لديك حقوق الوصول إلى بياناتك أو تصحيحها أو حذفها أو تقييد معالجتها أو الاعتراض عليها. تقديم الطلبات من خلال الدعم."
+    },
+    {
+      "key": "Uygunsuz veya cinsel içerik",
+      "source": "Inappropriate or sexual content",
+      "translation": "محتوى غير لائق أو جنسي"
+    },
+    {
+      "key": "Uygunsuz veya yanlış yönlendirici bir içerik görürsen destek ekibine raporla.",
+      "source": "Report inappropriate or misleading content to the support team.",
+      "translation": "قم بالإبلاغ عن محتوى غير لائق أو مضلل لفريق الدعم."
+    },
+    {
+      "key": "Uzman ipucu: Amacına en yakın sahneyi seç; filtre adımında görünümünü ayrıca özelleştirebilirsin.",
+      "source": "Tip: Choose the scene closest to your goal. You can customize the look further in the filter step.",
+      "translation": "نصيحة: اختر المشهد الأقرب إلى هدفك. يمكنك تخصيص المظهر بشكل أكبر في خطوة التصفية."
+    },
+    {
+      "key": "Uzman notu: Işık ve yüz dengesi uygunsa önizleme çok daha doğal görünür.",
+      "source": "Tip: Balanced lighting and facial composition make the preview look more natural.",
+      "translation": "نصيحة: الإضاءة المتوازنة وتركيبة الوجه تجعل المعاينة تبدو أكثر طبيعية."
     },
     {
       "key": "Ücretsiz",
@@ -7603,6 +8483,11 @@
       "translation": "لا يمكن إلغاء الإنتاج."
     },
     {
+      "key": "Üretim kredilerini",
+      "source": "Production credits",
+      "translation": "اعتمادات الإنتاج"
+    },
+    {
       "key": "Üretim kredisi iade edildi",
       "source": "Generation credits refunded",
       "translation": "تم رد أرصدة الإنشاء"
@@ -7643,6 +8528,11 @@
       "translation": "عند انتهاء عملية الإنشاء، قارن النتائج واطلب تعديلات صغيرة واحصل على صورة جاهزة للمشاركة."
     },
     {
+      "key": "Üretim tamamlanıyor",
+      "source": "Production is being completed",
+      "translation": "يتم الانتهاء من الإنتاج"
+    },
+    {
       "key": "Üretim tamamlanmadan paylaşım yapılamaz.",
       "source": "Sharing is available only after generation is complete.",
       "translation": "المشاركة متاحة فقط بعد اكتمال الإنشاء."
@@ -7666,6 +8556,11 @@
       "key": "üretimi",
       "source": "generation",
       "translation": "جيل"
+    },
+    {
+      "key": "Üretimi başlat · {{p0}} kredi",
+      "source": "Start production · {{p0}} credit",
+      "translation": "إنشاء · {{p0}} رصيد"
     },
     {
       "key": "Üretimi gözden geçir",
@@ -7718,6 +8613,41 @@
       "translation": "استوديو المنتج والأسلوب"
     },
     {
+      "key": "Ürün adı",
+      "source": "Product name",
+      "translation": "اسم المنتج"
+    },
+    {
+      "key": "Ürün adı en fazla 120 karakter olabilir.",
+      "source": "The product name can be up to 120 characters.",
+      "translation": "يمكن أن يصل اسم المنتج إلى 120 حرفًا."
+    },
+    {
+      "key": "Ürün adı, kaynak fotoğrafı, sahne ve çıktı formatıyla düzenli bir proje oluştur.",
+      "source": "Create an organized project with product name, source photo, scene and output format.",
+      "translation": "أنشئ مشروعًا منظمًا باسم المنتج وصورة المصدر والمشهد وتنسيق الإخراج."
+    },
+    {
+      "key": "Ürün adını yaz.",
+      "source": "Write the product name.",
+      "translation": "اكتب اسم المنتج."
+    },
+    {
+      "key": "Ürün adıyla katalog kaydı",
+      "source": "Catalog record with product name",
+      "translation": "سجل الكتالوج مع اسم المنتج"
+    },
+    {
+      "key": "Ürün alternatifleri",
+      "source": "Product alternatives",
+      "translation": "بدائل المنتج"
+    },
+    {
+      "key": "Ürün çalışma alanı",
+      "source": "Product work area",
+      "translation": "منطقة عمل المنتج"
+    },
+    {
       "key": "Ürün çekimi",
       "source": "Product photography",
       "translation": "تصوير المنتج"
@@ -7728,9 +8658,64 @@
       "translation": "تصوير المنتجات"
     },
     {
+      "key": "Ürün çekimi planı",
+      "source": "Product shooting plan",
+      "translation": "خطة تصوير المنتج"
+    },
+    {
+      "key": "Ürün çekimlerin, çıktılar ve yeni versiyonlar.",
+      "source": "Product shots, printouts and new versions.",
+      "translation": "لقطات المنتج والمطبوعات والإصدارات الجديدة."
+    },
+    {
+      "key": "Ürün çıktısını düzenle",
+      "source": "Edit product output",
+      "translation": "تحرير إخراج المنتج"
+    },
+    {
+      "key": "Ürün fotoğrafından satış kanallarına.",
+      "source": "From product photography to sales channels.",
+      "translation": "من تصوير المنتجات إلى قنوات البيع."
+    },
+    {
       "key": "Ürün fotoğrafını seç",
       "source": "Select product photo",
       "translation": "حدد صورة المنتج"
+    },
+    {
+      "key": "ÜRÜN FOTOĞRAFIYLA BAŞLA",
+      "source": "START WITH PRODUCT PHOTO",
+      "translation": "ابدأ بصورة المنتج"
+    },
+    {
+      "key": "ürün görsel çalışma alanın",
+      "source": "product visual workspace",
+      "translation": "مساحة العمل المرئية للمنتج"
+    },
+    {
+      "key": "Ürün görsel çalışma alanın",
+      "source": "Product visual workspace",
+      "translation": "مساحة العمل المرئية للمنتج"
+    },
+    {
+      "key": "Ürün görseli üretim bakiyeniz",
+      "source": "Your product image production balance",
+      "translation": "رصيد إنتاج صورة منتجك"
+    },
+    {
+      "key": "Ürün güvenli düzenleme",
+      "source": "Product safe regulation",
+      "translation": "تنظيم سلامة المنتج"
+    },
+    {
+      "key": "Ürün kataloğu",
+      "source": "Product catalog",
+      "translation": "كتالوج المنتجات"
+    },
+    {
+      "key": "Ürün kataloğun hazır",
+      "source": "Your product catalog is ready",
+      "translation": "كتالوج المنتجات الخاصة بك جاهز"
     },
     {
       "key": "Ürün kategorisi",
@@ -7738,9 +8723,94 @@
       "translation": "فئة المنتج"
     },
     {
+      "key": "Ürün kategorisi, sahne, kalite, alternatif sayısı ve kredi tutarı oluşturma öncesinde açıkça gösterilir.",
+      "source": "The product category, scene, quality, number of alternatives and loan amount are clearly displayed before creation.",
+      "translation": "يتم عرض فئة المنتج والمشهد والجودة وعدد البدائل ومبلغ القرض بوضوح قبل الإنشاء."
+    },
+    {
+      "key": "Ürün kategorisine göre koruma",
+      "source": "Protection by product category",
+      "translation": "الحماية حسب فئة المنتج"
+    },
+    {
+      "key": "Ürün kimliğini koruyan akış",
+      "source": "Flow preserving product identity",
+      "translation": "تدفق الحفاظ على هوية المنتج"
+    },
+    {
+      "key": "ÜRÜN KÜTÜPHANESİ",
+      "source": "PRODUCT LIBRARY",
+      "translation": "مكتبة المنتجات"
+    },
+    {
       "key": "Ürün net, tek ve mümkünse sade zeminde görünmeli.",
       "source": "The product should appear clearly, single and, if possible, on a plain background.",
       "translation": "يجب أن يظهر المنتج بوضوح، منفردًا، وإذا أمكن، على خلفية عادية."
+    },
+    {
+      "key": "Ürün projeleri",
+      "source": "Product projects",
+      "translation": "مشاريع المنتجات"
+    },
+    {
+      "key": "Ürün projelerin ve kataloğun seni bekliyor.",
+      "source": "Your product projects and catalog are waiting for you.",
+      "translation": "مشاريع المنتجات والكتالوج الخاص بك في انتظارك."
+    },
+    {
+      "key": "Ürün projelerinde",
+      "source": "In product projects",
+      "translation": "في مشاريع المنتجات"
+    },
+    {
+      "key": "Ürün projelerini ve gerçek çıktıları tek katalogda yönet.",
+      "source": "Manage product projects and actual deliverables in a single catalogue.",
+      "translation": "إدارة مشاريع المنتجات والتسليمات الفعلية في كتالوج واحد."
+    },
+    {
+      "key": "Ürün projesi",
+      "source": "product project",
+      "translation": "مشروع المنتج"
+    },
+    {
+      "key": "Ürün sayfası",
+      "source": "Product page",
+      "translation": "صفحة المنتج"
+    },
+    {
+      "key": "Ürün sayfası ve akış",
+      "source": "Product page and flow",
+      "translation": "صفحة المنتج والتدفق"
+    },
+    {
+      "key": "ÜRÜN STÜDYONA DÖN",
+      "source": "PRODUCT RETURN TO STUDIO",
+      "translation": "عودة المنتج إلى الاستوديو"
+    },
+    {
+      "key": "ÜRÜN STÜDYOSU",
+      "source": "PRODUCT STUDIO",
+      "translation": "استوديو المنتج"
+    },
+    {
+      "key": "Ürün tek başına, net ve mümkünse sade bir zeminde görünmeli.",
+      "source": "The product should appear alone, clearly and, if possible, on a plain background.",
+      "translation": "يجب أن يظهر المنتج بمفرده وبشكل واضح، وإذا أمكن، على خلفية عادية."
+    },
+    {
+      "key": "Ürün üretim kredilerinizi planlayın.",
+      "source": "Plan your product production credits.",
+      "translation": "خطط لأرصدة إنتاج منتجك."
+    },
+    {
+      "key": "Ürün ve katalog stüdyosu",
+      "source": "Product and catalog studio",
+      "translation": "استوديو المنتجات والكتالوج"
+    },
+    {
+      "key": "Ürün versiyonları",
+      "source": "Product versions",
+      "translation": "إصدارات المنتج"
     },
     {
       "key": "Ürünler",
@@ -7748,14 +8818,84 @@
       "translation": "المنتجات"
     },
     {
+      "key": "Ürünü adlandır, kategorisini seç ve kaynak fotoğrafını aynı çalışma alanında tut.",
+      "source": "Name the product, select its category, and keep the source photo in the same workspace.",
+      "translation": "قم بتسمية المنتج، وحدد فئته، واحتفظ بالصورة المصدر في نفس مساحة العمل."
+    },
+    {
+      "key": "Ürünü değiştirmeden renk sıcaklığını dengele.",
+      "source": "Balance color temperature without changing the product.",
+      "translation": "يوازن درجة حرارة اللون دون تغيير المنتج."
+    },
+    {
+      "key": "Ürünü düzenle",
+      "source": "Edit product",
+      "translation": "تحرير المنتج"
+    },
+    {
+      "key": "Ürünü koru",
+      "source": "protect product",
+      "translation": "حماية المنتج"
+    },
+    {
+      "key": "Ürünü koruyan kontrollü bir değişiklik iste",
+      "source": "Request a controlled change that protects the product",
+      "translation": "اطلب إجراء تغيير متحكم فيه يحمي المنتج"
+    },
+    {
+      "key": "Ürünü tanımla",
+      "source": "Describe the product",
+      "translation": "وصف المنتج"
+    },
+    {
+      "key": "Ürünü ve etiketi değiştirme",
+      "source": "Change the product and label",
+      "translation": "تغيير المنتج والتسمية"
+    },
+    {
+      "key": "Ürünü, etiketi, logoyu, malzemeyi ve geometriyi değiştirme.",
+      "source": "Changing the product, label, logo, material and geometry.",
+      "translation": "تغيير المنتج والملصق والشعار والمواد والهندسة."
+    },
+    {
+      "key": "Ürünün etiketini, malzemesini ve geometrisini koruyarak neyi değiştirmemi istersin?",
+      "source": "What would you like me to change while keeping the label, material and geometry of the product?",
+      "translation": "ما الذي تريد مني تغييره مع الاحتفاظ بملصق المنتج والمادة وشكله الهندسي؟"
+    },
+    {
+      "key": "Ürünün gölgesini daha yumuşak ve doğal yap.",
+      "source": "Make the shade of the product softer and more natural.",
+      "translation": "اجعل ظل المنتج أكثر نعومة وطبيعية."
+    },
+    {
       "key": "Ürünün kimliği ve tasarımı korunur",
       "source": "Product identity and design are preserved",
       "translation": "يتم الحفاظ على هوية المنتج وتصميمه"
     },
     {
+      "key": "Ürünün sağında metin alanı bırak",
+      "source": "Leave text area to the right of the product",
+      "translation": "اترك منطقة النص على يمين المنتج"
+    },
+    {
+      "key": "Ürünün sağında metin için boş alan bırak.",
+      "source": "Leave space for text to the right of the product.",
+      "translation": "اترك مساحة للنص على يمين المنتج."
+    },
+    {
+      "key": "Ürünün tamamı kadraj içinde",
+      "source": "The entire product is in the frame",
+      "translation": "المنتج بأكمله موجود في الإطار"
+    },
+    {
       "key": "Ürününü gerçeğine sadık kalarak sun",
       "source": "Showcase your product true to life",
       "translation": "اعرض منتجك على أرض الواقع"
+    },
+    {
+      "key": "Ürününü satışa hazırla.",
+      "source": "Prepare your product for sale.",
+      "translation": "قم بإعداد منتجك للبيع."
     },
     {
       "key": "Üstten bakışlı düzenli katalog kompozisyonu.",
@@ -7766,46 +8906,6 @@
       "key": "Üyelik kredisi",
       "source": "Membership credits",
       "translation": "اعتمادات العضوية"
-    },
-    {
-      "key": "Uygula ve dön",
-      "source": "Apply and return",
-      "translation": "تطبيق والعودة"
-    },
-    {
-      "key": "Uygulamaya dön",
-      "source": "Return to the app",
-      "translation": "العودة إلى التطبيق"
-    },
-    {
-      "key": "Uygulamayı sana göre düzenle",
-      "source": "Customize the app for you",
-      "translation": "تخصيص التطبيق بالنسبة لك"
-    },
-    {
-      "key": "Uygulanabilir mevzuat kapsamında verilerine erişme, düzeltme, silme, işlemeyi sınırlandırma veya itiraz etme hakların olabilir. Taleplerini Destek bölümünden iletebilirsin.",
-      "source": "Under applicable law, you may have rights to access, correct or delete your data, restrict processing or object to it. Submit requests through Support.",
-      "translation": "بموجب القانون المعمول به، قد يكون لديك حقوق الوصول إلى بياناتك أو تصحيحها أو حذفها أو تقييد معالجتها أو الاعتراض عليها. تقديم الطلبات من خلال الدعم."
-    },
-    {
-      "key": "Uygunsuz veya cinsel içerik",
-      "source": "Inappropriate or sexual content",
-      "translation": "محتوى غير لائق أو جنسي"
-    },
-    {
-      "key": "Uygunsuz veya yanlış yönlendirici bir içerik görürsen destek ekibine raporla.",
-      "source": "Report inappropriate or misleading content to the support team.",
-      "translation": "قم بالإبلاغ عن محتوى غير لائق أو مضلل لفريق الدعم."
-    },
-    {
-      "key": "Uzman ipucu: Amacına en yakın sahneyi seç; filtre adımında görünümünü ayrıca özelleştirebilirsin.",
-      "source": "Tip: Choose the scene closest to your goal. You can customize the look further in the filter step.",
-      "translation": "نصيحة: اختر المشهد الأقرب إلى هدفك. يمكنك تخصيص المظهر بشكل أكبر في خطوة التصفية."
-    },
-    {
-      "key": "Uzman notu: Işık ve yüz dengesi uygunsa önizleme çok daha doğal görünür.",
-      "source": "Tip: Balanced lighting and facial composition make the preview look more natural.",
-      "translation": "نصيحة: الإضاءة المتوازنة وتركيبة الوجه تجعل المعاينة تبدو أكثر طبيعية."
     },
     {
       "key": "Varyasyon",
@@ -7878,6 +8978,11 @@
       "translation": "تصدير بياناتي"
     },
     {
+      "key": "Versiyon",
+      "source": "Version",
+      "translation": "الإصدار"
+    },
+    {
       "key": "veya e-posta ile",
       "source": "or continue with email",
       "translation": "أو الاستمرار مع البريد الإلكتروني"
@@ -7893,9 +8998,19 @@
       "translation": "خمر"
     },
     {
+      "key": "Vitrin",
+      "source": "Showcase",
+      "translation": "عرض"
+    },
+    {
       "key": "Watercolor",
       "source": "watercolour",
       "translation": "ألوان مائية"
+    },
+    {
+      "key": "Web vitrin görseli",
+      "source": "Web showcase image",
+      "translation": "صورة عرض الويب"
     },
     {
       "key": "X / Twitter",
@@ -7931,6 +9046,11 @@
       "key": "Yaklaşık {{p0}} standart üretim için yeterli.",
       "source": "Enough for approximately {{p0}} standard generations.",
       "translation": "يكفي لحوالي {{p0}} الأجيال القياسية."
+    },
+    {
+      "key": "Yaklaşık {{p0}} standart ürün alternatifi için yeterli.",
+      "source": "Approximately {{p0}} is sufficient for the standard product alternative.",
+      "translation": "يعتبر {{p0}} تقريبًا كافيًا لبديل المنتج القياسي."
     },
     {
       "key": "Yaklaşık renk önizlemesi",
@@ -8008,14 +9128,14 @@
       "translation": "لمعان أبيض حليبي شفاف."
     },
     {
-      "key": "Yaşadığın sorunu, varsa proje adını ve ne beklediğini yaz.",
-      "source": "Describe the issue, include the project name if relevant and tell us what you expected.",
-      "translation": "قم بوصف المشكلة، وقم بتضمين اسم المشروع إذا كان ذلك مناسبًا وأخبرنا بما كنت تتوقعه."
-    },
-    {
       "key": "Yasal belgeler",
       "source": "Legal documents",
       "translation": "الوثائق القانونية"
+    },
+    {
+      "key": "Yaşadığın sorunu, varsa proje adını ve ne beklediğini yaz.",
+      "source": "Describe the issue, include the project name if relevant and tell us what you expected.",
+      "translation": "قم بوصف المشكلة، وقم بتضمين اسم المشروع إذا كان ذلك مناسبًا وأخبرنا بما كنت تتوقعه."
     },
     {
       "key": "Yeni bir fotoğraf çekmek için BirKare AI’ye kamera erişimi ver.",
@@ -8038,14 +9158,34 @@
       "translation": "يبدأ جيلًا جديدًا من البداية"
     },
     {
+      "key": "Yeni bir ürün fotoğrafı çekmek için BirKare Studio’ya kamera erişimi ver.",
+      "source": "Give camera access to BirKare Studio to take a new product photo.",
+      "translation": "اسمح لـ BirKare Studio بالوصول إلى الكاميرا لالتقاط صورة جديدة للمنتج."
+    },
+    {
+      "key": "Yeni bir ürün projesi başlatır",
+      "source": "Starts a new product project",
+      "translation": "يبدأ مشروع منتج جديد"
+    },
+    {
       "key": "Yeni oluştur",
       "source": "Create new",
       "translation": "إنشاء جديد"
     },
     {
+      "key": "YENİ PROJE",
+      "source": "NEW PROJECT",
+      "translation": "مشروع جديد"
+    },
+    {
       "key": "Yeni sahne oluştur",
       "source": "Create a new scene",
       "translation": "خلق مشهد جديد"
+    },
+    {
+      "key": "YENİ STÜDYO",
+      "source": "NEW STUDIO",
+      "translation": "استوديو جديد"
     },
     {
       "key": "Yeni şifre",
@@ -8058,11 +9198,6 @@
       "translation": "قم بإنشاء كلمة مرور جديدة."
     },
     {
-      "key": "YENİ STÜDYO",
-      "source": "NEW STUDIO",
-      "translation": "استوديو جديد"
-    },
-    {
       "key": "Yeni talep oluştur",
       "source": "Create a new request",
       "translation": "إنشاء طلب جديد"
@@ -8071,6 +9206,36 @@
       "key": "Yeni üretim başlat",
       "source": "Start a new generation",
       "translation": "ابدأ جيلًا جديدًا"
+    },
+    {
+      "key": "Yeni ürün çekimi",
+      "source": "New product shoot",
+      "translation": "تصوير منتج جديد"
+    },
+    {
+      "key": "Yeni ürün projesi",
+      "source": "New product project",
+      "translation": "مشروع منتج جديد"
+    },
+    {
+      "key": "YENİ ÜRÜN STÜDYOSU",
+      "source": "NEW PRODUCT STUDIO",
+      "translation": "استوديو منتج جديد"
+    },
+    {
+      "key": "Yeni versiyon",
+      "source": "new version",
+      "translation": "نسخة جديدة"
+    },
+    {
+      "key": "Yeni versiyon oluştur",
+      "source": "Create new version",
+      "translation": "إنشاء نسخة جديدة"
+    },
+    {
+      "key": "Yeniden dene",
+      "source": "Try again",
+      "translation": "حاول مرة أخرى"
     },
     {
       "key": "Yeniden denemek için dokun",
@@ -8113,14 +9278,14 @@
       "translation": "يتم استخدام عناصر التحكم في الوصول والاتصالات الآمنة وسجلات التشغيل لتقليل الوصول غير المصرح به. لا يوجد نظام يمكنه ضمان الأمن المطلق."
     },
     {
-      "key": "Yiyecek & İçecek",
-      "source": "Food & Drink",
-      "translation": "الطعام والشراب"
-    },
-    {
       "key": "Yıllık",
       "source": "Annual",
       "translation": "سنوي"
+    },
+    {
+      "key": "Yiyecek & İçecek",
+      "source": "Food & Drink",
+      "translation": "الطعام والشراب"
     },
     {
       "key": "Yoğunluğu artır",
@@ -8153,9 +9318,44 @@
       "translation": "الصورة أعلاه هي الصورة المصدر، وليست نتيجة تم إنشاؤها. قد تتغير الملابس والوضعية وتصفيفة الشعر والمكياج والإعدادات لتتناسب مع الاتجاه مع الحفاظ على هوية وجهك."
     },
     {
+      "key": "Yumuşak allık pembesi doğal görünüm.",
+      "source": "A natural look in soft blush pink.",
+      "translation": "مظهر طبيعي باللون الوردي الناعم."
+    },
+    {
+      "key": "Yumuşak arka plan derinliği",
+      "source": "Soft background depth",
+      "translation": "عمق الخلفية الناعمة"
+    },
+    {
+      "key": "Yumuşak Bokeh",
+      "source": "Soft Bokeh",
+      "translation": "بوكيه ناعم"
+    },
+    {
+      "key": "Yumuşak dekorlu resmi etkinlik çekimi.",
+      "source": "A formal event shot with soft decorative details.",
+      "translation": "حدث رسمي تم تصويره بتفاصيل زخرفية ناعمة."
+    },
+    {
+      "key": "Yumuşak pastel lavanta rengi.",
+      "source": "A soft pastel lavender shade.",
+      "translation": "ظل لافندر باستيل ناعم."
+    },
+    {
+      "key": "Yumuşak, profesyonel stüdyo ışığı",
+      "source": "Soft, professional studio lighting",
+      "translation": "إضاءة استوديو ناعمة واحترافية"
+    },
+    {
       "key": "Yüklediğim fotoğraf için gerekli kullanım hakkına sahibim.",
       "source": "I have the necessary rights to use the photo I upload.",
       "translation": "لدي الحقوق اللازمة لاستخدام الصورة التي أقوم بتحميلها."
+    },
+    {
+      "key": "Yüklediğim fotoğrafın bana ait olduğunu veya gerekli kullanım iznine sahip olduğumu beyan ederim.",
+      "source": "I confirm that I own the photo I upload or have permission to use it.",
+      "translation": "أقر بأن الصورة التي أرفعها تخصني أو أن لدي الإذن اللازم لاستخدامها."
     },
     {
       "key": "Yüklediğim fotoğrafın bana ait olduğunu veya gerekli kullanım iznine sahip olduğumu onaylıyorum.",
@@ -8206,36 +9406,6 @@
       "key": "Yüksek",
       "source": "High",
       "translation": "عالية"
-    },
-    {
-      "key": "Yumuşak allık pembesi doğal görünüm.",
-      "source": "A natural look in soft blush pink.",
-      "translation": "مظهر طبيعي باللون الوردي الناعم."
-    },
-    {
-      "key": "Yumuşak arka plan derinliği",
-      "source": "Soft background depth",
-      "translation": "عمق الخلفية الناعمة"
-    },
-    {
-      "key": "Yumuşak Bokeh",
-      "source": "Soft Bokeh",
-      "translation": "بوكيه ناعم"
-    },
-    {
-      "key": "Yumuşak dekorlu resmi etkinlik çekimi.",
-      "source": "A formal event shot with soft decorative details.",
-      "translation": "حدث رسمي تم تصويره بتفاصيل زخرفية ناعمة."
-    },
-    {
-      "key": "Yumuşak pastel lavanta rengi.",
-      "source": "A soft pastel lavender shade.",
-      "translation": "ظل لافندر باستيل ناعم."
-    },
-    {
-      "key": "Yumuşak, profesyonel stüdyo ışığı",
-      "source": "Soft, professional studio lighting",
-      "translation": "إضاءة استوديو ناعمة واحترافية"
     },
     {
       "key": "Yüz",
