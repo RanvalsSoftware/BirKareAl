@@ -5,6 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, type ComponentProps, type ReactNode } from 'react';
 import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useContentWidth } from '@/hooks/useContentWidth';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -227,7 +228,7 @@ function FloatPhoto({ source, left, top, width, height, rotate, driftX, driftY, 
 export function AnimatedPhotoCloud() {
   const languageRevision = useLanguageRevision();
 
-  const { width } = useWindowDimensions();
+  const width = useContentWidth();
   const reducedMotion = useReducedMotion();
   const canvasWidth = Math.min(width - 32, 420);
   const centerScale = useSharedValue(1);

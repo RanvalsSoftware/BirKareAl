@@ -11,6 +11,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { useContentWidth } from '@/hooks/useContentWidth';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { AppleGlassButton, BackButton, Icon, PrimaryButton, ProgressSteps } from '@/components';
@@ -91,7 +92,8 @@ export function CreateSegmentedControl<T extends string>({
   onChange: (value: T) => void;
   options: readonly { value: T; label: string; icon: React.ComponentProps<typeof Icon>['name'] }[];
 }) {
-  const { width, fontScale } = useWindowDimensions();
+  const { fontScale } = useWindowDimensions();
+  const width = useContentWidth();
   const stacked = width < 360 || fontScale > 1.2;
   return (
     <View

@@ -15,8 +15,12 @@ import { GlassSurface, Icon } from '@/components';
 import { useAuthStore } from '@/features/auth/auth-store';
 import { AuthBootScreen } from '@/features/auth/auth-boot-screen';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { useIsWideWindow } from '@/hooks/useContentWidth';
 import { useCopy } from '@/features/settings/language-store';
 import { colors } from '@/theme';
+
+// Readable on the dark glass bar (the previous #858584 was too faint on iPad).
+const INACTIVE_TAB_COLOR = '#A9A9A6';
 
 const tabIcons = {
   home: ['home-outline', 'home'] as const,
@@ -97,6 +101,7 @@ function GlassTabButton({
   const languageRevision = useLanguageRevision();
 
   const reducedMotion = useReducedMotion();
+  const wide = useIsWideWindow();
   const selection = useSharedValue(focused ? 1 : 0);
   const scale = useSharedValue(1);
   useEffect(() => {
@@ -136,15 +141,15 @@ function GlassTabButton({
           </Animated.View>
           <Icon
             name={focused ? active : inactive}
-            size={24}
-            color={focused ? colors.accentYellow : '#858584'}
+            size={wide ? 27 : 24}
+            color={focused ? colors.accentYellow : INACTIVE_TAB_COLOR}
           />
         </View>
         <Text
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={0.85}
-          style={[styles.label, focused && styles.selectedLabel]}
+          style={[styles.label, wide && styles.labelWide, focused && styles.selectedLabel]}
         >
           {label}
         </Text>
@@ -191,9 +196,10 @@ const styles = StyleSheet.create({
     fontSize: 10,
     lineHeight: 14,
     fontWeight: '600',
-    color: '#858584',
+    color: INACTIVE_TAB_COLOR,
     marginTop: 1,
     paddingHorizontal: 2,
   },
+  labelWide: { fontSize: 13, lineHeight: 17, marginTop: 3 },
   selectedLabel: { color: colors.accentYellow, fontWeight: '700' },
 });

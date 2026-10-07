@@ -13,6 +13,20 @@ export const notFoundMiddleware: RequestHandler = (req, res) => {
     );
 };
 
+/**
+ * Operators need the underlying failure (e.g. a GCS IAM denial) to diagnose a 500.
+ * Query strings are dropped so signed URLs or tokens never reach the logs.
+ */
+function summarizeCause(error: unknown) {
+  if (!(error instanceof Error)) return { type: typeof error };
+  const status = (error as { code?: unknown }).code;
+  return {
+    name: error.name,
+    message: error.message.replace(/\?\S*/g, '?[REDACTED]').slice(0, 500),
+    ...(typeof status === 'string' || typeof status === 'number' ? { status } : {}),
+  };
+}
+
 export function createErrorMiddleware(logger: Logger, isProduction: boolean): ErrorRequestHandler {
   return (error, req, res, _next) => {
     const apiError =
@@ -43,6 +57,7 @@ export function createErrorMiddleware(logger: Logger, isProduction: boolean): Er
           requestId: req.requestId,
           method: req.method,
           path: req.path,
+          ...(error instanceof ApiError ? {} : { cause: summarizeCause(error) }),
         },
         'API request başarısız oldu.',
       );

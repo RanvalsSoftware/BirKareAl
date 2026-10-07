@@ -17,6 +17,7 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
+import { useContentWidth } from '@/hooks/useContentWidth';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
@@ -178,7 +179,7 @@ export default function HomeScreen() {
   const copy = useCopy();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const width = useContentWidth();
   const user = useAuthStore((store) => store.user);
   const availableCredits = useAvailableCredits();
   const { studioModeCards } = useStudioCatalog();

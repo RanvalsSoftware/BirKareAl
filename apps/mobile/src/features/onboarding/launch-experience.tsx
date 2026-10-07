@@ -18,6 +18,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { useContentWidth } from '@/hooks/useContentWidth';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -526,7 +527,7 @@ export function GuidedSplash({ onFinished, onSkipped }: GuidedSplashProps) {
   const languageRevision = useLanguageRevision();
 
   const reducedMotion = useReducedMotion();
-  const { width } = useWindowDimensions();
+  const width = useContentWidth();
   const contentWidth = Math.min(width - 32, 520);
   const [step, setStep] = useState<StepIndex>(0);
   const [selectedPhoto, setSelectedPhoto] = useState<OnboardingPhoto | null>(null);
@@ -1100,7 +1101,7 @@ function FilterStep({
 }) {
   const languageRevision = useLanguageRevision();
 
-  const { width } = useWindowDimensions();
+  const width = useContentWidth();
   const trackWidth = Math.max(Math.min(width - 104, 420), 220);
   const sliderProgress = useSharedValue(intensity / 100);
   const sliderStart = useSharedValue(intensity / 100);
@@ -1715,6 +1716,8 @@ const styles = StyleSheet.create({
   logoSafe: {
     backgroundColor: '#000000',
     flex: 1,
+    // Tall tablet screens: keep the phone-height composition vertically centred.
+    justifyContent: 'center',
   },
   logoCanvas: {
     alignItems: 'center',
@@ -1916,7 +1919,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
+    // Rails and copy are positioned for a phone-height canvas; on an iPad the
+    // canvas would otherwise leave a large empty band between them.
+    maxHeight: 760,
     overflow: 'hidden',
+    width: '100%',
   },
   bridgeOrbitOne: {
     borderColor: 'rgba(255,196,0,0.30)',

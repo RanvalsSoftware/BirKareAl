@@ -36,6 +36,24 @@ export type GoogleProfileHint = {
   lastName: string | null;
 };
 
+const INSTANT_CANCEL_MS = 1500;
+
+/**
+ * Release builds keep console output (visible with `adb logcat -s ReactNativeJS`).
+ * Only status codes and timings are logged: never tokens, emails or names.
+ */
+function logGoogleDiagnostic(event: string, details: Record<string, unknown>): void {
+  console.warn(`[BirKare Google] ${event}`, JSON.stringify({ platform: Platform.OS, ...details }));
+}
+
+function describeError(error: unknown): Record<string, unknown> {
+  const object = error && typeof error === 'object' ? (error as { code?: unknown; message?: unknown }) : {};
+  return {
+    code: typeof object.code === 'string' || typeof object.code === 'number' ? object.code : undefined,
+    message: typeof object.message === 'string' ? object.message.slice(0, 200) : undefined,
+  };
+}
+
 function nonEmpty(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined;
 }
@@ -186,8 +204,26 @@ export function GoogleSignInButton({
         // this never revokes Google access or signs out of the BirKare account.
         if (forceReauthentication) await google.GoogleSignin.signOut();
 
+        const startedAt = Date.now();
         const response = await google.GoogleSignin.signIn();
-        if (!google.isSuccessResponse(response)) return;
+        if (!google.isSuccessResponse(response)) {
+          const elapsedMs = Date.now() - startedAt;
+          logGoogleDiagnostic('sign-in returned without success', { type: response.type, elapsedMs });
+          // Android reports an unregistered package/SHA-1 as an instant
+          // "cancelled" result (status 12501) without showing any account
+          // picker. A real user cancellation needs the picker to be shown first.
+          if (Platform.OS === 'android' && elapsedMs < INSTANT_CANCEL_MS) {
+            onError(
+              new GoogleAuthError(
+                'GOOGLE_CLIENT_CONFIGURATION',
+                translateCopy(
+                  'Google ile giriş şu anda kullanılamıyor. E-posta ve şifrenle giriş yapabilir veya daha sonra tekrar deneyebilirsin.',
+                ),
+              ),
+            );
+          }
+          return;
+        }
 
         // Some restored native sessions expose the account before returning a
         // refreshed ID token. Ask the SDK for current tokens once; never send
@@ -210,6 +246,7 @@ export function GoogleSignInButton({
           lastName: nonEmpty(response.data.user.familyName) ?? null,
         });
       } catch (error) {
+        logGoogleDiagnostic('sign-in failed', describeError(error));
         if (google.isErrorWithCode(error) && error.code === google.statusCodes.SIGN_IN_CANCELLED)
           return;
         onError(formatGoogleError(google, error));

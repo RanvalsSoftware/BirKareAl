@@ -5,7 +5,7 @@ import { LocaleProvider, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useRef, useState, type PropsWithChildren } from 'react';
-import { Appearance, View } from 'react-native';
+import { Appearance, View, useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAppearanceStore } from '@/features/settings/appearance-store';
@@ -14,6 +14,7 @@ import { useAuthBootstrap } from '@/features/auth/use-auth-bootstrap';
 import { bindAccountQueryCache } from '@/features/auth/account-query-cache';
 import { apiRequest } from '@/api/client';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { APP_COLUMN_MAX_WIDTH } from '@/hooks/useContentWidth';
 import { RevenueCatBootstrap } from '@/features/billing/revenuecat';
 
 // Keep the native black-and-gold mark on screen until the first React frame is
@@ -57,6 +58,8 @@ function RootNavigator() {
   const splashHidden = useRef(false);
   const reducedMotion = useReducedMotion();
   const userId = useAuthStore((state) => state.user?.id);
+  const { width: windowWidth } = useWindowDimensions();
+  const columnInset = Math.max(0, Math.round((windowWidth - APP_COLUMN_MAX_WIDTH) / 2));
 
   useEffect(() => {
     Appearance.setColorScheme('dark');
@@ -92,7 +95,9 @@ function RootNavigator() {
           screenOptions={{
             headerShown: false,
             animation: reducedMotion ? 'none' : 'fade',
-            contentStyle: { backgroundColor: '#050505' },
+            // Native stack screens always span the window, so the tablet column
+            // is applied as side padding inside every screen's content view.
+            contentStyle: { backgroundColor: '#050505', paddingHorizontal: columnInset },
           }}
         >
           <Stack.Screen name="index" />
@@ -104,7 +109,7 @@ function RootNavigator() {
             options={{
               presentation: 'transparentModal',
               animation: reducedMotion ? 'none' : 'slide_from_bottom',
-              contentStyle: { backgroundColor: 'transparent' },
+              contentStyle: { backgroundColor: 'transparent', paddingHorizontal: columnInset },
               gestureEnabled: true,
             }}
           />

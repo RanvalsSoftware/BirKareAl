@@ -139,7 +139,7 @@ describe('mobile release configuration', () => {
       credentialsSource: 'local',
       env: {
         EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID:
-          '197394599682-0nmn4oppa3v23p9dv4ovdneh4fpq2sbv.apps.googleusercontent.com',
+          '197394599682-u5jie9trkp8tbu56umq4oh9lkaq0ejf3.apps.googleusercontent.com',
       },
       android: { buildType: 'apk' },
     });

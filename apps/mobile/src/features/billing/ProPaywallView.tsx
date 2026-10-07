@@ -14,6 +14,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import { useContentWidth } from '@/hooks/useContentWidth';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { ProPlanId } from './paywall-model';
 
@@ -61,7 +62,8 @@ const assets = {
 export function ProPaywallView(props: ProPaywallViewProps) {
   const languageRevision = useLanguageRevision();
 
-  const { width, fontScale } = useWindowDimensions();
+  const { fontScale } = useWindowDimensions();
+  const width = useContentWidth();
   const maxWidth = Math.min(width, 440);
   const compact = maxWidth < 360;
   const stacked = maxWidth < 360 || fontScale > 1.25;

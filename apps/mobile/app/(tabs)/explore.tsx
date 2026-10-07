@@ -4,6 +4,7 @@ import { tr as translateCopy } from '@/i18n/engine';
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown, Layout } from 'react-native-reanimated';
+import { useIsWideWindow } from '@/hooks/useContentWidth';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -46,6 +47,7 @@ const categories = [
 export default function ExploreScreen() {
   const languageRevision = useLanguageRevision();
 
+  const wideWindow = useIsWideWindow();
   const router = useRouter();
   const availableCredits = useAvailableCredits();
   const [query, setQuery] = useState('');
@@ -158,7 +160,7 @@ export default function ExploreScreen() {
                       .toLocaleLowerCase(getAppLocale())
                       .includes(query.toLocaleLowerCase(getAppLocale())),
                 )
-                .slice(0, selectedCategory === 'Tümü' ? 3 : undefined)}
+                .slice(0, selectedCategory === 'Tümü' ? (wideWindow ? 5 : 3) : undefined)}
               onSelect={(option) => {
                 resetCreateFlow();
                 router.push({ pathname: '/beauty', params: { selected: option.id } } as never);
