@@ -1,11 +1,15 @@
 import { useLanguageRevision } from '@/i18n/use-language';
 import { tr as translateCopy } from '@/i18n/engine';
 import { useRouter } from 'expo-router';
+import { Alert } from 'react-native';
 
+import { openAppleStandardEula, openBirkarePrivacyPolicy } from '@/constants/legal-links';
+import { useCopy } from '@/features/settings/language-store';
 import {
   GlassSettingsHero,
   GlassSettingsPanel,
   GlassSettingsRow,
+  SettingsNote,
   SettingsPage,
   SettingsSectionTitle,
 } from '@/features/settings/components';
@@ -20,6 +24,16 @@ const documents = [
       return translateCopy('Hizmetin kullanım kuralları');
     },
     icon: 'document-text-outline',
+  },
+  {
+    slug: 'privacy',
+    get title() {
+      return translateCopy('Gizlilik politikası');
+    },
+    get detail() {
+      return translateCopy('Veri, fotoğraf ve saklama bilgileri');
+    },
+    icon: 'lock-closed-outline',
   },
   {
     slug: 'notice',
@@ -42,16 +56,6 @@ const documents = [
     icon: 'checkbox-outline',
   },
   {
-    slug: 'privacy',
-    get title() {
-      return translateCopy('Gizlilik politikası');
-    },
-    get detail() {
-      return translateCopy('Veri, fotoğraf ve saklama bilgileri');
-    },
-    icon: 'lock-closed-outline',
-  },
-  {
     slug: 'ai-policy',
     get title() {
       return translateCopy('AI içerik politikası');
@@ -59,39 +63,34 @@ const documents = [
     get detail() {
       return translateCopy('Güvenli ve şeffaf AI kullanımı');
     },
-    icon: 'sparkles-outline',
+    icon: 'document-text-outline',
   },
-  {
-    slug: 'fan-content',
-    get title() {
-      return translateCopy('Kurgusal karakter açıklaması');
-    },
-    get detail() {
-      return translateCopy('AI içerik ve gerçeklik bildirimi');
-    },
-    icon: 'people-outline',
-  },
-  {
-    slug: 'community',
-    get title() {
-      return translateCopy('Topluluk kuralları');
-    },
-    get detail() {
-      return translateCopy('İzinli ve saygılı paylaşım');
-    },
-    icon: 'heart-outline',
-  },
-] as const;
+] as const satisfies readonly {
+  slug: string;
+  title: string;
+  detail: string;
+  icon: string;
+}[];
 
 export default function LegalScreen() {
   const languageRevision = useLanguageRevision();
 
   const router = useRouter();
+  const copy = useCopy();
+
+  function openExternal(action: () => Promise<void>) {
+    action().catch((error: unknown) => {
+      Alert.alert(
+        copy('Bağlantı açılamadı', 'Could not open link'),
+        error instanceof Error
+          ? error.message
+          : copy('Lütfen daha sonra tekrar dene.', 'Please try again later.'),
+      );
+    });
+  }
+
   return (
-    <SettingsPage
-      title={translateCopy('Yasal belgeler')}
-      subtitle={translateCopy('Açık, anlaşılır ve her zaman erişilebilir')}
-    >
+    <SettingsPage backLabel={translateCopy('Ayarlar')} title={translateCopy('Yasal belgeler')}>
       <GlassSettingsHero
         icon="shield-checkmark-outline"
         title={translateCopy('Kontrol sende.')}
@@ -107,7 +106,6 @@ export default function LegalScreen() {
             icon={document.icon}
             title={document.title}
             detail={document.detail}
-            accent={index % 2 ? 'purple' : 'gold'}
             last={index === documents.length - 1}
             onPress={() => {
               router.push(`/legal/${document.slug}` as never);
@@ -115,7 +113,33 @@ export default function LegalScreen() {
           />
         ))}
       </GlassSettingsPanel>
-      <GlassSettingsPanel tone="neutral">
+
+      <SettingsSectionTitle>{copy('SÖZLEŞMELER VE BAĞLANTILAR', 'AGREEMENTS AND LINKS')}</SettingsSectionTitle>
+      <GlassSettingsPanel>
+        <GlassSettingsRow
+          icon="ribbon-outline"
+          title={copy('Lisans sözleşmesi (EULA)', 'License agreement (EULA)')}
+          detail={copy('Apple standart son kullanıcı sözleşmesi', 'Apple standard end user license agreement')}
+          external
+          onPress={() => openExternal(openAppleStandardEula)}
+        />
+        <GlassSettingsRow
+          icon="open-outline"
+          title={copy('Gizlilik politikası (web)', 'Privacy policy (web)')}
+          detail="ai.ranvals.com"
+          external
+          onPress={() => openExternal(openBirkarePrivacyPolicy)}
+          last
+        />
+      </GlassSettingsPanel>
+      <SettingsNote>
+        {copy(
+          'Uygulama içi satın almalar ve abonelikler Apple’ın standart son kullanıcı lisans sözleşmesine tabidir.',
+          'In-app purchases and subscriptions are subject to Apple’s standard end user license agreement.',
+        )}
+      </SettingsNote>
+
+      <GlassSettingsPanel>
         <GlassSettingsRow
           icon="help-buoy-outline"
           title={translateCopy('Bir sorunun mu var?')}

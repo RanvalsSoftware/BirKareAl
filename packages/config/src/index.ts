@@ -22,6 +22,21 @@ const DefaultedGoogleClientId = (fallback: string) =>
     z.string().trim().min(20).max(512),
   );
 
+// Express `trust proxy`: `false` (no proxy), `true` (trust every hop — the
+// client can then choose its own IP via X-Forwarded-For unless the proxy
+// overwrites that header), or the number of reverse proxies in front of the
+// API. A hop count is the safe setting behind a known proxy chain: per-IP rate
+// limits then key on the address the outermost trusted proxy observed.
+const TrustProxyFromEnv = z
+  .string()
+  .trim()
+  .regex(/^(true|false|[1-9]|10)$/, 'true, false veya 1-10 arası proxy sayısı olmalıdır')
+  .transform((value) => (value === 'true' ? true : value === 'false' ? false : Number(value)));
+
+// Public fallbacks used only outside production; also shipped in .env.example.
+const DEVELOPMENT_JWT_ACCESS_SECRET = 'development-only-secret-change-before-production-0001';
+const DEVELOPMENT_PASSWORD_PEPPER = 'development-only-pepper-change-before-production';
+
 const RawEnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'staging', 'production']).default('development'),
   APP_NAME: z.string().trim().min(1).max(80).default('BirKare Studio'),
@@ -33,7 +48,7 @@ const RawEnvSchema = z.object({
   API_HOST: z.string().default('0.0.0.0'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   CORS_ORIGINS: z.string().default('http://localhost:8081,http://localhost:19006'),
-  TRUST_PROXY: BooleanFromEnv.default('false'),
+  TRUST_PROXY: TrustProxyFromEnv.default('false'),
 
   DATABASE_PROVIDER: z.enum(['memory', 'prisma']).default('memory'),
   DATABASE_URL: OptionalEnvString(z.string().url()),
@@ -122,6 +137,14 @@ const RawEnvSchema = z.object({
   // verified entitlement into server-side Pro access and idempotent credits.
   REVENUECAT_ENABLED: BooleanFromEnv.default('false'),
   REVENUECAT_SECRET_API_KEY: OptionalEnvString(z.string().trim().min(10).max(2048)),
+  // Only overridden by local/integration tests that point at a stub server.
+  REVENUECAT_API_BASE_URL: z
+    .string()
+    .trim()
+    .url()
+    .max(512)
+    .transform((value) => value.replace(/\/+$/, ''))
+    .default('https://api.revenuecat.com/v1'),
   REVENUECAT_WEBHOOK_AUTH_TOKEN: OptionalEnvString(z.string().trim().min(24).max(2048)),
   REVENUECAT_WEBHOOK_SIGNING_SECRET: OptionalEnvString(z.string().trim().min(32).max(2048)),
   REVENUECAT_ENTITLEMENT_ID: z
@@ -154,6 +177,8 @@ const RawEnvSchema = z.object({
 
   OPENAI_API_KEY: OptionalEnvString(z.string().min(10)),
   OPENAI_TEXT_MODEL: z.string().min(1).default('gpt-4.1-mini'),
+  /** Text-only seller listing copy (title, description, highlights, hashtags). */
+  OPENAI_LISTING_MODEL: z.string().min(1).default('gpt-4.1-mini'),
   /** Fast/default lane: previews, filters, trends and ordinary scene work. */
   OPENAI_IMAGE_MODEL: z.string().min(1).default('gpt-image-2.5-flare'),
   /** Precision lane: beauty, gender presentation, Pro portrait and character identity work. */
@@ -274,6 +299,11 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): BirKareConf
       'Production ortamında REVENUECAT_SECRET_API_KEY için RevenueCat Secret API key (sk_...) kullanılmalıdır.',
     );
   }
+  if (isProductionLike && config.REVENUECAT_API_BASE_URL !== 'https://api.revenuecat.com/v1') {
+    throw new Error(
+      'Production ve staging ortamında REVENUECAT_API_BASE_URL değiştirilemez; secret API key yalnızca api.revenuecat.com adresine gönderilir.',
+    );
+  }
   if (isProductionLike && config.REVENUECAT_ENABLED && !config.REVENUECAT_WEBHOOK_SIGNING_SECRET) {
     throw new Error(
       'Production ortamında RevenueCat webhook HMAC doğrulaması için REVENUECAT_WEBHOOK_SIGNING_SECRET zorunludur.',
@@ -284,6 +314,19 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): BirKareConf
   }
   if (isProductionLike && (!config.PASSWORD_PEPPER || config.PASSWORD_PEPPER.length < 32)) {
     throw new Error('Production ortamında PASSWORD_PEPPER (en az 32 karakter) zorunludur.');
+  }
+  if (
+    isProductionLike &&
+    ([DEVELOPMENT_JWT_ACCESS_SECRET, DEVELOPMENT_PASSWORD_PEPPER].includes(
+      config.JWT_ACCESS_SECRET ?? '',
+    ) ||
+      [DEVELOPMENT_JWT_ACCESS_SECRET, DEVELOPMENT_PASSWORD_PEPPER].includes(
+        config.PASSWORD_PEPPER ?? '',
+      ))
+  ) {
+    throw new Error(
+      'Production ve staging ortamında JWT_ACCESS_SECRET ve PASSWORD_PEPPER için .env.example içindeki herkese açık geliştirme değerleri kullanılamaz; rastgele değerler üretin.',
+    );
   }
   if (
     isProductionLike &&
@@ -338,9 +381,8 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): BirKareConf
 
   return {
     ...config,
-    JWT_ACCESS_SECRET:
-      config.JWT_ACCESS_SECRET ?? 'development-only-secret-change-before-production-0001',
-    PASSWORD_PEPPER: config.PASSWORD_PEPPER ?? 'development-only-pepper-change-before-production',
+    JWT_ACCESS_SECRET: config.JWT_ACCESS_SECRET ?? DEVELOPMENT_JWT_ACCESS_SECRET,
+    PASSWORD_PEPPER: config.PASSWORD_PEPPER ?? DEVELOPMENT_PASSWORD_PEPPER,
     CORS_ORIGINS: config.CORS_ORIGINS.split(',')
       .map((value) => value.trim())
       .filter(Boolean),

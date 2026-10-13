@@ -197,6 +197,10 @@ model User {
   role            UserRole    @default(USER)
   status          UserStatus  @default(PENDING_VERIFICATION)
   emailVerifiedAt DateTime?
+  // SHA-256 of the opaque token handed to whoever submitted the CURRENT pending
+  // registration. Only that client may keep the password it chose; cleared on
+  // verification. Never returned by the API.
+  registrationTokenHash String?
   locale          String      @default("tr-TR")
   countryCode     String?
   dateOfBirth     DateTime?
@@ -298,6 +302,23 @@ model PendingSocialLogin {
   createdAt         DateTime     @default(now())
 
   @@index([provider, providerAccountId])
+  @@index([expiresAt])
+}
+
+/**
+ * Single-use registry for provider ID tokens. A Google/Apple ID token that
+ * produced a session or a pending social registration is recorded until its
+ * own `exp`, so a captured token cannot be replayed. Only the provider `jti`
+ * or a SHA-256 of the signed token content is stored, never the token.
+ */
+model ConsumedIdentityToken {
+  id        String       @id @default(uuid())
+  provider  AuthProvider
+  tokenKey  String
+  expiresAt DateTime
+  createdAt DateTime     @default(now())
+
+  @@unique([provider, tokenKey])
   @@index([expiresAt])
 }
 
@@ -490,6 +511,9 @@ model Project {
   composition      String?
   aspectRatio      String        @default("4:5")
   editRecipe       Json?
+  priceAmount      Decimal?      @db.Decimal(10, 2)
+  priceCurrency    String?
+  listing          Json?
   isFavorite       Boolean       @default(false)
   lastOpenedAt     DateTime?
   createdAt        DateTime      @default(now())
@@ -648,6 +672,7 @@ model CreditTransaction {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@index([userId, createdAt])
+  @@index([referenceType, referenceId])
 }
 
 model IdempotencyRecord {

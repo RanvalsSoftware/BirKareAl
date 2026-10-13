@@ -2,7 +2,7 @@ import { tr as translateCopy } from '@/i18n/engine';
 import { useLanguageRevision } from '@/i18n/use-language';
 import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
@@ -10,7 +10,7 @@ import { apiRequest } from '@/api/client';
 import {
   AuthBrandBar,
   AuthFormCard,
-  AuthHero,
+  AuthLogo,
   AuthLayout,
   AuthLink,
   AuthTitle,
@@ -45,7 +45,7 @@ export default function ForgotPasswordScreen() {
     setError,
   } = useForm<ForgotPasswordValues>({
     resolver: zodResolver(forgotPasswordSchema),
-    defaultValues: { email: '' },
+    defaultValues: { email: prefilledEmail },
   });
 
   useEffect(() => {
@@ -99,14 +99,24 @@ export default function ForgotPasswordScreen() {
   return (
     <AuthLayout>
       <AuthBrandBar onBack={goBack} />
-      <AuthHero variant="forgot" />
+      <AuthLogo />
       <AuthTitle
-        eyebrow={copy('HESAP GÜVENLİĞİ', 'ACCOUNT SECURITY')}
-        title={copy('Şifreni yenile.', 'Reset your password.')}
-        subtitle={copy(
-          'E-posta adresini gir; hesabın varsa güvenli bir sıfırlama bağlantısı göndereceğiz.',
-          'Enter your email and we will send a secure reset link if an account exists.',
-        )}
+        title={
+          verifiedWithoutPassword
+            ? copy('Şifreni belirle', 'Set your password')
+            : copy('Şifreni mi unuttun?', 'Forgot password?')
+        }
+        subtitle={
+          verifiedWithoutPassword
+            ? copy(
+                'E-postan doğrulandı. Hesabını korumak için sana bir şifre belirleme bağlantısı gönderelim.',
+                'Your email is verified. We will send you a link to set a password for your account.',
+              )
+            : copy(
+                'E-posta adresini gir; hesabın varsa güvenli bir sıfırlama bağlantısı göndereceğiz.',
+                'Enter your email and we will send a secure reset link if an account exists.',
+              )
+        }
       />
       <AuthFormCard>
         <Controller
@@ -176,24 +186,29 @@ export default function ForgotPasswordScreen() {
 const styles = StyleSheet.create({
   field: { marginTop: 16 },
   label: {
-    color: '#EFEFEF',
+    color: authColors.text,
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: 0.1,
     marginBottom: 8,
   },
   inputRow: {
     alignItems: 'center',
-    borderColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderColor: 'rgba(255,255,255,0.16)',
+    borderRadius: 14,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 13,
-    minHeight: 56,
+    gap: 12,
+    minHeight: 54,
     paddingLeft: 15,
   },
-  input: { color: authColors.text, flex: 1, fontSize: 16, minHeight: 55, paddingVertical: 0 },
+  input: { color: authColors.text, flex: 1, fontSize: 16, minHeight: 53, paddingVertical: 0 },
   fieldError: { color: '#FF928A', fontSize: 12, lineHeight: 17, marginTop: 6 },
   error: { color: '#FF928A', fontSize: 13, lineHeight: 19, marginTop: 16 },
   returnLink: { alignItems: 'center', marginTop: 21 },
 });
+  const params = useLocalSearchParams<{ email?: string; verified?: string }>();
+  const prefilledEmail = typeof params.email === 'string' ? params.email : '';
+  // Arrives here when an e-mail was verified without the device that chose the sign-up password.
+  const verifiedWithoutPassword = params.verified === '1';

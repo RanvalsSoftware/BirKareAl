@@ -108,9 +108,9 @@ export function createRevenueCatClient(options: ClientOptions) {
     if (codes && code === String(codes.NETWORK_ERROR))
       return translateCopy("Mağazaya bağlanılamadı. İnternet bağlantınızı kontrol edip tekrar deneyin.");
     if (codes && code === String(codes.CONFIGURATION_ERROR))
-      return translateCopy("Mağaza ürünleri hazır değil. RevenueCat ürün, entitlement ve offering bağlantılarını kontrol edin.");
+      return translateCopy("Mağaza ürünleri şu anda yüklenemedi. Lütfen daha sonra tekrar dene.");
     if (error instanceof Error && error.name === 'BirKareBillingError') return error.message;
-    return translateCopy("Satın alma servisine ulaşılamadı. Tekrar deneyin; yeni SDK eklendiyse uygulamayı yeniden derleyin.");
+    return translateCopy("Satın alma servisine ulaşılamadı. Lütfen tekrar dene.");
   };
 
   const fail = (message: string): never => {
@@ -139,9 +139,7 @@ export function createRevenueCatClient(options: ClientOptions) {
           offering,
           error: offering
             ? null
-            : options.offeringId
-              ? translateCopy('RevenueCat’te `{{p0}}` offering’i bulunamadı. Ürünleri bu offering’e bağlayın.', { p0: options.offeringId })
-              : translateCopy('RevenueCat’te bu uygulama için geçerli bir offering bulunamadı. Ürünleri bağlayıp current offering seçin.'),
+            : translateCopy('Mağaza ürünleri şu anda yüklenemedi. Lütfen daha sonra tekrar dene.'),
         });
       }
     } catch (error) {
@@ -224,7 +222,7 @@ export function createRevenueCatClient(options: ClientOptions) {
           publish({ status: 'unavailable', error: options.unavailableReason });
           return;
         }
-        if (!options.apiKey) fail(translateCopy('RevenueCat public SDK anahtarı yapılandırılmamış.'));
+        if (!options.apiKey) fail(translateCopy('Satın alma şu anda kullanılamıyor.'));
         sdkModule ??= await options.loadSdk();
         if (!current(version, userId)) return;
         const sdk = sdkModule.default;
@@ -352,7 +350,7 @@ export function createRevenueCatClient(options: ClientOptions) {
       ),
     presentPaywall: () =>
       action(async (version, userId) => {
-        if (!snapshot.offering) fail(translateCopy('Önce RevenueCat’te ürünleri bir offering’e bağlayın.'));
+        if (!snapshot.offering) fail(translateCopy('Mağaza ürünleri şu anda yüklenemedi. Lütfen daha sonra tekrar dene.'));
         const ui = await options.loadUi();
         assertAccount(version, userId);
         const result = await ui.default.presentPaywallIfNeeded({

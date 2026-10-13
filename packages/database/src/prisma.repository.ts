@@ -5,7 +5,7 @@ import {
   notFound,
   unauthorized,
 } from '@birkare/shared';
-import type { CatalogFeaturedPerson, CatalogItem } from '@birkare/shared';
+import type { CatalogFeaturedPerson, CatalogItem, ProjectListing } from '@birkare/shared';
 import { randomUUID } from 'node:crypto';
 import {
   ACCOUNT_DELETION_RECOVERY_MS,
@@ -41,6 +41,7 @@ import type {
   CreditTransactionRecord,
   CreditWalletRecord,
   GrantCreditsInput,
+  GrantCreditsResult,
   EmailTokenRecord,
   EmailTokenType,
   EmailVerificationCompletionResult,
@@ -196,6 +197,11 @@ function toProject(row: any): ProjectRecord {
     featuredPersonId: row.featuredPersonId ?? null,
     composition: row.composition ?? null,
     aspectRatio: row.aspectRatio,
+    // Prisma returns Decimal(10,2); the repository contract is a plain number.
+    priceAmount:
+      row.priceAmount === null || row.priceAmount === undefined ? null : Number(row.priceAmount),
+    priceCurrency: row.priceCurrency ?? null,
+    listing: (row.listing as ProjectListing | null | undefined) ?? null,
     isFavorite: row.isFavorite,
     createdAt: new Date(row.createdAt),
     updatedAt: new Date(row.updatedAt),
@@ -1421,6 +1427,31 @@ export class PrismaRepository implements BirKareRepository {
     amount: number;
     idempotencyKey?: string;
   }): Promise<{ wallet: CreditWalletRecord; reservationId: string }> {
+    try {
+      return await this.reserveCreditsOnce(input);
+    } catch (error: any) {
+      // The idempotency key is unique. A concurrent request carrying the same
+      // key already owns this reservation; the losing transaction rolled back
+      // (nothing was debited), so answer with a clean conflict, not a 500.
+      if (
+        input.idempotencyKey &&
+        error?.code === 'P2002' &&
+        String(error?.meta?.target ?? '').includes('idempotencyKey')
+      )
+        throw conflict(
+          'IDEMPOTENCY_KEY_REUSED',
+          'Bu Idempotency-Key ile bir istek zaten işleniyor.',
+        );
+      throw error;
+    }
+  }
+
+  private async reserveCreditsOnce(input: {
+    userId: string;
+    generationId: string;
+    amount: number;
+    idempotencyKey?: string;
+  }): Promise<{ wallet: CreditWalletRecord; reservationId: string }> {
     return this.prisma.$transaction(async (tx: PrismaClientLike) => {
       await this.lockWritableAccount(tx, input.userId);
       const currentWallet = await tx.creditWallet.findUniqueOrThrow({
@@ -1492,16 +1523,41 @@ export class PrismaRepository implements BirKareRepository {
     return this.adjustReservedCredits(input, 'release');
   }
 
-  async grantCredits(input: GrantCreditsInput): Promise<{
-    wallet: CreditWalletRecord;
-    transaction: CreditTransactionRecord;
-    created: boolean;
-  }> {
+  async grantCredits(input: GrantCreditsInput): Promise<GrantCreditsResult> {
     return this.prisma.$transaction(async (tx: PrismaClientLike) => {
       await this.lockWritableAccount(tx, input.userId);
+      if (input.exclusiveReference) {
+        // The account lock only serializes one user. Two different accounts
+        // presenting the same store transaction (restore/transfer) are
+        // serialized by a transaction-scoped advisory lock on the reference,
+        // so the lookup below cannot be raced into a second grant.
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`credit-reference:${input.referenceType}:${input.referenceId}`}, 0))`;
+      }
       const existing = await tx.creditTransaction.findUnique({
         where: { idempotencyKey: input.idempotencyKey },
       });
+      if (input.exclusiveReference) {
+        const claimed =
+          existing ??
+          (await tx.creditTransaction.findFirst({
+            where: {
+              referenceType: input.referenceType,
+              referenceId: input.referenceId,
+              amount: { gt: 0 },
+            },
+            orderBy: { createdAt: 'asc' },
+          }));
+        if (claimed) {
+          const wallet = await tx.creditWallet.findUniqueOrThrow({
+            where: { userId: input.userId },
+          });
+          return {
+            wallet: toWallet(wallet),
+            transaction: claimed.userId === input.userId ? toTransaction(claimed) : null,
+            created: false,
+          };
+        }
+      }
       if (existing) {
         if (
           existing.userId !== input.userId ||

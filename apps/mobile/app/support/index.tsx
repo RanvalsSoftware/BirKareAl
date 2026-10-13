@@ -92,8 +92,6 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     borderRadius: radii.xl,
     backgroundColor: colors.surfaceElevated,
-    borderWidth: 1,
-    borderColor: colors.border,
     marginTop: spacing.md,
   },
   heroIcon: {
@@ -117,8 +115,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     paddingHorizontal: 13,
     borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
   },
   faq: {
     paddingVertical: 15,

@@ -93,6 +93,11 @@ export function createApp(deps: ApiDependencies): Express {
   app.use('/v1/me', createUsersRouter(deps));
   app.use('/v1/support', createSupportRouter(deps));
   app.use(notFoundMiddleware);
-  app.use(createErrorMiddleware(deps.logger, deps.config.NODE_ENV === 'production'));
+  app.use(
+    createErrorMiddleware(
+      deps.logger,
+      deps.config.NODE_ENV === 'production' || deps.config.NODE_ENV === 'staging',
+    ),
+  );
   return app;
 }

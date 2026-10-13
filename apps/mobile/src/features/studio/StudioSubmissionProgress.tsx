@@ -58,7 +58,7 @@ export function StudioSubmissionProgress({ stage }: { stage: StudioSubmissionSta
           ]}
         >
           <LinearGradient
-            colors={['#FFF1B8', '#FFC400', '#9B53F5']}
+            colors={['#FFF1B8', '#FFC400', '#F5CA53']}
             end={{ x: 1, y: 0 }}
             start={{ x: 0, y: 0 }}
             style={StyleSheet.absoluteFill}

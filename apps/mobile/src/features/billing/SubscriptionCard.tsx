@@ -2,13 +2,12 @@ import { useLanguageRevision } from '@/i18n/use-language';
 import { getLocale as getAppLocale } from '@/i18n/engine';
 import { tr as translateCopy } from '@/i18n/engine';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
-import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 
-import { ProBadge } from '@/components';
-import { colors, radii, spacing, typography } from '@/theme';
+import { brand } from '@/theme/brand';
+import { Group, PrimaryAction, SecondaryAction, StatusPill } from '@/ui/kit';
 import { useRevenueCat } from './revenuecat';
 import type { BillingResult } from './revenuecat-client';
 
@@ -58,7 +57,7 @@ export function SubscriptionCard() {
     ? translateCopy("Aboneliğiniz iptal edildi.")
     : billing.isPro
       ? translateCopy("Pro hesabınız hazır.")
-      : translateCopy("Ürün üretim kredilerinizi planlayın.");
+      : translateCopy("Üretimini planla.");
 
   const description = cancelled
     ? expiresText
@@ -68,29 +67,17 @@ export function SubscriptionCard() {
       ? expiresText
         ? translateCopy('{{p0}}: {{p1}}', { p0: translateCopy(billing.entitlement?.willRenew ? 'Yenileme tarihi' : 'Erişim bitişi'), p1: expiresText })
         : translateCopy("Süresiz Pro erişimi · Otomatik yenileme yok.")
-      : translateCopy("Aylık, yıllık ve ömür boyu seçeneklerini mağazanın güncel yerel fiyatlarıyla inceleyin.");
+      : translateCopy("Aylık, yıllık veya ömür boyu seçeneklerini mağazanın güncel koşullarıyla incele.");
 
   return (
-    <LinearGradient colors={['#17130A', '#111111', '#171019']} style={styles.card}>
-      <View style={styles.hero}>
-        <View style={styles.copy}>
-          <ProBadge label={badgeLabel} />
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.text}>{description}</Text>
-        </View>
-        <View style={styles.crownFrame}>
-          <Image
-            accessibilityIgnoresInvertColors
-            source={require('../../../assets/credits/pro-crown.webp')}
-            resizeMode="contain"
-            style={styles.crown}
-          />
-        </View>
-      </View>
+    <Group padding={20} style={styles.card}>
+      <StatusPill>{badgeLabel}</StatusPill>
+      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.text}>{description}</Text>
 
       {cancelled ? (
         <View accessibilityRole="alert" style={styles.cancelledBox}>
-          <Ionicons name="close-circle" size={18} color="#FF8D80" />
+          <Ionicons name="close-circle" size={18} color={brand.danger} />
           <Text style={styles.cancelledText}>{expiresText ? translateCopy('İptal edildi · {{p0}} tarihine kadar kullanabilirsiniz.', { p0: expiresText }) : translateCopy('İptal edildi')}</Text>
         </View>
       ) : null}
@@ -102,146 +89,50 @@ export function SubscriptionCard() {
         <Text style={styles.text}>{translateCopy("Mağaza hazırlanıyor…")}</Text>
       ) : null}
       {billing.error ? (
-        <Text accessibilityRole="alert" style={styles.warning}>
+        <Text accessibilityRole="alert" style={styles.text}>
           {billing.error}
         </Text>
       ) : null}
 
       {!billing.isPro ? (
-        <Pressable
-          accessibilityRole="button"
-          style={({ pressed }) => [styles.primary, pressed && styles.pressed]}
-          onPress={() => router.push('/pro' as never)}
-        >
-          <Text style={styles.primaryText}>{translateCopy("Pro’yu incele")}</Text>
-          <Ionicons name="arrow-forward" size={22} color={colors.background} />
-        </Pressable>
+        billing.error ? (
+          <SecondaryAction
+            icon="refresh"
+            label={translateCopy('Fiyatları yeniden yükle')}
+            loading={billing.busy}
+            onPress={() => void billing.refreshFresh()}
+          />
+        ) : (
+          <PrimaryAction
+            label={translateCopy("Pro’yu incele")}
+            onPress={() => router.push('/pro' as never)}
+            trailingIcon="arrow-forward"
+          />
+        )
       ) : (
-        <View style={styles.actions}>
-          <Pressable
-            accessibilityRole="button"
-            disabled={disabled}
-            style={({ pressed }) => [
-              styles.secondary,
-              disabled && styles.disabled,
-              pressed && !disabled && styles.pressed,
-            ]}
-            onPress={() => {
-              void billing.presentCustomerCenter().then(async (result) => {
-                if (result.kind === 'error' || result.kind === 'pending') {
-                  notify(result);
-                  return;
-                }
-                await billing.refreshFresh();
-              });
-            }}
-          >
-            <Text style={styles.secondaryText}>
-              {billing.busy ? translateCopy("Mağaza güncelleniyor…") : translateCopy("Aboneliği yönet")}
-            </Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            disabled={disabled}
-            style={({ pressed }) => [
-              styles.linkButton,
-              disabled && styles.disabled,
-              pressed && !disabled && styles.pressed,
-            ]}
-            onPress={() => void billing.restore().then((result) => notify(result, true))}
-          >
-            <Text style={styles.link}>{translateCopy("Satın alımları geri yükle")}</Text>
-          </Pressable>
-        </View>
+        <SecondaryAction
+          disabled={disabled}
+          label={billing.busy ? translateCopy("Mağaza güncelleniyor…") : translateCopy("Aboneliği yönet")}
+          onPress={() => {
+            void billing.presentCustomerCenter().then(async (result) => {
+              if (result.kind === 'error' || result.kind === 'pending') {
+                notify(result);
+                return;
+              }
+              await billing.refreshFresh();
+            });
+          }}
+        />
       )}
-    </LinearGradient>
+    </Group>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    marginTop: spacing.md,
-    padding: 16,
-    borderRadius: radii.xl,
-    borderWidth: 1,
-    borderColor: 'rgba(255,211,84,0.6)',
-    shadowColor: colors.accentYellow,
-    shadowOpacity: 0.13,
-    shadowRadius: 15,
-    shadowOffset: { width: 0, height: 6 },
-  },
-  hero: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  copy: { flex: 1, minWidth: 0 },
-  crownFrame: {
-    width: 78,
-    height: 78,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255,211,84,0.55)',
-    backgroundColor: '#140F08',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: colors.accentYellow,
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-  },
-  crown: { width: 70, height: 70 },
-  title: { ...typography.h3, color: colors.textPrimary, marginTop: 8 },
-  text: { ...typography.caption, color: colors.textSecondary, lineHeight: 19, marginTop: 6 },
-  cancelledBox: {
-    minHeight: 42,
-    marginTop: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,141,128,0.36)',
-    backgroundColor: 'rgba(255,92,75,0.08)',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  cancelledText: {
-    ...typography.caption,
-    color: '#FFB0A7',
-    lineHeight: 18,
-    flex: 1,
-  },
-  test: {
-    ...typography.overline,
-    color: colors.accentYellow,
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(255,211,84,0.3)',
-    borderRadius: 9,
-    padding: 7,
-    textAlign: 'center',
-  },
-  warning: { ...typography.caption, color: colors.accentYellow, lineHeight: 19, marginTop: 10 },
-  primary: {
-    minHeight: 50,
-    borderRadius: 14,
-    backgroundColor: colors.accentYellow,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 9,
-    marginTop: 16,
-    paddingHorizontal: 16,
-  },
-  primaryText: { ...typography.bodyStrong, color: colors.background },
-  actions: { marginTop: 14, gap: 4 },
-  secondary: {
-    minHeight: 48,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.accentYellow,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  secondaryText: { ...typography.label, color: colors.accentYellow },
-  linkButton: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
-  link: { ...typography.label, color: colors.textSecondary },
-  disabled: { opacity: 0.45 },
-  pressed: { opacity: 0.75 },
+  card: { gap: 12 },
+  title: { color: brand.text, fontSize: 22, fontWeight: '600', lineHeight: 28 },
+  text: { color: brand.textSecondary, fontSize: 14, lineHeight: 20 },
+  cancelledBox: { alignItems: 'center', flexDirection: 'row', gap: 8 },
+  cancelledText: { color: brand.danger, flex: 1, fontSize: 13, lineHeight: 18 },
+  test: { color: brand.textMuted, fontSize: 11, lineHeight: 15 },
 });

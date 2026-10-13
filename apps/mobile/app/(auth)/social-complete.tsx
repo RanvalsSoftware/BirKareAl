@@ -124,7 +124,7 @@ export default function SocialCompleteScreen() {
   });
 
   return (
-    <AuthLayout showLanguagePicker={false}>
+    <AuthLayout>
       <AuthBrandBar onBack={goBack} />
       <AuthLogo compact />
       <AuthTitle
@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
   },
-  keyboardDoneText: { color: '#FFC400', fontSize: 16, fontWeight: '600' as const },
+  keyboardDoneText: { color: '#F5C132', fontSize: 16, fontWeight: '600' as const },
   consentDivider: { backgroundColor: 'rgba(255,255,255,.08)', height: 1, marginTop: 22 },
   privacyPolicyLink: {
     alignItems: 'center' as const,
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
     height: 32,
     justifyContent: 'center' as const,
     shadowColor: '#55E58C',
-    shadowOpacity: 0.35,
+    shadowOpacity: 0,
     shadowRadius: 8,
     width: 32,
   },

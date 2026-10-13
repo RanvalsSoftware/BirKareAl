@@ -311,10 +311,10 @@ const styles = StyleSheet.create({
   },
   segmentSelected: {
     shadowColor: colors.accentYellow,
-    shadowOpacity: 0.36,
+    shadowOpacity: 0,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 3 },
-    elevation: 5,
+    elevation: 0,
   },
   segmentPressed: { opacity: 0.78, transform: [{ scale: 0.975 }] },
   segmentLabel: {
@@ -340,10 +340,10 @@ const styles = StyleSheet.create({
   choiceCardSelected: {
     backgroundColor: 'rgba(255,196,0,0.035)',
     shadowColor: colors.accentYellow,
-    shadowOpacity: 0.22,
+    shadowOpacity: 0,
     shadowRadius: 13,
     shadowOffset: { width: 0, height: 5 },
-    elevation: 4,
+    elevation: 0,
   },
   choiceReflection: {
     position: 'absolute',
@@ -381,7 +381,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
     backgroundColor: colors.accentPurpleSoft,
   },
-  choiceBadgeText: { ...typography.caption, color: '#D2BCFF', fontSize: 10, fontWeight: '800' },
+  choiceBadgeText: { ...typography.caption, color: '#FFEDBC', fontSize: 11, fontWeight: '800' },
   radio: {
     width: 21,
     height: 21,
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
   miniChoiceCaption: {
     ...typography.caption,
     color: colors.textMuted,
-    fontSize: 10,
+    fontSize: 11,
     textAlign: 'center',
     marginTop: 2,
   },

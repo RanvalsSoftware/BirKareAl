@@ -8,6 +8,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Icon, TextField } from '@/components';
 import { GlassSurface } from '@/components/GlassSurface';
 import { apiRequest } from '@/api/client';
+import { deleteBrandKit } from '@/features/brand/brand-kit';
 import { useAuthStore } from '@/features/auth/auth-store';
 import { clearRefreshToken } from '@/features/auth/token-store';
 import {
@@ -91,6 +92,8 @@ export default function DeleteAccountScreen() {
         body: JSON.stringify({ confirmation: CONFIRMATION, ...credentials }),
       });
       setPassword('');
+      const deletedUserId = useAuthStore.getState().user?.id;
+      if (deletedUserId) deleteBrandKit(deletedUserId);
       await clearRefreshToken().catch(() => undefined);
       await signOutOfNativeGoogleIfAvailable();
       useAuthStore.getState().clearSession();
@@ -395,13 +398,11 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    borderWidth: 1,
-    borderColor: '#F27671',
     backgroundColor: 'rgba(140,20,24,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#FF514A',
-    shadowOpacity: 0.25,
+    shadowOpacity: 0,
     shadowRadius: 17,
     shadowOffset: { width: 0, height: 0 },
   },
@@ -432,8 +433,6 @@ const styles = StyleSheet.create({
     width: 25,
     height: 25,
     borderRadius: 7,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -446,8 +445,6 @@ const styles = StyleSheet.create({
   deleteAction: {
     minHeight: 65,
     borderRadius: 23,
-    borderWidth: 1,
-    borderColor: '#EB6F60',
     backgroundColor: 'rgba(113,22,26,0.35)',
     flexDirection: 'row',
     gap: 8,

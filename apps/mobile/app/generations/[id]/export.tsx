@@ -147,7 +147,7 @@ export default function ExportScreen() {
         ) : (
           <View style={styles.previewEmpty}>
             <Icon name="image-outline" size={46} color={colors.textMuted} />
-            <Text style={styles.previewEmptyText}>{translateCopy("Tamamlanmış sunucu çıktısı bulunamadı")}</Text>
+            <Text style={styles.previewEmptyText}>{translateCopy("Tamamlanmış bir görsel bulunamadı")}</Text>
           </View>
         )}
         {selection ? (
@@ -198,15 +198,13 @@ const styles = StyleSheet.create({
   topSubtitle: {
     ...typography.caption,
     color: colors.textMuted,
-    fontSize: 10,
+    fontSize: 11,
     marginTop: 1,
   },
   topButton: {
     width: 46,
     height: 46,
     borderRadius: 23,
-    borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: 'rgba(255,255,255,0.025)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -217,14 +215,12 @@ const styles = StyleSheet.create({
     minHeight: 260,
     borderRadius: 24,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.14)',
     backgroundColor: '#070707',
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#F5C842',
-    shadowOpacity: 0.08,
+    shadowOpacity: 0,
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 5 },
   },
@@ -243,8 +239,6 @@ const styles = StyleSheet.create({
     minHeight: 30,
     borderRadius: radii.pill,
     backgroundColor: 'rgba(5,5,5,0.72)',
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 9,
@@ -252,8 +246,6 @@ const styles = StyleSheet.create({
   counterText: { ...typography.caption, color: colors.textPrimary, fontWeight: '800' },
   integrityNote: {
     borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: 'rgba(255,196,0,0.20)',
     backgroundColor: 'rgba(255,196,0,0.045)',
     minHeight: 58,
     padding: 12,

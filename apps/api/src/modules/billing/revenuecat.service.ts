@@ -3,7 +3,6 @@ import type { BirKareConfig } from '@birkare/config';
 import type { BirKareRepository, CreditTransactionRecord } from '@birkare/database';
 import { BIRKARE_CREDIT_PRODUCTS, conflict, forbidden, unavailable } from '@birkare/shared';
 
-const REVENUECAT_API_BASE = 'https://api.revenuecat.com/v1';
 const REVENUECAT_EVENT_ID = /^[A-Za-z0-9._:$-]{1,200}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -37,6 +36,7 @@ type RevenueCatSubscription = {
   is_sandbox?: boolean;
   unsubscribe_detected_at?: string | null;
   billing_issues_detected_at?: string | null;
+  store_transaction_id?: string | number | null;
 };
 
 type RevenueCatNonSubscription = {
@@ -89,7 +89,8 @@ type RevenueCatConfig = Pick<
   | 'REVENUECAT_LIFETIME_CREDITS'
   | 'REVENUECAT_REQUEST_TIMEOUT_MS'
   | 'REVENUECAT_CACHE_TTL_MS'
->;
+> &
+  Partial<Pick<BirKareConfig, 'REVENUECAT_API_BASE_URL'>>;
 
 type Dependencies = {
   config: RevenueCatConfig;
@@ -117,6 +118,12 @@ function validDate(value: string | null | undefined): Date | null {
 
 function utcMonthKey(value: Date): string {
   return `${value.getUTCFullYear()}-${String(value.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
+/** A usable store transaction identifier, or null when RevenueCat omits it. */
+function storeReference(value: string | number | null | undefined): string | null {
+  const text = typeof value === 'number' ? String(value) : value?.trim();
+  return text && text.length <= 200 ? text : null;
 }
 
 function safeTokenEquals(received: string, expected: string): boolean {
@@ -169,6 +176,7 @@ export function createRevenueCatService(dependencies: Dependencies) {
   const { config, repository } = dependencies;
   const fetchImpl = dependencies.fetchImpl ?? fetch;
   const now = dependencies.now ?? (() => new Date());
+  const apiBase = config.REVENUECAT_API_BASE_URL ?? 'https://api.revenuecat.com/v1';
   const cache = new Map<string, CachedStatus>();
   const monthlyProducts = csvSet(config.REVENUECAT_MONTHLY_PRODUCT_IDS);
   const annualProducts = csvSet(config.REVENUECAT_ANNUAL_PRODUCT_IDS);
@@ -202,7 +210,7 @@ export function createRevenueCatService(dependencies: Dependencies) {
     const timeout = setTimeout(() => controller.abort(), config.REVENUECAT_REQUEST_TIMEOUT_MS);
     try {
       const response = await fetchImpl(
-        `${REVENUECAT_API_BASE}/subscribers/${encodeURIComponent(userId)}`,
+        `${apiBase}/subscribers/${encodeURIComponent(userId)}`,
         {
           headers: {
             Authorization: `Bearer ${config.REVENUECAT_SECRET_API_KEY}`,
@@ -235,6 +243,7 @@ export function createRevenueCatService(dependencies: Dependencies) {
     productId: string,
     plan: Exclude<RevenueCatPlan, 'unknown'>,
     periodKey: string,
+    storeTransactionId?: string | null,
   ): Promise<{ credits: number; transaction: CreditTransactionRecord | null }> {
     const amount =
       plan === 'monthly'
@@ -249,7 +258,13 @@ export function createRevenueCatService(dependencies: Dependencies) {
       amount,
       type: plan === 'lifetime' ? 'PURCHASE' : 'SUBSCRIPTION_GRANT',
       referenceType: 'REVENUECAT',
-      referenceId: productId,
+      // The idempotency key keeps one grant per account and period. When the
+      // store transaction is known it additionally becomes an exclusive
+      // reference, so restoring/transferring the same paid period to another
+      // BirKare account cannot mint the period's credits a second time.
+      ...(storeTransactionId
+        ? { referenceId: `${storeTransactionId}:${periodKey}`, exclusiveReference: true }
+        : { referenceId: productId }),
       idempotencyKey: `revenuecat:${userId}:${plan}:${productId}:${periodKey}`,
       description:
         plan === 'monthly'
@@ -276,6 +291,9 @@ export function createRevenueCatService(dependencies: Dependencies) {
           type: 'PURCHASE',
           referenceType: 'REVENUECAT_CONSUMABLE',
           referenceId: transactionId,
+          // One paid store transaction is credited once, whichever account
+          // RevenueCat currently lists it under (restore/transfer/alias).
+          exclusiveReference: true,
           idempotencyKey: `revenuecat:${userId}:credit-pack:${pack.productId}:${transactionId}`,
           description: `BirKare ${pack.credits} kredi paketi`,
         });
@@ -325,12 +343,30 @@ export function createRevenueCatService(dependencies: Dependencies) {
           nonSubscription?.original_purchase_date ||
           nonSubscription?.purchase_date ||
           'first-purchase';
-        creditsGranted = (await grant(userId, productId, plan, lifetimeKey)).credits;
+        creditsGranted = (
+          await grant(userId, productId, plan, lifetimeKey, storeReference(nonSubscription?.id))
+        ).credits;
       } else if (plan === 'monthly') {
         const period = validDate(subscription?.purchase_date) ?? now();
-        creditsGranted = (await grant(userId, productId, plan, utcMonthKey(period))).credits;
+        creditsGranted = (
+          await grant(
+            userId,
+            productId,
+            plan,
+            utcMonthKey(period),
+            storeReference(subscription?.store_transaction_id),
+          )
+        ).credits;
       } else {
-        creditsGranted = (await grant(userId, productId, plan, utcMonthKey(now()))).credits;
+        creditsGranted = (
+          await grant(
+            userId,
+            productId,
+            plan,
+            utcMonthKey(now()),
+            storeReference(subscription?.store_transaction_id),
+          )
+        ).credits;
       }
     }
 

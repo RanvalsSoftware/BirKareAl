@@ -9,6 +9,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { apiRequest } from '@/api/client';
 import { useAuthStore } from '@/features/auth/auth-store';
+import { AppleSignInButton } from '@/features/auth/apple-sign-in';
 import { GoogleSignInButton, type GoogleProfileHint } from '@/features/auth/google-sign-in';
 import {
   setPendingSocialRegistration,
@@ -23,7 +24,8 @@ import { consumePostAuthDestination } from '@/features/auth/post-auth-destinatio
 import {
   AuthBrandBar,
   AuthFormCard,
-  AuthHero,
+  AuthLogo,
+  AuthSocialRow,
   AuthLayout,
   AuthLink,
   AuthTitle,
@@ -34,6 +36,7 @@ import {
 } from '@/features/auth/auth-ui';
 import { registerSchema, type RegisterValues } from '@/features/auth/validation';
 import { verificationRecoveryParams } from '@/features/auth/email-delivery';
+import { saveRegistrationToken } from '@/features/auth/registration-token';
 import { useCopy } from '@/features/settings/language-store';
 
 export default function RegisterScreen() {
@@ -41,6 +44,7 @@ export default function RegisterScreen() {
 
   const copy = useCopy();
   const signInWithGoogle = useAuthStore((store) => store.signInWithGoogle);
+  const signInWithApple = useAuthStore((store) => store.signInWithApple);
   const lastNameInputRef = useRef<TextInput>(null);
   const emailInputRef = useRef<TextInput>(null);
   const birthYearInputRef = useRef<TextInput>(null);
@@ -146,6 +150,42 @@ export default function RegisterScreen() {
   const showGoogleError = useCallback((error: Error) => {
     setSocialError(error.message);
   }, []);
+  const completeAppleSignIn = useCallback(
+    async (input: { idToken: string; nonce?: string; firstName?: string; lastName?: string }) => {
+      setSocialError(null);
+      try {
+        const result = await signInWithApple(input);
+        if (result.kind === 'deletion_recovery_required') {
+          stageDeletionRecoveryHandoff({
+            kind: 'apple',
+            input,
+            recoveryUntil: result.recoveryUntil,
+          });
+          router.replace('/(auth)/login');
+          return;
+        }
+        if (result.kind === 'profile_completion_required') {
+          setPendingSocialRegistration({
+            pendingToken: result.pendingToken,
+            profile: result.profile,
+            provider: 'Apple',
+          });
+          router.push('/(auth)/social-complete');
+          return;
+        }
+        router.replace(consumePostAuthDestination() ?? '/(tabs)/home');
+      } catch (error) {
+        const recoveryUntil = recoveryUntilFromError(error);
+        if (recoveryUntil) {
+          stageDeletionRecoveryHandoff({ kind: 'apple', input, recoveryUntil });
+          router.replace('/(auth)/login');
+          return;
+        }
+        throw error;
+      }
+    },
+    [signInWithApple],
+  );
   // react-hook-form invokes this callback only from the submit event. These
   // refs prevent duplicate submissions and late updates after navigation.
   // eslint-disable-next-line react-hooks/refs
@@ -156,6 +196,7 @@ export default function RegisterScreen() {
     try {
       const result = await apiRequest<{
         verificationRequired: true;
+        registrationToken?: string;
         developmentVerificationToken?: string;
       }>(
         '/v1/auth/register',
@@ -176,6 +217,8 @@ export default function RegisterScreen() {
         },
         { authenticated: false },
       );
+      if (result.registrationToken)
+        await saveRegistrationToken(values.email.trim().toLowerCase(), result.registrationToken);
       if (revision !== screenRevision.current) return;
       // Do not hold the registration form behind a success flag/delay. The
       // destination shows a one-time notice; verification is still required.
@@ -205,34 +248,21 @@ export default function RegisterScreen() {
   });
 
   return (
-    <AuthLayout showLanguagePicker={false}>
+    <AuthLayout>
       <AuthBrandBar
         actionLabel={copy('Giriş yap', 'Sign in')}
         onAction={() => router.replace('/(auth)/login')}
         onBack={goBack}
       />
-      <AuthHero variant="register" />
+      <AuthLogo compact />
       <AuthTitle
-        eyebrow={copy('YENİ ÜRÜN STÜDYOSU', 'NEW PRODUCT STUDIO')}
-        title={copy('Hesabını oluştur.', 'Create your account.')}
+        title={copy('Hesabını oluştur', 'Create your account')}
         subtitle={copy(
           'Ürün projelerini ve gerçek çıktıları tek katalogda yönet.',
           'Manage product projects and real outputs in one catalog.',
         )}
       />
       <AuthFormCard>
-        <GoogleSignInButton
-          label={copy('Google ile devam et', 'Continue with Google')}
-          disabled={isSubmitting || !legalChecksComplete}
-          onError={showGoogleError}
-          onSuccess={completeGoogleSignIn}
-        />
-        {socialError ? (
-          <Text accessibilityLiveRegion="polite" style={styles.serverError}>
-            {socialError}
-          </Text>
-        ) : null}
-        <Divider>{copy('veya e-posta ile kayıt ol', 'or sign up with email')}</Divider>
         <View style={styles.names}>
           <Controller
             control={control}
@@ -330,12 +360,6 @@ export default function RegisterScreen() {
                   value={value ?? ''}
                 />
               </View>
-              <Text style={styles.emailHint}>
-                {copy(
-                  'Gmail, Outlook/Hotmail, Yandex, iCloud, Yahoo, Proton ve desteklenen diğer kalıcı sağlayıcılar. Yeni kayıtlarda kurumsal adresler desteklenmiyor.',
-                  'Gmail, Outlook/Hotmail, Yandex, iCloud, Yahoo, Proton and other supported providers. Custom domains are not supported for new accounts.',
-                )}
-              </Text>
               {errors.email?.message ? (
                 <Text style={styles.fieldError}>{errors.email.message}</Text>
               ) : null}
@@ -476,7 +500,7 @@ export default function RegisterScreen() {
           )}
         />
         <View style={styles.consentHeader}>
-          <Ionicons color={authColors.yellow} name="sparkles-outline" size={15} />
+          <Ionicons color={authColors.yellow} name="information-circle-outline" size={15} />
           <Text style={styles.consentHeaderText}>{translateCopy('Yasal belgeler')}</Text>
         </View>
         <Controller
@@ -540,6 +564,33 @@ export default function RegisterScreen() {
         >
           {copy('Kayıt ol', 'Sign up')}
         </GradientAuthButton>
+        <Divider />
+        <AuthSocialRow>
+          <GoogleSignInButton
+            label="Google"
+            disabled={isSubmitting || !legalChecksComplete}
+            onError={showGoogleError}
+            onSuccess={completeGoogleSignIn}
+          />
+          <AppleSignInButton
+            disabled={isSubmitting || !legalChecksComplete}
+            onError={showGoogleError}
+            onSuccess={completeAppleSignIn}
+          />
+        </AuthSocialRow>
+        {!legalChecksComplete ? (
+          <Text style={styles.socialHint}>
+            {copy(
+              'Google veya Apple ile devam etmek için önce yukarıdaki belgeleri onayla.',
+              'Accept the documents above to continue with Google or Apple.',
+            )}
+          </Text>
+        ) : null}
+        {socialError ? (
+          <Text accessibilityLiveRegion="polite" style={styles.serverError}>
+            {socialError}
+          </Text>
+        ) : null}
       </AuthFormCard>
       <View style={styles.bottomText}>
         <Text style={styles.bottomCopy}>
@@ -558,23 +609,24 @@ const styles = StyleSheet.create({
   nameField: { flex: 1 },
   field: { marginTop: 16 },
   label: {
-    color: '#EFEFEF',
+    color: authColors.text,
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: 0.1,
     marginBottom: 8,
   },
   inputRow: {
     alignItems: 'center',
-    borderColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderColor: 'rgba(255,255,255,0.16)',
+    borderRadius: 14,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 13,
-    minHeight: 56,
+    gap: 12,
+    minHeight: 54,
     paddingLeft: 15,
   },
-  input: { color: authColors.text, flex: 1, fontSize: 16, minHeight: 55, paddingVertical: 0 },
+  input: { color: authColors.text, flex: 1, fontSize: 16, minHeight: 53, paddingVertical: 0 },
   eyeButton: { alignItems: 'center', height: 48, justifyContent: 'center', width: 46 },
   fieldError: { color: '#FF928A', fontSize: 12, lineHeight: 17, marginTop: 6 },
   emailHint: { color: authColors.secondary, fontSize: 11, lineHeight: 16, marginTop: 8 },
@@ -587,7 +639,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
     paddingTop: 17,
   },
-  consentHeaderText: { color: '#F0D173', fontSize: 12, fontWeight: '800' },
+  consentHeaderText: { color: authColors.yellowLight, fontSize: 12, fontWeight: '800' },
   privacyPolicyLink: {
     alignItems: 'center',
     alignSelf: 'flex-start',
@@ -617,4 +669,11 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   bottomCopy: { color: authColors.secondary, fontSize: 14 },
+  socialHint: {
+    color: authColors.muted,
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 10,
+    textAlign: 'center',
+  },
 });

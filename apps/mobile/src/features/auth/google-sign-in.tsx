@@ -39,10 +39,10 @@ export type GoogleProfileHint = {
 const INSTANT_CANCEL_MS = 1500;
 
 /**
- * Release builds keep console output (visible with `adb logcat -s ReactNativeJS`).
- * Only status codes and timings are logged: never tokens, emails or names.
+ * Development only. Status codes and timings are logged: never tokens, emails or names.
  */
 function logGoogleDiagnostic(event: string, details: Record<string, unknown>): void {
+  if (!__DEV__) return;
   console.warn(`[BirKare Google] ${event}`, JSON.stringify({ platform: Platform.OS, ...details }));
 }
 
@@ -259,11 +259,10 @@ export function GoogleSignInButton({
   return (
     <SocialButton
       disabled={disabled || isWorking}
-      icon={<Ionicons name="logo-google" color="#111111" size={20} />}
+      icon={<Ionicons name="logo-google" color="#F4F6EC" size={19} />}
       loading={isWorking}
       loadingLabel={copy('Google açılıyor…', 'Opening Google…')}
       onPress={startGoogleSignIn}
-      tone="light"
     >
       {label}
     </SocialButton>

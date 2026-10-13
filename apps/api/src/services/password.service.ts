@@ -22,6 +22,14 @@ export class PasswordService {
     }
   }
 
+  private dummyHash: Promise<string> | undefined;
+
+  /** Constant-work stand-in for accounts that do not exist or have no password. */
+  async verifyAgainstDummy(password: string): Promise<void> {
+    this.dummyHash ??= this.hash('birkare-timing-equalizer-not-a-credential');
+    await this.verify(await this.dummyHash, password);
+  }
+
   /**
    * Verification codes have a deliberately small, user-friendly key space.
    * A keyed digest prevents an attacker who obtains the database from

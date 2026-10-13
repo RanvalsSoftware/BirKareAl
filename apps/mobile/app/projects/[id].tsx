@@ -15,6 +15,8 @@ import { apiBaseUrl, apiRequest } from '@/api/client';
 import { AppHeader, Icon, Notice, Screen } from '@/components';
 import { GlassSurface } from '@/components/GlassSurface';
 import { useAuthStore } from '@/features/auth/auth-store';
+import type { ProductCommerce } from '@/features/projects/product-api';
+import { ProductProjectScreen } from '@/features/projects/ProductProjectScreen';
 import { shareAspectRatio } from '@/features/sharing/output';
 import { colors, radii, spacing, typography } from '@/theme';
 
@@ -44,7 +46,7 @@ type ProjectDetail = {
     sourceAssetId: string | null;
     isFavorite: boolean;
     updatedAt: string;
-  };
+  } & Partial<ProductCommerce>;
   generations: ProjectGeneration[];
 };
 
@@ -130,6 +132,19 @@ export default function ProjectDetailScreen() {
     );
   }
 
+  if (detail && isProductProject)
+    return (
+      <ProductProjectScreen
+        detail={{
+          project: detail.project,
+          versions: completed.flatMap((generation) => {
+            const output = preferredOutput(generation);
+            return output ? [{ id: generation.id, output }] : [];
+          }),
+        }}
+      />
+    );
+
   return (
     <Screen contentContainerStyle={styles.content}>
       <AppHeader
@@ -183,7 +198,7 @@ export default function ProjectDetailScreen() {
               }}
             />
             <View style={styles.aiBadge}>
-              <Icon name="sparkles" size={13} color={colors.accentYellow} />
+              <Icon name="information-circle" size={13} color={colors.accentYellow} />
               <Text style={styles.aiBadgeText}>{translateCopy("AI ile oluşturuldu")}</Text>
             </View>
           </View>
@@ -193,7 +208,7 @@ export default function ProjectDetailScreen() {
               onPress={() => router.push(`/generations/${activeGeneration.id}/edit` as never)}
               style={({ pressed }) => [styles.editAction, pressed && styles.pressed]}
             >
-              <Icon name="sparkles" size={23} color="#050505" />
+              <Icon name="create-outline" size={23} color="#050505" />
               <Text style={styles.editActionText}>
                 {translateCopy(isProductProject ? 'Ürünü düzenle' : 'Düzenle')}
               </Text>
@@ -221,7 +236,7 @@ export default function ProjectDetailScreen() {
           >
             <GlassSurface radius={radii.lg} tone="iridescent" glow contentStyle={styles.aiEditCard}>
               <View style={styles.aiEditIcon}>
-                <Icon name="sparkles" size={25} color={colors.accentPurpleSoft} />
+                <Icon name="create-outline" size={25} color={colors.accentPurpleSoft} />
               </View>
               <View style={styles.aiEditCopy}>
                 <Text style={styles.aiEditTitle}>
@@ -355,7 +370,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     backgroundColor: '#070707',
     shadowColor: '#F5C842',
-    shadowOpacity: 0.10,
+    shadowOpacity: 0,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 6 },
   },
@@ -388,7 +403,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: 58,
     shadowColor: '#F5C842',
-    shadowOpacity: 0.28,
+    shadowOpacity: 0,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 4 },
   },
@@ -413,7 +428,7 @@ const styles = StyleSheet.create({
   },
   aiEditIcon: {
     alignItems: 'center',
-    backgroundColor: 'rgba(124,58,237,0.15)',
+    backgroundColor: 'rgba(245,193,50,0.15)',
     borderRadius: 24,
     height: 48,
     justifyContent: 'center',
@@ -466,7 +481,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(245,245,245,0.78)',
     justifyContent: 'center',
   },
-  activePillText: { ...typography.caption, color: '#161616', fontSize: 9, fontWeight: '900' },
+  activePillText: { ...typography.caption, color: '#161616', fontSize: 11, fontWeight: '900' },
   versionCopy: { flex: 1 },
   versionTitle: { ...typography.h3, color: colors.textPrimary, fontSize: 16 },
   versionDate: { ...typography.caption, color: colors.textMuted, marginTop: 4 },

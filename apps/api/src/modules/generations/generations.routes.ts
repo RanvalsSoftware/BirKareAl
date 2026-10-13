@@ -37,7 +37,7 @@ import type {
 } from '@birkare/database';
 import type { CatalogFeaturedPerson } from '@birkare/shared';
 import { requireAuth } from '../../middleware/auth.middleware.js';
-import { generationRateLimit } from '../../middleware/rate-limit.middleware.js';
+import { generationRateLimit, messageRateLimit } from '../../middleware/rate-limit.middleware.js';
 import { validate } from '../../middleware/validate.middleware.js';
 import type { ApiDependencies } from '../../services/dependencies.js';
 import { asyncHandler, sendSuccess } from '../../services/http.js';
@@ -395,8 +395,12 @@ function withSelectionSnapshot(
 }
 
 async function presentation(deps: ApiDependencies, generation: GenerationRecord) {
+  // Outputs are stored just before credits are captured. A generation that was
+  // cancelled, failed or blocked in that window was refunded, so its images
+  // must never become downloadable; only a captured (COMPLETED) job has any.
+  const deliverable = generation.status === 'COMPLETED' ? generation.outputs : [];
   const outputs = await Promise.all(
-    generation.outputs.map(async (output) => {
+    deliverable.map(async (output) => {
       const asset = await deps.repository.getAssetById(output.assetId);
       return {
         ...output,
@@ -1113,7 +1117,9 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
         assertReadyStudioSource(referenceAsset, req.auth!.userId);
       }
       const revisionInstruction = referenceAsset
-        ? `${req.body.instruction}\n\nINPUT IMAGE MARKED REFERENCE is an optional visual reference. Apply only the details explicitly requested above. Do not copy identity, face, body, logos, text or unrelated background from the reference image.`
+        ? // Server guard first: prompt builders keep the first 1000 characters, so a
+          // long user instruction must not be able to push the guard out.
+          `INPUT IMAGE MARKED REFERENCE is an optional visual reference. Apply only the details explicitly requested in the instruction that follows. Do not copy identity, face, body, logos, text or unrelated background from the reference image.\n\n${req.body.instruction}`
         : req.body.instruction;
       const recordRevisionMessages = async (generationId: string) => {
         await deps.repository.addGenerationMessage({
@@ -1313,6 +1319,7 @@ export function createGenerationsRouter(deps: ApiDependencies): Router {
   );
   router.post(
     '/:generationId/messages',
+    messageRateLimit,
     validate(GenerationParamsSchema, 'params'),
     validate(GenerationMessageSchema),
     asyncHandler(async (req, res) => {

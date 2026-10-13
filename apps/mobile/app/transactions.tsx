@@ -142,7 +142,7 @@ function TransactionsContent() {
           style={styles.summaryCard}
           contentStyle={styles.summaryContent}
         >
-          <Icon name="flash-outline" size={19} color="#C5A5EF" />
+          <Icon name="flash-outline" size={19} color="#EFDBA5" />
           <Text style={styles.summaryValue}>−{spent}</Text>
           <Text style={styles.summaryLabel}>{translateCopy("Toplam kullanılan")}</Text>
         </GlassSurface>
@@ -231,13 +231,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#21190B',
-    borderWidth: 1,
-    borderColor: 'rgba(255,211,88,.22)',
   },
   transactionCopy: { flex: 1, minWidth: 0 },
   transactionTitle: { ...typography.bodyStrong, color: colors.textPrimary },
   transactionDate: { ...typography.caption, color: colors.textSecondary, marginTop: 3 },
-  amount: { ...typography.h3, color: '#C1A8E7' },
+  amount: { ...typography.h3, color: '#E7D6A8' },
   amountPositive: { color: '#7BE495' },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginVertical: 12 },
   detailRow: {
@@ -257,11 +255,9 @@ const styles = StyleSheet.create({
   status: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   statusText: { ...typography.caption, fontWeight: '700' },
   statusDot: { width: 7, height: 7, borderRadius: 4 },
-  transactionId: { ...typography.caption, color: '#69656F', fontSize: 9, marginTop: 8 },
+  transactionId: { ...typography.caption, color: '#69656F', fontSize: 11, marginTop: 8 },
   state: {
     minHeight: 128,
-    borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',

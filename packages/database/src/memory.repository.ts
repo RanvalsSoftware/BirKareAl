@@ -6,6 +6,7 @@ import {
   notFound,
   unauthorized,
 } from '@birkare/shared';
+import type { ProjectListing } from '@birkare/shared';
 import {
   ACCOUNT_DELETION_RECOVERY_MS,
   accountDeletionRecoveryDeadline,
@@ -42,6 +43,7 @@ import type {
   CreditSettlementResult,
   CreditWalletRecord,
   GrantCreditsInput,
+  GrantCreditsResult,
   EmailTokenRecord,
   EmailTokenType,
   EmailVerificationCompletionResult,
@@ -913,6 +915,9 @@ export class MemoryRepository implements BirKareRepository {
       featuredPersonId: input.featuredPersonId,
       composition: input.composition,
       aspectRatio: input.aspectRatio,
+      priceAmount: null,
+      priceCurrency: null,
+      listing: null,
       isFavorite: false,
       createdAt: now,
       updatedAt: now,
@@ -960,14 +965,16 @@ export class MemoryRepository implements BirKareRepository {
         | 'featuredPersonId'
         | 'composition'
         | 'aspectRatio'
+        | 'priceAmount'
+        | 'priceCurrency'
         | 'isFavorite'
         | 'deletedAt'
       >
-    >,
+    > & { listing?: ProjectListing },
   ): Promise<ProjectRecord> {
     const project = this.projects.get(id);
     if (!project) throw notFound('PROJECT_NOT_FOUND', 'Proje bulunamadı.');
-    Object.assign(project, input, { updatedAt: new Date() });
+    Object.assign(project, clone(input), { updatedAt: new Date() });
     return clone(project);
   }
 
@@ -1258,16 +1265,29 @@ export class MemoryRepository implements BirKareRepository {
     };
   }
 
-  async grantCredits(input: GrantCreditsInput): Promise<{
-    wallet: CreditWalletRecord;
-    transaction: CreditTransactionRecord;
-    created: boolean;
-  }> {
+  async grantCredits(input: GrantCreditsInput): Promise<GrantCreditsResult> {
     this.assertAccountWritable(input.userId);
     const wallet = this.wallets.get(input.userId);
     if (!wallet) throw notFound('WALLET_NOT_FOUND', 'Kredi cüzdanı bulunamadı.');
     const existingId = this.transactionIdsByIdempotencyKey.get(input.idempotencyKey);
     const existing = existingId ? this.transactions.get(existingId) : undefined;
+    if (input.exclusiveReference) {
+      // Mirrors PrismaRepository: one store transaction, one grant, any account.
+      const claimed =
+        existing ??
+        [...this.transactions.values()].find(
+          (transaction) =>
+            transaction.referenceType === input.referenceType &&
+            transaction.referenceId === input.referenceId &&
+            transaction.amount > 0,
+        );
+      if (claimed)
+        return {
+          wallet: clone(wallet),
+          transaction: claimed.userId === input.userId ? clone(claimed) : null,
+          created: false,
+        };
+    }
     if (existing) {
       if (
         existing.userId !== input.userId ||

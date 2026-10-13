@@ -1,12 +1,10 @@
 import { useLanguageRevision } from '@/i18n/use-language';
 import { tr as translateCopy } from '@/i18n/engine';
-import { LanguagePicker } from '@/i18n/LanguagePicker';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { PropsWithChildren, ReactNode, Ref } from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
-  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -19,35 +17,30 @@ import {
   type TextInputProps,
   type ViewStyle,
 } from 'react-native';
-import Animated, {
-  cancelAnimation,
-  interpolate,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useReducedMotion } from '@/hooks/useReducedMotion';
+
+import { BrandLogo } from '@/components/BrandLogo';
 import { useCopy } from '@/features/settings/language-store';
+import { brand, brandGradients } from '@/theme/brand';
 
-const brandLogoMark = require('../../../assets/brand/birkare-studio-icon-1024-v1.png');
-const productHeroImage = require('../../../assets/products/ui/product-shoot.webp');
-
+/**
+ * Colour aliases kept for the authentication screens. `yellow` is the gold
+ * accent; the historical key name stays so existing call sites keep working.
+ */
 export const authColors = {
-  background: '#0B0F0D',
-  surface: '#111815',
-  surfaceRaised: '#17211B',
-  surfaceSoft: '#1C2821',
-  text: '#F1F7F3',
-  secondary: '#A7B4AC',
-  muted: '#748178',
-  yellow: '#B8F1CD',
-  yellowLight: '#DDF8E7',
-  purple: '#47755A',
-  pink: '#91BBA0',
-  border: 'rgba(255,255,255,0.11)',
-  borderSoft: 'rgba(255,255,255,0.07)',
+  background: brand.background,
+  surface: brand.surface,
+  surfaceRaised: brand.surfaceRaised,
+  surfaceSoft: brand.surfaceSoft,
+  text: brand.text,
+  secondary: brand.textSecondary,
+  muted: brand.textMuted,
+  yellow: brand.gold,
+  yellowLight: brand.goldLight,
+  purple: brand.goldDeep,
+  pink: brand.goldLight,
+  border: brand.border,
+  borderSoft: brand.borderSoft,
   danger: '#FF7065',
   success: '#8FE8A7',
 };
@@ -58,43 +51,27 @@ type BrandBarProps = {
   onBack?: () => void;
 };
 
-function AmbientGlow() {
-  const languageRevision = useLanguageRevision();
-
-  const reduceMotion = useReducedMotion();
-  const pulse = useSharedValue(0.44);
-
-  useEffect(() => {
-    cancelAnimation(pulse);
-    if (reduceMotion) {
-      pulse.value = 0.44;
-      return undefined;
-    }
-    pulse.value = withRepeat(withTiming(1, { duration: 3_800 }), -1, true);
-    return () => cancelAnimation(pulse);
-  }, [pulse, reduceMotion]);
-
-  const commerceGlow = useAnimatedStyle(() => ({
-    opacity: interpolate(pulse.value, [0, 1], [0.11, 0.22]),
-  }));
+function AmbientBackdrop() {
   return (
-    <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.ambientLayer]}>
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       <LinearGradient
-        colors={['#0B0F0D', '#0E1611', '#0B0F0D', '#101812']}
-        locations={[0, 0.34, 0.74, 1]}
+        colors={['#1A1508', brand.background, brand.background, '#120F06']}
+        locations={[0, 0.38, 0.78, 1]}
+        start={{ x: 0.1, y: 0 }}
+        end={{ x: 0.9, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      <Animated.View style={[styles.backgroundCommerceHaze, commerceGlow]} />
+      <View style={styles.backdropGlow} />
     </View>
   );
 }
 
-export function AuthLayout({ children, showLanguagePicker = true }: PropsWithChildren<{ showLanguagePicker?: boolean }>) {
+export function AuthLayout({ children }: PropsWithChildren) {
   const languageRevision = useLanguageRevision();
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <AmbientGlow />
+      <AmbientBackdrop />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardAvoider}
@@ -105,44 +82,35 @@ export function AuthLayout({ children, showLanguagePicker = true }: PropsWithChi
           keyboardShouldPersistTaps="always"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.content}>{children}{showLanguagePicker ? <LanguagePicker compact /> : null}</View>
+          <View style={styles.content}>
+            {children}
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
+/** Top row of the auth screens: an optional back circle and an optional pill action. */
 export function AuthBrandBar({ actionLabel, onAction, onBack }: BrandBarProps) {
   const languageRevision = useLanguageRevision();
 
   const copy = useCopy();
   return (
     <View style={styles.brandBar}>
-      <View style={styles.brandLeading}>
-        {onBack ? (
-          <Pressable
-            accessibilityLabel={copy('Geri', 'Back')}
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={onBack}
-            style={({ pressed }) => [styles.brandBack, pressed && styles.pressed]}
-          >
-            <Ionicons color={authColors.yellowLight} name="chevron-back" size={21} />
-          </Pressable>
-        ) : null}
-        <View style={styles.brandIdentity}>
-          <Image source={brandLogoMark} style={styles.brandMark} />
-          <View style={styles.brandWordBlock}>
-            <View style={styles.brandWordmark}>
-              <Text style={styles.brandWordmarkText}>BirKare</Text>
-              <Text style={styles.brandWordmarkStudio}> {translateCopy('Studio')}</Text>
-            </View>
-            <Text style={styles.brandTagline}>
-              {copy('Ürün fotoğrafından satış kanallarına.', 'From product photo to sales channels.')}
-            </Text>
-          </View>
-        </View>
-      </View>
+      {onBack ? (
+        <Pressable
+          accessibilityLabel={copy('Geri', 'Back')}
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={onBack}
+          style={({ pressed }) => [styles.circleButton, pressed && styles.pressed]}
+        >
+          <Ionicons color={brand.text} name="chevron-back" size={21} />
+        </Pressable>
+      ) : (
+        <View style={styles.circleButtonSpacer} />
+      )}
       {actionLabel && onAction ? (
         <Pressable
           accessibilityRole="button"
@@ -151,81 +119,23 @@ export function AuthBrandBar({ actionLabel, onAction, onBack }: BrandBarProps) {
           style={({ pressed }) => [styles.topAction, pressed && styles.pressed]}
         >
           <Text style={styles.topActionText}>{actionLabel}</Text>
-          <Ionicons color={authColors.yellow} name="arrow-forward" size={13} />
+          <Ionicons color={brand.gold} name="arrow-forward" size={13} />
         </Pressable>
       ) : null}
     </View>
   );
 }
 
+/** Centered brand mark used above every auth title. */
 export function AuthLogo({ compact = false }: { compact?: boolean }) {
   const languageRevision = useLanguageRevision();
 
-  const copy = useCopy();
   return (
-    <View style={[styles.logoWrap, compact && styles.logoWrapCompact]}>
-      <View style={styles.logoAura}>
-        <Image
-          accessibilityLabel={translateCopy("BirKare Studio logosu")}
-          source={brandLogoMark}
-          style={styles.logoImage}
-        />
-      </View>
-      {!compact ? (
-        <View style={styles.logoCaption}>
-          <View style={styles.logoWordmark}>
-            <Text style={styles.logoWordmarkText}>BirKare</Text>
-            <Text style={styles.logoWordmarkStudio}> {translateCopy('Studio')}</Text>
-          </View>
-          <View style={styles.logoCaptionLine} />
-          <Text style={styles.logoCaptionText}>
-            {copy('Ürün ve katalog stüdyosu', 'Product & catalog studio')}
-          </Text>
-        </View>
-      ) : null}
-    </View>
-  );
-}
-
-/**
- * Shared product-imagery stage for login, registration, and password recovery.
- * It uses the same catalog-shoot visual language as the signed-in workspace.
- */
-export function AuthHero({
-  variant = 'default',
-}: {
-  variant?: 'default' | 'login' | 'register' | 'forgot';
-}) {
-  const languageRevision = useLanguageRevision();
-
-  const reduceMotion = useReducedMotion();
-  const isForgot = variant === 'forgot';
-  const float = useSharedValue(0);
-
-  useEffect(() => {
-    cancelAnimation(float);
-    if (reduceMotion) {
-      float.value = 0;
-      return undefined;
-    }
-    float.value = withRepeat(withTiming(1, { duration: 2_900 }), -1, true);
-    return () => cancelAnimation(float);
-  }, [float, reduceMotion]);
-
-  const floatingProduct = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: interpolate(float.value, [0, 1], [-2, 4]) },
-      { scale: interpolate(float.value, [0, 1], [1, 1.025]) },
-    ],
-  }));
-
-  return (
-    <View pointerEvents="none" style={[styles.hero, isForgot && styles.heroForgot]}>
-      <Animated.Image
-        accessibilityLabel={translateCopy('BirKare Studio ürün katalog görseli')}
-        source={productHeroImage}
-        style={[styles.heroProductImage, isForgot && styles.heroProductImageForgot, floatingProduct]}
-      />
+    <View
+      accessibilityLabel={translateCopy('BirKare Studio logosu')}
+      style={[styles.logoWrap, compact && styles.logoWrapCompact]}
+    >
+      <BrandLogo size={compact ? 96 : 132} />
     </View>
   );
 }
@@ -233,7 +143,7 @@ export function AuthHero({
 export function AuthTitle({
   title,
   subtitle,
-  eyebrow = 'BİRKARE STUDIO',
+  eyebrow,
 }: {
   title: string;
   subtitle: string;
@@ -243,10 +153,7 @@ export function AuthTitle({
 
   return (
     <View style={styles.titleBlock}>
-      <View style={styles.eyebrowRow}>
-        <View style={styles.eyebrowLine} />
-        <Text style={styles.eyebrow}>{eyebrow}</Text>
-      </View>
+      {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
       <Text accessibilityRole="header" style={styles.title}>
         {title}
       </Text>
@@ -255,17 +162,14 @@ export function AuthTitle({
   );
 }
 
+/** Form region; kept as a named wrapper so the screens read the same. */
 export function AuthFormCard({
   children,
   style,
 }: PropsWithChildren<{ style?: StyleProp<ViewStyle> }>) {
   const languageRevision = useLanguageRevision();
 
-  return (
-    <View style={[styles.cardOuter, style]}>
-      <View style={styles.cardContent}>{children}</View>
-    </View>
-  );
+  return <View style={[styles.form, style]}>{children}</View>;
 }
 
 export function AuthNote({
@@ -283,8 +187,8 @@ export function AuthNote({
     tone === 'success'
       ? authColors.success
       : tone === 'warning'
-        ? authColors.yellow
-        : authColors.secondary;
+        ? brand.gold
+        : brand.textSecondary;
   return (
     <View
       style={[
@@ -337,13 +241,13 @@ export function FormField({
           ref={inputRef}
           {...inputProps}
           accessibilityLabel={inputProps.accessibilityLabel ?? label}
-          cursorColor={authColors.yellow}
+          cursorColor={brand.gold}
           editable={inputProps.editable ?? true}
           onChangeText={onChangeText}
           pointerEvents="auto"
-          placeholderTextColor={authColors.muted}
+          placeholderTextColor={brand.textMuted}
           rejectResponderTermination={false}
-          selectionColor={authColors.yellow}
+          selectionColor={brand.gold}
           style={[styles.input, icon ? styles.inputFullHitboxWithIcon : undefined, inputStyle]}
           underlineColorAndroid="transparent"
           value={value ?? ''}
@@ -392,7 +296,7 @@ export function PasswordFormField({
       <Text style={styles.label}>{label}</Text>
       <View
         style={[
-          styles.passwordWrap,
+          styles.inputShell,
           focused && styles.inputFocused,
           error ? styles.inputError : undefined,
         ]}
@@ -405,15 +309,15 @@ export function PasswordFormField({
         <TextInput
           {...inputProps}
           accessibilityLabel={inputProps.accessibilityLabel ?? label}
-          cursorColor={authColors.yellow}
+          cursorColor={brand.gold}
           editable={inputProps.editable ?? true}
           onChangeText={onChangeText}
           pointerEvents="auto"
-          placeholderTextColor={authColors.muted}
+          placeholderTextColor={brand.textMuted}
           rejectResponderTermination={false}
-          selectionColor={authColors.yellow}
+          selectionColor={brand.gold}
           secureTextEntry={!visible}
-          style={[styles.passwordInput, icon ? styles.inputWithIcon : undefined, inputStyle]}
+          style={[styles.input, icon ? styles.inputWithIcon : undefined, inputStyle]}
           underlineColorAndroid="transparent"
           value={value ?? ''}
           onBlur={(event) => {
@@ -437,7 +341,7 @@ export function PasswordFormField({
           style={({ pressed }) => [styles.eyeButton, pressed && styles.pressed]}
         >
           <Ionicons
-            color={authColors.secondary}
+            color={brand.textSecondary}
             name={visible ? 'eye-off-outline' : 'eye-outline'}
             size={19}
           />
@@ -452,6 +356,7 @@ export function PasswordFormField({
   );
 }
 
+/** Primary gold pill. The icon leads the label, as in the reference design. */
 export function GradientAuthButton({
   children,
   onPress,
@@ -485,18 +390,25 @@ export function GradientAuthButton({
       ]}
     >
       <LinearGradient
-        colors={['#DDF8E7', '#B8F1CD', '#8CCFA6']}
+        colors={brandGradients.button}
         end={{ x: 1, y: 0.85 }}
         start={{ x: 0.02, y: 0.1 }}
         style={styles.gradientButton}
       >
+        {icon && !loading ? <Ionicons color={brand.onGold} name={icon} size={18} /> : null}
         <Text style={styles.gradientButtonText}>
           {loading ? copy('İşleniyor…', 'Processing…') : children}
         </Text>
-        {icon && !loading ? <Ionicons color="#090909" name={icon} size={19} /> : null}
       </LinearGradient>
     </Pressable>
   );
+}
+
+/** Lays social sign-in buttons side by side with equal width. */
+export function AuthSocialRow({ children }: PropsWithChildren) {
+  const languageRevision = useLanguageRevision();
+
+  return <View style={styles.socialRow}>{children}</View>;
 }
 
 export function SocialButton({
@@ -534,17 +446,12 @@ export function SocialButton({
       ]}
     >
       <View style={styles.socialIcon}>{icon}</View>
-      <Text style={[styles.socialText, tone === 'light' && styles.socialTextLight]}>
-        {loading ? loadingLabel ?? copy('Açılıyor…', 'Opening…') : children}
+      <Text
+        numberOfLines={1}
+        style={[styles.socialText, tone === 'light' && styles.socialTextLight]}
+      >
+        {loading ? (loadingLabel ?? copy('Açılıyor…', 'Opening…')) : children}
       </Text>
-      {!loading ? (
-        <Ionicons
-          color={tone === 'light' ? '#5B5B5B' : authColors.muted}
-          name="chevron-forward"
-          size={16}
-          style={styles.socialChevron}
-        />
-      ) : null}
     </Pressable>
   );
 }
@@ -563,7 +470,7 @@ export function Divider({ children }: { children?: string }) {
   const languageRevision = useLanguageRevision();
 
   const copy = useCopy();
-  const label = children ?? copy('veya e-posta ile', 'or continue with email');
+  const label = children ?? copy('veya şununla devam et', 'or continue with');
   return (
     <View style={styles.divider}>
       <View style={styles.line} />
@@ -595,7 +502,7 @@ export function CheckRow({
 
   const checkbox = (
     <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
-      {checked ? <Ionicons name="checkmark" size={15} color="#050505" /> : null}
+      {checked ? <Ionicons name="checkmark" size={15} color={brand.onGold} /> : null}
     </View>
   );
 
@@ -604,7 +511,9 @@ export function CheckRow({
       {documentLink ? (
         <View style={styles.checkRow}>
           <Pressable
-            accessibilityLabel={checkboxAccessibilityLabel ?? translateCopy("{{p0}} kabulü", { p0: documentLink.label })}
+            accessibilityLabel={
+              checkboxAccessibilityLabel ?? translateCopy('{{p0}} kabulü', { p0: documentLink.label })
+            }
             accessibilityRole="checkbox"
             accessibilityState={{ checked }}
             hitSlop={10}
@@ -615,7 +524,7 @@ export function CheckRow({
           </Pressable>
           <Text style={styles.checkText}>
             <Text
-              accessibilityHint={translateCopy("Belgeyi açar")}
+              accessibilityHint={translateCopy('Belgeyi açar')}
               accessibilityRole="link"
               onPress={documentLink.onPress}
               style={styles.checkLink}
@@ -642,157 +551,89 @@ export function CheckRow({
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: authColors.background },
+  safe: { flex: 1, backgroundColor: brand.background },
   keyboardAvoider: { flex: 1 },
-  scroll: { flexGrow: 1, paddingBottom: 48 },
+  scroll: { flexGrow: 1, paddingBottom: 40 },
   content: {
     alignSelf: 'center',
     flexGrow: 1,
-    maxWidth: 680,
-    paddingHorizontal: 22,
+    maxWidth: 560,
+    paddingHorizontal: 24,
     width: '100%',
   },
-  ambientLayer: {},
-  backgroundCommerceHaze: {
-    backgroundColor: '#234633',
+  backdropGlow: {
+    backgroundColor: brand.gold,
     borderRadius: 999,
-    height: 820,
-    left: -535,
+    height: 520,
+    opacity: 0.045,
     position: 'absolute',
-    top: -555,
-    width: 820,
+    right: -260,
+    top: -330,
+    width: 520,
   },
   brandBar: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    minHeight: 64,
-    paddingTop: 7,
+    minHeight: 56,
+    paddingTop: 4,
   },
-  brandLeading: { alignItems: 'center', flex: 1, flexDirection: 'row', gap: 10, minWidth: 0 },
-  brandBack: {
+  circleButton: {
     alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.06)',
-    borderColor: 'rgba(184,241,205,0.35)',
-    borderRadius: 18,
+    borderColor: brand.border,
+    borderRadius: 22,
     borderWidth: 1,
-    height: 36,
+    height: 44,
     justifyContent: 'center',
-    width: 36,
+    width: 44,
   },
-  brandIdentity: { alignItems: 'center', flexDirection: 'row', flexShrink: 1, gap: 11 },
-  brandMark: { height: 34, resizeMode: 'contain', width: 34 },
-  brandWordBlock: { gap: 1 },
-  brandWordmark: { alignItems: 'baseline', flexDirection: 'row' },
-  brandWordmarkText: {
-    color: '#F1F7F3',
-    fontSize: 23,
-    fontWeight: '700',
-    letterSpacing: -1,
-  },
-  brandWordmarkStudio: {
-    color: '#B8F1CD',
-    fontSize: 18,
-    fontWeight: '600',
-    letterSpacing: -0.6,
-  },
-  brandTagline: {
-    color: '#91A198',
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
+  circleButtonSpacer: { height: 44, width: 44 },
   topAction: {
     alignItems: 'center',
-    backgroundColor: 'rgba(184,241,205,0.07)',
-    borderColor: 'rgba(184,241,205,0.58)',
+    backgroundColor: brand.goldTint,
+    borderColor: brand.goldBorder,
     borderRadius: 999,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 7,
     minHeight: 44,
-    paddingHorizontal: 15,
-    shadowColor: '#B8F1CD',
-    shadowOffset: { height: 4, width: 0 },
-    shadowOpacity: 0.13,
-    shadowRadius: 9,
+    paddingHorizontal: 16,
   },
-  topActionText: { color: authColors.yellowLight, fontSize: 14, fontWeight: '900' },
-  hero: {
-    alignItems: 'center',
-    height: 154,
-    justifyContent: 'center',
-    marginBottom: 5,
-    position: 'relative',
-  },
-  heroForgot: { height: 162, marginBottom: 7 },
-  heroProductImage: {
-    borderColor: '#28342D',
-    borderRadius: 22,
-    borderWidth: 1,
-    height: 138,
-    maxWidth: 520,
-    resizeMode: 'cover',
-    width: '100%',
-  },
-  heroProductImageForgot: { height: 146 },
-  logoWrap: { alignItems: 'center', marginBottom: 25, marginTop: 23 },
-  logoWrapCompact: { marginBottom: 18, marginTop: 16 },
-  logoAura: {
-    alignItems: 'center',
-    height: 108,
-    justifyContent: 'center',
-    width: 108,
-  },
-  logoImage: { height: '100%', resizeMode: 'contain', width: '100%' },
-  logoCaption: { alignItems: 'center', gap: 6, marginTop: 4 },
-  logoWordmark: { alignItems: 'baseline', flexDirection: 'row' },
-  logoWordmarkText: { color: '#F1F7F3', fontSize: 31, fontWeight: '700', letterSpacing: -1.3 },
-  logoWordmarkStudio: { color: '#B8F1CD', fontSize: 25, fontWeight: '600', letterSpacing: -0.9 },
-  logoCaptionLine: { backgroundColor: authColors.yellow, borderRadius: 99, height: 2, width: 22 },
-  logoCaptionText: {
-    color: authColors.muted,
+  topActionText: { color: brand.goldLight, fontSize: 14, fontWeight: '800' },
+  logoWrap: { alignItems: 'center', marginBottom: 22, marginTop: 10 },
+  logoWrapCompact: { marginBottom: 14, marginTop: 4 },
+  titleBlock: { alignItems: 'center', marginBottom: 22 },
+  eyebrow: {
+    color: brand.gold,
     fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
-  },
-  titleBlock: { marginBottom: 25 },
-  eyebrowRow: { alignItems: 'center', flexDirection: 'row', gap: 9, marginBottom: 9 },
-  eyebrowLine: { backgroundColor: authColors.yellow, borderRadius: 2, height: 4, width: 24 },
-  eyebrow: { color: authColors.yellowLight, fontSize: 11, fontWeight: '900', letterSpacing: 2.1 },
-  title: {
-    color: authColors.text,
-    fontSize: 39,
     fontWeight: '800',
-    letterSpacing: -1.9,
-    lineHeight: 45,
+    letterSpacing: 2,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  title: {
+    color: brand.text,
+    fontSize: 32,
+    fontWeight: '800',
+    letterSpacing: -1,
+    lineHeight: 38,
+    textAlign: 'center',
   },
   subtitle: {
-    color: authColors.secondary,
-    fontSize: 17,
-    lineHeight: 24,
+    color: brand.textSecondary,
+    fontSize: 15,
+    lineHeight: 22,
     marginTop: 8,
-    maxWidth: 390,
+    maxWidth: 360,
+    textAlign: 'center',
   },
-  cardOuter: {
-    backgroundColor: '#17211B',
-    borderRadius: 27,
-    padding: 1,
-    shadowColor: '#47755A',
-    shadowOffset: { height: 13, width: 0 },
-    shadowOpacity: 0.13,
-    shadowRadius: 20,
-  },
-  cardInner: {
-    borderRadius: 26,
-  },
-  cardContent: { padding: 19 },
+  form: { width: '100%' },
   note: {
     alignItems: 'flex-start',
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    borderColor: authColors.borderSoft,
-    borderRadius: 13,
+    backgroundColor: 'rgba(255,255,255,0.035)',
+    borderColor: brand.borderSoft,
+    borderRadius: 14,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 10,
@@ -800,31 +641,31 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   noteSuccess: { backgroundColor: 'rgba(48,209,88,0.075)', borderColor: 'rgba(48,209,88,0.2)' },
-  noteWarning: { backgroundColor: 'rgba(184,241,205,0.075)', borderColor: 'rgba(184,241,205,0.2)' },
-  noteText: { color: authColors.secondary, flex: 1, fontSize: 12, lineHeight: 18 },
+  noteWarning: { backgroundColor: brand.goldTint, borderColor: brand.goldBorder },
+  noteText: { color: brand.textSecondary, flex: 1, fontSize: 12, lineHeight: 18 },
   noteTextSuccess: { color: '#B7F4C7' },
   fieldWrap: { marginTop: 16 },
   label: {
-    color: '#EFEFEF',
+    color: brand.text,
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: 0.1,
     marginBottom: 8,
   },
   inputShell: {
     alignItems: 'center',
-    backgroundColor: 'transparent',
-    borderColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderColor: 'rgba(255,255,255,0.16)',
+    borderRadius: 14,
     borderWidth: 1,
     flexDirection: 'row',
-    minHeight: 56,
+    minHeight: 54,
   },
   input: {
-    color: authColors.text,
+    color: brand.text,
     flex: 1,
     fontSize: 16,
-    minHeight: 55,
+    minHeight: 53,
     paddingHorizontal: 15,
     paddingVertical: 0,
   },
@@ -833,117 +674,86 @@ const styles = StyleSheet.create({
   // A sibling icon column leaves an inert touch strip and cannot receive focus.
   inputFullHitboxWithIcon: { paddingLeft: 46 },
   fieldIconOverlay: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 46,
     alignItems: 'center',
+    bottom: 0,
     justifyContent: 'center',
+    left: 0,
+    position: 'absolute',
+    top: 0,
+    width: 46,
   },
   leadingIcon: { alignItems: 'center', justifyContent: 'center', width: 46 },
-  passwordWrap: {
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-    borderColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 16,
-    borderWidth: 1,
-    flexDirection: 'row',
-    minHeight: 56,
-  },
   inputFocused: {
-    borderColor: 'rgba(184,241,205,0.78)',
-    shadowColor: '#B8F1CD',
+    borderColor: brand.gold,
+    shadowColor: brand.gold,
     shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0,
     shadowRadius: 8,
-  },
-  passwordInput: {
-    color: authColors.text,
-    flex: 1,
-    fontSize: 16,
-    minHeight: 55,
-    paddingHorizontal: 15,
-    paddingVertical: 0,
   },
   eyeButton: { alignItems: 'center', height: 48, justifyContent: 'center', width: 46 },
   inputError: { borderColor: authColors.danger },
   error: { color: '#FF928A', fontSize: 12, lineHeight: 17, marginTop: 6 },
-  buttonHitbox: { marginTop: 24, minHeight: 58 },
+  buttonHitbox: { marginTop: 24, minHeight: 56 },
   gradientButton: {
     alignItems: 'center',
-    borderRadius: 17,
+    borderRadius: 999,
     flex: 1,
     flexDirection: 'row',
-    gap: 8,
+    gap: 9,
     justifyContent: 'center',
-    minHeight: 58,
+    minHeight: 56,
     paddingHorizontal: 18,
-    shadowColor: '#B8F1CD',
-    shadowOffset: { height: 7, width: 0 },
-    shadowOpacity: 0.32,
-    shadowRadius: 15,
+    shadowColor: brand.gold,
+    shadowOffset: { height: 8, width: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 16,
   },
-  gradientButtonText: { color: '#080705', fontSize: 17, fontWeight: '900' },
+  gradientButtonText: { color: brand.onGold, fontSize: 16, fontWeight: '800' },
+  socialRow: { flexDirection: 'row', gap: 12, marginTop: 4 },
   socialButton: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.045)',
-    borderColor: authColors.border,
-    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderColor: 'rgba(255,255,255,0.16)',
+    borderRadius: 999,
     borderWidth: 1,
+    flex: 1,
     flexDirection: 'row',
+    gap: 9,
     justifyContent: 'center',
-    marginTop: 12,
-    minHeight: 56,
-    paddingHorizontal: 52,
+    minHeight: 52,
+    paddingHorizontal: 14,
   },
-  socialButtonLight: {
-    backgroundColor: '#FFFFFF',
-    borderColor: 'rgba(255,255,255,0.92)',
-    shadowColor: '#000000',
-    shadowOffset: { height: 4, width: 0 },
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-  },
-  socialIcon: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    left: 18,
-    position: 'absolute',
-    width: 24,
-  },
+  socialButtonLight: { backgroundColor: '#FFFFFF', borderColor: '#FFFFFF' },
+  socialIcon: { alignItems: 'center', justifyContent: 'center' },
   socialText: {
-    color: authColors.text,
-    fontSize: 16,
+    color: brand.text,
+    flexShrink: 1,
+    fontSize: 15,
     fontWeight: '700',
-    letterSpacing: -0.18,
-    lineHeight: 21,
-    textAlign: 'center',
+    letterSpacing: -0.1,
   },
   socialTextLight: { color: '#111111' },
-  socialChevron: { position: 'absolute', right: 16 },
-  divider: { alignItems: 'center', flexDirection: 'row', gap: 10, marginTop: 19 },
-  line: { backgroundColor: authColors.border, flex: 1, height: 1 },
-  dividerText: { color: authColors.muted, fontSize: 11, fontWeight: '600' },
-  link: { color: '#B8F1CD', fontSize: 13, fontWeight: '800' },
+  divider: { alignItems: 'center', flexDirection: 'row', gap: 12, marginTop: 22, marginBottom: 16 },
+  line: { backgroundColor: brand.border, flex: 1, height: 1 },
+  dividerText: { color: brand.textMuted, fontSize: 12, fontWeight: '600' },
+  link: { color: brand.gold, fontSize: 14, fontWeight: '700' },
   checkRow: { alignItems: 'flex-start', flexDirection: 'row', gap: 10, marginTop: 13 },
   checkbox: {
     alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.035)',
-    borderColor: authColors.border,
+    borderColor: brand.border,
     borderRadius: 7,
     borderWidth: 1,
     height: 22,
     justifyContent: 'center',
-    marginTop: 0,
     width: 22,
   },
-  checkboxChecked: { backgroundColor: authColors.yellow, borderColor: authColors.yellow },
-  checkText: { color: authColors.secondary, flex: 1, fontSize: 12, lineHeight: 18 },
-  checkLink: { color: authColors.yellowLight, fontWeight: '900', textDecorationLine: 'underline' },
+  checkboxChecked: { backgroundColor: brand.gold, borderColor: brand.gold },
+  checkText: { color: brand.textSecondary, flex: 1, fontSize: 12, lineHeight: 18 },
+  checkLink: { color: brand.goldLight, fontWeight: '800', textDecorationLine: 'underline' },
   checkError: { marginLeft: 32 },
   pressed: { opacity: 0.72 },
-  disabled: { opacity: 0.52 },
+  disabled: { opacity: 0.5 },
 });
 
 export const authStyles = styles;

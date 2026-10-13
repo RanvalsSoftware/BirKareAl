@@ -25,13 +25,15 @@ const getUserId = () => {
 
 function unavailableReason(): string | undefined {
   if (Platform.OS !== 'ios' && Platform.OS !== 'android')
-    return translateCopy("Satın alımlar iOS veya Android uygulamasında kullanılabilir.");
+    return translateCopy('Satın alımlar iOS veya Android uygulamasında kullanılabilir.');
   if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient)
-    return translateCopy("Gerçek satın alma testi için Expo Go yerine uygulamanın yeni native derlemesini açın.");
+    return translateCopy(
+      'Gerçek satın alma testi için Expo Go yerine uygulamanın yeni native derlemesini açın.',
+    );
   if (!config || config.entitlementId !== entitlementId || !apiKey)
-    return translateCopy("RevenueCat yapılandırması eksik. Uygulamayı güncel app.config.ts ile yeniden derleyin.");
+    return translateCopy('Satın alma şu anda kullanılamıyor.');
   if (isTestStore && appEnv !== 'development')
-    return translateCopy("Test Store anahtarı canlı ortamda kullanılamaz.");
+    return translateCopy('Satın alma şu anda kullanılamıyor.');
   return undefined;
 }
 
@@ -82,6 +84,49 @@ async function refreshFreshCustomerInfo(): Promise<void> {
   await revenueCat.refresh();
 }
 
+export type BillingSyncResponse = { creditPackCreditsGranted?: number };
+
+let syncInFlight: Promise<BillingSyncResponse> | null = null;
+
+/**
+ * Asks the server to reconcile store purchases with the wallet. Concurrent
+ * callers share one request, so a purchase never spends the endpoint's rate
+ * limit twice, and a failed attempt is retried before the caller hears of it.
+ */
+export function syncBilling(retryDelaysMs: readonly number[] = []): Promise<BillingSyncResponse> {
+  syncInFlight ??= (async () => {
+    try {
+      for (let attempt = 0; ; attempt += 1) {
+        try {
+          return await apiRequest<BillingSyncResponse>('/v1/billing/revenuecat/sync', {
+            method: 'POST',
+          });
+        } catch (error) {
+          const delay = retryDelaysMs[attempt];
+          if (delay === undefined) throw error;
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+      }
+    } finally {
+      syncInFlight = null;
+    }
+  })();
+  return syncInFlight;
+}
+
+/** Changes only when something purchasable changed, not on every store refresh. */
+function purchaseFingerprint(info: {
+  entitlements: { active: Record<string, { expirationDate?: string | null }> };
+  nonSubscriptionTransactions?: readonly { transactionIdentifier: string }[];
+}): string {
+  return JSON.stringify([
+    Object.entries(info.entitlements.active)
+      .map(([id, entitlement]) => `${id}:${entitlement.expirationDate ?? ''}`)
+      .sort(),
+    (info.nonSubscriptionTransactions ?? []).map((item) => item.transactionIdentifier).sort(),
+  ]);
+}
+
 /** Mount once below QueryClientProvider. No anonymous customer may buy. */
 export function RevenueCatBootstrap() {
   const queryClient = useQueryClient();
@@ -93,22 +138,25 @@ export function RevenueCatBootstrap() {
     const unsubscribeAuth = useAuthStore.subscribe((state, previous) => {
       if (state.user?.id !== previous.user?.id || state.state !== previous.state) identify();
     });
-    let lastInfo = revenueCat.getSnapshot().customerInfo;
+    let lastSynced: string | null = null;
     const unsubscribeBilling = revenueCat.subscribe(() => {
       const state = revenueCat.getSnapshot();
-      if (state.customerInfo === lastInfo) return;
-      lastInfo = state.customerInfo;
-      if (state.customerInfo && state.userId === getUserId()) {
-        void apiRequest('/v1/billing/revenuecat/sync', { method: 'POST' })
-          .catch(() => undefined)
-          .finally(() =>
-            queryClient
-              .invalidateQueries({
-                queryKey: accountQueryKey(CREDIT_WALLET_QUERY_KEY, state.userId ?? undefined),
-              })
-              .catch(() => undefined),
-          );
-      }
+      if (!state.customerInfo || state.userId !== getUserId()) return;
+      const fingerprint = `${state.userId}|${purchaseFingerprint(state.customerInfo)}`;
+      if (fingerprint === lastSynced) return;
+      lastSynced = fingerprint;
+      void syncBilling()
+        .catch(() => {
+          // Let the next store refresh try again instead of treating this state as synced.
+          lastSynced = null;
+        })
+        .finally(() =>
+          queryClient
+            .invalidateQueries({
+              queryKey: accountQueryKey(CREDIT_WALLET_QUERY_KEY, state.userId ?? undefined),
+            })
+            .catch(() => undefined),
+        );
     });
     const appState = AppState.addEventListener('change', (state) => {
       if (state === 'active') void revenueCat.refresh();
@@ -145,9 +193,9 @@ export function useRevenueCat() {
         ? ('active' as const)
         : ('lifetime' as const);
   const testEnvironmentLabel = isTestStore
-    ? translateCopy("REVENUECAT TEST STORE · GERÇEK ÜCRET ALINMAZ")
+    ? translateCopy('REVENUECAT TEST STORE · GERÇEK ÜCRET ALINMAZ')
     : appEnv !== 'production'
-      ? translateCopy("APP STORE / PLAY TEST ORTAMI · GERÇEK MAĞAZA FİYATLARI SANDBOX’TAN GELİR")
+      ? translateCopy('APP STORE / PLAY TEST ORTAMI · GERÇEK MAĞAZA FİYATLARI SANDBOX’TAN GELİR')
       : null;
   return {
     ...state,

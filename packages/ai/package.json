@@ -14,6 +14,7 @@
     "@birkare/database": "workspace:*",
     "@birkare/shared": "workspace:*",
     "@birkare/storage": "workspace:*",
-    "openai": "^4.86.2"
+    "openai": "^4.86.2",
+    "zod": "^3.24.2"
   }
 }

@@ -1,6 +1,6 @@
 export type SocialDeletionRecoveryAttempt =
   | { kind: 'google'; idToken: string; recoveryUntil: string }
-  | { kind: 'apple'; input: { idToken: string; firstName?: string; lastName?: string }; recoveryUntil: string };
+  | { kind: 'apple'; input: { idToken: string; nonce?: string; firstName?: string; lastName?: string }; recoveryUntil: string };
 
 // One-use memory handoff from registration to login. Never persist provider
 // credentials in route parameters, logs, AsyncStorage, SecureStore or the URL.

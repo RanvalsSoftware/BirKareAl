@@ -9,9 +9,19 @@ import { SocialButton } from './auth-ui';
 type AppleSignInButtonProps = {
   disabled?: boolean;
   onError: (error: Error) => void;
-  onSuccess: (input: { idToken: string; firstName?: string; lastName?: string }) => Promise<void>;
+  onSuccess: (input: { idToken: string; nonce?: string; firstName?: string; lastName?: string }) => Promise<void>;
 };
 type AppleAuthenticationError = { code?: unknown };
+
+/** A fresh value per attempt; Apple embeds it in the identity token it returns. */
+function createNonce(): string {
+  const bytes = new Uint8Array(16);
+  const secure = (globalThis as { crypto?: { getRandomValues?: (array: Uint8Array) => void } })
+    .crypto;
+  if (secure?.getRandomValues) secure.getRandomValues(bytes);
+  else for (let index = 0; index < bytes.length; index += 1) bytes[index] = Math.random() * 256;
+  return Array.from(bytes, (value) => value.toString(16).padStart(2, '0')).join('');
+}
 
 export function AppleSignInButton({ disabled = false, onError, onSuccess }: AppleSignInButtonProps) {
   const languageRevision = useLanguageRevision();
@@ -30,12 +40,15 @@ export function AppleSignInButton({ disabled = false, onError, onSuccess }: Appl
   const signIn = () => {
     if (disabled || working) return;
     setWorking(true);
+    const nonce = createNonce();
     void AppleAuthentication.signInAsync({
+      nonce,
       requestedScopes: [AppleAuthentication.AppleAuthenticationScope.FULL_NAME, AppleAuthentication.AppleAuthenticationScope.EMAIL],
     }).then(async (credential) => {
       if (!credential.identityToken) throw new Error(copy('Apple kimlik belirteci alınamadı. Lütfen yeniden deneyin.', 'Could not receive the Apple identity token. Please try again.'));
       await onSuccess({
         idToken: credential.identityToken,
+        nonce,
         ...(credential.fullName?.givenName ? { firstName: credential.fullName.givenName } : {}),
         ...(credential.fullName?.familyName ? { lastName: credential.fullName.familyName } : {}),
       });
@@ -61,9 +74,9 @@ export function AppleSignInButton({ disabled = false, onError, onSuccess }: Appl
     }).finally(() => setWorking(false));
   };
   return (
-    <SocialButton disabled={disabled || working} icon={<Ionicons name="logo-apple" color="#111111" size={22} />}
-      loading={working} loadingLabel={copy('Apple açılıyor…', 'Opening Apple…')} onPress={signIn} tone="light">
-      {copy('Apple ile giriş yap', 'Sign in with Apple')}
+    <SocialButton disabled={disabled || working} icon={<Ionicons name="logo-apple" color="#F4F6EC" size={21} />}
+      loading={working} loadingLabel={copy('Apple açılıyor…', 'Opening Apple…')} onPress={signIn}>
+      {copy('Apple', 'Apple')}
     </SocialButton>
   );
 }

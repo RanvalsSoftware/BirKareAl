@@ -15,6 +15,11 @@ const mocks = vi.hoisted(() => ({
   replace: vi.fn(),
 }));
 vi.mock('@/api/client', () => ({ apiRequest: mocks.request }));
+vi.mock('@/features/auth/registration-token', () => ({
+  clearRegistrationToken: async () => undefined,
+  readRegistrationToken: async () => null,
+  saveRegistrationToken: async () => undefined,
+}));
 vi.mock('@/features/settings/language-store', () => ({
   useCopy: () => (turkish: string) => turkish,
 }));

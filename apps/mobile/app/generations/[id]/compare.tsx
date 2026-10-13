@@ -200,7 +200,7 @@ export default function CompareScreen() {
             </View>
             <View {...responder.panHandlers} style={StyleSheet.absoluteFill} />
             <View pointerEvents="none" style={styles.afterTag}>
-              <Icon name="sparkles" size={11} color={colors.accentYellow} />
+              <Icon name="information-circle" size={11} color={colors.accentYellow} />
               <Text style={styles.tagText}>{translateCopy("AI SONUÇ")}</Text>
             </View>
             <View pointerEvents="none" style={styles.beforeTag}>
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   handle: {
     alignItems: 'center',
     backgroundColor: colors.textPrimary,
-    borderColor: colors.accentYellow,
+    borderColor: colors.border,
     borderRadius: 24,
     borderWidth: 2,
     flexDirection: 'row',
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
+    shadowOpacity: 0,
     shadowRadius: 8,
     width: 48,
   },
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     position: 'absolute',
   },
-  tagText: { ...typography.caption, color: colors.textPrimary, fontSize: 10, fontWeight: '800' },
+  tagText: { ...typography.caption, color: colors.textPrimary, fontSize: 11, fontWeight: '800' },
   legend: { flexDirection: 'row', gap: 18, justifyContent: 'center', paddingVertical: 14 },
   legendItem: { alignItems: 'center', flexDirection: 'row', gap: 6 },
   legendDot: { borderRadius: 4, height: 8, width: 8 },

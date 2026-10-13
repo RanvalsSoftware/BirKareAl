@@ -20,6 +20,10 @@ import {
   authColors,
 } from '@/features/auth/auth-ui';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import {
+  clearRegistrationToken,
+  readRegistrationToken,
+} from '@/features/auth/registration-token';
 import { useCopy } from '@/features/settings/language-store';
 
 export default function VerifyEmailScreen() {
@@ -172,11 +176,11 @@ export default function VerifyEmailScreen() {
     if (operation.current || verified) return;
     const normalized = emailVerificationCode(code);
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError(translateCopy("Kodu doğrulamak için kayıt ekranındaki e-posta adresin gerekli."));
+      setError(translateCopy('Kodu doğrulamak için kayıt ekranındaki e-posta adresin gerekli.'));
       return;
     }
     if (!/^\d{6}$/.test(normalized)) {
-      setError(translateCopy("E-postandaki 6 haneli doğrulama kodunu gir."));
+      setError(translateCopy('E-postandaki 6 haneli doğrulama kodunu gir.'));
       inputRef.current?.focus();
       return;
     }
@@ -187,18 +191,31 @@ export default function VerifyEmailScreen() {
     dismissNotice();
     registrationNotice.dismiss();
     try {
-      await apiRequest(
+      const registrationToken = await readRegistrationToken(email);
+      const result = await apiRequest<{ passwordResetRequired?: boolean } | null>(
         '/v1/auth/verify-email',
         {
           method: 'POST',
-          body: JSON.stringify({ email, code: normalized }),
+          body: JSON.stringify({
+            email,
+            code: normalized,
+            ...(registrationToken ? { registrationToken } : {}),
+          }),
         },
         { authenticated: false },
       );
+      await clearRegistrationToken();
+      if (revision !== screenRevision.current) return;
+      if (result?.passwordResetRequired) {
+        // Verified from a device that did not start the sign-up: the password
+        // typed back then is discarded, so the owner of the inbox chooses one.
+        router.replace({ pathname: '/(auth)/forgot-password', params: { email, verified: '1' } });
+        return;
+      }
       if (revision === screenRevision.current) showVerificationSuccess();
     } catch (reason) {
       if (revision === screenRevision.current)
-        setError(reason instanceof Error ? reason.message : translateCopy("Kod doğrulanamadı."));
+        setError(reason instanceof Error ? reason.message : translateCopy('Kod doğrulanamadı.'));
     } finally {
       operation.current = false;
       setBusy(false);
@@ -207,7 +224,7 @@ export default function VerifyEmailScreen() {
   const resend = async () => {
     if (operation.current || verified) return;
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError(translateCopy("Tekrar göndermek için kayıt ekranındaki e-posta adresin gerekli."));
+      setError(translateCopy('Tekrar göndermek için kayıt ekranındaki e-posta adresin gerekli.'));
       return;
     }
     operation.current = true;
@@ -231,7 +248,9 @@ export default function VerifyEmailScreen() {
       if (delivery === 'failed') router.setParams({ delivery: '0' });
     } catch (reason) {
       if (revision === screenRevision.current)
-        setError(reason instanceof Error ? reason.message : translateCopy("E-posta gönderilemedi."));
+        setError(
+          reason instanceof Error ? reason.message : translateCopy('E-posta gönderilemedi.'),
+        );
     } finally {
       operation.current = false;
       setResending(false);
@@ -247,11 +266,11 @@ export default function VerifyEmailScreen() {
 
   return (
     <View style={styles.screen}>
-      <AuthLayout showLanguagePicker={false}>
+      <AuthLayout>
         <AuthBrandBar onBack={goBack} />
         <AuthLogo compact />
         <View style={styles.icon}>
-          <Ionicons name="mail-open-outline" size={27} color="#FFC400" />
+          <Ionicons name="mail-open-outline" size={27} color="#F5C132" />
         </View>
         <AuthTitle
           eyebrow={copy('GÜVENLİ BAŞLANGIÇ', 'SECURE START')}
@@ -273,7 +292,11 @@ export default function VerifyEmailScreen() {
             />
           ) : null}
           {delivery === 'failed' ? (
-            <AuthNote icon="alert-circle-outline" tone="warning">{translateCopy("Hesabın oluşturuldu ancak doğrulama e-postası gönderilemedi. Yeniden kayıt olman gerekmiyor; aşağıdan e-postayı tekrar göndermeyi deneyebilirsin.")}</AuthNote>
+            <AuthNote icon="alert-circle-outline" tone="warning">
+              {translateCopy(
+                'Hesabın oluşturuldu ancak doğrulama e-postası gönderilemedi. Yeniden kayıt olman gerekmiyor; aşağıdan e-postayı tekrar göndermeyi deneyebilirsin.',
+              )}
+            </AuthNote>
           ) : null}
           <View style={styles.field}>
             <Text style={styles.label}>{copy('Doğrulama kodu', 'Verification code')}</Text>
@@ -378,12 +401,6 @@ export default function VerifyEmailScreen() {
                 </Text>
               </Pressable>
             </View>
-            <Text style={styles.helperText}>
-              {copy(
-                'E-postandaki 6 haneli kod 10 dakika geçerlidir ve yalnızca bir kez kullanılabilir.',
-                'The six-digit code is valid for 10 minutes and can be used only once.',
-              )}
-            </Text>
           </View>
           {notice ? (
             <AuthSuccessNotice
@@ -518,18 +535,18 @@ const styles = StyleSheet.create({
   otpCellFilled: {
     backgroundColor: 'rgba(255,196,0,0.075)',
     borderColor: 'rgba(255,196,0,0.34)',
-    shadowColor: '#FFC400',
+    shadowColor: '#F5C132',
     shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.13,
+    shadowOpacity: 0,
     shadowRadius: 12,
   },
   otpCellActive: {
     backgroundColor: 'rgba(255,196,0,0.11)',
     borderColor: '#FFD55A',
     borderWidth: 1.5,
-    shadowColor: '#FFC400',
+    shadowColor: '#F5C132',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.28,
+    shadowOpacity: 0,
     shadowRadius: 15,
   },
   otpCellError: { borderColor: 'rgba(255,135,125,.7)' },
@@ -544,9 +561,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFD55A',
     borderRadius: 4,
     height: 7,
-    shadowColor: '#FFC400',
+    shadowColor: '#F5C132',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
+    shadowOpacity: 0,
     shadowRadius: 8,
     width: 7,
   },
@@ -581,7 +598,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     zIndex: 50,
-    elevation: 50,
+    elevation: 0,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 28,
@@ -598,7 +615,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(52,199,89,0.18)',
     shadowColor: '#34C759',
-    shadowOpacity: 0.3,
+    shadowOpacity: 0,
     shadowRadius: 26,
     shadowOffset: { width: 0, height: 8 },
   },

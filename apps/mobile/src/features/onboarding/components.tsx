@@ -269,7 +269,7 @@ export function AnimatedPhotoCloud() {
 
   return (
     <View style={[styles.cloudCanvas, { width: canvasWidth }]}>
-      <LinearGradient colors={['rgba(124,58,237,0.05)', 'rgba(124,58,237,0.28)', 'rgba(255,196,0,0.08)']} style={styles.cloudHalo} />
+      <LinearGradient colors={['rgba(245,193,50,0.05)', 'rgba(245,193,50,0.28)', 'rgba(255,196,0,0.08)']} style={styles.cloudHalo} />
       <FloatPhoto delay={90} driftX={9} driftY={-8} height={139} left={7} rotate={-10} source={surrounding[0] as number} top={32} width={106} />
       <FloatPhoto delay={180} driftX={-8} driftY={9} height={128} left={canvasWidth - 113} rotate={9} source={surrounding[1] as number} top={48} width={104} />
       <FloatPhoto delay={265} driftX={11} driftY={7} height={124} left={18} rotate={8} source={surrounding[2] as number} top={240} width={102} />
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   headerSide: { alignItems: 'flex-start', minWidth: 66 },
   headerRight: { alignItems: 'flex-end' },
   headerCenter: { alignItems: 'center', flex: 1 },
-  headerStep: { color: colors.accentYellow, fontSize: 10, fontWeight: '900', letterSpacing: 0.8, textTransform: 'uppercase' },
+  headerStep: { color: colors.accentYellow, fontSize: 11, fontWeight: '900', letterSpacing: 0.8, textTransform: 'uppercase' },
   headerTitle: { color: colors.textPrimary, fontSize: 13, fontWeight: '800', marginTop: 2 },
   backButton: { alignItems: 'center', backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 14, borderWidth: 1, height: 42, justifyContent: 'center', width: 42 },
   skipButton: { paddingHorizontal: 5, paddingVertical: 9 },
@@ -316,13 +316,13 @@ const styles = StyleSheet.create({
   goldDisabled: { opacity: 0.36 },
   goldPressed: { opacity: 0.78, transform: [{ scale: 0.988 }] },
   photoChip: { alignItems: 'center', backgroundColor: 'rgba(5,5,5,0.74)', borderColor: 'rgba(255,255,255,0.14)', borderRadius: 999, borderWidth: 1, flexDirection: 'row', gap: 5, paddingHorizontal: 9, paddingVertical: 6 },
-  photoChipText: { color: colors.textPrimary, fontSize: 10, fontWeight: '800' },
+  photoChipText: { color: colors.textPrimary, fontSize: 11, fontWeight: '800' },
   cloudCanvas: { alignSelf: 'center', height: 405, position: 'relative' },
   cloudHalo: { borderRadius: 190, height: 310, left: '50%', marginLeft: -155, marginTop: -155, position: 'absolute', top: '50%', width: 310 },
   floatSlot: { overflow: 'visible', position: 'absolute' },
   floatCard: { ...StyleSheet.absoluteFill, backgroundColor: colors.surface, borderColor: colors.borderStrong, borderRadius: 22, borderWidth: 1, overflow: 'hidden', ...shadows.floating },
   centerSlot: { alignSelf: 'center', height: 254, marginTop: 76, width: 190 },
-  centerCard: { ...StyleSheet.absoluteFill, backgroundColor: colors.surface, borderColor: colors.accentYellow, borderRadius: 30, borderWidth: 2, overflow: 'hidden', ...shadows.yellow },
+  centerCard: { ...StyleSheet.absoluteFill, backgroundColor: colors.surface, borderColor: colors.border, borderRadius: 30, borderWidth: 2, overflow: 'hidden', ...shadows.yellow },
   centerCaption: { bottom: 15, left: 13, position: 'absolute', right: 13 },
-  centerCaptionText: { color: colors.textPrimary, fontSize: 10, fontWeight: '800', textAlign: 'center' },
+  centerCaptionText: { color: colors.textPrimary, fontSize: 11, fontWeight: '800', textAlign: 'center' },
 });

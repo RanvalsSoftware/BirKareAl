@@ -1,20 +1,20 @@
 import { Platform } from 'react-native';
 
-/** Shared visual tokens for BirKare AI's dark, photo-first interface. */
+/** Shared visual tokens for BirKare Studio's dark, gold-accented interface. */
 export const colors = {
-  background: '#050505',
-  surface: '#111111',
-  surfaceElevated: '#191919',
-  surfaceSoft: '#222222',
-  surfaceSubtle: '#151515',
-  textPrimary: '#FFFFFF',
-  textSecondary: '#A7A7A7',
-  textMuted: '#737373',
-  accentYellow: '#FFC400',
-  accentYellowSoft: 'rgba(255, 196, 0, 0.16)',
-  accentPurple: '#7C3AED',
-  accentPurpleSoft: 'rgba(124, 58, 237, 0.20)',
-  accentPink: '#C83CF0',
+  background: '#0A0906',
+  surface: '#141108',
+  surfaceElevated: '#1B170B',
+  surfaceSoft: '#241E0E',
+  surfaceSubtle: '#141108',
+  textPrimary: '#F7F3E8',
+  textSecondary: '#B3AC9A',
+  textMuted: '#7A7260',
+  accentYellow: '#F5C132',
+  accentYellowSoft: 'rgba(245, 193, 50, 0.16)',
+  accentPurple: '#C48A0A',
+  accentPurpleSoft: 'rgba(196, 138, 10, 0.20)',
+  accentPink: '#FFE27A',
   success: '#30D158',
   warning: '#FF9F0A',
   danger: '#FF5A52',
@@ -26,9 +26,9 @@ export const colors = {
 
 export const gradients = {
   primary: [colors.accentPurple, colors.accentPink, colors.accentYellow] as const,
-  warm: ['#8B35E7', '#D545E6', '#FFC400'] as const,
-  hero: ['#21122F', '#151515', '#563900'] as const,
-  midnight: ['#13102A', '#111111', '#251B05'] as const,
+  warm: ['#C48A0A', '#F5C132', '#FFE27A'] as const,
+  hero: ['#1A1508', '#0A0906', '#2A2210'] as const,
+  midnight: ['#120F06', '#0A0906', '#241E0E'] as const,
   card: ['#181818', '#0D0D0D'] as const,
 } as const;
 
@@ -80,21 +80,21 @@ export const shadows = {
   yellow: Platform.select({
     ios: {
       shadowColor: colors.accentYellow,
-      shadowOpacity: 0.28,
+      shadowOpacity: 0,
       shadowRadius: 16,
       shadowOffset: { width: 0, height: 7 },
     },
-    android: { elevation: 8 },
+    android: { elevation: 0 },
     default: {},
   }),
   floating: Platform.select({
     ios: {
       shadowColor: '#000',
-      shadowOpacity: 0.35,
+      shadowOpacity: 0,
       shadowRadius: 15,
       shadowOffset: { width: 0, height: 7 },
     },
-    android: { elevation: 6 },
+    android: { elevation: 0 },
     default: {},
   }),
 };

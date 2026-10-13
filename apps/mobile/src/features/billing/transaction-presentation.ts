@@ -34,7 +34,7 @@ export function transactionIcon(type: string): ComponentProps<typeof Icon>['name
   if (type === 'PURCHASE') return 'card-outline';
   if (type === 'REFUND' || type === 'GENERATION_RELEASE') return 'refresh-outline';
   if (type === 'CHARGEBACK' || type === 'GENERATION_CAPTURE') return 'flash-outline';
-  return 'sparkles-outline';
+  return 'images-outline';
 }
 
 export function transactionStatus(status: string): string {

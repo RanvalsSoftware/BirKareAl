@@ -2,7 +2,8 @@ import { useLanguageRevision } from '@/i18n/use-language';
 import { getLocale as getAppLocale } from '@/i18n/engine';
 import { tr as translateCopy } from '@/i18n/engine';
 import { useEffect, useState } from 'react';
-import { Alert, Linking, StyleSheet, Switch, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Alert, Image, Linking, StyleSheet, Switch, Text, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -21,6 +22,8 @@ import {
   SettingsSectionTitle,
 } from '@/features/settings/components';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { brand } from '@/theme/brand';
+import { Group, Hint, InfoNote, SelectionMark } from '@/ui/kit';
 
 type Preferences = {
   pushEnabled: boolean;
@@ -85,9 +88,9 @@ function PreferenceSwitch({
       value={value}
       disabled={disabled}
       onValueChange={onChange}
-      thumbColor={value ? '#FFE59C' : '#AAA6AE'}
-      trackColor={{ false: '#343139', true: '#75602B' }}
-      ios_backgroundColor="#343139"
+      thumbColor="#FFFFFF"
+      trackColor={{ false: '#3A3A3C', true: '#F5C132' }}
+      ios_backgroundColor="#3A3A3C"
     />
   );
 }
@@ -173,6 +176,7 @@ function AccountProfileForm({
   }
   return (
     <SettingsPage
+      backLabel={translateCopy('Ayarlar')}
       title={translateCopy('Profili düzenle')}
       subtitle={translateCopy('Hesabındaki adını güncelle')}
     >
@@ -261,17 +265,26 @@ function Appearance() {
   }
   return (
     <SettingsPage
+      backLabel={translateCopy('Ayarlar')}
       title={translateCopy('Görünüm')}
-      subtitle={translateCopy('BirKare’yi kendine göre ayarla')}
+      subtitle={translateCopy('Işığı görseline bırak.')}
     >
-      <GlassSettingsHero
-        icon="color-palette-outline"
-        title={translateCopy('Işığı görseline bırak.')}
-        description={translateCopy(
-          'Fotoğraflarını öne çıkaran siyah arka plan ve yumuşak cam yansımaları.',
-        )}
-        tone="iridescent"
-      />
+      <Group>
+        <View style={styles.appearancePreview}>
+          <Image
+            accessibilityIgnoresInvertColors
+            resizeMode="cover"
+            source={require('../../assets/products/ui/hero-tote.webp')}
+            style={styles.fillImage}
+          />
+        </View>
+        <View style={styles.appearanceMode}>
+          <Ionicons color={brand.gold} name="moon-outline" size={18} />
+          <Text style={styles.appearanceModeTitle}>{translateCopy('Koyu görünüm')}</Text>
+          <SelectionMark selected />
+        </View>
+        <Hint>{translateCopy('BirKare Studio yalnızca koyu temayı kullanır.')}</Hint>
+      </Group>
       <SettingsSectionTitle>{translateCopy('EFEKTLER VE ERİŞİLEBİLİRLİK')}</SettingsSectionTitle>
       <GlassSettingsPanel>
         <GlassSettingsRow
@@ -291,9 +304,9 @@ function Appearance() {
         />
         <GlassSettingsRow
           icon="accessibility-outline"
-          accent="purple"
+          last
           title={translateCopy('Animasyonu azalt')}
-          detail={translateCopy('Dekoratif hareketleri ve basma animasyonunu azalt')}
+          detail={translateCopy('Dekoratif hareketleri azalt')}
           trailing={
             <PreferenceSwitch
               label={translateCopy('Animasyonu azalt')}
@@ -307,15 +320,15 @@ function Appearance() {
         />
       </GlassSettingsPanel>
       <Feedback message={feedback.message} />
-      <SettingsNote>
+      <InfoNote title={translateCopy('Sistem tercihlerin her zaman korunur')}>
         {reducedMotion
           ? translateCopy(
               'Animasyon azaltma şu anda etkin. Sistem erişilebilirlik tercihi her zaman önceliklidir.',
             )
           : translateCopy(
-              'Sistemin Hareketi Azalt ve Saydamlığı Azalt tercihleri her zaman korunur.',
+              'iOS’ta Hareketi Azalt veya Saydamlığı Azalt açıksa, uygulama bu tercihlere uyar.',
             )}
-      </SettingsNote>
+      </InfoNote>
     </SettingsPage>
   );
 }
@@ -349,19 +362,22 @@ function Notifications() {
   }
   return (
     <SettingsPage
+      backLabel={translateCopy('Ayarlar')}
       title={translateCopy('Bildirimler')}
-      subtitle={translateCopy('İletişim tercihlerin senin elinde')}
+      subtitle={translateCopy('İletişim tercihlerin senin elinde.')}
     >
-      <GlassSettingsHero
-        icon="notifications-outline"
-        title={translateCopy('Yalnızca istediklerin.')}
-        description={translateCopy(
-          'Tercihlerin hesabında saklanır; cihaz izinleri ayrıca yönetilir.',
+      <InfoNote
+        icon="alert-circle-outline"
+        title={translateCopy('Anlık bildirimler henüz aktif değil')}
+      >
+        {translateCopy(
+          'Bu sürümde cihazına bildirim gönderilmez. Tercihlerini kaydedebilirsin; gönderim sistemi etkinleşene kadar bildirim ulaşmaz.',
         )}
-      />
+      </InfoNote>
+      <SettingsSectionTitle>{translateCopy('Kayıtlı tercihler')}</SettingsSectionTitle>
       <GlassSettingsPanel>
         <GlassSettingsRow
-          icon="sparkles-outline"
+          icon="chatbubble-ellipses-outline"
           title={translateCopy('Üretim bildirimleri')}
           detail={translateCopy('Sonuç hazır olduğunda bildirim alma tercihi')}
           trailing={
@@ -377,7 +393,7 @@ function Notifications() {
         />
         <GlassSettingsRow
           icon="mail-outline"
-          accent="purple"
+          last
           title={translateCopy('Kampanya e-postaları')}
           detail={translateCopy('Kredi ve ürün haberleri için iletişim izni')}
           trailing={
@@ -391,14 +407,21 @@ function Notifications() {
             />
           }
         />
+      </GlassSettingsPanel>
+      <GlassSettingsPanel>
         <GlassSettingsRow
           icon="phone-portrait-outline"
           title={translateCopy('Cihaz izinlerini aç')}
+          detail={translateCopy('iOS bildirim ayarlarına git')}
           onPress={() => {
             void Linking.openSettings().catch(feedback.error);
           }}
-          last
         />
+        <Hint>
+          {translateCopy(
+            'Cihaz izni vermek, bu sürümde anlık bildirim gönderimini başlatmaz.',
+          )}
+        </Hint>
       </GlassSettingsPanel>
       {isError ? (
         <SettingsNote warning>
@@ -410,7 +433,7 @@ function Notifications() {
       <Feedback message={feedback.message} />
       <SettingsNote>
         {translateCopy(
-          'Bu sürümde cihazlara anlık bildirim gönderimi henüz etkin değil. Tercihlerini kaydedebilirsin; gönderim sistemi etkinleşmeden bildirim ulaşmaz.',
+          'Tercihler hesabında saklanır. Cihaz izinleri ayrıca iOS Ayarlar’dan yönetilir.',
         )}
       </SettingsNote>
     </SettingsPage>
@@ -447,6 +470,7 @@ function Privacy() {
   }
   return (
     <SettingsPage
+      backLabel={translateCopy('Ayarlar')}
       title={translateCopy('Gizlilik ve verilerim')}
       subtitle={translateCopy('Hesabın ve görsellerin üzerinde kontrol')}
     >
@@ -785,6 +809,7 @@ function History() {
   });
   return (
     <SettingsPage
+      backLabel={translateCopy('Ayarlar')}
       title={translateCopy('İşlem geçmişi')}
       subtitle={translateCopy('Hesabına ait kredi hareketleri')}
     >
@@ -831,6 +856,10 @@ function History() {
 }
 
 const styles = StyleSheet.create({
+  fillImage: { height: '100%', width: '100%' },
+  appearancePreview: { aspectRatio: 326 / 178, borderRadius: 12, overflow: 'hidden' },
+  appearanceMode: { alignItems: 'center', flexDirection: 'row', gap: 10 },
+  appearanceModeTitle: { color: brand.text, flex: 1, fontSize: 16, fontWeight: '600' },
   nameForm: { paddingVertical: 17, gap: 19 },
   googleButton: { marginBottom: 9 },
   helper: { color: '#99949F', fontSize: 12, lineHeight: 19, marginBottom: 12 },

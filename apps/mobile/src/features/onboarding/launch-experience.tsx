@@ -77,12 +77,12 @@ const filterTints: Record<OnboardingFilterId, string> = {
   'warm-studio': '#D57A30',
   cinematic: '#A76118',
   'pop-art': '#D43A7A',
-  'drip-art': '#763BCA',
+  'drip-art': '#CAA43B',
   hdr: '#417CAF',
   'black-white': '#A8A8A8',
   vintage: '#966336',
   bokeh: '#B56B2C',
-  cyberpunk: '#7D39D8',
+  cyberpunk: '#D8AE39',
   watercolor: '#5A8FC9',
   sketch: '#7E716A',
   cartoon: '#E25B31',
@@ -1159,7 +1159,7 @@ function FilterStep({
           style={StyleSheet.absoluteFill}
         />
         <View style={styles.filterAiBadge}>
-          <Ionicons color={colors.background} name="sparkles" size={13} />
+          <Ionicons color={colors.background} name="camera" size={13} />
           <Text style={styles.filterAiBadgeText}>{translateCopy('Yaklaşık ton önizlemesi')}</Text>
         </View>
         <View style={styles.originalThumb}>
@@ -1255,7 +1255,7 @@ function FilterStep({
         </View>
       </View>
 
-      <InfoNote icon="sparkles-outline">
+      <InfoNote icon="information-circle-outline">
         <Text style={styles.infoAccent}>{translateCopy('Ücretsiz yerel önizleme:')}</Text>
         {translateCopy(
           'Yoğunluk burada ışık ve tonu değiştirir. Filtrenin gerçek AI dokusu üretim onayından sonra oluşur.',
@@ -1598,7 +1598,7 @@ function MotionNote({ children }: { children: string }) {
 
   return (
     <View style={styles.motionNote}>
-      <Ionicons color={colors.accentYellow} name="sparkles-outline" size={15} />
+      <Ionicons color={colors.accentYellow} name="information-circle-outline" size={15} />
       <Text style={styles.motionNoteText}>{children}</Text>
     </View>
   );
@@ -1772,7 +1772,7 @@ const styles = StyleSheet.create({
     opacity: 0.07,
     shadowColor: '#FFC400',
     shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.95,
+    shadowOpacity: 0,
     shadowRadius: 28,
   },
   logoBeamArcWide: {
@@ -1780,7 +1780,7 @@ const styles = StyleSheet.create({
     opacity: 0.18,
     shadowColor: '#FFB800',
     shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.85,
+    shadowOpacity: 0,
     shadowRadius: 16,
   },
   logoBeamArcCore: {
@@ -1788,7 +1788,7 @@ const styles = StyleSheet.create({
     opacity: 0.98,
     shadowColor: '#FFF0B5',
     shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.98,
+    shadowOpacity: 0,
     shadowRadius: 9,
   },
   logoBeamArcParallel: {
@@ -1808,7 +1808,7 @@ const styles = StyleSheet.create({
     opacity: 0.63,
     shadowColor: '#FFD64D',
     shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.72,
+    shadowOpacity: 0,
     shadowRadius: 8,
   },
   logoBeamArcTertiary: {
@@ -1816,7 +1816,7 @@ const styles = StyleSheet.create({
     opacity: 0.34,
     shadowColor: '#FFC400',
     shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.48,
+    shadowOpacity: 0,
     shadowRadius: 6,
   },
   logoBeamShimmerTopLeft: {
@@ -1929,7 +1929,7 @@ const styles = StyleSheet.create({
     width: 460,
   },
   bridgeOrbitTwo: {
-    borderColor: 'rgba(124,58,237,0.38)',
+    borderColor: 'rgba(255,255,255,0.10)',
     borderRadius: 260,
     borderWidth: 1,
     bottom: -210,
@@ -2273,7 +2273,7 @@ const styles = StyleSheet.create({
     width: 72,
   },
   demoCardActive: {
-    borderColor: colors.accentYellow,
+    borderColor: colors.border,
     borderWidth: 2,
     transform: [{ scale: motion.scale.thumbnailSelected }],
   },
@@ -2326,7 +2326,7 @@ const styles = StyleSheet.create({
   motionNoteText: {
     color: '#AAA18E',
     flex: 1,
-    fontSize: 10,
+    fontSize: 11,
     lineHeight: 15,
   },
   sceneGrid: {
@@ -2349,10 +2349,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   sceneCardActive: {
-    borderColor: colors.accentYellow,
+    borderColor: colors.border,
     borderWidth: 2,
     shadowColor: colors.accentYellow,
-    shadowOpacity: 0.28,
+    shadowOpacity: 0,
     shadowRadius: 13,
     transform: [{ scale: motion.scale.selected }],
   },
@@ -2443,7 +2443,7 @@ const styles = StyleSheet.create({
   },
   sceneReadyBody: {
     color: colors.textSecondary,
-    fontSize: 10,
+    fontSize: 11,
     marginTop: 3,
   },
   filterHero: {
@@ -2469,7 +2469,7 @@ const styles = StyleSheet.create({
   },
   filterAiBadgeText: {
     color: colors.background,
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '900',
   },
   originalThumb: {
@@ -2493,7 +2493,7 @@ const styles = StyleSheet.create({
   },
   originalThumbText: {
     color: colors.textPrimary,
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '800',
     textAlign: 'center',
   },
@@ -2520,7 +2520,7 @@ const styles = StyleSheet.create({
     width: 104,
   },
   filterCardActive: {
-    borderColor: colors.accentYellow,
+    borderColor: colors.border,
     borderWidth: 2,
     transform: [{ scale: motion.scale.selected }],
   },
@@ -2674,7 +2674,7 @@ const styles = StyleSheet.create({
   compareHandle: {
     alignItems: 'center',
     backgroundColor: '#121212',
-    borderColor: colors.accentYellow,
+    borderColor: colors.border,
     borderRadius: 24,
     borderWidth: 2,
     flexDirection: 'row',
@@ -2731,7 +2731,7 @@ const styles = StyleSheet.create({
   },
   faceChipText: {
     color: colors.background,
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: '900',
   },
   compareTip: {
@@ -2803,7 +2803,7 @@ const styles = StyleSheet.create({
   },
   selectionPreviewValue: {
     color: colors.textPrimary,
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '800',
     lineHeight: 13,
     marginTop: 3,
@@ -3007,7 +3007,7 @@ const styles = StyleSheet.create({
   },
   sheetEyebrow: {
     color: colors.accentYellow,
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '900',
     letterSpacing: 0.9,
   },
@@ -3050,11 +3050,11 @@ const styles = StyleSheet.create({
   },
   editOptionActive: {
     backgroundColor: colors.accentYellow,
-    borderColor: colors.accentYellow,
+    borderColor: colors.border,
   },
   editOptionText: {
     color: colors.textPrimary,
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '800',
     textAlign: 'center',
   },

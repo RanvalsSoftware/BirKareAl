@@ -12,7 +12,6 @@ import {
   AuthFormCard,
   AuthLayout,
   AuthLogo,
-  AuthNote,
   AuthTitle,
   FormField,
   GradientAuthButton,
@@ -214,12 +213,6 @@ export default function ResetPasswordScreen() {
             </View>
           )}
         />
-        <AuthNote icon="lock-closed-outline" tone="warning">
-          {copy(
-            'Güvenlik için şifren değiştiğinde tüm açık oturumların kapatılır.',
-            'For security, changing your password signs out all active sessions.',
-          )}
-        </AuthNote>
         {errors.root?.message ? (
           <Text accessibilityLiveRegion="polite" style={styles.error}>
             {errors.root.message}

@@ -1,6 +1,6 @@
-import { getLocale as getAppLocale } from '@/i18n/engine';
-import { useLanguageRevision } from '@/i18n/use-language';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import type { ReactNode } from 'react';
 import {
   Image,
   Pressable,
@@ -8,66 +8,83 @@ import {
   StyleSheet,
   Text,
   View,
-  useWindowDimensions,
   type ImageSourcePropType,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { apiBaseUrl } from '@/api/client';
-import { CreditBadge, Icon } from '@/components';
 import { useAuthStore, type AuthUser } from '@/features/auth/auth-store';
 import { useAvailableCredits } from '@/features/billing/use-wallet';
 import { useUserProjects } from '@/features/projects/use-user-projects';
-import {
-  commerceGoals,
-  commerceGoalById,
-  type CommerceGoalDefinition,
-} from '@/features/studio/commerceGoals';
-import {
-  resetProductStudioFlow,
-  updateProductStudioFlow,
-} from '@/features/studio/productFlow';
 import { useCopy } from '@/features/settings/language-store';
-import { colors, radii, spacing, typography } from '@/theme';
+import { commerceGoals, type CommerceGoalDefinition } from '@/features/studio/commerceGoals';
+import { resetProductStudioFlow, updateProductStudioFlow } from '@/features/studio/productFlow';
+import { getLocale as getAppLocale } from '@/i18n/engine';
+import { useLanguageRevision } from '@/i18n/use-language';
+import { brand } from '@/theme/brand';
+import { BrandNav, CreditBadge, Page, PrimaryAction, TabHeader, useLayout } from '@/ui/kit';
+
+const heroPhotograph = require('../../assets/products/ui/hero-tote.webp');
 
 const goalArtwork: Record<CommerceGoalDefinition['id'], ImageSourcePropType> = {
-  marketplace: require('../../assets/products/ui/scenes/white-studio.webp'),
-  'product-page': require('../../assets/products/ui/product-shoot.webp'),
-  'social-ad': require('../../assets/products/ui/scenes/ad-poster.webp'),
-  'web-hero': require('../../assets/products/ui/scenes/desktop.webp'),
+  marketplace: require('../../assets/products/ui/categories/shoes.webp'),
+  'product-page': require('../../assets/products/ui/categories/cosmetics.webp'),
+  'social-ad': require('../../assets/products/ui/categories/handbag.webp'),
+  'web-hero': require('../../assets/products/ui/product-shoot.webp'),
 };
+
+const WORKSPACE_WIDTH = 1120;
+const GRID_GAP = 12;
 
 function displayFirstName(user: AuthUser | null): string | null {
   const firstName = user?.firstName?.trim();
   if (firstName) return firstName;
-  const emailPrefix = user?.email.split('@')[0]?.replace(/[._-]+/g, ' ').trim();
+  const emailPrefix = user?.email
+    .split('@')[0]
+    ?.replace(/[._-]+/g, ' ')
+    .trim();
   return emailPrefix
     ? emailPrefix.charAt(0).toLocaleUpperCase(getAppLocale()) + emailPrefix.slice(1)
     : null;
 }
 
-function projectOutputUri(assetId: string | null): string | null {
+function outputUri(assetId: string | null): string | null {
   return assetId ? `${apiBaseUrl}/v1/assets/${encodeURIComponent(assetId)}/content` : null;
+}
+
+function formatDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return new Intl.DateTimeFormat(getAppLocale(), {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
 }
 
 export default function HomeScreen() {
   useLanguageRevision();
   const copy = useCopy();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
-  const tablet = width >= 768;
   const user = useAuthStore((store) => store.user);
   const accessToken = useAuthStore((store) => store.accessToken);
   const availableCredits = useAvailableCredits();
   const projectsQuery = useUserProjects();
   const firstName = displayFirstName(user);
-  const recentProducts = (projectsQuery.data ?? [])
+  const { wide, width, gutter } = useLayout();
+  const columns = wide ? 4 : 2;
+  const contentWidth = Math.min(width - gutter * 2, WORKSPACE_WIDTH);
+  const tileWidth = Math.floor((contentWidth - GRID_GAP * (columns - 1)) / columns);
+  const recentProjects = (projectsQuery.data ?? [])
     .filter((project) => project.mode === 'PRODUCT_STUDIO')
-    .slice(0, tablet ? 4 : 3);
+    .slice(0, 4);
 
-  function startGoal(goalId: CommerceGoalDefinition['id']) {
-    const goal = commerceGoalById(goalId);
+  function startProject() {
+    resetProductStudioFlow();
+    router.push('/studio/product' as never);
+  }
+
+  /** Skips the "where will you use it" step: the shortcut already answers it. */
+  function startWithGoal(goal: CommerceGoalDefinition) {
     resetProductStudioFlow();
     updateProductStudioFlow({
       commerceGoal: goal.id,
@@ -78,445 +95,272 @@ export default function HomeScreen() {
     router.push({ pathname: '/studio/product', params: { entry: goal.id } } as never);
   }
 
-  return (
-    <ScrollView
-      style={styles.screen}
-      contentContainerStyle={[
-        styles.scrollContent,
-        {
-          paddingTop: insets.top + spacing.sm,
-          paddingBottom: Math.max(insets.bottom, spacing.md) + 92,
-        },
-      ]}
-      showsVerticalScrollIndicator={false}
+  const goalCards = commerceGoals.map((goal) => (
+    <Pressable
+      accessibilityHint={copy(goal.descriptionTr, goal.descriptionEn)}
+      accessibilityLabel={`${copy(goal.titleTr, goal.titleEn)}, ${goal.aspectRatio}`}
+      accessibilityRole="button"
+      key={goal.id}
+      onPress={() => startWithGoal(goal)}
+      style={({ pressed }) => [wide ? styles.goalWide : styles.goal, pressed && styles.pressed]}
     >
-      <View style={styles.page}>
-        <View style={styles.topBar}>
-          <View style={styles.brand}>
-            <View style={styles.brandMark}>
-              <Icon name="cube-outline" size={22} color="#0A2118" />
-            </View>
-            <View>
-              <Text style={styles.brandName}>BirKare Studio</Text>
-              <Text style={styles.brandCaption}>
-                {copy('Ürün görsel çalışma alanın', 'Your product-image workspace')}
-              </Text>
-            </View>
-          </View>
-          <CreditBadge credits={availableCredits} />
-        </View>
+      <Image
+        accessibilityIgnoresInvertColors
+        resizeMode="cover"
+        source={goalArtwork[goal.id]}
+        style={[styles.goalImage, wide && styles.goalImageWide]}
+      />
+      <View style={styles.tileCopy}>
+        <Text numberOfLines={2} style={styles.tileTitle}>
+          {copy(goal.titleTr, goal.titleEn)}
+        </Text>
+        <Text style={styles.tileMeta}>{goal.aspectRatio}</Text>
+      </View>
+    </Pressable>
+  ));
 
-        <View style={[styles.hero, tablet && styles.heroTablet]}>
+  return (
+    <Page width="workspace">
+      <BrandNav
+        trailing={
+          <CreditBadge
+            accessibilityLabel={copy(
+              `${availableCredits} kredi, kredileri aç`,
+              `${availableCredits} credits, open credits`,
+            )}
+            amount={availableCredits}
+            onPress={() => router.push('/(tabs)/credits' as never)}
+          />
+        }
+      />
+      <TabHeader
+        subtitle={
+          firstName
+            ? copy(`Merhaba, ${firstName}`, `Hello, ${firstName}`)
+            : copy('Merhaba', 'Hello')
+        }
+        title={copy('Stüdyo', 'Studio')}
+      />
+
+      <View style={[styles.hero, wide && styles.heroWide]}>
+        <Image
+          accessibilityIgnoresInvertColors
+          accessibilityLabel={copy(
+            'Taş bir kaide üzerinde keten çanta örnek ürün fotoğrafı',
+            'Sample product photo of a linen bag on a stone plinth',
+          )}
+          resizeMode="cover"
+          source={heroPhotograph}
+          style={wide ? styles.heroImageWide : styles.heroImage}
+        />
+        <View style={[styles.heroBody, wide && styles.heroBodyWide]}>
           <View style={styles.heroCopy}>
-            <Text style={styles.eyebrow}>{copy('ÜRÜN STÜDYOSU', 'PRODUCT STUDIO')}</Text>
             <Text style={styles.heroTitle}>
-              {firstName
-                ? copy(
-                    `${firstName}, ürününü satışa hazırla.`,
-                    `${firstName}, get your product ready to sell.`,
-                  )
-                : copy('Ürününü satışa hazırla.', 'Get your product ready to sell.')}
+              {copy('Tek fotoğraf, dört satış formatı.', 'One photo, four sales formats.')}
             </Text>
-            <Text style={styles.heroBody}>
+            <Text style={styles.heroSubtitle}>
               {copy(
-                'Tek bir ürün fotoğrafından katalog, ürün sayfası ve kampanya alternatifleri üret.',
-                'Turn one product photo into catalog, product-page, and campaign alternatives.',
-              )}
-            </Text>
-            <View style={styles.heroActions}>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => startGoal('marketplace')}
-                style={({ pressed }) => [styles.primaryAction, pressed && styles.pressed]}
-              >
-                <Icon name="add" size={21} color="#0A2118" />
-                <Text style={styles.primaryActionText}>
-                  {copy('Yeni ürün çekimi', 'New product shoot')}
-                </Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => router.push('/(tabs)/projects' as never)}
-                style={({ pressed }) => [styles.secondaryAction, pressed && styles.pressed]}
-              >
-                <Text style={styles.secondaryActionText}>
-                  {copy('Kataloğu aç', 'Open catalog')}
-                </Text>
-                <Icon name="arrow-forward" size={18} color={colors.textPrimary} />
-              </Pressable>
-            </View>
-          </View>
-          <View style={[styles.heroVisual, tablet && styles.heroVisualTablet]}>
-            <Image
-              accessibilityIgnoresInvertColors
-              source={require('../../assets/products/ui/catalog-shoot.webp')}
-              resizeMode="cover"
-              style={styles.heroImage}
-            />
-            <View style={styles.heroImageBadge}>
-              <Icon name="shield-checkmark-outline" size={16} color="#C8F6D9" />
-              <Text style={styles.heroImageBadgeText}>
-                {copy('Ürün kimliğini koruyan akış', 'Product-preserving workflow')}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.steps}>
-          {[
-            [copy('1 · Yükle', '1 · Upload'), copy('Net bir ürün fotoğrafı', 'One clear product photo')],
-            [copy('2 · Planla', '2 · Plan'), copy('Amaç, sahne ve format', 'Goal, scene, and format')],
-            [copy('3 · Üret', '3 · Generate'), copy('1, 2 veya 4 alternatif', '1, 2, or 4 alternatives')],
-          ].map(([title, detail]) => (
-            <View key={title} style={styles.step}>
-              <Text style={styles.stepTitle}>{title}</Text>
-              <Text style={styles.stepDetail}>{detail}</Text>
-            </View>
-          ))}
-        </View>
-
-        <View style={styles.sectionHeading}>
-          <View>
-            <Text style={styles.sectionTitle}>
-              {copy('Nerede kullanacaksın?', 'Where will you use it?')}
-            </Text>
-            <Text style={styles.sectionSubtitle}>
-              {copy(
-                'Seçimin sahne ve format için başlangıç ayarını yapar.',
-                'Your choice sets a starting scene and format.',
+                'Katalog, ürün sayfası, sosyal ilan ve web vitrini için tutarlı alternatifler üret.',
+                'Create consistent alternatives for catalogs, product pages, social ads, and web heroes.',
               )}
             </Text>
           </View>
+          <PrimaryAction
+            icon="camera"
+            label={copy('Yeni ürün çekimi', 'New product shoot')}
+            onPress={startProject}
+            style={wide ? styles.heroActionWide : undefined}
+          />
         </View>
+      </View>
 
-        <View style={[styles.goalGrid, tablet && styles.goalGridTablet]}>
-          {commerceGoals.map((goal) => (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={copy(goal.titleTr, goal.titleEn)}
-              key={goal.id}
-              onPress={() => startGoal(goal.id)}
-              style={({ pressed }) => [
-                styles.goalCard,
-                tablet && styles.goalCardTablet,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Image source={goalArtwork[goal.id]} resizeMode="cover" style={styles.goalImage} />
-              <View style={styles.goalCopy}>
-                <View style={styles.goalIcon}>
-                  <Icon name={goal.icon} size={18} color="#C8F6D9" />
-                </View>
-                <View style={styles.goalText}>
-                  <Text style={styles.goalTitle}>{copy(goal.titleTr, goal.titleEn)}</Text>
-                  <Text numberOfLines={2} style={styles.goalDescription}>
-                    {copy(goal.descriptionTr, goal.descriptionEn)}
-                  </Text>
-                  <Text style={styles.goalMeta}>
-                    {goal.aspectRatio} · {copy('2 alternatifle başla', 'Start with 2 alternatives')}
-                  </Text>
-                </View>
-                <Icon name="chevron-forward" size={19} color={colors.textMuted} />
-              </View>
-            </Pressable>
-          ))}
-        </View>
-
-        <View style={styles.sectionHeading}>
-          <View>
-            <Text style={styles.sectionTitle}>
-              {copy('Son ürün projeleri', 'Recent product projects')}
-            </Text>
-            <Text style={styles.sectionSubtitle}>
-              {copy(
-                'Çekimlerine ve versiyonlarına kaldığın yerden devam et.',
-                'Continue your shoots and versions where you left off.',
-              )}
-            </Text>
-          </View>
-          <Pressable onPress={() => router.push('/(tabs)/projects' as never)} hitSlop={8}>
-            <Text style={styles.inlineAction}>{copy('Tümü', 'See all')}</Text>
-          </Pressable>
-        </View>
-
-        {recentProducts.length ? (
+      <View style={styles.section}>
+        <SectionHeading
+          subtitle={copy(
+            'Görseli nerede kullanacaksan oradan başla.',
+            'Start from where the image will be used.',
+          )}
+          title={copy('Hızlı başlat', 'Quick start')}
+        />
+        {wide ? (
+          <View style={styles.goalRow}>{goalCards}</View>
+        ) : (
           <ScrollView
+            contentContainerStyle={[styles.goalShelf, { paddingHorizontal: gutter }]}
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.projectRail}
+            style={{ marginHorizontal: -gutter }}
           >
-            {recentProducts.map((project) => {
-              const outputUri = projectOutputUri(project.outputAssetId);
+            {goalCards}
+          </ScrollView>
+        )}
+      </View>
+
+      <View style={styles.section}>
+        <SectionHeading
+          action={
+            recentProjects.length ? (
+              <Pressable
+                accessibilityRole="button"
+                hitSlop={8}
+                onPress={() => router.push('/(tabs)/projects' as never)}
+                style={({ pressed }) => [styles.seeAll, pressed && styles.pressed]}
+              >
+                <Text style={styles.seeAllText}>{copy('Tümünü gör', 'See all')}</Text>
+                <Ionicons color={brand.gold} name="chevron-forward" size={15} />
+              </Pressable>
+            ) : null
+          }
+          title={copy('Son projeler', 'Recent projects')}
+        />
+
+        {projectsQuery.isLoading ? (
+          <View style={styles.grid}>
+            {Array.from({ length: columns }, (_, index) => (
+              <View key={index} style={[styles.projectVisual, { width: tileWidth }]} />
+            ))}
+          </View>
+        ) : recentProjects.length ? (
+          <View style={styles.grid}>
+            {recentProjects.map((project) => {
+              const source = outputUri(project.outputAssetId);
+              const title = project.title?.trim() || copy('Ürün projesi', 'Product project');
               return (
                 <Pressable
+                  accessibilityLabel={title}
                   accessibilityRole="button"
                   key={project.id}
                   onPress={() => router.push(`/projects/${project.id}` as never)}
-                  style={({ pressed }) => [styles.projectCard, pressed && styles.pressed]}
+                  style={({ pressed }) => [{ width: tileWidth }, pressed && styles.pressed]}
                 >
-                  {outputUri ? (
-                    <Image
-                      source={{
-                        uri: outputUri,
-                        headers: accessToken
-                          ? { authorization: `Bearer ${accessToken}` }
-                          : undefined,
-                      }}
-                      resizeMode="cover"
-                      style={styles.projectImage}
-                    />
-                  ) : (
-                    <View style={styles.projectPlaceholder}>
-                      <Icon name="hourglass-outline" size={26} color={colors.textMuted} />
-                    </View>
-                  )}
-                  <Text numberOfLines={1} style={styles.projectTitle}>
-                    {project.title || copy('Ürün çekimi', 'Product shoot')}
-                  </Text>
-                  <Text style={styles.projectStatus}>
-                    {project.outputAssetId
-                      ? copy('Çıktı hazır', 'Output ready')
-                      : copy('Hazırlanıyor', 'In progress')}
-                  </Text>
+                  <View style={styles.projectVisual}>
+                    {source ? (
+                      <Image
+                        accessibilityIgnoresInvertColors
+                        resizeMode="cover"
+                        source={{
+                          uri: source,
+                          headers: accessToken
+                            ? { authorization: `Bearer ${accessToken}` }
+                            : undefined,
+                        }}
+                        style={StyleSheet.absoluteFill}
+                      />
+                    ) : (
+                      <Ionicons color={brand.textMuted} name="hourglass-outline" size={28} />
+                    )}
+                  </View>
+                  <View style={styles.tileCopy}>
+                    <Text numberOfLines={1} style={styles.tileTitle}>
+                      {title}
+                    </Text>
+                    <Text numberOfLines={1} style={styles.tileMeta}>
+                      {source ? formatDate(project.updatedAt) : copy('Hazırlanıyor', 'Preparing')}
+                    </Text>
+                  </View>
                 </Pressable>
               );
             })}
-          </ScrollView>
+          </View>
         ) : (
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => startGoal('product-page')}
-            style={({ pressed }) => [styles.emptyCatalog, pressed && styles.pressed]}
-          >
-            <View style={styles.emptyIcon}>
-              <Icon name="albums-outline" size={24} color="#C8F6D9" />
-            </View>
-            <View style={styles.emptyCopy}>
-              <Text style={styles.emptyTitle}>
-                {copy('İlk ürününü kataloğa ekle', 'Add your first product to the catalog')}
-              </Text>
-              <Text style={styles.emptyDetail}>
-                {copy(
-                  'Ürün adı, kaynak fotoğrafı, sahne ve çıktı formatıyla düzenli bir proje oluştur.',
-                  'Create an organized project with a product name, source photo, scene, and output format.',
-                )}
-              </Text>
-            </View>
-            <Icon name="arrow-forward" size={20} color={colors.textSecondary} />
-          </Pressable>
+          <View style={styles.emptyState}>
+            <Ionicons color={brand.textMuted} name="images-outline" size={28} />
+            <Text style={styles.emptyTitle}>{copy('Henüz proje yok', 'No projects yet')}</Text>
+            <Text style={styles.emptyText}>
+              {copy(
+                'İlk ürün çekimin, sahneleri ve alternatifleriyle birlikte burada görünecek.',
+                'Your first product shoot will appear here with its scenes and alternatives.',
+              )}
+            </Text>
+          </View>
         )}
-
       </View>
-    </ScrollView>
+    </Page>
+  );
+}
+
+function SectionHeading({
+  title,
+  subtitle,
+  action,
+}: {
+  title: string;
+  subtitle?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <View style={styles.sectionHeader}>
+      <View style={styles.sectionCopy}>
+        <Text accessibilityRole="header" style={styles.sectionTitle}>
+          {title}
+        </Text>
+        {subtitle ? <Text style={styles.sectionSubtitle}>{subtitle}</Text> : null}
+      </View>
+      {action}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#0B0F0D' },
-  scrollContent: { paddingHorizontal: spacing.lg },
-  page: { alignSelf: 'center', maxWidth: 1080, width: '100%' },
-  topBar: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    minHeight: 58,
-  },
-  brand: { alignItems: 'center', flexDirection: 'row', flexShrink: 1, gap: 11 },
-  brandMark: {
-    alignItems: 'center',
-    backgroundColor: '#A9EBC2',
-    borderRadius: 14,
-    height: 42,
-    justifyContent: 'center',
-    width: 42,
-  },
-  brandName: { color: '#F5F8F6', fontSize: 17, fontWeight: '800', letterSpacing: -0.2 },
-  brandCaption: { color: '#89958E', fontSize: 11, lineHeight: 15, marginTop: 1 },
   hero: {
-    backgroundColor: '#15201B',
-    borderColor: '#263A30',
-    borderRadius: 28,
-    borderWidth: 1,
-    marginTop: spacing.lg,
+    backgroundColor: brand.surface,
+    borderRadius: 24,
     overflow: 'hidden',
   },
-  heroTablet: { flexDirection: 'row', minHeight: 390 },
-  heroCopy: { flex: 1, justifyContent: 'center', padding: 24 },
-  eyebrow: { ...typography.overline, color: '#A9EBC2' },
-  heroTitle: {
-    color: '#F5F8F6',
-    fontSize: 34,
-    fontWeight: '800',
-    letterSpacing: -1.1,
-    lineHeight: 40,
-    marginTop: 13,
-    maxWidth: 540,
-  },
-  heroBody: { color: '#B7C2BC', fontSize: 16, lineHeight: 24, marginTop: 13, maxWidth: 520 },
-  heroActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 24 },
-  primaryAction: {
-    alignItems: 'center',
-    backgroundColor: '#A9EBC2',
-    borderRadius: 15,
-    flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'center',
-    minHeight: 50,
-    paddingHorizontal: 18,
-  },
-  primaryActionText: { color: '#0A2118', fontSize: 15, fontWeight: '800' },
-  secondaryAction: {
-    alignItems: 'center',
-    borderColor: '#3C5046',
-    borderRadius: 15,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'center',
-    minHeight: 50,
-    paddingHorizontal: 17,
-  },
-  secondaryActionText: { color: '#F5F8F6', fontSize: 15, fontWeight: '700' },
-  heroVisual: {
-    borderRadius: 22,
-    height: 245,
-    margin: 8,
-    marginTop: 0,
-    overflow: 'hidden',
-  },
-  heroVisualTablet: { flex: 0.78, height: undefined, marginLeft: 0, marginTop: 8 },
-  heroImage: { height: '100%', width: '100%' },
-  heroImageBadge: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(8,18,13,0.84)',
-    borderColor: 'rgba(200,246,217,0.20)',
-    borderRadius: 14,
-    borderWidth: 1,
-    bottom: 12,
-    flexDirection: 'row',
-    gap: 7,
-    left: 12,
-    paddingHorizontal: 11,
-    paddingVertical: 9,
-    position: 'absolute',
-    right: 12,
-  },
-  heroImageBadgeText: { color: '#E6F1EA', flex: 1, fontSize: 12, fontWeight: '700' },
-  steps: {
-    backgroundColor: '#101613',
-    borderColor: '#232E28',
-    borderRadius: 20,
-    borderWidth: 1,
-    flexDirection: 'row',
-    marginTop: 12,
-    overflow: 'hidden',
-  },
-  step: { flex: 1, minWidth: 0, paddingHorizontal: 12, paddingVertical: 15 },
-  stepTitle: { color: '#D9E3DD', fontSize: 12, fontWeight: '800' },
-  stepDetail: { color: '#75837B', fontSize: 11, lineHeight: 15, marginTop: 3 },
-  sectionHeading: {
-    alignItems: 'flex-end',
-    flexDirection: 'row',
-    gap: 12,
-    justifyContent: 'space-between',
-    marginBottom: 13,
-    marginTop: 30,
-  },
-  sectionTitle: { color: '#F5F8F6', fontSize: 22, fontWeight: '800', letterSpacing: -0.5 },
-  sectionSubtitle: { color: '#89958E', fontSize: 13, lineHeight: 18, marginTop: 4 },
-  inlineAction: { color: '#A9EBC2', fontSize: 14, fontWeight: '800', paddingBottom: 2 },
-  goalGrid: { gap: 11 },
-  goalGridTablet: { flexDirection: 'row', flexWrap: 'wrap' },
-  goalCard: {
-    backgroundColor: '#111815',
-    borderColor: '#25322B',
-    borderRadius: 21,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  goalCardTablet: { flexBasis: '48%', flexGrow: 1, minWidth: 340 },
-  goalImage: { height: 126, width: '100%' },
-  goalCopy: { alignItems: 'center', flexDirection: 'row', gap: 11, padding: 14 },
-  goalIcon: {
-    alignItems: 'center',
-    backgroundColor: '#1C2D25',
-    borderRadius: 12,
-    height: 40,
-    justifyContent: 'center',
-    width: 40,
-  },
-  goalText: { flex: 1, minWidth: 0 },
-  goalTitle: { color: '#EEF4F0', fontSize: 16, fontWeight: '800' },
-  goalDescription: { color: '#909C95', fontSize: 12, lineHeight: 17, marginTop: 3 },
-  goalMeta: { color: '#A9EBC2', fontSize: 11, fontWeight: '700', marginTop: 7 },
-  projectRail: { gap: 11, paddingRight: spacing.lg },
-  projectCard: {
-    backgroundColor: '#111815',
-    borderColor: '#25322B',
-    borderRadius: 18,
-    borderWidth: 1,
-    overflow: 'hidden',
-    paddingBottom: 12,
-    width: 174,
-  },
-  projectImage: { height: 145, width: '100%' },
-  projectPlaceholder: {
-    alignItems: 'center',
-    backgroundColor: '#18211D',
-    height: 145,
-    justifyContent: 'center',
+  heroWide: { flexDirection: 'row-reverse' },
+  heroImage: { aspectRatio: 3 / 2, height: undefined, width: '100%' },
+  heroImageWide: { flex: 1.1, height: '100%', minHeight: 340, width: undefined },
+  heroBody: { gap: 20, padding: 20 },
+  heroBodyWide: { flex: 1, justifyContent: 'center', padding: 32 },
+  heroCopy: { gap: 8 },
+  heroActionWide: { alignSelf: 'flex-start', minWidth: 280 },
+  heroTitle: { color: brand.text, fontSize: 28, fontWeight: '700', lineHeight: 34 },
+  heroSubtitle: { color: brand.textSecondary, fontSize: 15, lineHeight: 21 },
+  section: { gap: 14, marginTop: 8 },
+  sectionHeader: { alignItems: 'flex-end', flexDirection: 'row', gap: 12 },
+  sectionCopy: { flex: 1, gap: 2, minWidth: 0 },
+  sectionTitle: { color: brand.text, fontSize: 22, fontWeight: '700', lineHeight: 28 },
+  sectionSubtitle: { color: brand.textSecondary, fontSize: 15, lineHeight: 20 },
+  seeAll: { alignItems: 'center', flexDirection: 'row', gap: 2, minHeight: 28 },
+  seeAllText: { color: brand.gold, fontSize: 15 },
+  goalShelf: { gap: GRID_GAP },
+  goalRow: { flexDirection: 'row', gap: GRID_GAP },
+  goal: { width: 148 },
+  goalWide: { flex: 1 },
+  goalImage: {
+    aspectRatio: 1,
+    backgroundColor: brand.surfaceRaised,
+    borderRadius: 16,
+    height: undefined,
     width: '100%',
   },
-  projectTitle: {
-    color: '#EEF4F0',
-    fontSize: 14,
-    fontWeight: '800',
-    marginTop: 10,
-    paddingHorizontal: 11,
+  goalImageWide: { aspectRatio: 3 / 2 },
+  tileCopy: { gap: 2, paddingHorizontal: 2, paddingTop: 8 },
+  tileTitle: { color: brand.text, fontSize: 15, fontWeight: '600', lineHeight: 20 },
+  tileMeta: {
+    color: brand.textSecondary,
+    fontSize: 13,
+    fontVariant: ['tabular-nums'],
+    lineHeight: 18,
   },
-  projectStatus: { color: '#849088', fontSize: 11, marginTop: 3, paddingHorizontal: 11 },
-  emptyCatalog: {
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP, rowGap: 18 },
+  projectVisual: {
     alignItems: 'center',
-    backgroundColor: '#111815',
-    borderColor: '#2A3B32',
+    aspectRatio: 1,
+    backgroundColor: brand.surface,
+    borderRadius: 16,
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  emptyState: {
+    alignItems: 'center',
+    backgroundColor: brand.surface,
     borderRadius: 20,
-    borderStyle: 'dashed',
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 13,
-    padding: 17,
+    gap: 6,
+    paddingHorizontal: 24,
+    paddingVertical: 28,
   },
-  emptyIcon: {
-    alignItems: 'center',
-    backgroundColor: '#1C2D25',
-    borderRadius: 14,
-    height: 48,
-    justifyContent: 'center',
-    width: 48,
-  },
-  emptyCopy: { flex: 1 },
-  emptyTitle: { color: '#EDF4EF', fontSize: 15, fontWeight: '800' },
-  emptyDetail: { color: '#87948C', fontSize: 12, lineHeight: 17, marginTop: 4 },
-  legacyTools: {
-    alignItems: 'center',
-    borderColor: '#222B26',
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 30,
-    padding: 15,
-  },
-  legacyIcon: {
-    alignItems: 'center',
-    backgroundColor: '#171D1A',
-    borderRadius: 12,
-    height: 40,
-    justifyContent: 'center',
-    width: 40,
-  },
-  legacyCopy: { flex: 1 },
-  legacyTitle: { color: '#C1CBC5', fontSize: 14, fontWeight: '700' },
-  legacyDetail: { color: '#707C75', fontSize: 11, lineHeight: 16, marginTop: 3 },
-  pressed: { opacity: 0.78, transform: [{ scale: 0.99 }] },
+  emptyTitle: { color: brand.text, fontSize: 17, fontWeight: '600', marginTop: 4 },
+  emptyText: { color: brand.textSecondary, fontSize: 15, lineHeight: 20, textAlign: 'center' },
+  pressed: { opacity: 0.65 },
 });

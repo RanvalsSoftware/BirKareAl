@@ -24,6 +24,7 @@ import {
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { BackNav, PageTitle } from '@/ui/kit';
 import { colors, gradients, layout, radii, shadows, spacing, typography } from '@/theme';
 import { GlassSurface } from './GlassSurface';
 
@@ -32,7 +33,7 @@ export { GlassSurface } from './GlassSurface';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
-const brandLogoMark = require('../../assets/brand/birkare-studio-icon-1024-v1.png');
+const brandLogoMark = require('../../assets/brand/logo-mark-640.png');
 
 export function Icon({
   name,
@@ -371,43 +372,43 @@ export function BackButton({
   );
 }
 
+/**
+ * Page header for pushed screens: a gold back link, an optional trailing
+ * accessory, then the page title. `compact` is accepted for compatibility.
+ */
 export function AppHeader({
   title,
   subtitle,
   back = true,
   right,
-  compact = false,
+  backLabel,
 }: {
   title: string;
   subtitle?: string;
   back?: boolean;
   right?: React.ReactNode;
   compact?: boolean;
+  /** Name of the screen the back link returns to. */
+  backLabel?: string;
 }) {
   const languageRevision = useLanguageRevision();
 
   return (
-    <GlassSurface
-      radius={28}
-      tone="gold"
-      style={styles.headerSurface}
-      contentStyle={[styles.header, compact && styles.headerCompact]}
-    >
-      <View style={styles.headerLeft}>
-        {back ? <BackButton /> : null}
-        <View style={styles.headerTitleWrap}>
-          <Text numberOfLines={1} style={styles.headerTitle}>
-            {title}
-          </Text>
-          {subtitle ? (
-            <Text numberOfLines={1} style={styles.headerSubtitle}>
-              {subtitle}
-            </Text>
-          ) : null}
+    <View style={styles.headerBlock}>
+      {back ? (
+        <BackNav
+          accessibilityLabel={translateCopy('Geri')}
+          label={backLabel ?? translateCopy('Geri')}
+          trailing={right}
+        />
+      ) : right ? (
+        <View style={styles.headerRow}>
+          <View />
+          {right}
         </View>
-      </View>
-      {right ? <View style={styles.headerRight}>{right}</View> : null}
-    </GlassSurface>
+      ) : null}
+      <PageTitle subtitle={subtitle} title={title} />
+    </View>
   );
 }
 
@@ -460,7 +461,7 @@ export function ProBadge({ label = 'Pro' }: { label?: string }) {
 
   return (
     <View accessible accessibilityLabel={translateCopy("{{p0}} üyelik", { p0: label })} style={styles.proBadge}>
-      <Icon name="sparkles" size={12} color={colors.background} />
+      <Icon name="star" size={12} color={colors.background} />
       <Text style={styles.proBadgeText}>{label}</Text>
     </View>
   );
@@ -718,7 +719,7 @@ export function CharacterTile({
         {subtitle}
       </Text>
       <View style={styles.aiLabel}>
-        <Icon name="sparkles" size={10} color={colors.accentYellow} />
+        <Icon name="information-circle" size={10} color={colors.accentYellow} />
         <Text style={styles.aiLabelText}>{translateCopy("Kurgusal")}</Text>
       </View>
     </Pressable>
@@ -789,7 +790,7 @@ export function UploadTile({
 }
 
 export function EmptyState({
-  icon = 'sparkles-outline',
+  icon = 'information-circle-outline',
   title,
   detail,
   action,
@@ -825,16 +826,16 @@ export function Notice({
   const languageRevision = useLanguageRevision();
 
   const toneColor =
-    tone === 'warning' ? colors.warning : tone === 'success' ? colors.success : colors.accentPurple;
+    tone === 'warning' ? colors.warning : tone === 'success' ? colors.success : colors.textSecondary;
   return (
-    <View style={[styles.notice, { borderColor: `${toneColor}66` }]}>
+    <View style={styles.notice}>
       <Icon
         name={
           tone === 'warning'
             ? 'information-circle'
             : tone === 'success'
               ? 'checkmark-circle'
-              : 'sparkles'
+              : 'information-circle'
         }
         size={18}
         color={toneColor}
@@ -1074,7 +1075,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.6,
   },
   wordmarkAi: { fontWeight: '300', letterSpacing: 0.3 },
-  wordmarkCaption: { fontSize: 9, lineHeight: 13, color: '#92908A', marginTop: 1 },
+  wordmarkCaption: { fontSize: 11, lineHeight: 13, color: '#92908A', marginTop: 1 },
   primaryButton: {
     minHeight: layout.minTouchTarget,
     paddingHorizontal: spacing.lg,
@@ -1145,21 +1146,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginLeft: -4,
   },
-  headerSurface: { marginBottom: spacing.md },
-  header: {
-    minHeight: 70,
-    paddingHorizontal: 11,
-    paddingVertical: 10,
-    flexDirection: 'row',
+  headerBlock: { gap: 20, marginBottom: spacing.md },
+  headerRow: {
     alignItems: 'center',
+    flexDirection: 'row',
     justifyContent: 'space-between',
+    minHeight: 44,
   },
-  headerCompact: { minHeight: 48, marginBottom: spacing.sm },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  headerTitleWrap: { flex: 1, marginLeft: 5 },
-  headerTitle: { ...typography.h3, color: colors.textPrimary },
-  headerSubtitle: { ...typography.caption, color: colors.textMuted, marginTop: 1 },
-  headerRight: { marginLeft: spacing.sm },
   creditBadge: {
     minHeight: 44,
     paddingHorizontal: 12,
@@ -1174,7 +1167,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
-  proInline: { ...typography.overline, fontSize: 9, color: colors.accentYellow, marginLeft: 2 },
+  proInline: { ...typography.overline, fontSize: 11, color: colors.accentYellow, marginLeft: 2 },
   proBadge: {
     alignSelf: 'flex-start',
     minHeight: 25,
@@ -1300,7 +1293,7 @@ const styles = StyleSheet.create({
   },
   tileBadgeText: {
     ...typography.caption,
-    fontSize: 10,
+    fontSize: 11,
     color: colors.textPrimary,
     fontWeight: '700',
   },
@@ -1316,7 +1309,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   characterTileSelected: {
-    borderColor: colors.accentYellow,
+    borderColor: colors.border,
     backgroundColor: colors.surfaceElevated,
   },
   characterAvatar: {
@@ -1345,7 +1338,7 @@ const styles = StyleSheet.create({
   characterName: { ...typography.label, color: colors.textPrimary, marginTop: 9 },
   characterSubtitle: { ...typography.caption, color: colors.textMuted, marginTop: 2 },
   aiLabel: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 7 },
-  aiLabelText: { ...typography.caption, fontSize: 10, color: colors.accentYellow },
+  aiLabelText: { ...typography.caption, fontSize: 11, color: colors.accentYellow },
   uploadTile: {
     minHeight: 250,
     borderRadius: radii.xl,
@@ -1417,7 +1410,6 @@ const styles = StyleSheet.create({
   },
   emptyAction: { alignSelf: 'stretch', marginTop: spacing.lg },
   notice: {
-    borderWidth: 1,
     backgroundColor: colors.surfaceElevated,
     borderRadius: radii.md,
     padding: 13,

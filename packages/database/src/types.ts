@@ -6,7 +6,12 @@ import type {
   GenerationStatus,
   ProjectMode,
 } from '@birkare/shared';
-import type { CatalogFeaturedPerson, CatalogItem, ResolvedStudioSelection } from '@birkare/shared';
+import type {
+  CatalogFeaturedPerson,
+  CatalogItem,
+  ProjectListing,
+  ResolvedStudioSelection,
+} from '@birkare/shared';
 import type {
   AiToolPreset,
   BeautySettings,
@@ -166,6 +171,12 @@ export type PasswordResetCompletionResult =
 export type EmailVerificationCompletionResult = {
   status: 'VERIFIED' | 'INVALID_TOKEN' | 'ACCOUNT_SUSPENDED' | 'ACCOUNT_UNAVAILABLE';
   welcomeCreditsGranted: boolean;
+  /**
+   * True when the e-mail was verified by someone who did not present the
+   * pending registration's token: the stored password was cleared and every
+   * session revoked, so the owner must set a password through password reset.
+   */
+  passwordResetRequired: boolean;
 };
 
 export type AssetRecord = {
@@ -200,6 +211,12 @@ export type ProjectRecord = {
   featuredPersonId: string | null;
   composition: string | null;
   aspectRatio: AspectRatio;
+  /** Major units with at most two decimals (e.g. 1249.9); `null` when unset. */
+  priceAmount: number | null;
+  /** ISO-4217 alphabetic code. */
+  priceCurrency: string | null;
+  /** Latest generated listing copy; regenerating overwrites it. */
+  listing: ProjectListing | null;
   isFavorite: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -418,6 +435,67 @@ export type GrantCreditsInput = {
   referenceId: string;
   idempotencyKey: string;
   description?: string;
+  /**
+   * Store purchases: `referenceType` + `referenceId` identify one paid store
+   * transaction and may be credited once across ALL accounts. A purchase that
+   * RevenueCat later exposes under another account (restore/transfer/alias)
+   * resolves to `created: false, transaction: null` instead of a second grant.
+   */
+  exclusiveReference?: boolean;
+  /**
+   * The store's own transaction identifier, when it differs from
+   * `referenceId`. Kept with the grant (never returned to clients) so a later
+   * store refund, which only carries this identifier, can find the grant.
+   */
+  storeTransactionId?: string;
+};
+
+export type StoreCreditGrantQuery = {
+  /** Ledger reference types that hold store purchases. */
+  referenceTypes: string[];
+  /** Store transaction identifier carried by the refund signal. */
+  storeTransactionId?: string;
+  /** Exact `referenceId` values already resolved for that store transaction. */
+  referenceIds?: string[];
+};
+
+export type ReverseCreditGrantInput = {
+  /** Ledger id of the PURCHASE / SUBSCRIPTION_GRANT row being clawed back. */
+  grantTransactionId: string;
+  type: Extract<CreditTransactionRecord['type'], 'REFUND' | 'CHARGEBACK'>;
+  /** Short machine-readable origin, e.g. `revenuecat-webhook`. */
+  source: string;
+  description?: string;
+};
+
+export type ReverseCreditGrantResult = {
+  /**
+   * REVERSED: this call deducted. ALREADY_REVERSED: an earlier call did.
+   * NOT_FOUND: no such grant (never granted, or the account was erased).
+   */
+  status: 'REVERSED' | 'ALREADY_REVERSED' | 'NOT_FOUND';
+  userId: string | null;
+  granted: number;
+  /** Credits actually removed from `available` (never more than available). */
+  deducted: number;
+  /** Granted credits that were already spent/reserved and could not be removed. */
+  shortfall: number;
+  transaction: CreditTransactionRecord | null;
+};
+
+export type RestoreCreditGrantResult = {
+  /** RESTORED: the earlier deduction was returned by this call. */
+  status: 'RESTORED' | 'NOT_REVERSED' | 'NOT_FOUND';
+  userId: string | null;
+  restored: number;
+  transaction: CreditTransactionRecord | null;
+};
+
+export type GrantCreditsResult = {
+  wallet: CreditWalletRecord;
+  /** Null only when another account already owns an exclusive reference. */
+  transaction: CreditTransactionRecord | null;
+  created: boolean;
 };
 
 export type IdempotencyRecord = {
@@ -462,7 +540,11 @@ export type CreateUserConsentInput = Omit<UserConsentRecord, 'id' | 'userId' | '
 export type CreateUserInput = Pick<
   UserRecord,
   'email' | 'passwordHash' | 'firstName' | 'lastName' | 'locale' | 'dateOfBirth'
-> & { consents: CreateUserConsentInput[] };
+> & {
+  consents: CreateUserConsentInput[];
+  /** SHA-256 of the opaque registration token; binds the pending registration to its client. */
+  registrationTokenHash?: string | null;
+};
 export type CreateSessionInput = {
   userId: string;
   refreshTokenHash: string;
@@ -553,6 +635,13 @@ export interface BirKareRepository {
   backfillWelcomeCreditClaims(): Promise<number>;
 
   createUser(input: CreateUserInput): Promise<UserRecord>;
+  /**
+   * Atomically replaces a still-unverified password registration with a fresh
+   * one: credentials, profile, consents and registration token are overwritten,
+   * outstanding verification codes are deleted and sessions revoked. Returns
+   * null when the account is not (or no longer) pending verification.
+   */
+  replacePendingRegistration(userId: string, input: CreateUserInput): Promise<UserRecord | null>;
   getUserById(id: string): Promise<UserRecord | null>;
   getUserByEmail(email: string): Promise<UserRecord | null>;
   getUserByAuthAccount(
@@ -567,6 +656,22 @@ export interface BirKareRepository {
     provider: SocialAuthProvider,
   ): Promise<PendingSocialLoginRecord | null>;
   purgePendingSocialLogins(input: { before: Date; limit: number }): Promise<number>;
+  /**
+   * Atomically marks a provider ID token as used. Exactly one caller receives
+   * true for a given provider + tokenKey; every other caller receives false.
+   */
+  consumeIdentityToken(input: {
+    provider: SocialAuthProvider;
+    tokenKey: string;
+    expiresAt: Date;
+  }): Promise<boolean>;
+  /** Undoes a consume whose request then failed before any session/handoff was issued. */
+  releaseIdentityToken(input: { provider: SocialAuthProvider; tokenKey: string }): Promise<void>;
+  isIdentityTokenConsumed(input: {
+    provider: SocialAuthProvider;
+    tokenKey: string;
+  }): Promise<boolean>;
+  purgeConsumedIdentityTokens(input: { before: Date; limit: number }): Promise<number>;
   listUserConsents(userId: string): Promise<UserConsentRecord[]>;
   listUserConsentEvents(userId: string, type: ConsentType): Promise<ConsentEventRecord[]>;
   createUserConsentEvent(
@@ -639,6 +744,12 @@ export interface BirKareRepository {
     tokenHash: string,
     maxFailedAttempts: number,
     welcomeCreditAbuseHash: string,
+    /**
+     * Hash of the registration token presented with the code, or null. When it
+     * does not equal the pending registration's stored hash the e-mail is
+     * still verified, but the password is cleared and sessions are revoked.
+     */
+    registrationTokenHash?: string | null,
   ): Promise<EmailVerificationCompletionResult>;
   invalidateEmailTokens(userId: string, type: EmailTokenType): Promise<void>;
 
@@ -671,10 +782,12 @@ export interface BirKareRepository {
         | 'featuredPersonId'
         | 'composition'
         | 'aspectRatio'
+        | 'priceAmount'
+        | 'priceCurrency'
         | 'isFavorite'
         | 'deletedAt'
       >
-    >,
+    > & { listing?: ProjectListing },
   ): Promise<ProjectRecord>;
 
   createGeneration(input: CreateGenerationInput): Promise<GenerationRecord>;
@@ -711,11 +824,22 @@ export interface BirKareRepository {
       reason?: string;
     },
   ): Promise<CreditSettlementResult>;
-  grantCredits(input: GrantCreditsInput): Promise<{
-    wallet: CreditWalletRecord;
-    transaction: CreditTransactionRecord;
-    created: boolean;
-  }>;
+  grantCredits(input: GrantCreditsInput): Promise<GrantCreditsResult>;
+  /** Store-purchase grants (positive PURCHASE / SUBSCRIPTION_GRANT rows) for one store transaction. */
+  findStoreCreditGrants(input: StoreCreditGrantQuery): Promise<CreditTransactionRecord[]>;
+  /**
+   * Claws back one grant after a store refund, at most once per refund:
+   * deducts min(granted, available), never touches `reserved`, never drives the
+   * wallet negative, and writes one REFUND/CHARGEBACK ledger row. Uses the same
+   * account + reference locks as `grantCredits`.
+   */
+  reverseCreditGrant(input: ReverseCreditGrantInput): Promise<ReverseCreditGrantResult>;
+  /** A store refund was reversed: returns the credits that refund removed, exactly once. */
+  restoreReversedCreditGrant(input: {
+    grantTransactionId: string;
+    source: string;
+    description?: string;
+  }): Promise<RestoreCreditGrantResult>;
   listCreditTransactions(userId: string): Promise<CreditTransactionRecord[]>;
 
   getIdempotency(route: string, key: string): Promise<IdempotencyRecord | null>;

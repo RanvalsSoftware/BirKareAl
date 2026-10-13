@@ -5,6 +5,7 @@ import { useFocusEffect } from 'expo-router';
 import { apiRequest } from '@/api/client';
 import { useAuthStore } from '@/features/auth/auth-store';
 import { accountQueryKey } from '@/features/auth/account-query-cache';
+import type { ProductListing } from './product-api';
 
 export const USER_PROJECTS_QUERY_KEY = ['projects', 'current-user'] as const;
 
@@ -26,6 +27,10 @@ type ProjectListItem = {
   isFavorite: boolean;
   createdAt: string;
   updatedAt: string;
+  /** Absent on servers that predate product pricing and listings. */
+  priceAmount?: number | null;
+  priceCurrency?: string | null;
+  listing?: ProductListing | null;
 };
 
 type ProjectListPage = {

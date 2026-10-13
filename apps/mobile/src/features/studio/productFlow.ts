@@ -13,6 +13,8 @@ export type ProductStudioFlow = {
   numberOfImages: StudioImageCount;
   primaryUri: string | null;
   primaryName: string | null;
+  /** Transparent on-device cut-out of the product, used only by the live preview. */
+  cutoutUri: string | null;
   categoryId: string | null;
   sceneId: string | null;
   quality: StudioQuality;
@@ -29,6 +31,7 @@ function freshFlow(): ProductStudioFlow {
     numberOfImages: 2,
     primaryUri: null,
     primaryName: null,
+    cutoutUri: null,
     categoryId: null,
     sceneId: null,
     quality: 'STANDARD',

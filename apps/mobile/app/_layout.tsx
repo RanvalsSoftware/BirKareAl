@@ -16,6 +16,11 @@ import { apiRequest } from '@/api/client';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { RevenueCatBootstrap } from '@/features/billing/revenuecat';
 
+// Required only in development so the driver's code is not part of a release bundle.
+const ScreenshotDriver: (() => null) | null = __DEV__
+  ? (require('@/dev/screenshot-driver') as { ScreenshotDriver: () => null }).ScreenshotDriver
+  : null;
+
 // Keep the native black-and-gold mark on screen until the first React frame is
 // actually laid out. Calling this at module scope is important on a cold start.
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
@@ -41,6 +46,7 @@ function Providers({ children }: PropsWithChildren) {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <RevenueCatBootstrap />
+          {ScreenshotDriver ? <ScreenshotDriver /> : null}
           {children}
         </QueryClientProvider>
       </SafeAreaProvider>
@@ -86,71 +92,78 @@ function RootNavigator() {
   return (
     <LocaleProvider direction={direction}>
       <Providers>
-      <View onLayout={hideNativeSplash} style={{ flex: 1, backgroundColor: '#050505', direction }}>
-        <StatusBar style="light" />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            animation: reducedMotion ? 'none' : 'fade',
-            contentStyle: { backgroundColor: '#050505' },
-          }}
+        <View
+          onLayout={hideNativeSplash}
+          style={{ flex: 1, backgroundColor: '#050505', direction }}
         >
-          <Stack.Screen name="index" />
-          <Stack.Screen name="(onboarding)" />
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen
-            name="pro"
-            options={{
-              presentation: 'transparentModal',
-              animation: reducedMotion ? 'none' : 'slide_from_bottom',
-              contentStyle: { backgroundColor: 'transparent' },
-              gestureEnabled: true,
+          <StatusBar style="light" />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              animation: reducedMotion ? 'none' : 'fade',
+              contentStyle: { backgroundColor: '#050505' },
             }}
-          />
-          <Stack.Screen
-            name="create"
-            options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="studio"
-            options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="transactions"
-            options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="filters"
-            options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="generations"
-            options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="projects"
-            options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="settings"
-            options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="support"
-            options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
-          />
-          <Stack.Screen
-            name="legal"
-            options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
-          />
-        </Stack>
-      </View>
+          >
+            <Stack.Screen name="index" />
+            <Stack.Screen name="(onboarding)" />
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen
+              name="pro"
+              options={{
+                presentation: 'transparentModal',
+                animation: reducedMotion ? 'none' : 'slide_from_bottom',
+                contentStyle: { backgroundColor: 'transparent' },
+                gestureEnabled: true,
+              }}
+            />
+            <Stack.Screen
+              name="create"
+              options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="studio"
+              options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="transactions"
+              options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="filters"
+              options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="generations"
+              options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="projects"
+              options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="settings"
+              options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="support"
+              options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
+            />
+            <Stack.Screen
+              name="legal"
+              options={{ animation: reducedMotion ? 'none' : 'slide_from_right' }}
+            />
+          </Stack>
+        </View>
       </Providers>
     </LocaleProvider>
   );
 }
 
 export default function RootLayout() {
-  return <LanguageProvider><RootNavigator /></LanguageProvider>;
+  return (
+    <LanguageProvider>
+      <RootNavigator />
+    </LanguageProvider>
+  );
 }

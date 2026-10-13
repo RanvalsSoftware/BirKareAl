@@ -38,6 +38,7 @@ function flow(update: Partial<ProductStudioFlow> = {}): ProductStudioFlow {
     numberOfImages: 2,
     primaryUri: 'file:///product.jpg',
     primaryName: 'product.jpg',
+    cutoutUri: null,
     categoryId: 'handbag',
     sceneId: 'white-studio',
     quality: 'STANDARD',

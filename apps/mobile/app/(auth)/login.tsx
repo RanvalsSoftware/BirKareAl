@@ -26,10 +26,10 @@ import { consumePostAuthDestination } from '@/features/auth/post-auth-destinatio
 import {
   AuthBrandBar,
   AuthFormCard,
-  AuthHero,
   AuthLayout,
   AuthLink,
-  AuthNote,
+  AuthLogo,
+  AuthSocialRow,
   AuthTitle,
   Divider,
   GradientAuthButton,
@@ -119,7 +119,7 @@ export default function LoginScreen() {
       attempt:
         | { kind: 'password'; values: LoginValues }
         | { kind: 'google'; idToken: string }
-        | { kind: 'apple'; input: { idToken: string; firstName?: string; lastName?: string } },
+        | { kind: 'apple'; input: { idToken: string; nonce?: string; firstName?: string; lastName?: string } },
     ) => {
       const recoveryUntil = recoveryUntilFromError(error);
       if (!recoveryUntil) return false;
@@ -226,7 +226,7 @@ export default function LoginScreen() {
     [dismissVerified],
   );
   const completeAppleSignIn = useCallback(
-    async (input: { idToken: string; firstName?: string; lastName?: string }) => {
+    async (input: { idToken: string; nonce?: string; firstName?: string; lastName?: string }) => {
       dismissVerified();
       setSocialError(null);
       try {
@@ -255,18 +255,17 @@ export default function LoginScreen() {
   );
 
   return (
-    <AuthLayout showLanguagePicker={false}>
+    <AuthLayout>
       <AuthBrandBar
         actionLabel={copy('Kayıt ol', 'Sign up')}
         onAction={() => router.push('/(auth)/register')}
       />
-      <AuthHero variant="login" />
+      <AuthLogo />
       <AuthTitle
-        eyebrow={copy('ÜRÜN STÜDYONA DÖN', 'BACK TO YOUR PRODUCT STUDIO')}
-        title={copy('Tekrar hoş geldin.', 'Welcome back.')}
+        title={copy('Tekrar hoş geldin!', 'Welcome back!')}
         subtitle={copy(
-          'Ürün projelerin ve kataloğun seni bekliyor.',
-          'Your product projects and catalog are waiting.',
+          'Ürün projelerine ve kataloğuna devam etmek için giriş yap.',
+          'Sign in to continue with your product projects and catalog.',
         )}
       />
       <AuthFormCard>
@@ -280,25 +279,6 @@ export default function LoginScreen() {
             onDismiss={dismissVerified}
           />
         ) : null}
-        <View style={styles.socials}>
-          <GoogleSignInButton
-            label={copy('Google ile giriş yap', 'Sign in with Google')}
-            disabled={isSubmitting || Boolean(recovery)}
-            onError={showGoogleError}
-            onSuccess={completeGoogleSignIn}
-          />
-          <AppleSignInButton
-            disabled={isSubmitting || Boolean(recovery)}
-            onError={showGoogleError}
-            onSuccess={completeAppleSignIn}
-          />
-        </View>
-        {socialError ? (
-          <Text accessibilityLiveRegion="polite" style={styles.serverError}>
-            {socialError}
-          </Text>
-        ) : null}
-        <Divider />
         <Controller
           control={control}
           name="email"
@@ -406,17 +386,35 @@ export default function LoginScreen() {
         >
           {copy('Giriş yap', 'Sign in')}
         </GradientAuthButton>
-        <AuthNote>
-          {copy(
-            'Bilgilerin şifreli olarak korunur. Yalnızca senin onayınla fotoğrafın işlenir.',
-            'Your information is encrypted. Your photo is processed only with your consent.',
-          )}
-        </AuthNote>
+        <Divider />
+        <AuthSocialRow>
+          <GoogleSignInButton
+            label="Google"
+            disabled={isSubmitting || Boolean(recovery)}
+            onError={showGoogleError}
+            onSuccess={completeGoogleSignIn}
+          />
+          <AppleSignInButton
+            disabled={isSubmitting || Boolean(recovery)}
+            onError={showGoogleError}
+            onSuccess={completeAppleSignIn}
+          />
+        </AuthSocialRow>
+        {socialError ? (
+          <Text accessibilityLiveRegion="polite" style={styles.serverError}>
+            {socialError}
+          </Text>
+        ) : null}
       </AuthFormCard>
       <View style={styles.bottomText}>
         <Text style={styles.bottomCopy}>{copy('Henüz hesabın yok mu? ', 'New here? ')}</Text>
         <AuthLink onPress={() => router.push('/(auth)/register')}>
           {copy('Kayıt ol', 'Sign up')}
+        </AuthLink>
+      </View>
+      <View style={styles.bottomText}>
+        <AuthLink onPress={() => router.push('/try' as never)}>
+          {copy('Hesap açmadan stüdyoyu dene', 'Try the studio without an account')}
         </AuthLink>
       </View>
       <Modal
@@ -453,7 +451,7 @@ export default function LoginScreen() {
             </Text>
             {recovery ? (
               <View style={styles.recoveryDeadline}>
-                <Ionicons name="time-outline" size={18} color="#E7C46E" />
+                <Ionicons name="time-outline" size={18} color="#F5C132" />
                 <Text style={styles.recoveryDeadlineText}>
                   {copy('Son geri alma tarihi: ', 'Recovery deadline: ')}
                   {new Date(recovery.recoveryUntil).toLocaleString(getLocale(), {
@@ -518,26 +516,26 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   field: { marginTop: 16 },
   label: {
-    color: '#EFEFEF',
+    color: authColors.text,
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: 0.1,
     marginBottom: 8,
   },
   inputRow: {
     alignItems: 'center',
-    borderColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderColor: 'rgba(255,255,255,0.16)',
+    borderRadius: 14,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 13,
-    minHeight: 56,
+    gap: 12,
+    minHeight: 54,
     paddingLeft: 15,
   },
-  input: { color: authColors.text, flex: 1, fontSize: 16, minHeight: 55, paddingVertical: 0 },
+  input: { color: authColors.text, flex: 1, fontSize: 16, minHeight: 53, paddingVertical: 0 },
   eyeButton: { alignItems: 'center', height: 48, justifyContent: 'center', width: 46 },
   fieldError: { color: '#FF928A', fontSize: 12, lineHeight: 17, marginTop: 6 },
-  socials: { marginTop: 0 },
   forgot: { alignItems: 'flex-end', marginTop: 13 },
   serverError: {
     color: '#FF877D',
@@ -576,10 +574,10 @@ const styles = StyleSheet.create({
     paddingBottom: 22,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOpacity: 0.45,
+    shadowOpacity: 0,
     shadowRadius: 30,
     shadowOffset: { width: 0, height: -10 },
-    elevation: 24,
+    elevation: 0,
   },
   recoveryHandle: {
     width: 42,
@@ -594,12 +592,12 @@ const styles = StyleSheet.create({
     borderRadius: 29,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F3D275',
+    backgroundColor: '#F5C132',
     marginBottom: 13,
   },
   recoveryEyebrow: {
-    color: '#E3C46E',
-    fontSize: 10,
+    color: '#F5C132',
+    fontSize: 11,
     fontWeight: '900',
     letterSpacing: 1.4,
     marginBottom: 8,
@@ -626,14 +624,14 @@ const styles = StyleSheet.create({
     minHeight: 48,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(231,196,110,0.25)',
-    backgroundColor: 'rgba(231,196,110,0.07)',
+    borderColor: 'rgba(255,255,255,0.10)',
+    backgroundColor: 'rgba(245,193,50,0.07)',
     paddingHorizontal: 14,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 9,
   },
-  recoveryDeadlineText: { color: '#DED7C5', flex: 1, fontSize: 12, lineHeight: 18 },
+  recoveryDeadlineText: { color: '#AEB3A3', flex: 1, fontSize: 12, lineHeight: 18 },
   recoveryError: {
     color: '#FF8E85',
     fontSize: 12,
@@ -645,7 +643,7 @@ const styles = StyleSheet.create({
     width: '100%',
     minHeight: 56,
     borderRadius: 18,
-    backgroundColor: '#F1CF70',
+    backgroundColor: '#F5C132',
     marginTop: 18,
     flexDirection: 'row',
     alignItems: 'center',
@@ -666,7 +664,7 @@ const styles = StyleSheet.create({
   },
   recoveryFootnote: {
     color: '#7F7A85',
-    fontSize: 10,
+    fontSize: 11,
     lineHeight: 15,
     textAlign: 'center',
     paddingHorizontal: 16,

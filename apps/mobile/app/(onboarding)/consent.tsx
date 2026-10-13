@@ -116,7 +116,7 @@ export default function ConsentScreen() {
               </View>
             </Pressable>
             <View style={styles.consentNotice}>
-              <Ionicons color="#91BBA0" name="shield-checkmark-outline" size={19} />
+              <Ionicons color="#BBB091" name="shield-checkmark-outline" size={19} />
               <Text style={styles.consentNoticeText}>
                 {translateCopy(
                   'Bu adım yüz verisi işlemeye izin vermez. Yüz içeren bir aracı seçersen açık rızan ilgili işlemden hemen önce ayrıca istenir; onay vermemen hesap açmanı engellemez.',
@@ -166,13 +166,13 @@ export default function ConsentScreen() {
             ]}
           >
             {submitting ? (
-              <ActivityIndicator color="#0B2118" />
+              <ActivityIndicator color="#211B0B" />
             ) : (
               <>
                 <Text style={styles.continueButtonText}>
                   {translateCopy('Onayla ve devam et')}
                 </Text>
-                <Ionicons color="#0B2118" name="arrow-forward" size={20} />
+                <Ionicons color="#211B0B" name="arrow-forward" size={20} />
               </>
             )}
           </Pressable>
@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     alignItems: 'center',
-    borderColor: '#28342D',
+    borderColor: '#343128',
     borderRadius: 14,
     borderWidth: 1,
     height: 44,
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     width: 44,
   },
   headerCopy: { alignItems: 'center', flex: 1, paddingHorizontal: 10 },
-  headerStep: { color: '#91BBA0', fontSize: 9, fontWeight: '900', letterSpacing: 1.1 },
+  headerStep: { color: '#BBB091', fontSize: 11, fontWeight: '900', letterSpacing: 1.1 },
   headerTitle: { color: colors.textPrimary, fontSize: 16, fontWeight: '900', marginTop: 3 },
   headerSpacer: { width: 44 },
   content: { paddingBottom: 25, paddingTop: 28 },
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     gap: 13,
     padding: 15,
   },
-  rowChecked: { backgroundColor: '#15251C', borderColor: 'rgba(145,187,160,0.65)' },
+  rowChecked: { backgroundColor: '#252115', borderColor: 'rgba(145,187,160,0.65)' },
   iconBox: {
     alignItems: 'center',
     backgroundColor: colors.surfaceElevated,
@@ -241,14 +241,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 44,
   },
-  iconBoxChecked: { backgroundColor: '#B8F1CD', borderColor: '#B8F1CD' },
+  iconBoxChecked: { backgroundColor: '#F5C132', borderColor: '#F5C132' },
   rowCopy: { flex: 1 },
   rowTitle: { color: colors.textPrimary, fontSize: 14, fontWeight: '900', lineHeight: 19 },
   rowDetail: { color: colors.textSecondary, fontSize: 11, lineHeight: 17, marginTop: 5 },
   consentNotice: {
     alignItems: 'flex-start',
-    backgroundColor: '#111815',
-    borderColor: '#28342D',
+    backgroundColor: '#141108',
+    borderColor: '#343128',
     borderRadius: radii.lg,
     borderWidth: 1,
     flexDirection: 'row',
@@ -266,11 +266,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   legalText: { color: colors.textMuted, flex: 1, fontSize: 11, lineHeight: 17 },
-  legalLink: { color: '#B8F1CD', fontWeight: '800', textDecorationLine: 'underline' },
+  legalLink: { color: '#F5C132', fontWeight: '800', textDecorationLine: 'underline' },
   bottom: { paddingBottom: 8, paddingTop: 10 },
   continueButton: {
     alignItems: 'center',
-    backgroundColor: '#B8F1CD',
+    backgroundColor: '#F5C132',
     borderRadius: 16,
     flexDirection: 'row',
     gap: 9,
@@ -279,6 +279,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   continueButtonDisabled: { opacity: 0.38 },
-  continueButtonText: { color: '#0B2118', fontSize: 15, fontWeight: '900' },
+  continueButtonText: { color: '#211B0B', fontSize: 15, fontWeight: '900' },
   pressed: { opacity: 0.78 },
 });

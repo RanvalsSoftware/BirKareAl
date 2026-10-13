@@ -8,7 +8,6 @@ import {
   Image,
   Keyboard,
   Modal,
-  KeyboardAvoidingView,
   Platform,
   Pressable,
   ScrollView,
@@ -26,6 +25,7 @@ import { useAuthStore } from '@/features/auth/auth-store';
 import { uploadSourceAsset } from '@/features/create/server';
 import { shareAspectRatio } from '@/features/sharing/output';
 import { colors, radii, spacing, typography } from '@/theme';
+import { brand } from '@/theme/brand';
 
 type GenerationOutput = {
   id: string;
@@ -104,7 +104,7 @@ const legacyToolItems = [
     prompt: 'Işığı düzelt',
   },
   { label: 'Renk', icon: 'color-palette-outline', prompt: 'Renkleri dengele' },
-  { label: 'Stil', icon: 'sparkles-outline', prompt: 'Sinematik bir stil uygula' },
+  { label: 'Stil', icon: 'brush-outline', prompt: 'Sinematik bir stil uygula' },
 ] as const;
 
 export default function GenerationEditScreen() {
@@ -128,7 +128,10 @@ export default function GenerationEditScreen() {
   const [error, setError] = useState<string | null>(null);
   const [allSuggestions, setAllSuggestions] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  // The keyboard's height is applied as padding by hand: the composer sits below a
+  // fixed preview, where KeyboardAvoidingView measured the wrong frame and left it covered.
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const keyboardVisible = keyboardHeight > 0;
   const messagesRef = useRef<ScrollView>(null);
   const isProductProject =
     projectMode !== null &&
@@ -146,8 +149,10 @@ export default function GenerationEditScreen() {
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-    const show = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
-    const hide = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
+    const show = Keyboard.addListener(showEvent, (event) =>
+      setKeyboardHeight(event.endCoordinates.height),
+    );
+    const hide = Keyboard.addListener(hideEvent, () => setKeyboardHeight(0));
     return () => {
       show.remove();
       hide.remove();
@@ -207,17 +212,15 @@ export default function GenerationEditScreen() {
     : null;
   const previewAspectRatio = shareAspectRatio(generation?.aspectRatio);
   const availablePreviewWidth = Math.min(720, Math.max(240, viewport.width - spacing.lg * 2));
-  const targetPreviewHeight = Math.min(420, Math.max(260, viewport.height * 0.38));
+  // While typing, the picture shrinks to a strip so the conversation and the field stay visible.
+  const targetPreviewHeight = keyboardVisible
+    ? 120
+    : Math.min(420, Math.max(260, viewport.height * 0.38));
   const previewWidth = Math.min(availablePreviewWidth, targetPreviewHeight * previewAspectRatio);
   const previewHeight = previewWidth / previewAspectRatio;
 
   const chooseReference = async () => {
     setError(null);
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      setError(translateCopy('Referans eklemek için fotoğraf arşivi izni gerekiyor.'));
-      return;
-    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: false,
@@ -308,7 +311,7 @@ export default function GenerationEditScreen() {
           </View>
         )}
         <View style={styles.previewBadge}>
-          <Icon name="sparkles" size={14} color={colors.accentYellow} />
+          <Icon name="create" size={14} color={colors.accentYellow} />
           <Text style={styles.previewBadgeText}>{translateCopy('AI düzenleme')}</Text>
         </View>
         <Pressable
@@ -336,10 +339,11 @@ export default function GenerationEditScreen() {
           </Pressable>
         </View>
       </Modal>
-      <KeyboardAvoidingView
-        style={styles.keyboardArea}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 12 : 0}
+      <View
+        style={[
+          styles.keyboardArea,
+          { paddingBottom: keyboardVisible ? Math.max(0, keyboardHeight - insets.bottom) : 0 },
+        ]}
       >
         <ScrollView
           ref={messagesRef}
@@ -351,7 +355,7 @@ export default function GenerationEditScreen() {
         >
           <View style={styles.assistantCard}>
             <View style={styles.purpleIcon}>
-              <Icon name="sparkles" size={24} color={colors.accentPurple} />
+              <Icon name="create-outline" size={22} color={brand.gold} />
             </View>
             <Text style={[styles.bubbleText, { flex: 1 }]}>
               {translateCopy(
@@ -401,12 +405,12 @@ export default function GenerationEditScreen() {
                         'sunny-outline',
                         'image-outline',
                         'color-palette-outline',
-                        'sparkles-outline',
+                        'brush-outline',
                       ] as const
                     )[index]!
                   }
-                  size={22}
-                  color={index % 2 === 0 ? colors.accentYellow : colors.textPrimary}
+                  size={18}
+                  color={brand.gold}
                 />
                 <Text style={styles.chipText}>{item}</Text>
               </Pressable>
@@ -414,7 +418,7 @@ export default function GenerationEditScreen() {
           </View>
           <View style={styles.assistantCard}>
             <View style={styles.purpleIcon}>
-              <Icon name="layers" size={24} color={colors.accentPurple} />
+              <Icon name="layers" size={22} color={brand.gold} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.chipText}>
@@ -472,7 +476,7 @@ export default function GenerationEditScreen() {
         <View
           style={[
             styles.composerDock,
-            { paddingBottom: keyboardVisible ? 18 : Math.max(insets.bottom, 10) },
+            { paddingBottom: keyboardVisible ? 8 : 10 },
           ]}
         >
           <View style={styles.composer}>
@@ -519,7 +523,7 @@ export default function GenerationEditScreen() {
             </Pressable>
           </View>
         </View>
-      </KeyboardAvoidingView>
+      </View>
     </Screen>
   );
 }
@@ -548,9 +552,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.xl,
     overflow: 'hidden',
     position: 'relative',
-    backgroundColor: '#080808',
-    borderWidth: 1,
-    borderColor: colors.accentYellow,
+    backgroundColor: brand.surface,
   },
   previewImage: { ...StyleSheet.absoluteFill },
   previewLoading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -573,19 +575,17 @@ const styles = StyleSheet.create({
   bubble: { maxWidth: '86%', paddingHorizontal: 14, paddingVertical: 11, borderRadius: radii.md },
   aiBubble: {
     alignSelf: 'flex-start',
-    backgroundColor: colors.surfaceElevated,
-    borderColor: 'rgba(124,58,237,0.55)',
-    borderWidth: 1,
+    backgroundColor: brand.surface,
     borderBottomLeftRadius: 4,
   },
   userBubble: {
     alignSelf: 'flex-end',
-    backgroundColor: colors.accentPurple,
+    backgroundColor: brand.gold,
     borderBottomRightRadius: 4,
   },
-  bubbleText: { ...typography.caption, color: colors.textSecondary, lineHeight: 20 },
-  userBubbleText: { color: colors.textPrimary },
-  suggestionLabel: { ...typography.caption, color: colors.textSecondary, marginTop: 4 },
+  bubbleText: { color: brand.textSecondary, fontSize: 15, lineHeight: 20 },
+  userBubbleText: { color: brand.onGold },
+  suggestionLabel: { color: brand.textSecondary, fontSize: 13, fontWeight: '600', marginTop: 4 },
   suggestions: { gap: 8, flexDirection: 'row', flexWrap: 'wrap' },
   sectionHeading: {
     flexDirection: 'row',
@@ -593,27 +593,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  link: { ...typography.caption, color: '#B880FF', fontWeight: '600' },
+  link: { color: brand.gold, fontSize: 15 },
   suggestionChip: {
     flexDirection: 'row',
     gap: 8,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#716A77',
-    borderRadius: 28,
+    borderRadius: 100,
+    minHeight: 44,
     paddingHorizontal: 14,
-    paddingVertical: 12,
-    backgroundColor: '#19171C',
+    paddingVertical: 10,
+    backgroundColor: brand.surface,
   },
-  goldBorder: { borderColor: '#BBA34E' },
-  chipText: { ...typography.caption, color: colors.textPrimary, fontWeight: '600' },
+  goldBorder: {},
+  chipText: { color: brand.text, fontSize: 15, fontWeight: '500' },
   assistantCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    borderWidth: 1,
-    borderColor: '#8752B9',
-    backgroundColor: '#191323',
+    backgroundColor: brand.surface,
     borderRadius: 18,
     padding: 14,
     marginVertical: 4,
@@ -622,7 +619,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#2B1D40',
+    backgroundColor: brand.surfaceSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -633,13 +630,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     gap: 6,
     borderRadius: 15,
-    borderWidth: 1,
-    borderColor: '#59535D',
-    backgroundColor: '#19171C',
+    backgroundColor: brand.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  toolLabel: { fontSize: 11, textAlign: 'center', color: colors.textSecondary },
+  toolLabel: { fontSize: 12, textAlign: 'center', color: brand.textSecondary },
   expand: {
     position: 'absolute',
     right: 12,
@@ -666,10 +661,8 @@ const styles = StyleSheet.create({
   errorText: { ...typography.caption, color: colors.danger },
   referenceRow: {
     alignItems: 'center',
-    backgroundColor: colors.surfaceElevated,
-    borderColor: 'rgba(124,58,237,0.55)',
+    backgroundColor: brand.surface,
     borderRadius: radii.md,
-    borderWidth: 1,
     flexDirection: 'row',
     gap: 10,
     marginBottom: 8,
@@ -681,14 +674,12 @@ const styles = StyleSheet.create({
   referenceName: { ...typography.caption, color: colors.textMuted, fontSize: 11 },
   composerDock: {
     paddingTop: 10,
-    backgroundColor: colors.background,
+    backgroundColor: brand.background,
   },
   composer: {
-    minHeight: 60,
-    borderRadius: radii.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceElevated,
+    minHeight: 52,
+    borderRadius: 26,
+    backgroundColor: brand.surfaceRaised,
     paddingLeft: 8,
     flexDirection: 'row',
     alignItems: 'center',
@@ -697,17 +688,17 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     maxHeight: 96,
-    minHeight: 54,
-    ...typography.body,
-    color: colors.textPrimary,
-    paddingTop: 14,
-    paddingBottom: 14,
+    minHeight: 44,
+    color: brand.text,
+    fontSize: 17,
+    paddingTop: 12,
+    paddingBottom: 12,
   },
   send: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: colors.accentYellow,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: brand.gold,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 6,

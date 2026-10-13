@@ -110,7 +110,7 @@ export function GeneratedSharePanel({
                   />
                 ) : action.brand === 'instagram' ? (
                   <LinearGradient
-                    colors={['#833AB4', '#E1306C', '#F77737']}
+                    colors={['#B4933A', '#E1306C', '#F77737']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.instagramBadge}
@@ -170,7 +170,7 @@ export function GeneratedSharePanel({
           style={styles.disclosureHeader}
         >
           <View style={styles.disclosureHeading}>
-            <Icon name="sparkles" size={17} color={colors.textPrimary} />
+            <Icon name="information-circle" size={17} color={colors.textPrimary} />
             <Text style={styles.disclosureTitle}>{translateCopy("AI Açıklaması")}</Text>
           </View>
           <Icon
@@ -210,8 +210,6 @@ const styles = StyleSheet.create({
     minWidth: 0,
     minHeight: 94,
     borderRadius: 17,
-    borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: 'rgba(255,255,255,0.025)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -227,8 +225,6 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 13,
-    borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: 'rgba(255,255,255,0.025)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -251,7 +247,7 @@ const styles = StyleSheet.create({
   actionLabel: {
     ...typography.caption,
     color: colors.textSecondary,
-    fontSize: 10,
+    fontSize: 11,
     lineHeight: 13,
     fontWeight: '600',
     textAlign: 'center',
@@ -265,8 +261,6 @@ const styles = StyleSheet.create({
   },
   disclosureCard: {
     borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: '#141211',
     overflow: 'hidden',
   },
@@ -297,12 +291,10 @@ const styles = StyleSheet.create({
   tag: {
     minHeight: 30,
     borderRadius: radii.pill,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
     justifyContent: 'center',
     paddingHorizontal: 10,
   },
-  tagText: { ...typography.caption, color: colors.textSecondary, fontSize: 10 },
+  tagText: { ...typography.caption, color: colors.textSecondary, fontSize: 11 },
   unavailable: { ...typography.caption, color: colors.textMuted, textAlign: 'center' },
   disabled: { opacity: 0.4 },
   pressed: { opacity: 0.74, transform: [{ scale: 0.98 }] },

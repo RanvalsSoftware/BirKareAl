@@ -1,7 +1,6 @@
 import { useLanguageRevision } from '@/i18n/use-language';
 import { tr as translateCopy } from '@/i18n/engine';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import type { ReactNode } from 'react';
 import {
@@ -12,9 +11,9 @@ import {
   StyleSheet,
   Text,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { brand } from '@/theme/brand';
 import type { ProPlanId } from './paywall-model';
 
 /** Presentational only: no SDK, API, authentication or wallet imports. */
@@ -46,466 +45,306 @@ export type ProPaywallViewProps = {
   banner?: string;
   message?: ReactNode;
 };
-const GOLD = '#F7D778';
-const BLACK = '#050505';
 const assets = {
-  logo: require('../../../assets/brand/birkare-studio-icon-1024-v1.png'),
-  city: require('../../../assets/products/ui/scenes/white-studio.webp'),
-  balloons: require('../../../assets/products/ui/scenes/ad-poster.webp'),
-  portrait: require('../../../assets/products/ui/scenes/glass-surface.webp'),
-  infinity: require('../../../assets/products/ui/categories/cosmetics.webp'),
-  people: require('../../../assets/products/ui/categories/handbag.webp'),
-  wand: require('../../../assets/products/ui/categories/electronics.webp'),
+  first: require('../../../assets/products/ui/categories/shoes.webp'),
+  second: require('../../../assets/products/ui/categories/cosmetics.webp'),
+  third: require('../../../assets/products/ui/categories/handbag.webp'),
 };
 
+/**
+ * Plan picker in the shape people know from the App Store: what the plan
+ * gives, the plans as a radio list with store prices, and one pinned action
+ * with restore and legal links directly under it.
+ */
 export function ProPaywallView(props: ProPaywallViewProps) {
-  const languageRevision = useLanguageRevision();
+  useLanguageRevision();
 
-  const { width, fontScale } = useWindowDimensions();
-  const maxWidth = Math.min(width, 440);
-  const compact = maxWidth < 360;
-  const stacked = maxWidth < 360 || fontScale > 1.25;
-  const heroHeight = Math.round((maxWidth - 32) * 0.48);
-  const features = [
-    { image: assets.infinity, title: translateCopy('Plan kredileri'), detail: translateCopy("hesabına tanımlanır") },
-    { image: assets.people, title: translateCopy('Ürün projelerinde'), detail: translateCopy('kullanılır') },
-    { image: assets.wand, title: translateCopy("Aboneliğini"), detail: translateCopy("mağazadan yönet") },
+  const benefits = [
+    `${translateCopy('Plan kredileri')} ${translateCopy('hesabına tanımlanır')}`,
+    `${translateCopy('Ürün projelerinde')} ${translateCopy('kullanılır')}`,
+    `${translateCopy('Aboneliğini')} ${translateCopy('mağazadan yönet')}`,
   ];
-  const scenes = [
-    { image: assets.city, label: translateCopy("Katalog"), rotate: '-3deg' },
-    { image: assets.balloons, label: translateCopy("Kampanya"), rotate: '0deg' },
-    { image: assets.portrait, label: translateCopy("Vitrin"), rotate: '3deg' },
-  ];
+  const unavailable = Boolean(props.disabled || props.busy);
   return (
     <SafeAreaView
       edges={props.sheet ? ['bottom', 'left', 'right'] : ['top', 'bottom', 'left', 'right']}
-      style={[s.safe, props.sheet && s.sheetSafe]}
+      style={s.safe}
     >
       <StatusBar style="light" />
       {props.sheet ? <View pointerEvents="none" style={s.handle} /> : null}
-      <ScrollView
-        contentContainerStyle={s.scroll}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-      >
-        <View style={[s.page, { width: '100%', maxWidth }]}>
-          <View pointerEvents="none" style={s.topGlow} />
-          <View style={s.brandRow}>
-            <Image source={assets.logo} style={s.logo} resizeMode="contain" accessible={false} />
-            <View style={s.brandCopy}>
-              <Text style={[s.brand, compact && s.brandCompact]}>
-                BirKare <Text style={s.gold}>PRO</Text>
-              </Text>
-              <Text style={s.tagline}>{translateCopy("ürün görsel çalışma alanın")}</Text>
-            </View>
-            <Pressable
-              onPress={props.onClose}
-              accessibilityRole="button"
-              accessibilityLabel={translateCopy("Pro ekranını kapat")}
-              style={s.close}
-              hitSlop={4}
-            >
-              <Ionicons name="close" size={24} color="#CAC9D2" />
-            </Pressable>
-          </View>
+      <View style={s.bar}>
+        <Pressable
+          accessibilityLabel={translateCopy('Pro ekranını kapat')}
+          accessibilityRole="button"
+          hitSlop={6}
+          onPress={props.onClose}
+          style={({ pressed }) => [s.close, pressed && s.pressed]}
+        >
+          <Ionicons color={brand.textSecondary} name="close" size={20} />
+        </Pressable>
+      </View>
 
-          <Text accessibilityRole="header" style={[s.title, compact && s.titleCompact]}>
-            {translateCopy("Üretim kredilerini")} <Text style={s.gold}>{translateCopy("planla")}</Text>
+      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+        <View style={s.column}>
+          <Text accessibilityRole="header" style={s.title}>
+            BirKare Pro
           </Text>
-          <Text style={s.subtitle}>{translateCopy("Planına göre tanımlanan kredileri ürün{{p0}}projelerinde kullan.", { p0: '\n' })}</Text>
+          <Text style={s.subtitle}>
+            {translateCopy('Planına göre tanımlanan kredileri ürün{{p0}}projelerinde kullan.', {
+              p0: ' ',
+            })}
+          </Text>
 
-          <View style={[s.scenes, { height: heroHeight + 10 }]}>
-            {scenes.map((scene) => (
-              <View
-                key={scene.label}
-                style={[s.scene, { height: heroHeight, transform: [{ rotate: scene.rotate }] }]}
-              >
-                <Image
-                  source={scene.image}
-                  style={s.sceneImage}
-                  resizeMode="contain"
-                  accessibilityIgnoresInvertColors
-                  accessibilityLabel={scene.label + translateCopy("— örnek üretim")}
-                />
-                <Text style={s.sceneLabel}>{scene.label}</Text>
-              </View>
+          <View style={s.gallery}>
+            {[assets.first, assets.second, assets.third].map((image, index) => (
+              <Image
+                accessibilityIgnoresInvertColors
+                accessible={false}
+                key={index}
+                resizeMode="cover"
+                source={image}
+                style={s.galleryImage}
+              />
             ))}
           </View>
 
-          <View style={s.features}>
-            {features.map((feature) => (
-              <View key={feature.title} style={s.feature}>
-                <Image
-                  source={feature.image}
-                  style={s.featureIcon}
-                  resizeMode="contain"
-                  accessible={false}
-                />
-                <Text style={s.featureText}>
-                  {feature.title}
-                  {'\n'}
-                  {feature.detail}
-                </Text>
+          <View style={s.benefits}>
+            {benefits.map((benefit) => (
+              <View key={benefit} style={s.benefit}>
+                <Ionicons color={brand.gold} name="checkmark-circle" size={20} />
+                <Text style={s.benefitText}>{benefit}</Text>
               </View>
             ))}
           </View>
 
           {props.preview ? (
-            <Text testID="paywall-preview-label" style={s.preview}>{translateCopy("TASARIM ÖNİZLEMESİ · ÖRNEK FİYATLAR · ÖDEME YAPMAZ")}</Text>
+            <Text style={s.banner} testID="paywall-preview-label">
+              {translateCopy('TASARIM ÖNİZLEMESİ · ÖRNEK FİYATLAR · ÖDEME YAPMAZ')}
+            </Text>
           ) : null}
-          {!props.preview && props.banner ? <Text style={s.preview}>{props.banner}</Text> : null}
+          {!props.preview && props.banner ? <Text style={s.banner}>{props.banner}</Text> : null}
+
           {props.active ? (
-            <View style={s.activeBox}>
-              <Ionicons name="checkmark-circle" size={32} color={GOLD} />
+            <View style={s.active}>
+              <Ionicons color={brand.gold} name="checkmark-circle" size={30} />
               <View style={s.flex}>
-                <Text style={s.planTitle}>{translateCopy("BirKare Pro aktif")}</Text>
+                <Text style={s.planTitle}>{translateCopy('BirKare Pro aktif')}</Text>
                 <Text style={s.planNote}>{props.activeNote}</Text>
               </View>
             </View>
           ) : (
-            <View style={s.plans} accessibilityLabel={translateCopy("BirKare Pro paketleri")}>
+            <View
+              accessibilityLabel={translateCopy('BirKare Pro paketleri')}
+              accessibilityRole="radiogroup"
+              style={s.plans}
+            >
               {props.plans.map((plan) => {
                 const selected = props.selected === plan.id;
                 return (
                   <Pressable
-                    key={plan.id}
-                    testID={`paywall-plan-${plan.id}`}
-                    accessibilityRole="radio"
                     accessibilityLabel={`${plan.label}, ${plan.price}, ${plan.period}, ${plan.note}`}
-                    accessibilityState={{
-                      checked: selected,
-                      disabled: Boolean(props.disabled || props.busy),
-                    }}
-                    disabled={props.disabled || props.busy}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: selected, disabled: unavailable }}
+                    disabled={unavailable}
+                    key={plan.id}
                     onPress={() => props.onSelect(plan.id)}
                     style={({ pressed }) => [
-                      s.planOuter,
-                      selected && s.selectedGlow,
+                      s.plan,
+                      selected && s.planSelected,
                       pressed && s.pressed,
                     ]}
+                    testID={`paywall-plan-${plan.id}`}
                   >
-                    <LinearGradient
-                      colors={
-                        selected
-                          ? ['#FBE7A1', '#E4B551', '#BA51F6']
-                          : ['#37323F', '#252431', '#393042']
-                      }
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={s.planBorder}
-                    >
-                      <LinearGradient
-                        colors={
-                          selected
-                            ? ['#342710', '#141015', '#20141B']
-                            : ['#111014', '#0C0C10', '#101015']
-                        }
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={[s.planInner, compact && s.planInnerCompact]}
-                      >
-                        <Ionicons
-                          name={plan.id === 'lifetime' ? 'infinite-outline' : 'calendar-outline'}
-                          size={compact ? 26 : 30}
-                          color={GOLD}
-                          style={s.planIcon}
-                        />
-                        <View style={s.flex}>
-                          <Text style={s.planTitle}>{plan.label}</Text>
-                          <Text style={s.planPrice}>
-                            {plan.price}
-                            <Text style={s.period}> {plan.period}</Text>
-                          </Text>
-                          <View style={[s.noteRow, stacked && s.noteRowStack]}>
-                            <Text style={s.planNote}>{plan.note}</Text>
-                            {plan.badge ? (
-                              <LinearGradient colors={['#361362', '#942EFF']} style={s.badge}>
-                                <Text style={s.badgeText}>{plan.badge}</Text>
-                              </LinearGradient>
-                            ) : null}
+                    <Ionicons
+                      color={selected ? brand.gold : brand.textMuted}
+                      name={selected ? 'radio-button-on' : 'radio-button-off'}
+                      size={24}
+                    />
+                    <View style={s.flex}>
+                      <View style={s.planHead}>
+                        <Text style={s.planTitle}>{plan.label}</Text>
+                        {plan.badge ? (
+                          <View style={s.badge}>
+                            <Text style={s.badgeText}>{plan.badge}</Text>
                           </View>
-                          {plan.monthlyEquivalent ? (
-                            <Text style={s.equivalent}>{plan.monthlyEquivalent}</Text>
-                          ) : null}
-                        </View>
-                        <View style={[s.radio, selected && s.radioSelected]}>
-                          {selected ? (
-                            <Ionicons name="checkmark" size={18} color="#231705" />
-                          ) : null}
-                        </View>
-                      </LinearGradient>
-                    </LinearGradient>
+                        ) : null}
+                      </View>
+                      <Text style={s.planNote}>{plan.note}</Text>
+                      {plan.monthlyEquivalent ? (
+                        <Text style={s.planNote}>{plan.monthlyEquivalent}</Text>
+                      ) : null}
+                    </View>
+                    <View style={s.priceBlock}>
+                      <Text style={s.price}>{plan.price}</Text>
+                      <Text style={s.period}>{plan.period}</Text>
+                    </View>
                   </Pressable>
                 );
               })}
             </View>
           )}
 
-          {props.message ? <View style={s.message}>{props.message}</View> : null}
-          <Pressable
-            testID="paywall-purchase"
-            accessibilityRole="button"
-            accessibilityLabel={
-              props.preview
-                ? translateCopy("Pro’ya geç — yalnızca tasarım önizlemesi")
-                : props.active
-                  ? translateCopy("Aboneliği yönet")
-                  : translateCopy("Pro’ya geç")
-            }
-            accessibilityState={{ disabled: Boolean(props.disabled || props.busy) }}
-            disabled={props.disabled || props.busy}
-            onPress={props.onBuy}
-            style={({ pressed }) => [
-              s.cta,
-              (props.disabled || props.busy) && s.disabled,
-              pressed && s.pressed,
-            ]}
-          >
-            <LinearGradient
-              colors={['#FFEDA1', '#E5B052', '#F9D77C']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={s.ctaFill}
-            >
-              {props.busy ? (
-                <ActivityIndicator color="#0A0804" />
-              ) : (
-                <>
-                  <Text style={s.ctaText}>{props.active ? translateCopy("Aboneliği yönet") : translateCopy("Pro’ya geç")}</Text>
-                  <Ionicons name="arrow-forward" size={26} color="#0A0804" />
-                </>
-              )}
-            </LinearGradient>
-          </Pressable>
-          <Pressable onPress={props.onClose} accessibilityRole="button" style={s.free}>
-            <Text style={s.freeText}>{props.active ? translateCopy("Uygulamaya dön") : translateCopy("Ücretsiz devam et")}</Text>
-          </Pressable>
-          <Text style={s.termsNote}>{translateCopy("Aylık ve yıllık planlar iptal edilmedikçe yenilenir. Ömür Boyu tek ödemedir. AI üretimleri kredi kullanır; sınırsız üretim içermez.")}</Text>
-          <View style={s.footer}>
-            <Pressable
-              disabled={props.restoreDisabled || props.busy}
-              onPress={props.onRestore}
-              accessibilityRole="button"
-              style={s.footerButton}
-            >
-              <Text style={[s.footerText, (props.restoreDisabled || props.busy) && s.disabled]}>{translateCopy("Geri yükle")}</Text>
-            </Pressable>
-            <Text style={s.divider}>|</Text>
-            <Pressable onPress={props.onTerms} accessibilityRole="link" style={s.footerButton}>
-              <Text style={s.footerText}>{translateCopy("Şartlar")}</Text>
-            </Pressable>
-            <Text style={s.divider}>|</Text>
-            <Pressable onPress={props.onPrivacy} accessibilityRole="link" style={s.footerButton}>
-              <Text style={s.footerText}>{translateCopy("Gizlilik")}</Text>
-            </Pressable>
-          </View>
-          <View pointerEvents="none" style={s.bottomGlow} />
+          {props.message ? <View>{props.message}</View> : null}
         </View>
       </ScrollView>
+
+      <View style={s.footer}>
+        <View style={s.column}>
+          <Pressable
+            accessibilityLabel={
+              props.preview
+                ? translateCopy('Pro’ya geç — yalnızca tasarım önizlemesi')
+                : props.active
+                  ? translateCopy('Aboneliği yönet')
+                  : translateCopy('Pro’ya geç')
+            }
+            accessibilityRole="button"
+            accessibilityState={{ busy: Boolean(props.busy), disabled: unavailable }}
+            disabled={unavailable}
+            onPress={props.onBuy}
+            style={({ pressed }) => [s.cta, unavailable && s.disabled, pressed && s.pressed]}
+            testID="paywall-purchase"
+          >
+            {props.busy ? (
+              <ActivityIndicator color={brand.onGold} />
+            ) : (
+              <Text style={s.ctaText}>
+                {props.active ? translateCopy('Aboneliği yönet') : translateCopy('Pro’ya geç')}
+              </Text>
+            )}
+          </Pressable>
+          <View style={s.links}>
+            <Pressable
+              accessibilityRole="button"
+              disabled={props.restoreDisabled || props.busy}
+              onPress={props.onRestore}
+              style={s.link}
+            >
+              <Text style={[s.linkText, (props.restoreDisabled || props.busy) && s.disabled]}>
+                {translateCopy('Geri yükle')}
+              </Text>
+            </Pressable>
+            <Pressable accessibilityRole="link" onPress={props.onTerms} style={s.link}>
+              <Text style={s.linkText}>{translateCopy('Şartlar')}</Text>
+            </Pressable>
+            <Pressable accessibilityRole="link" onPress={props.onPrivacy} style={s.link}>
+              <Text style={s.linkText}>{translateCopy('Gizlilik')}</Text>
+            </Pressable>
+          </View>
+          <Text style={s.terms}>
+            {translateCopy(
+              'Aylık ve yıllık planlar iptal edilmedikçe yenilenir. Ömür Boyu tek ödemedir. AI üretimleri kredi kullanır; sınırsız üretim içermez.',
+            )}
+          </Text>
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
+
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: BLACK },
-  sheetSafe: { borderTopLeftRadius: 29, borderTopRightRadius: 29 },
+  safe: { backgroundColor: brand.background, flex: 1 },
+  flex: { flex: 1, minWidth: 0 },
   handle: {
     alignSelf: 'center',
-    width: 42,
-    height: 5,
+    backgroundColor: brand.textMuted,
     borderRadius: 3,
-    backgroundColor: '#77727E',
-    marginTop: 9,
-    marginBottom: 3,
+    height: 5,
+    marginTop: 8,
+    width: 36,
   },
-  scroll: { alignItems: 'center', paddingBottom: 12 },
-  page: { paddingHorizontal: 18, paddingTop: 6, overflow: 'hidden' },
-  flex: { flex: 1, minWidth: 0 },
-  gold: { color: GOLD },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 18 },
-  logo: { width: 46, height: 46 },
-  brandCopy: { flex: 1 },
-  brand: { color: '#FFF', fontSize: 23, fontWeight: '800' },
-  brandCompact: { fontSize: 21 },
-  tagline: { color: '#9A98A5', fontSize: 10.5, marginTop: 3 },
+  bar: { alignItems: 'flex-end', paddingHorizontal: 16, paddingTop: 8 },
   close: {
-    width: 44,
-    height: 44,
     alignItems: 'center',
+    backgroundColor: brand.surfaceSoft,
+    borderRadius: 16,
+    height: 32,
     justifyContent: 'center',
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: '#39363D',
-    backgroundColor: '#141317',
+    width: 32,
   },
-  title: {
-    color: '#FFF',
-    textAlign: 'center',
-    fontSize: 32,
-    lineHeight: 37,
-    fontWeight: '900',
-    letterSpacing: -0.6,
-  },
-  titleCompact: { fontSize: 28, lineHeight: 34 },
+  scroll: { alignItems: 'center', paddingBottom: 16, paddingHorizontal: 20 },
+  column: { gap: 16, maxWidth: 520, width: '100%' },
+  title: { color: brand.text, fontSize: 34, fontWeight: '700', lineHeight: 41, textAlign: 'center' },
   subtitle: {
-    color: '#B3B0BA',
-    textAlign: 'center',
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: 9,
-    marginBottom: 14,
-  },
-  scenes: { flexDirection: 'row', gap: 3, alignItems: 'center', marginHorizontal: -5 },
-  scene: { flex: 1, minWidth: 0 },
-  sceneImage: { width: '100%', height: '100%' },
-  sceneLabel: {
-    position: 'absolute',
-    bottom: 20,
-    left: 12,
-    right: 3,
+    color: brand.textSecondary,
     fontSize: 17,
-    fontStyle: 'italic',
-    color: '#F5EFD8',
-    textShadowColor: '#000',
-    textShadowRadius: 5,
-  },
-  features: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 4,
-    marginBottom: 17,
-    gap: 4,
-  },
-  feature: { flex: 1, alignItems: 'center' },
-  featureIcon: { width: 48, height: 48 },
-  featureText: {
-    marginTop: 3,
-    fontSize: 11,
-    lineHeight: 15,
+    lineHeight: 22,
+    marginTop: -8,
     textAlign: 'center',
-    color: '#DEDBDF',
   },
-  preview: {
-    borderWidth: 1,
-    borderColor: '#5F4930',
-    color: '#D9BE80',
-    textAlign: 'center',
-    fontSize: 8,
-    lineHeight: 13,
-    letterSpacing: 0.6,
-    padding: 7,
-    borderRadius: 10,
-    marginBottom: 10,
-  },
-  plans: { gap: 8 },
-  planOuter: { borderRadius: 15 },
-  selectedGlow: {
-    shadowColor: '#FCD875',
-    shadowOpacity: 0.38,
-    shadowRadius: 9,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 4,
-  },
-  planBorder: { padding: 1.2, borderRadius: 15 },
-  planInner: {
+  gallery: { flexDirection: 'row', gap: 8 },
+  galleryImage: {
+    aspectRatio: 3 / 4,
+    backgroundColor: brand.surface,
     borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    minHeight: 79,
+    flex: 1,
+    height: undefined,
   },
-  planInnerCompact: { gap: 8, paddingHorizontal: 10 },
-  planIcon: { width: 32 },
-  planTitle: { fontSize: 17, lineHeight: 22, fontWeight: '800', color: '#F7F6F8' },
-  planPrice: { fontSize: 16, fontWeight: '700', lineHeight: 22, color: '#FFF', marginTop: 2 },
-  period: { fontSize: 13, fontWeight: '400' },
-  planNote: { color: '#B4AFBE', fontSize: 10.5, lineHeight: 15, flexShrink: 1 },
-  noteRow: { flexDirection: 'row', gap: 6, alignItems: 'center', flexWrap: 'wrap', marginTop: 3 },
-  noteRowStack: { alignItems: 'flex-start' },
-  equivalent: { color: '#C3B08B', fontSize: 10, marginTop: 2 },
+  benefits: { gap: 10 },
+  benefit: { alignItems: 'center', flexDirection: 'row', gap: 10 },
+  benefitText: { color: brand.text, flex: 1, fontSize: 15, lineHeight: 20 },
+  banner: { color: brand.textMuted, fontSize: 11, lineHeight: 15, textAlign: 'center' },
+  active: {
+    alignItems: 'center',
+    backgroundColor: brand.surface,
+    borderRadius: 18,
+    flexDirection: 'row',
+    gap: 12,
+    padding: 16,
+  },
+  plans: { gap: 10 },
+  plan: {
+    alignItems: 'center',
+    backgroundColor: brand.surface,
+    borderColor: brand.surface,
+    borderRadius: 18,
+    borderWidth: 2,
+    flexDirection: 'row',
+    gap: 12,
+    minHeight: 72,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  planSelected: { backgroundColor: brand.surfaceRaised, borderColor: brand.gold },
+  planHead: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  planTitle: { color: brand.text, fontSize: 17, fontWeight: '600', lineHeight: 22 },
+  planNote: { color: brand.textSecondary, fontSize: 13, lineHeight: 18 },
   badge: {
-    borderRadius: 12,
-    borderWidth: 0.7,
-    borderColor: '#A36ADC',
-    paddingHorizontal: 7,
+    backgroundColor: brand.goldTint,
+    borderRadius: 100,
+    paddingHorizontal: 8,
     paddingVertical: 2,
   },
-  badgeText: { color: '#F6E6FF', fontSize: 9 },
-  radio: {
-    width: 25,
-    height: 25,
-    borderRadius: 13,
-    borderColor: '#8A8394',
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
+  badgeText: { color: brand.goldLight, fontSize: 12, fontWeight: '600', lineHeight: 16 },
+  priceBlock: { alignItems: 'flex-end' },
+  price: {
+    color: brand.text,
+    fontSize: 17,
+    fontVariant: ['tabular-nums'],
+    fontWeight: '700',
+    lineHeight: 22,
   },
-  radioSelected: { backgroundColor: '#F4D174', borderColor: '#FFF0B9' },
+  period: { color: brand.textSecondary, fontSize: 13, lineHeight: 18 },
+  footer: {
+    alignItems: 'center',
+    borderTopColor: brand.line,
+    borderTopWidth: StyleSheet.hairlineWidth * 2,
+    paddingBottom: 8,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+  },
   cta: {
-    borderRadius: 29,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: '#FFEAA1',
-    overflow: 'hidden',
-  },
-  ctaFill: {
-    minHeight: 54,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: brand.gold,
+    borderRadius: 14,
     justifyContent: 'center',
-    gap: 13,
+    minHeight: 52,
   },
-  ctaText: { color: '#080604', fontSize: 24, lineHeight: 30, fontWeight: '900' },
-  free: { minHeight: 46, alignItems: 'center', justifyContent: 'center' },
-  freeText: { color: '#BBB6C5', textDecorationLine: 'underline', fontSize: 14 },
-  termsNote: {
-    color: '#918799',
-    fontSize: 9,
-    lineHeight: 13,
-    textAlign: 'center',
-    paddingHorizontal: 8,
-  },
-  footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 4 },
-  footerButton: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 10 },
-  footerText: { color: '#AAA3B4', fontSize: 11 },
-  divider: { color: '#665D70' },
-  activeBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#A17E36',
-    borderRadius: 15,
-  },
-  message: { marginTop: 8 },
+  ctaText: { color: brand.onGold, fontSize: 17, fontWeight: '600' },
+  links: { flexDirection: 'row', justifyContent: 'center', gap: 20, marginVertical: -10 },
+  link: { justifyContent: 'center', minHeight: 44 },
+  linkText: { color: brand.text, fontSize: 15 },
+  terms: { color: brand.textMuted, fontSize: 11, lineHeight: 15, textAlign: 'center' },
   disabled: { opacity: 0.45 },
-  pressed: { opacity: 0.8 },
-  topGlow: {
-    position: 'absolute',
-    top: -300,
-    right: -240,
-    width: 420,
-    height: 420,
-    borderRadius: 210,
-    borderWidth: 1,
-    borderColor: '#775527',
-    shadowColor: '#E2A338',
-    shadowOpacity: 0.8,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 0 },
-  },
-  bottomGlow: {
-    height: 30,
-    borderBottomWidth: 1,
-    borderBottomColor: '#543476',
-    borderRadius: 200,
-    marginHorizontal: -60,
-    marginTop: -12,
-    transform: [{ rotate: '-9deg' }],
-    opacity: 0.75,
-  },
+  pressed: { opacity: 0.65 },
 });

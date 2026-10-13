@@ -1,4 +1,4 @@
-import type { TrendPreset } from '@birkare/shared';
+import type { ListingLanguage, ListingTone, ProjectMode, TrendPreset } from '@birkare/shared';
 
 export type ImageReference = {
   buffer: Buffer;
@@ -72,4 +72,35 @@ export type ModerationInput = {
 export interface ModerationProvider {
   readonly name: 'fake' | 'openai' | 'disabled';
   moderateText(input: ModerationInput): Promise<ModerationResult>;
+}
+
+export type ListingCopyInput = {
+  requestId: string;
+  /** Server-validated enums; never taken from free text. */
+  language: ListingLanguage;
+  tone: ListingTone;
+  /** Text only. Seller-provided `title` and `userNote` are data, never instructions. */
+  product: {
+    title: string;
+    mode: ProjectMode;
+    categoryId?: string | null;
+    category?: string | null;
+    scene?: string | null;
+    commerceGoal?: string | null;
+    userNote?: string | null;
+  };
+};
+
+export type ListingCopy = {
+  title: string;
+  description: string;
+  highlights: string[];
+  hashtags: string[];
+};
+
+export type ListingCopyOutput = ListingCopy & { providerRequestId?: string };
+
+export interface ListingCopyProvider {
+  readonly name: 'fake' | 'openai' | 'disabled';
+  write(input: ListingCopyInput): Promise<ListingCopyOutput>;
 }

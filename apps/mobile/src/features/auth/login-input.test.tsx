@@ -33,10 +33,11 @@ vi.mock('@/features/settings/language-store', () => ({
 vi.mock('@/features/auth/auth-ui', () => ({
   AuthBrandBar: 'AuthBrandBar',
   AuthFormCard: 'AuthFormCard',
-  AuthHero: 'AuthHero',
   AuthLayout: 'AuthLayout',
   AuthLink: 'AuthLink',
+  AuthLogo: 'AuthLogo',
   AuthNote: 'AuthNote',
+  AuthSocialRow: 'AuthSocialRow',
   AuthTitle: 'AuthTitle',
   Divider: 'Divider',
   GradientAuthButton: 'GradientAuthButton',

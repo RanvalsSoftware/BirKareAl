@@ -70,13 +70,13 @@ const plugins: NonNullable<ExpoConfig['plugins']> = [
   [
     'expo-splash-screen',
     {
-      image: './assets/brand/birkare-studio-icon-1024-v1.png',
-      imageWidth: 196,
+      image: './assets/brand/logo-mark-640.png',
+      imageWidth: 180,
       resizeMode: 'contain',
-      backgroundColor: '#0B0F0D',
+      backgroundColor: '#0A0906',
       dark: {
-        image: './assets/brand/birkare-studio-icon-1024-v1.png',
-        backgroundColor: '#0B0F0D',
+        image: './assets/brand/logo-mark-640.png',
+        backgroundColor: '#0A0906',
       },
     },
   ],
@@ -86,9 +86,10 @@ const plugins: NonNullable<ExpoConfig['plugins']> = [
       photosPermission:
         'BirKare Studio, seçtiğiniz ürün fotoğrafını yalnızca ürün görseli oluşturma işleminiz için kullanır.',
       cameraPermission: 'BirKare Studio ile yeni bir ürün kaynak fotoğrafı çekebilirsiniz.',
+      microphonePermission: false,
     },
   ],
-  'expo-secure-store',
+  ['expo-secure-store', { faceIDPermission: false }],
   'expo-sharing',
   'expo-apple-authentication',
   './plugins/with-ios-release-environment',
@@ -110,18 +111,17 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     es: './locales/es.json',
     ar: './locales/ar.json',
   },
-  version: '1.0',
-  // Opaque, product-specific icon for the focused catalog workspace.
-  // The previous gold assets remain in the repository for rollback/history.
-  icon: './assets/brand/birkare-studio-icon-1024-v1.png',
+  version: '1.0.1',
+  // App icons must be opaque: the gold mark is composited on the brand black.
+  icon: './assets/brand/birkare-gold-icon-1024.png',
   orientation: 'default',
   userInterfaceStyle: 'dark',
-  backgroundColor: '#050505',
+  backgroundColor: '#0A0906',
   ios: {
-    icon: './assets/brand/birkare-studio-icon-1024-v1.png',
+    icon: './assets/brand/birkare-gold-icon-1024.png',
     supportsTablet: true,
     bundleIdentifier: 'com.birkareai.mobile',
-    buildNumber: '12',
+    buildNumber: '14',
     usesAppleSignIn: true,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
@@ -152,10 +152,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
     permissions: ['com.android.vending.BILLING'],
     // New Play upload with R8 code/resource optimization enabled.
-    versionCode: 8,
+    versionCode: 9,
     adaptiveIcon: {
-      foregroundImage: './assets/brand/birkare-studio-icon-1024-v1.png',
-      backgroundColor: '#0B0F0D',
+      foregroundImage: './assets/brand/birkare-gold-logo.png',
+      backgroundColor: '#0A0906',
     },
   },
   plugins,

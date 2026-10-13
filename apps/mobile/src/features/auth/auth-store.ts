@@ -80,6 +80,8 @@ type AuthState = {
   ) => Promise<SocialSignInResult>;
   signInWithApple: (input: {
     idToken: string;
+    /** Echoed in the identity token so the server can tie it to this request. */
+    nonce?: string;
     firstName?: string;
     lastName?: string;
     recoverDeletion?: boolean;

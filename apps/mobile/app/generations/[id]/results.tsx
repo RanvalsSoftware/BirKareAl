@@ -15,13 +15,27 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { AppHeader, Icon, Notice, PrimaryButton, Screen, VisualTile } from '@/components';
+import { Icon } from '@/components';
 import { apiBaseUrl, apiRequest } from '@/api/client';
 import { useAuthStore } from '@/features/auth/auth-store';
 import { resetCreateFlow } from '@/features/create/createFlow';
 import { resetProductStudioFlow } from '@/features/studio/productFlow';
-import { GeneratedSharePanel } from '@/features/sharing/GeneratedSharePanel';
+import { useCopy } from '@/features/settings/language-store';
 import { shareAspectRatio } from '@/features/sharing/output';
+import { brand } from '@/theme/brand';
+import {
+  BackNav,
+  Group,
+  Hint,
+  InfoNote,
+  Page,
+  PageTitle,
+  PrimaryAction,
+  Row,
+  SecondaryAction,
+  Separator,
+  Split,
+} from '@/ui/kit';
 import {
   createContentReportInput,
   newSupportSubmissionKey,
@@ -34,7 +48,7 @@ const variants = [
   {
     id: 'a',
     label: translateCopy('Varyasyon 1'),
-    palette: ['#341D68', '#CA8D24'] as const,
+    palette: ['#68541D', '#CA8D24'] as const,
     icon: '✦',
   },
   {
@@ -46,16 +60,18 @@ const variants = [
   {
     id: 'c',
     label: translateCopy('Varyasyon 3'),
-    palette: ['#5C2148', '#8B81CE'] as const,
+    palette: ['#5C2148', '#CEB981'] as const,
     icon: '◌',
   },
   {
     id: 'd',
     label: translateCopy('Varyasyon 4'),
-    palette: ['#485C2D', '#213A6B'] as const,
+    palette: ['#5C4F2D', '#213A6B'] as const,
     icon: '✧',
   },
 ];
+
+const MAX_PREVIEW_HEIGHT = 460;
 
 type GenerationOutput = {
   id: string;
@@ -156,6 +172,9 @@ export default function GenerationResultsScreen() {
       ? { authorization: `Bearer ${accessToken}` }
       : undefined;
   const displayGenerationError = invalidGenerationError ?? generationError;
+  const copy = useCopy();
+  const [imageRatio, setImageRatio] = useState<number | null>(null);
+  const [columnWidth, setColumnWidth] = useState(0);
   useEffect(() => {
     if (!generationId || generationId === 'demo') return;
     let active = true;
@@ -278,214 +297,233 @@ export default function GenerationResultsScreen() {
     setReportError(null);
   };
 
+  const ready = Boolean(
+    generationId && generation?.status === 'COMPLETED' && imageUri && selectedVariant,
+  );
+  const aspect = imageRatio ?? shareAspectRatio(generation?.aspectRatio);
+  // Bound the height so the actions stay on screen, and keep the picture's own shape.
+  const previewWidth = Math.min(columnWidth, MAX_PREVIEW_HEIGHT * aspect);
+  const variantSource = (variant: DisplayVariant) => ({
+    uri: variant.sourceUrl!.startsWith('/')
+      ? `${apiBaseUrl}${variant.sourceUrl}`
+      : variant.sourceUrl!,
+    headers:
+      variant.sourceUrl!.startsWith('/') && accessToken
+        ? { authorization: `Bearer ${accessToken}` }
+        : undefined,
+  });
+  const openExport = () =>
+    router.push({
+      pathname: '/generations/[id]/export',
+      params: { id: generationId, outputId: selected },
+    } as never);
+
   return (
-    <Screen contentContainerStyle={styles.content}>
-      <AppHeader
-        back
+    <Page width="workspace">
+      <BackNav label={copy('Geri', 'Back')} />
+      <PageTitle
+        subtitle={
+          ready
+            ? copy(
+                `${displayVariants.length} alternatif hazır. Beğendiğini seç.`,
+                displayVariants.length === 1
+                  ? '1 alternative is ready.'
+                  : `${displayVariants.length} alternatives are ready. Pick the one you like.`,
+              )
+            : undefined
+        }
         title={translateCopy(isProductProject ? 'Ürün alternatifleri' : 'Sonuçlar')}
-        subtitle={translateCopy(
-          isProductProject ? 'Sunucuda tamamlanan gerçek çıktılar' : 'Oluşturulan görseller',
-        )}
       />
-      {imageUri ? (
-        <View
-          style={[styles.mainPreview, { aspectRatio: shareAspectRatio(generation?.aspectRatio) }]}
-        >
-          <Image
-            accessibilityLabel={translateCopy('{{p0}} AI üretim sonucu', {
-              p0: selectedVariant.label,
-            })}
-            source={{ uri: imageUri, headers: imageHeaders }}
-            style={styles.generatedImage}
-            resizeMode="contain"
-          />
-          <View style={styles.aiTag}>
-            <Icon name="sparkles" size={12} color={colors.accentYellow} />
-            <Text style={styles.aiTagText}>{translateCopy('AI ile oluşturuldu')}</Text>
-          </View>
-        </View>
-      ) : (
-        <View style={styles.resultState}>
-          {displayGenerationError ? (
-            <Icon name="cloud-offline-outline" size={36} color={colors.warning} />
-          ) : generation && generation.status !== 'COMPLETED' ? (
-            <ActivityIndicator color={colors.accentYellow} size="large" />
-          ) : (
-            <Icon name="images-outline" size={36} color={colors.textMuted} />
-          )}
-          <Text style={styles.resultStateTitle}>
-            {displayGenerationError
-              ? translateCopy('Sonuç yüklenemedi')
-              : generation && generation.status !== 'COMPLETED'
-                ? translateCopy('Üretim tamamlanıyor')
-                : translateCopy('Tamamlanmış çıktı bulunamadı')}
-          </Text>
-          <Text style={styles.resultStateDetail}>
-            {displayGenerationError
-              ? translateCopy('Sunucuda kayıtlı gerçek sonuç alınmadan önizleme gösterilmez.')
-              : generation && generation.status !== 'COMPLETED'
-                ? translateCopy('Gerçek çıktılar hazır olduğunda bu ekranda görünecek.')
-                : translateCopy('Bu üretimde indirilebilir bir sunucu çıktısı yok.')}
-          </Text>
-        </View>
-      )}
-      {displayGenerationError ? (
-        <Notice tone="warning" title={translateCopy('Sonuçlar sunucudan alınamadı')}>
-          {displayGenerationError}
-        </Notice>
-      ) : null}
-      {generation && generation.status !== 'COMPLETED' ? (
-        <Notice tone="warning" title={translateCopy('Üretim henüz hazır değil')}>
-          {translateCopy('Güvenli sonuçlar tamamlandığında burada gösterilir.')}
-        </Notice>
-      ) : null}
-      {displayVariants.length ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.variants}
-          accessibilityRole="radiogroup"
-        >
-          {displayVariants.map((variant, index) => (
-            <VisualTile
-              key={variant.id}
-              size="small"
-              title={variant.label}
-              subtitle={index === 0 ? translateCopy('Önerilen') : translateCopy('Alternatif')}
-              palette={variant.palette}
-              icon={variant.icon}
-              imageSource={{
-                uri: variant.sourceUrl!.startsWith('/')
-                  ? `${apiBaseUrl}${variant.sourceUrl}`
-                  : variant.sourceUrl!,
-                headers:
-                  variant.sourceUrl!.startsWith('/') && accessToken
-                    ? { authorization: `Bearer ${accessToken}` }
-                    : undefined,
-              }}
-              selected={selected === variant.id}
-              onPress={() => void chooseVariant(variant)}
-            />
-          ))}
-        </ScrollView>
-      ) : null}
-      {selectionError ? (
-        <Notice tone="warning" title={translateCopy('Seçim kaydedilemedi')}>
-          {selectionError}
-        </Notice>
-      ) : null}
-      {generationId && generation?.status === 'COMPLETED' && imageUri && selectedVariant ? (
-        <>
-          <View style={styles.actionRow}>
-            <PrimaryButton
-              label={translateCopy(isProductProject ? 'Ürünü düzenle' : 'Düzenle')}
-              icon="sparkles-outline"
-              onPress={() => router.push(`/generations/${generationId}/edit` as never)}
-              style={styles.action}
-            />
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={translateCopy('Önce ve sonra karşılaştır')}
-              onPress={() => router.push(`/generations/${generationId}/compare` as never)}
-              style={styles.iconAction}
-            >
-              <Icon name="git-compare-outline" size={21} />
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={translateCopy('Dışa aktar ve paylaş')}
-              onPress={() =>
-                router.push({
-                  pathname: '/generations/[id]/export',
-                  params: { id: generationId, outputId: selected },
-                } as never)
-              }
-              style={styles.iconAction}
-            >
-              <Icon name="share-outline" size={21} />
-            </Pressable>
-          </View>
-          <Notice
-            tone="neutral"
-            title={translateCopy(isProductProject ? 'Seçili gerçek çıktı' : 'Seçili sonuç')}
-          >
-            {translateCopy(
-              isProductProject
-                ? 'Seçtiğin sunucu çıktısını mevcut kalitesiyle kaydedebilir ve paylaşabilirsin.'
-                : 'Seçtiğin gerçek üretimi mevcut kalitesiyle kaydedebilir ve paylaşabilirsin.',
+      <Split
+        leading={
+          <>
+            {imageUri && selectedVariant ? (
+              <View
+                onLayout={(event) => setColumnWidth(event.nativeEvent.layout.width)}
+                style={styles.previewWrap}
+              >
+                <View
+                  style={[styles.preview, { height: previewWidth / aspect, width: previewWidth }]}
+                >
+                  <Image
+                    accessibilityLabel={translateCopy('{{p0}} AI üretim sonucu', {
+                      p0: selectedVariant.label,
+                    })}
+                    onLoad={(event) => {
+                      const { width, height } = event.nativeEvent.source;
+                      if (width > 0 && height > 0) setImageRatio(width / height);
+                    }}
+                    resizeMode="cover"
+                    source={{ uri: imageUri, headers: imageHeaders }}
+                    style={styles.fill}
+                  />
+                </View>
+              </View>
+            ) : (
+              <View style={styles.state}>
+                {displayGenerationError ? (
+                  <Icon name="cloud-offline-outline" size={32} color={brand.warning} />
+                ) : generation && generation.status !== 'COMPLETED' ? (
+                  <ActivityIndicator color={brand.gold} />
+                ) : (
+                  <Icon name="images-outline" size={32} color={brand.textMuted} />
+                )}
+                <Text style={styles.stateTitle}>
+                  {displayGenerationError
+                    ? translateCopy('Sonuç yüklenemedi')
+                    : generation && generation.status !== 'COMPLETED'
+                      ? translateCopy('Üretim tamamlanıyor')
+                      : translateCopy('Tamamlanmış çıktı bulunamadı')}
+                </Text>
+                <Text style={styles.stateDetail}>
+                  {displayGenerationError ??
+                    (generation && generation.status !== 'COMPLETED'
+                      ? translateCopy('Gerçek çıktılar hazır olduğunda bu ekranda görünecek.')
+                      : translateCopy('Bu üretimde indirilebilir bir görsel yok.'))}
+                </Text>
+              </View>
             )}
-          </Notice>
-          <View style={{ marginTop: spacing.lg }}>
-            <GeneratedSharePanel generationId={generationId} outputId={selected} ready />
-          </View>
-          <View style={styles.secondaryActions}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={translateCopy(
-                isProductProject ? 'Yeni versiyon oluştur' : 'Yeniden oluştur',
+
+            {displayVariants.length > 1 ? (
+              <View accessibilityRole="radiogroup" style={styles.variants}>
+                {displayVariants.map((variant, index) => {
+                  const on = selected === variant.id;
+                  return (
+                    <Pressable
+                      accessibilityLabel={variant.label}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: on }}
+                      key={variant.id}
+                      onPress={() => void chooseVariant(variant)}
+                      style={({ pressed }) => [styles.variant, pressed && styles.pressed]}
+                    >
+                      <View style={[styles.variantImage, on && styles.variantImageOn]}>
+                        <Image
+                          resizeMode="cover"
+                          source={variantSource(variant)}
+                          style={styles.fill}
+                        />
+                      </View>
+                      <Text style={[styles.variantLabel, on && styles.variantLabelOn]}>
+                        {index + 1}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ) : null}
+            {selectionError ? (
+              <InfoNote
+                icon="alert-circle-outline"
+                title={translateCopy('Seçim kaydedilemedi')}
+                tone="warning"
+              >
+                {selectionError}
+              </InfoNote>
+            ) : null}
+          </>
+        }
+        leadingFlex={5}
+        trailing={
+          <>
+            {ready ? (
+              <>
+                <PrimaryAction
+                  icon="download-outline"
+                  label={translateCopy('Kaydet ve paylaş')}
+                  onPress={openExport}
+                />
+                <Group>
+                  <Row
+                    icon="create-outline"
+                    onPress={() => router.push(`/generations/${generationId}/edit` as never)}
+                    title={copy('Görseli düzenle', 'Edit the image')}
+                  />
+                  <Separator />
+                  <Row
+                    icon="git-compare-outline"
+                    onPress={() => router.push(`/generations/${generationId}/compare` as never)}
+                    title={copy('Önce ve sonra', 'Before and after')}
+                  />
+                  {isProductProject ? (
+                    <>
+                      <Separator />
+                      <Row
+                        detail="1:1 · 4:5 · 9:16 · 16:9"
+                        icon="albums-outline"
+                        onPress={() =>
+                          router.push({
+                            pathname: '/generations/[id]/formats',
+                            params: { id: generationId, outputId: selected },
+                          } as never)
+                        }
+                        title={copy('Satış formatlarını dışa aktar', 'Export sales formats')}
+                      />
+                      {generation?.projectId ? (
+                        <>
+                          <Separator />
+                          <Row
+                            detail={copy('Fiyat ve ilan metni', 'Price and listing text')}
+                            icon="pricetag-outline"
+                            onPress={() =>
+                              router.push(`/projects/${generation.projectId}` as never)
+                            }
+                            title={copy('Ürün sayfası', 'Product page')}
+                          />
+                        </>
+                      ) : null}
+                    </>
+                  ) : null}
+                </Group>
+                <Hint>
+                  {copy(
+                    'Görseller yapay zekâ ile üretildi. Yayımlamadan önce ürününe uygunluğunu kontrol et.',
+                    'These images were generated with AI. Check them against your product before publishing.',
+                  )}
+                </Hint>
+              </>
+            ) : null}
+            {reportReceipt ? (
+              <InfoNote icon="checkmark-circle-outline" title={translateCopy('Raporun gönderildi')}>
+                {translateCopy('İçerik güvenli inceleme için kaydedildi. Talep numaran: {{p0}}', {
+                  p0: reportReceipt.id,
+                })}
+              </InfoNote>
+            ) : null}
+            <SecondaryAction
+              accessibilityHint={translateCopy(
+                isProductProject
+                  ? 'Yeni bir ürün projesi başlatır'
+                  : 'Yeni bir üretime en baştan başlar',
               )}
-              onPress={() => router.push(`/generations/${generationId}/edit` as never)}
-              style={styles.secondary}
-            >
-              <Icon name="refresh-outline" size={18} color={colors.textSecondary} />
-              <Text style={styles.secondaryText}>
-                {translateCopy(isProductProject ? 'Yeni versiyon' : 'Yeniden oluştur')}
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={translateCopy('Seçili görseli kaydet')}
-              onPress={() =>
-                router.push({
-                  pathname: '/generations/[id]/export',
-                  params: { id: generationId, outputId: selected },
-                } as never)
-              }
-              style={styles.secondary}
-            >
-              <Icon name="download-outline" size={18} color={colors.textSecondary} />
-              <Text style={styles.secondaryText}>{translateCopy('Kaydet ve paylaş')}</Text>
-            </Pressable>
-          </View>
-        </>
-      ) : null}
-      {reportReceipt ? (
-        <Notice tone="success" title={translateCopy('Raporun gönderildi')}>
-          {translateCopy('İçerik güvenli inceleme için kaydedildi. Talep numaran: {{p0}}', {
-            p0: reportReceipt.id,
-          })}
-        </Notice>
-      ) : null}
-      {generationId && selectedVariant?.serverOutput ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={translateCopy('Bu içeriği raporla')}
-          onPress={() => {
-            setReportError(null);
-            setReportOpen(true);
-          }}
-          style={({ pressed }) => [styles.reportAction, pressed && styles.pressed]}
-        >
-          <Icon name="flag-outline" size={18} color={colors.danger} />
-          <Text style={styles.reportActionText}>{translateCopy('Raporla')}</Text>
-        </Pressable>
-      ) : null}
-      <PrimaryButton
-        accessibilityHint={translateCopy(
-          isProductProject ? 'Yeni bir ürün projesi başlatır' : 'Yeni bir üretime en baştan başlar',
-        )}
-        icon="add"
-        label={translateCopy(isProductProject ? 'Yeni ürün projesi' : 'Yeni oluştur')}
-        onPress={() => {
-          if (isProductProject) {
-            resetProductStudioFlow();
-            router.dismissTo('/studio' as never);
-            return;
-          }
-          resetCreateFlow();
-          router.dismissTo('/create' as never);
-        }}
-        style={styles.newCreateAction}
+              icon="add"
+              label={translateCopy(isProductProject ? 'Yeni ürün projesi' : 'Yeni oluştur')}
+              onPress={() => {
+                if (isProductProject) {
+                  resetProductStudioFlow();
+                  router.dismissTo('/studio/product' as never);
+                  return;
+                }
+                resetCreateFlow();
+                router.dismissTo('/create' as never);
+              }}
+            />
+            {generationId && selectedVariant?.serverOutput ? (
+              <Pressable
+                accessibilityLabel={translateCopy('Bu içeriği raporla')}
+                accessibilityRole="button"
+                onPress={() => {
+                  setReportError(null);
+                  setReportOpen(true);
+                }}
+                style={({ pressed }) => [styles.report, pressed && styles.pressed]}
+              >
+                <Text style={styles.reportText}>{translateCopy('Raporla')}</Text>
+              </Pressable>
+            ) : null}
+          </>
+        }
+        trailingFlex={6}
       />
       <ReportModal
         detail={reportDetail}
@@ -498,7 +536,7 @@ export default function GenerationResultsScreen() {
         sending={reportSending}
         visible={reportOpen}
       />
-    </Screen>
+    </Page>
   );
 }
 
@@ -639,6 +677,35 @@ function ReportModal({
 }
 
 const styles = StyleSheet.create({
+  previewWrap: { alignItems: 'center', width: '100%' },
+  preview: { backgroundColor: brand.surface, borderRadius: 20, overflow: 'hidden' },
+  fill: { height: '100%', width: '100%' },
+  state: {
+    alignItems: 'center',
+    backgroundColor: brand.surface,
+    borderRadius: 20,
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 48,
+  },
+  stateTitle: { color: brand.text, fontSize: 17, fontWeight: '600', textAlign: 'center' },
+  stateDetail: { color: brand.textSecondary, fontSize: 15, lineHeight: 20, textAlign: 'center' },
+  variants: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
+  variant: { alignItems: 'center', gap: 4 },
+  variantImage: {
+    backgroundColor: brand.surface,
+    borderColor: 'transparent',
+    borderRadius: 14,
+    borderWidth: 2,
+    height: 84,
+    overflow: 'hidden',
+    width: 68,
+  },
+  variantImageOn: { borderColor: brand.gold },
+  variantLabel: { color: brand.textSecondary, fontSize: 13, fontVariant: ['tabular-nums'] },
+  variantLabelOn: { color: brand.gold, fontWeight: '600' },
+  report: { alignItems: 'center', justifyContent: 'center', minHeight: 44 },
+  reportText: { color: brand.danger, fontSize: 15 },
   content: { paddingBottom: 42 },
   favorite: {
     width: 44,
@@ -652,6 +719,7 @@ const styles = StyleSheet.create({
   },
   mainPreview: {
     alignSelf: 'center',
+    backgroundColor: colors.surface,
     borderRadius: radii.xl,
     maxHeight: 640,
     minHeight: 320,
@@ -714,8 +782,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
-  aiTagText: { ...typography.caption, fontSize: 10, color: colors.textPrimary, fontWeight: '700' },
-  variants: { gap: 10, marginTop: spacing.lg, paddingRight: spacing.lg },
+  aiTagText: { ...typography.caption, fontSize: 12, color: colors.textPrimary, fontWeight: '700' },
   actionRow: { flexDirection: 'row', gap: 9, marginTop: spacing.lg },
   action: { flex: 1 },
   iconAction: {
@@ -823,7 +890,7 @@ const styles = StyleSheet.create({
   },
   reportReasonSelected: {
     backgroundColor: colors.accentPurpleSoft,
-    borderColor: colors.accentPurple,
+    borderColor: colors.border,
   },
   radio: {
     alignItems: 'center',

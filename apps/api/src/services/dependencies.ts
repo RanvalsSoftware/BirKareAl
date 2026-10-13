@@ -1,6 +1,12 @@
 import type { BirKareConfig } from '@birkare/config';
 import { getConfig } from '@birkare/config';
 import { createRepository, type BirKareRepository } from '@birkare/database';
+import {
+  createListingCopyProvider,
+  createModerationProvider,
+  type ListingCopyProvider,
+  type ModerationProvider,
+} from '@birkare/ai';
 import { createLogger, type Logger } from '@birkare/logger';
 import { createStorageProvider, type StorageProvider } from '@birkare/storage';
 import { AuthService } from '../modules/auth/auth.service.js';
@@ -28,6 +34,8 @@ export type ApiDependencies = {
   mailService: MailService;
   revenueCatService: RevenueCatService;
   generationQueue: GenerationQueue;
+  moderationProvider: ModerationProvider;
+  listingCopyProvider: ListingCopyProvider;
 };
 
 export async function createApiDependencies(config = getConfig()): Promise<ApiDependencies> {
@@ -70,5 +78,7 @@ export async function createApiDependencies(config = getConfig()): Promise<ApiDe
     mailService,
     revenueCatService,
     generationQueue,
+    moderationProvider: createModerationProvider(config),
+    listingCopyProvider: createListingCopyProvider(config),
   };
 }

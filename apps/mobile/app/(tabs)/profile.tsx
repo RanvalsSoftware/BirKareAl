@@ -1,22 +1,23 @@
 import { useLanguageRevision } from '@/i18n/use-language';
 import { getLocale as getAppLocale } from '@/i18n/engine';
 import { tr as translateCopy } from '@/i18n/engine';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { GlassSurface, Icon } from '@/components';
 import { apiRequest } from '@/api/client';
 import { useAuthStore, type AuthUser } from '@/features/auth/auth-store';
 import { useCreditWallet } from '@/features/billing/use-wallet';
-import { useAppearanceStore } from '@/features/settings/appearance-store';
+import { useUserProjects } from '@/features/projects/use-user-projects';
+import { useCopy } from '@/features/settings/language-store';
 import {
   GlassSettingsPanel,
   GlassSettingsRow,
+  SettingsAccountCard,
   SettingsPage,
   SettingsSectionTitle,
 } from '@/features/settings/components';
-import { colors, typography } from '@/theme';
+import { brand } from '@/theme/brand';
 
 type MeResponse = {
   user: AuthUser;
@@ -44,16 +45,18 @@ export default function ProfileScreen() {
   const languageRevision = useLanguageRevision();
 
   const router = useRouter();
+  const copy = useCopy();
   const queryClient = useQueryClient();
   const sessionUser = useAuthStore((store) => store.user);
   const signOut = useAuthStore((store) => store.signOut);
-  const glassEffects = useAppearanceStore((store) => store.glassEffects);
   const { data: liveWallet } = useCreditWallet();
   const { data: me } = useQuery({
     queryKey: ['me', sessionUser?.id],
     queryFn: ({ signal }) => apiRequest<MeResponse>('/v1/me', { signal }),
     enabled: Boolean(sessionUser),
   });
+  const projectsQuery = useUserProjects();
+  const products = projectsQuery.data?.filter((item) => item.mode === 'PRODUCT_STUDIO');
   const user = me?.user ?? sessionUser;
   const wallet = liveWallet ?? me?.wallet;
   const verified = Boolean(user?.emailVerified);
@@ -73,71 +76,27 @@ export default function ProfileScreen() {
 
   return (
     <SettingsPage
-      title={translateCopy("Profil")}
-      subtitle={translateCopy("Hesabın ve tercihlerin")}
-      credits={wallet?.unlimited ? '∞' : wallet?.available}
+      title={translateCopy("Hesap")}
+      subtitle={copy('Sana ait çalışma alanı.', 'Your own workspace.')}
+      credits={wallet?.available}
       back={false}
     >
-      <GlassSurface
-        radius={29}
-        tone="iridescent"
-        style={styles.hero}
-        contentStyle={styles.heroContent}
-      >
-        {glassEffects ? (
-          <View pointerEvents="none" accessible={false} style={StyleSheet.absoluteFill}>
-            <View style={styles.goldArc} />
-            <View style={styles.purpleArc} />
-          </View>
-        ) : null}
-        <View style={styles.heroTop}>
-          <GlassSurface
-            radius={999}
-            tone="gold"
-            selected
-            style={styles.avatar}
-            contentStyle={styles.center}
-          >
-            <Text style={styles.initials}>{avatarInitials(user)}</Text>
-          </GlassSurface>
-          <View style={styles.copy}>
-            <Text style={styles.name}>{fullName(user)}</Text>
-            <View style={styles.verification}>
-              <Icon
-                name={verified ? 'checkmark-circle' : 'time-outline'}
-                size={14}
-                color={verified ? '#70DC94' : '#E9BA65'}
-              />
-              <Text style={[styles.verifiedText, { color: verified ? '#70DC94' : '#E9BA65' }]}>
-                {verified ? translateCopy("E-posta doğrulandı") : translateCopy("Doğrulama bekleniyor")}
-              </Text>
-            </View>
-            <Text numberOfLines={2} style={styles.email}>
-              {user?.email ?? translateCopy("Hesap bilgileri yükleniyor…")}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.heroFooter}>
-          <Text style={styles.heroMotto}>{translateCopy("Her karede biraz sen.")}</Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={translateCopy("Profili düzenle")}
-            accessibilityHint={translateCopy("Hesabındaki ad ve soyadını güncelle")}
-            onPress={() => router.push('/settings/account' as never)}
-            style={({ pressed }) => [styles.editAction, pressed && styles.editPressed]}
-          >
-            <GlassSurface radius={22} tone="gold" glow={false} contentStyle={styles.editContent}>
-              <Icon name="create-outline" size={16} color="#F0D481" />
-              <Text style={styles.editLabel}>{translateCopy("Profili düzenle")}</Text>
-            </GlassSurface>
-          </Pressable>
-        </View>
-      </GlassSurface>
+      <SettingsAccountCard
+        initials={avatarInitials(user)}
+        name={fullName(user)}
+        email={user?.email ?? translateCopy("Hesap bilgileri yükleniyor…")}
+        caption={verified ? translateCopy("E-posta doğrulandı") : translateCopy("Doğrulama bekleniyor")}
+        verified={verified}
+        onPress={() => router.push('/settings/account' as never)}
+      />
 
       <View style={styles.stats}>
-        <Stat value={wallet ? String(wallet.available) : '—'} label={translateCopy("Kredi")} icon="flash-outline" />
-        <Stat value={wallet ? String(wallet.reserved) : '—'} label={translateCopy("Ayrılmış")} icon="time-outline" />
-        <Stat value={verified ? '✓' : '—'} label={translateCopy("Doğrulama")} icon="shield-checkmark-outline" />
+        <Stat value={products ? String(products.length) : '—'} label={copy('Ürün', 'Products')} />
+        <Stat
+          value={products ? String(products.filter((item) => item.outputAssetId).length) : '—'}
+          label={copy('Hazır görsel', 'Ready')}
+        />
+        <Stat accent value={wallet ? String(wallet.available) : '—'} label={translateCopy("Kredi")} />
       </View>
 
       <SettingsSectionTitle>{translateCopy("BAKİYE VE HAREKETLER")}</SettingsSectionTitle>
@@ -145,15 +104,12 @@ export default function ProfileScreen() {
         <GlassSettingsRow
           icon="flash-outline"
           title={translateCopy("Kredi bakiyem")}
-          detail={translateCopy("Kullanılabilir ve ayrılmış krediler")}
-          value={wallet ? `${wallet.available} kredi` : translateCopy("Yükleniyor")}
+          value={wallet ? translateCopy('{{p0}} kredi', { p0: wallet.available }) : translateCopy("Yükleniyor")}
           onPress={() => router.push('/(tabs)/credits' as never)}
         />
         <GlassSettingsRow
-          icon="receipt-outline"
-          accent="purple"
+          icon="time-outline"
           title={translateCopy("İşlem geçmişi")}
-          detail={translateCopy("Hesabına ait gerçek kredi hareketleri")}
           onPress={() => router.push('/settings/history' as never)}
           last
         />
@@ -162,17 +118,22 @@ export default function ProfileScreen() {
       <SettingsSectionTitle>{translateCopy("HESABIM")}</SettingsSectionTitle>
       <GlassSettingsPanel>
         <GlassSettingsRow
-          icon="color-palette-outline"
-          title={translateCopy("Görünüm")}
-          detail={translateCopy("Koyu tema, cam efektleri ve animasyon")}
-          onPress={() => router.push('/settings/appearance' as never)}
+          icon="storefront-outline"
+          title={copy('Marka kiti', 'Brand kit')}
+          detail={copy('Mağaza adı, logo ve iletişim', 'Shop name, logo and contact')}
+          onPress={() => router.push('/settings/brand' as never)}
         />
         <GlassSettingsRow
-          icon="settings-outline"
-          accent="purple"
+          icon="options-outline"
           title={translateCopy("Ayarlar")}
-          detail={translateCopy("Uygulamayı sana göre düzenle")}
+          detail={copy('Tercihler, dil ve bildirimler', 'Preferences, language and notifications')}
           onPress={() => router.push('/settings' as never)}
+        />
+        <GlassSettingsRow
+          icon="layers-outline"
+          title={translateCopy("Görünüm")}
+          value={copy('Koyu', 'Dark')}
+          onPress={() => router.push('/settings/appearance' as never)}
         />
         <GlassSettingsRow
           icon="shield-checkmark-outline"
@@ -180,8 +141,7 @@ export default function ProfileScreen() {
           onPress={() => router.push('/settings/privacy' as never)}
         />
         <GlassSettingsRow
-          icon="help-buoy-outline"
-          accent="purple"
+          icon="help-circle-outline"
           title={translateCopy("Yardım ve destek")}
           onPress={() => router.push('/support' as never)}
         />
@@ -192,7 +152,8 @@ export default function ProfileScreen() {
           last
         />
       </GlassSettingsPanel>
-      <GlassSettingsPanel tone="neutral">
+
+      <GlassSettingsPanel>
         <GlassSettingsRow
           icon="log-out-outline"
           title={translateCopy("Çıkış yap")}
@@ -216,95 +177,21 @@ export default function ProfileScreen() {
   );
 }
 
-function Stat({
-  value,
-  label,
-  icon,
-}: {
-  value: string;
-  label: string;
-  icon: React.ComponentProps<typeof Icon>['name'];
-}) {
+function Stat({ value, label, accent = false }: { value: string; label: string; accent?: boolean }) {
   const languageRevision = useLanguageRevision();
 
   return (
-    <GlassSurface
-      radius={21}
-      tone="iridescent"
-      glow={false}
-      style={styles.stat}
-      contentStyle={styles.statContent}
-    >
-      <Icon name={icon} size={17} color={colors.accentYellow} />
-      <Text style={styles.statValue}>{value}</Text>
+    <View style={styles.stat}>
+      <Text style={[styles.statValue, accent && styles.statValueAccent]}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
-    </GlassSurface>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  hero: { marginTop: 7 },
-  heroContent: { minHeight: 216, padding: 20, gap: 23, borderRadius: 29, overflow: 'hidden' },
-  heroTop: { flexDirection: 'row', alignItems: 'center', gap: 16, minHeight: 90 },
-  avatar: { width: 78, height: 78, borderRadius: 999 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  initials: { fontSize: 29, fontWeight: '600', color: '#F9DA7C' },
-  goldArc: {
-    position: 'absolute',
-    width: 380,
-    height: 235,
-    top: -158,
-    left: -70,
-    borderRadius: 220,
-    borderWidth: 1,
-    borderColor: 'rgba(239,195,84,0.16)',
-    transform: [{ rotate: '-24deg' }],
-  },
-  purpleArc: {
-    position: 'absolute',
-    width: 280,
-    height: 190,
-    bottom: -146,
-    right: -51,
-    borderRadius: 190,
-    borderWidth: 1,
-    borderColor: 'rgba(172,123,220,0.2)',
-    transform: [{ rotate: '-31deg' }],
-  },
-  heroFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-    paddingTop: 17,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(241,226,182,0.12)',
-  },
-  heroMotto: { color: '#938F87', fontSize: 11, lineHeight: 17, flex: 1 },
-  editAction: { flexShrink: 0 },
-  editPressed: { opacity: 0.75 },
-  editContent: {
-    minHeight: 44,
-    paddingHorizontal: 13,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  editLabel: { color: '#E8DBB8', fontSize: 12, fontWeight: '600' },
-  copy: { flex: 1, minWidth: 0 },
-  name: { ...typography.h3, color: colors.textPrimary },
-  verification: { flexDirection: 'row', gap: 4, alignItems: 'center', marginTop: 6 },
-  verifiedText: { fontSize: 10, lineHeight: 15 },
-  email: { fontSize: 11, lineHeight: 17, color: '#929097', marginTop: 5 },
-  stats: { flexDirection: 'row', gap: 10, marginTop: 14, marginBottom: 12 },
-  stat: { flex: 1 },
-  statContent: {
-    minHeight: 93,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
-    paddingVertical: 10,
-  },
-  statValue: { color: '#F8F7F9', fontSize: 23, lineHeight: 29, fontWeight: '600' },
-  statLabel: { color: '#8F8D95', fontSize: 11, lineHeight: 16 },
+  stats: { flexDirection: 'row', gap: 12 },
+  stat: { backgroundColor: brand.surface, borderRadius: 16, flex: 1, gap: 6, padding: 16 },
+  statValue: { color: brand.text, fontSize: 26, fontVariant: ['tabular-nums'], fontWeight: '700' },
+  statValueAccent: { color: brand.gold },
+  statLabel: { color: brand.textSecondary, fontSize: 13 },
 });

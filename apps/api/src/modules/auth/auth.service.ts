@@ -241,11 +241,13 @@ export class AuthService {
   async login(input: LoginInput, context: AuthRequestContext): Promise<AuthSessionResponse> {
     await this.emailSecurityService?.assertLoginAllowed(input.email, context);
     const user = await this.repository.getUserByEmail(normalizeEmail(input.email));
-    if (
-      !user ||
-      !user.passwordHash ||
-      !(await this.passwordService.verify(user.passwordHash, input.password))
-    ) {
+    if (!user?.passwordHash) {
+      // Spend the same Argon2 work as a real check so response time does not
+      // reveal whether a password account exists for this address.
+      await this.passwordService.verifyAgainstDummy(input.password);
+      throw unauthorized('AUTH_INVALID_CREDENTIALS', 'E-posta veya şifre hatalı.');
+    }
+    if (!(await this.passwordService.verify(user.passwordHash, input.password))) {
       throw unauthorized('AUTH_INVALID_CREDENTIALS', 'E-posta veya şifre hatalı.');
     }
     const eligibleUser = await this.resolveLoginUser(user, input.recoverDeletion);

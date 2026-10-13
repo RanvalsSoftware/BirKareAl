@@ -7,7 +7,6 @@ import { useAuthStore } from '@/features/auth/auth-store';
 import { accountQueryKey } from '@/features/auth/account-query-cache';
 
 export const CREDIT_WALLET_QUERY_KEY = ['wallet'] as const;
-export const INITIAL_CREDIT_PLACEHOLDER = 21;
 
 export type CreditWallet = {
   available: number;
@@ -53,8 +52,9 @@ export function useCreditWallet() {
   return query;
 }
 
+/** The server's balance; 0 until it has loaded, never an invented figure. */
 export function useAvailableCredits(): number {
-  return useCreditWallet().data?.available ?? INITIAL_CREDIT_PLACEHOLDER;
+  return useCreditWallet().data?.available ?? 0;
 }
 
 export function useCreditTransactions() {

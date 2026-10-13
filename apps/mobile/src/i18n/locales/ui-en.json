@@ -129,5 +129,10 @@
   "Varyasyon 1": "Variation 1",
   "Varyasyon 2": "Variation 2",
   "Varyasyon 3": "Variation 3",
-  "Varyasyon 4": "Variation 4"
+  "Varyasyon 4": "Variation 4",
+  "Kamera izni gerekli": "Camera access needed",
+  "Ürün fotoğrafı çekmek için Ayarlar’dan kamera erişimine izin ver.": "Allow camera access in Settings to take a product photo.",
+  "Kamera açılamadı": "Camera unavailable",
+  "Bu cihazda kamera kullanılamıyor. Galeriden bir fotoğraf seçebilirsin.": "The camera is not available on this device. You can choose a photo from your library.",
+  "Bu cihazda paylaşım menüsü kullanılamıyor.": "Sharing is not available on this device."
 }

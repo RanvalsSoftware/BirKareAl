@@ -8,8 +8,10 @@ const mocks = await vi.hoisted(async () => {
   const { default: Module, createRequire } = await import('node:module');
   const require = createRequire(import.meta.url);
   const paths = [
-    require.resolve('../../../assets/brand/birkare-studio-icon-1024-v1.png'),
-    require.resolve('../../../assets/products/ui/product-shoot.webp'),
+    require.resolve('../../../assets/brand/logo-layer-left.png'),
+    require.resolve('../../../assets/brand/logo-layer-right.png'),
+    require.resolve('../../../assets/brand/logo-layer-streak.png'),
+    require.resolve('../../../assets/brand/logo-mark-640.png'),
   ];
   const originals = paths.map((path) => require.cache[path]);
   paths.forEach((path) => {
@@ -53,6 +55,8 @@ vi.mock('react-native-reanimated', () => ({
   default: { View: 'AnimatedView', Image: 'AnimatedImage' },
 }));
 vi.mock('@/hooks/useReducedMotion', () => ({ useReducedMotion: () => false }));
+vi.mock('@/components/BrandLogo', () => ({ BrandLogo: 'BrandLogo' }));
+// The picker pulls in the navigation-aware interface kit, which this unit test does not need.
 vi.mock('@/features/settings/language-store', () => ({
   useCopy: () => (turkish: string) => turkish,
 }));

@@ -395,7 +395,7 @@ function GlassProgressOrb({
           />
         </Animated.View>
         <Icon
-          name={completed ? 'checkmark' : stopped ? 'pause-outline' : 'sparkles-outline'}
+          name={completed ? 'checkmark' : stopped ? 'pause-outline' : 'hourglass-outline'}
           size={32}
           color={completed ? '#FFE89A' : '#F5EEDB'}
         />
@@ -557,8 +557,6 @@ const styles = StyleSheet.create({
   outerHairline: {
     ...StyleSheet.absoluteFill,
     borderRadius: ORB_SIZE / 2,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,246,219,0.20)',
   },
   orbHalo: {
     position: 'absolute',
@@ -567,7 +565,7 @@ const styles = StyleSheet.create({
     borderRadius: 98,
     backgroundColor: 'rgba(242,214,135,0.07)',
     shadowColor: '#FFE7A2',
-    shadowOpacity: 0.6,
+    shadowOpacity: 0,
     shadowOffset: { width: 0, height: 0 },
     shadowRadius: 30,
   },
@@ -630,7 +628,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF8DD',
     shadowColor: '#FFF1B1',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
+    shadowOpacity: 0,
     shadowRadius: 7,
   },
   percent: {
@@ -642,7 +640,7 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   orbCaption: {
-    fontSize: 9,
+    fontSize: 11,
     letterSpacing: 2.1,
     fontWeight: '700',
     color: 'rgba(255,249,230,0.48)',
@@ -657,7 +655,7 @@ const styles = StyleSheet.create({
     maxWidth: 310,
   },
   progressHint: {
-    fontSize: 10,
+    fontSize: 11,
     lineHeight: 15,
     color: colors.textMuted,
     textAlign: 'center',
@@ -671,8 +669,6 @@ const styles = StyleSheet.create({
     height: 30,
     borderRadius: 15,
     backgroundColor: 'rgba(15,15,15,0.5)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',

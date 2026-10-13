@@ -79,7 +79,13 @@
     ]
   },
   {
-    "text": "{{p0}} ayrı sonuç",
+    "text": "{{p0}} alternatif",
+    "files": [
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+    ]
+  },
+  {
+    "text": "{{p0}} alternatif üret",
     "files": [
       "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
@@ -94,6 +100,12 @@
     "text": "{{p0}} görsel · {{p1}}",
     "files": [
       "apps/mobile/src/features/legacy/routes/create/review.tsx"
+    ]
+  },
+  {
+    "text": "{{p0}} için başlangıç seçimi: {{p1}}.",
+    "files": [
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
@@ -123,8 +135,12 @@
   {
     "text": "{{p0}} kredi",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx",
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+      "apps/mobile/app/(tabs)/credits.tsx",
+      "apps/mobile/app/(tabs)/home.tsx",
+      "apps/mobile/app/(tabs)/profile.tsx",
+      "apps/mobile/app/(tabs)/projects.tsx",
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx",
+      "apps/mobile/src/features/settings/components.tsx"
     ]
   },
   {
@@ -170,21 +186,9 @@
     ]
   },
   {
-    "text": "{{p0}} sayfasına git",
-    "files": [
-      "apps/mobile/src/features/settings/settings-tab-footer.tsx"
-    ]
-  },
-  {
     "text": "{{p0}} seçenek",
     "files": [
       "apps/mobile/src/features/legacy/routes/tabs/explore.tsx"
-    ]
-  },
-  {
-    "text": "{{p0}} uygulamasını paylaşım menüsünden seç",
-    "files": [
-      "apps/mobile/src/features/sharing/native-share.ts"
     ]
   },
   {
@@ -194,11 +198,17 @@
     ]
   },
   {
+    "text": "{{p0}} uygulamasını paylaşım menüsünden seç",
+    "files": [
+      "apps/mobile/src/features/sharing/native-share.ts"
+    ]
+  },
+  {
     "text": "{{p0}} Yeniden denemek için dokun.",
     "files": [
       "apps/mobile/app/create/progress.tsx",
-      "apps/mobile/app/studio/[mode].tsx",
-      "apps/mobile/src/features/legacy/routes/create/review.tsx"
+      "apps/mobile/src/features/legacy/routes/create/review.tsx",
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -222,7 +232,7 @@
   {
     "text": "{{p0}}, ürün kategorisi",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -271,8 +281,7 @@
   {
     "text": "+{{p0}} kredi",
     "files": [
-      "apps/mobile/src/features/legacy/routes/tabs/explore.tsx",
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+      "apps/mobile/src/features/legacy/routes/tabs/explore.tsx"
     ]
   },
   {
@@ -282,15 +291,9 @@
     ]
   },
   {
-    "text": "1 · Yükle",
+    "text": "1 fotoğraf eklendi",
     "files": [
-      "apps/mobile/app/(tabs)/home.tsx"
-    ]
-  },
-  {
-    "text": "1, 2 veya 4 alternatif",
-    "files": [
-      "apps/mobile/app/(tabs)/home.tsx"
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
@@ -325,18 +328,6 @@
     ]
   },
   {
-    "text": "2 · Planla",
-    "files": [
-      "apps/mobile/app/(tabs)/home.tsx"
-    ]
-  },
-  {
-    "text": "2 alternatifle başla",
-    "files": [
-      "apps/mobile/app/(tabs)/home.tsx"
-    ]
-  },
-  {
     "text": "2 Ekim 2026",
     "files": [
       "apps/mobile/app/legal/[document].tsx"
@@ -353,12 +344,6 @@
     "files": [
       "apps/mobile/src/features/billing/ProPaywallPreview.tsx",
       "apps/mobile/src/features/billing/paywall-model.ts"
-    ]
-  },
-  {
-    "text": "3 · Üret",
-    "files": [
-      "apps/mobile/app/(tabs)/home.tsx"
     ]
   },
   {
@@ -477,15 +462,15 @@
     ]
   },
   {
-    "text": "Acil olmayan talepler",
-    "files": [
-      "apps/mobile/app/support/index.tsx"
-    ]
-  },
-  {
     "text": "Aç",
     "files": [
       "apps/mobile/src/features/legacy/routes/tabs/explore.tsx"
+    ]
+  },
+  {
+    "text": "Acil olmayan talepler",
+    "files": [
+      "apps/mobile/app/support/index.tsx"
     ]
   },
   {
@@ -546,12 +531,6 @@
     ]
   },
   {
-    "text": "Açık, anlaşılır ve her zaman erişilebilir",
-    "files": [
-      "apps/mobile/app/legal/index.tsx"
-    ]
-  },
-  {
     "text": "Açıklama",
     "files": [
       "apps/mobile/app/support/ticket.tsx"
@@ -580,12 +559,6 @@
     "files": [
       "apps/mobile/app/(auth)/register.tsx",
       "apps/mobile/app/(auth)/social-complete.tsx"
-    ]
-  },
-  {
-    "text": "Ad ve soyadını güncelle",
-    "files": [
-      "apps/mobile/app/settings/index.tsx"
     ]
   },
   {
@@ -686,12 +659,6 @@
     ]
   },
   {
-    "text": "AI içerik ve gerçeklik bildirimi",
-    "files": [
-      "apps/mobile/app/legal/index.tsx"
-    ]
-  },
-  {
     "text": "AI ile düzenle",
     "files": [
       "apps/mobile/app/generations/[id]/edit.tsx",
@@ -712,15 +679,15 @@
     ]
   },
   {
-    "text": "AI ile uygulanır",
-    "files": [
-      "apps/mobile/src/features/legacy/routes/trends/slug.tsx"
-    ]
-  },
-  {
     "text": "AI ile üretilen veya önemli ölçüde düzenlenen sonuçlar, paylaşım akışında AI içeriği olarak işaretlenir.",
     "files": [
       "apps/mobile/app/legal/[document].tsx"
+    ]
+  },
+  {
+    "text": "AI ile uygulanır",
+    "files": [
+      "apps/mobile/src/features/legacy/routes/trends/slug.tsx"
     ]
   },
   {
@@ -730,13 +697,13 @@
     ]
   },
   {
-    "text": "AI sonucu",
+    "text": "AI SONUÇ",
     "files": [
       "apps/mobile/app/generations/[id]/compare.tsx"
     ]
   },
   {
-    "text": "AI SONUÇ",
+    "text": "AI sonucu",
     "files": [
       "apps/mobile/app/generations/[id]/compare.tsx"
     ]
@@ -751,6 +718,13 @@
     "text": "AI üretim sonucu",
     "files": [
       "apps/mobile/app/generations/[id]/compare.tsx"
+    ]
+  },
+  {
+    "text": "ai.ranvals.com",
+    "files": [
+      "apps/mobile/app/legal/index.tsx",
+      "apps/mobile/app/settings/index.tsx"
     ]
   },
   {
@@ -857,21 +831,15 @@
     ]
   },
   {
-    "text": "alternatif",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
-    ]
-  },
-  {
     "text": "Alternatif",
     "files": [
       "apps/mobile/app/generations/[id]/results.tsx"
     ]
   },
   {
-    "text": "Alternatif sayısı",
+    "text": "Alternatif üret",
     "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+      "apps/mobile/app/(tabs)/home.tsx"
     ]
   },
   {
@@ -883,7 +851,8 @@
   {
     "text": "Altın vurgulu premium reklam karesi.",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
     ]
   },
   {
@@ -893,32 +862,23 @@
     ]
   },
   {
-    "text": "Amaç seçimi yalnızca başlangıç ayarlarını hazırlar.",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
-    ]
-  },
-  {
-    "text": "Amaç, sahne ve format",
-    "files": [
-      "apps/mobile/app/(tabs)/home.tsx"
-    ]
-  },
-  {
     "text": "Ambalaj, kapak ve etiketi koruyan temiz beauty çekimi.",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
     ]
   },
   {
     "text": "Ana görsel güvenle yükleniyor",
     "files": [
+      "apps/mobile/src/features/studio/productServer.ts",
       "apps/mobile/src/features/studio/server.ts"
     ]
   },
   {
     "text": "Ana görsel hazırlanıyor",
     "files": [
+      "apps/mobile/src/features/studio/productServer.ts",
       "apps/mobile/src/features/studio/server.ts"
     ]
   },
@@ -960,9 +920,21 @@
     ]
   },
   {
+    "text": "Anlık bildirimler henüz aktif değil",
+    "files": [
+      "apps/mobile/app/settings/[section].tsx"
+    ]
+  },
+  {
     "text": "APP STORE / PLAY TEST ORTAMI · GERÇEK MAĞAZA FİYATLARI SANDBOX’TAN GELİR",
     "files": [
       "apps/mobile/src/features/billing/revenuecat.tsx"
+    ]
+  },
+  {
+    "text": "Apple",
+    "files": [
+      "apps/mobile/src/features/auth/apple-sign-in.tsx"
     ]
   },
   {
@@ -1008,12 +980,6 @@
     ]
   },
   {
-    "text": "Apple ile giriş yap",
-    "files": [
-      "apps/mobile/src/features/auth/apple-sign-in.tsx"
-    ]
-  },
-  {
     "text": "Apple kimlik belirteci alınamadı. Lütfen yeniden dene.",
     "files": [
       "apps/mobile/app/settings/delete-account.tsx"
@@ -1023,6 +989,13 @@
     "text": "Apple kimlik belirteci alınamadı. Lütfen yeniden deneyin.",
     "files": [
       "apps/mobile/src/features/auth/apple-sign-in.tsx"
+    ]
+  },
+  {
+    "text": "Apple standart son kullanıcı sözleşmesi",
+    "files": [
+      "apps/mobile/app/legal/index.tsx",
+      "apps/mobile/app/settings/index.tsx"
     ]
   },
   {
@@ -1115,14 +1088,18 @@
   {
     "text": "Ayakkabı",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
     ]
   },
   {
     "text": "Ayarlar",
     "files": [
       "apps/mobile/app/(tabs)/profile.tsx",
-      "apps/mobile/app/settings/index.tsx"
+      "apps/mobile/app/legal/index.tsx",
+      "apps/mobile/app/settings/[section].tsx",
+      "apps/mobile/app/settings/index.tsx",
+      "apps/mobile/app/settings/language.tsx"
     ]
   },
   {
@@ -1150,6 +1127,12 @@
     "files": [
       "apps/mobile/app/(auth)/register.tsx",
       "apps/mobile/app/(auth)/social-complete.tsx"
+    ]
+  },
+  {
+    "text": "Aydınlatma, açık rıza ve AI politikası",
+    "files": [
+      "apps/mobile/app/settings/index.tsx"
     ]
   },
   {
@@ -1184,7 +1167,7 @@
     ]
   },
   {
-    "text": "Aylık, yıllık ve ömür boyu seçeneklerini mağazanın güncel yerel fiyatlarıyla inceleyin.",
+    "text": "Aylık, yıllık veya ömür boyu seçeneklerini mağazanın güncel koşullarıyla incele.",
     "files": [
       "apps/mobile/src/features/billing/SubscriptionCard.tsx"
     ]
@@ -1238,6 +1221,13 @@
     ]
   },
   {
+    "text": "Bağlantı açılamadı",
+    "files": [
+      "apps/mobile/app/legal/index.tsx",
+      "apps/mobile/app/settings/index.tsx"
+    ]
+  },
+  {
     "text": "Bağlantı bekleniyor",
     "files": [
       "apps/mobile/app/create/progress.tsx"
@@ -1281,6 +1271,12 @@
     ]
   },
   {
+    "text": "Bakiyen: {{p0}} kredi. Üretim başladığında {{p1}} kredi ayrılır.",
+    "files": [
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+    ]
+  },
+  {
     "text": "Başarısız",
     "files": [
       "apps/mobile/app/settings/[section].tsx",
@@ -1309,12 +1305,6 @@
     "text": "Başka bir kelime deneyin veya tüm koleksiyonu keşfedin.",
     "files": [
       "apps/mobile/src/features/legacy/routes/tabs/explore.tsx"
-    ]
-  },
-  {
-    "text": "Başka ürün veya kişi yok",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
@@ -1431,13 +1421,8 @@
   {
     "text": "Beyaz Stüdyo",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
-    ]
-  },
-  {
-    "text": "Bildirim ve iletişim tercihleri",
-    "files": [
-      "apps/mobile/app/settings/index.tsx"
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
     ]
   },
   {
@@ -1449,7 +1434,8 @@
   {
     "text": "Bildirimler",
     "files": [
-      "apps/mobile/app/settings/[section].tsx"
+      "apps/mobile/app/settings/[section].tsx",
+      "apps/mobile/app/settings/index.tsx"
     ]
   },
   {
@@ -1480,12 +1466,6 @@
     "text": "Bir filtre uygula veya arka planını AI ile yeniden tasarla.",
     "files": [
       "apps/mobile/src/features/legacy/routes/create/index.tsx"
-    ]
-  },
-  {
-    "text": "Bir fotoğraf, düzenli bir ürün akışı",
-    "files": [
-      "apps/mobile/app/studio/index.tsx"
     ]
   },
   {
@@ -1537,6 +1517,12 @@
     ]
   },
   {
+    "text": "Bir ürün, bir kaynak fotoğraf.",
+    "files": [
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+    ]
+  },
+  {
     "text": "Biraz uzaklaştır",
     "files": [
       "apps/mobile/app/generations/[id]/edit.tsx"
@@ -1546,7 +1532,6 @@
     "text": "BirKare",
     "files": [
       "apps/mobile/src/components/index.tsx",
-      "apps/mobile/src/features/auth/auth-ui.tsx",
       "apps/mobile/src/features/billing/ProPaywallView.tsx",
       "apps/mobile/src/features/onboarding/launch-experience.tsx"
     ]
@@ -1567,7 +1552,8 @@
   {
     "text": "BirKare kullanıcısı",
     "files": [
-      "apps/mobile/app/(tabs)/profile.tsx"
+      "apps/mobile/app/(tabs)/profile.tsx",
+      "apps/mobile/app/settings/index.tsx"
     ]
   },
   {
@@ -1589,20 +1575,14 @@
     ]
   },
   {
-    "text": "BİRKARE STUDIO",
-    "files": [
-      "apps/mobile/src/features/auth/auth-ui.tsx"
-    ]
-  },
-  {
     "text": "BirKare Studio",
     "files": [
-      "apps/mobile/app/(tabs)/home.tsx",
       "apps/mobile/src/components/index.tsx",
       "apps/mobile/src/features/auth/auth-boot-screen.tsx",
       "apps/mobile/src/features/legacy/routes/create/index.tsx",
       "apps/mobile/src/features/onboarding/components.tsx",
-      "apps/mobile/src/features/onboarding/product-launch-experience.tsx"
+      "apps/mobile/src/features/onboarding/product-launch-experience.tsx",
+      "apps/mobile/src/ui/kit.tsx"
     ]
   },
   {
@@ -1614,7 +1594,7 @@
   {
     "text": "BirKare Studio açılıyor",
     "files": [
-      "apps/mobile/src/features/onboarding/product-launch-experience.tsx"
+      "apps/mobile/src/features/onboarding/SplashIntro.tsx"
     ]
   },
   {
@@ -1642,9 +1622,9 @@
     ]
   },
   {
-    "text": "BirKare Studio ürün katalog görseli",
+    "text": "BirKare Studio yalnızca koyu temayı kullanır.",
     "files": [
-      "apps/mobile/src/features/auth/auth-ui.tsx"
+      "apps/mobile/app/settings/[section].tsx"
     ]
   },
   {
@@ -1660,12 +1640,6 @@
     ]
   },
   {
-    "text": "BirKare’yi kendine göre ayarla",
-    "files": [
-      "apps/mobile/app/settings/[section].tsx"
-    ]
-  },
-  {
     "text": "Bize ne olduğunu anlat",
     "files": [
       "apps/mobile/app/support/ticket.tsx"
@@ -1675,12 +1649,6 @@
     "text": "Bokeh",
     "files": [
       "apps/mobile/src/features/onboarding/data.ts"
-    ]
-  },
-  {
-    "text": "Bu ad katalogda proje başlığı olarak görünür.",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
@@ -1780,6 +1748,12 @@
     ]
   },
   {
+    "text": "Bu fotoğrafı kullanma hakkına sahibim ve ürün bana ya da işletmeme ait.",
+    "files": [
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+    ]
+  },
+  {
     "text": "Bu fotoğrafı kullanma hakkına sahip olduğumu onaylıyorum",
     "files": [
       "apps/mobile/src/features/legacy/routes/create/upload.tsx"
@@ -1806,7 +1780,7 @@
   {
     "text": "Bu görselleri kullanma hakkım var",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -1906,6 +1880,12 @@
     ]
   },
   {
+    "text": "Bu paket şu anda mağazada kullanılamıyor. Lütfen biraz sonra tekrar dene.",
+    "files": [
+      "apps/mobile/app/(tabs)/credits.tsx"
+    ]
+  },
+  {
     "text": "Bu plan {{p0}} kredi gerektiriyor; hesabında {{p1}} kredi var.",
     "files": [
       "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
@@ -1920,7 +1900,7 @@
   {
     "text": "Bu seçim {{p0}} kredi gerektiriyor; hesabında {{p1}} kredi var.",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -1936,15 +1916,9 @@
     ]
   },
   {
-    "text": "Bu sürümde cihazlara anlık bildirim gönderimi henüz etkin değil. Tercihlerini kaydedebilirsin; gönderim sistemi etkinleşmeden bildirim ulaşmaz.",
+    "text": "Bu sürümde cihazına bildirim gönderilmez. Tercihlerini kaydedebilirsin; gönderim sistemi etkinleşene kadar bildirim ulaşmaz.",
     "files": [
       "apps/mobile/app/settings/[section].tsx"
-    ]
-  },
-  {
-    "text": "Bu uygulamadaki karakter örnekleri tamamen hayal ürünüdür; gerçek kişiler, gerçek buluşmalar veya gerçek onaylar anlamına gelmez.",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
     ]
   },
   {
@@ -1957,31 +1931,26 @@
     "text": "Bu üretim için yeterli kredin bulunmuyor.",
     "files": [
       "apps/mobile/src/features/create/server.ts",
+      "apps/mobile/src/features/studio/productServer.ts",
       "apps/mobile/src/features/studio/server.ts"
     ]
   },
   {
-    "text": "Bu üretimde indirilebilir bir sunucu çıktısı yok.",
+    "text": "Bu üretimde indirilebilir bir görsel yok.",
     "files": [
       "apps/mobile/app/generations/[id]/results.tsx"
     ]
   },
   {
-    "text": "Bu üretimin hata kodu ve teknik istek numarası sunucudan eklenir. Fotoğrafın ve üretim promptun destek e-postasına eklenmez.",
+    "text": "Bu üretimin hata kodu talebe otomatik eklenir. Fotoğrafın ve çekim notun destek e-postasına eklenmez.",
     "files": [
       "apps/mobile/app/support/ticket.tsx"
     ]
   },
   {
-    "text": "Bu ürün App Store / RevenueCat kataloğundan alınamadı. Ürün ID ve mağaza durumunu kontrol edin.",
+    "text": "Bu uygulamadaki karakter örnekleri tamamen hayal ürünüdür; gerçek kişiler, gerçek buluşmalar veya gerçek onaylar anlamına gelmez.",
     "files": [
-      "apps/mobile/app/(tabs)/credits.tsx"
-    ]
-  },
-  {
-    "text": "Bu ürün görselini kullanma hakkım var",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+      "apps/mobile/app/legal/[document].tsx"
     ]
   },
   {
@@ -2005,7 +1974,8 @@
   {
     "text": "Cam Yüzey",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
     ]
   },
   {
@@ -2021,13 +1991,56 @@
     ]
   },
   {
+    "text": "Çanta",
+    "files": [
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
+    ]
+  },
+  {
     "text": "Cartoon",
     "files": [
       "apps/mobile/src/features/onboarding/data.ts"
     ]
   },
   {
+    "text": "Çekim notu",
+    "files": [
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+    ]
+  },
+  {
+    "text": "Çekim notu (isteğe bağlı)",
+    "files": [
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+    ]
+  },
+  {
+    "text": "Çekim sahnesi",
+    "files": [
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
+    ]
+  },
+  {
+    "text": "Çekimi şekillendir.",
+    "files": [
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+    ]
+  },
+  {
+    "text": "Çerçeve çıktı oranını gösterir; kaynak esnetilmez. AI, seçtiğin orana göre görüntüyü yeniden düzenler.",
+    "files": [
+      "apps/mobile/src/features/legacy/routes/create/settings.tsx"
+    ]
+  },
+  {
     "text": "Cihaz izinlerini aç",
+    "files": [
+      "apps/mobile/app/settings/[section].tsx"
+    ]
+  },
+  {
+    "text": "Cihaz izni vermek, bu sürümde anlık bildirim gönderimini başlatmaz.",
     "files": [
       "apps/mobile/app/settings/[section].tsx"
     ]
@@ -2067,55 +2080,6 @@
     ]
   },
   {
-    "text": "Cyberpunk",
-    "files": [
-      "apps/mobile/src/features/onboarding/data.ts"
-    ]
-  },
-  {
-    "text": "Çanta",
-    "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
-    ]
-  },
-  {
-    "text": "Çekim notu",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
-    ]
-  },
-  {
-    "text": "Çekim notu (isteğe bağlı)",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
-    ]
-  },
-  {
-    "text": "Çekim sahnesi",
-    "files": [
-      "apps/mobile/app/studio/[mode].tsx",
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
-    ]
-  },
-  {
-    "text": "Çekimi planla",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
-    ]
-  },
-  {
-    "text": "Çekimlerine ve versiyonlarına kaldığın yerden devam et.",
-    "files": [
-      "apps/mobile/app/(tabs)/home.tsx"
-    ]
-  },
-  {
-    "text": "Çerçeve çıktı oranını gösterir; kaynak esnetilmez. AI, seçtiğin orana göre görüntüyü yeniden düzenler.",
-    "files": [
-      "apps/mobile/src/features/legacy/routes/create/settings.tsx"
-    ]
-  },
-  {
     "text": "Çıkış yap",
     "files": [
       "apps/mobile/app/(tabs)/profile.tsx",
@@ -2131,13 +2095,7 @@
   {
     "text": "Çıktı ayarları",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
-    ]
-  },
-  {
-    "text": "Çıktı hazır",
-    "files": [
-      "apps/mobile/app/(tabs)/home.tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -2162,15 +2120,15 @@
     ]
   },
   {
-    "text": "Çıktıları ayarla",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
-    ]
-  },
-  {
     "text": "Çok hafif",
     "files": [
       "apps/mobile/src/features/beauty/settings.ts"
+    ]
+  },
+  {
+    "text": "Cyberpunk",
+    "files": [
+      "apps/mobile/src/features/onboarding/data.ts"
     ]
   },
   {
@@ -2217,7 +2175,7 @@
     ]
   },
   {
-    "text": "Dekoratif hareketleri ve basma animasyonunu azalt",
+    "text": "Dekoratif hareketleri azalt",
     "files": [
       "apps/mobile/app/settings/[section].tsx"
     ]
@@ -2251,7 +2209,8 @@
   {
     "text": "Dengeli, gerçekçi yüzen ürün kompozisyonu.",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
     ]
   },
   {
@@ -2263,7 +2222,8 @@
   {
     "text": "Deri, dikiş ve metal detaylarını koruyan premium ürün çekimi.",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
     ]
   },
   {
@@ -2281,7 +2241,13 @@
   {
     "text": "Desen, renk, kesim, düğme, cep ve kumaş dokusu net görünmeli.",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
+    ]
+  },
+  {
+    "text": "DESTEK",
+    "files": [
+      "apps/mobile/app/settings/index.tsx"
     ]
   },
   {
@@ -2373,13 +2339,8 @@
   {
     "text": "Devam etmek için yüklediğin görselleri kullanma hakkını onaylamalısın.",
     "files": [
+      "apps/mobile/src/features/studio/productServer.ts",
       "apps/mobile/src/features/studio/server.ts"
-    ]
-  },
-  {
-    "text": "Dışa aktar ve paylaş",
-    "files": [
-      "apps/mobile/app/generations/[id]/results.tsx"
     ]
   },
   {
@@ -2403,12 +2364,6 @@
     ]
   },
   {
-    "text": "Diğer araçlar",
-    "files": [
-      "apps/mobile/app/(tabs)/_layout.tsx"
-    ]
-  },
-  {
     "text": "Diğer paylaşım seçenekleri",
     "files": [
       "apps/mobile/app/generations/[id]/export.tsx"
@@ -2424,6 +2379,12 @@
     "text": "Dil",
     "files": [
       "apps/mobile/app/settings/index.tsx"
+    ]
+  },
+  {
+    "text": "Dışa aktar ve paylaş",
+    "files": [
+      "apps/mobile/app/generations/[id]/results.tsx"
     ]
   },
   {
@@ -2498,12 +2459,6 @@
     ]
   },
   {
-    "text": "Doğrulama",
-    "files": [
-      "apps/mobile/app/(tabs)/profile.tsx"
-    ]
-  },
-  {
     "text": "Doğrulama bekleniyor",
     "files": [
       "apps/mobile/app/(tabs)/profile.tsx"
@@ -2553,14 +2508,6 @@
     ]
   },
   {
-    "text": "Dosya büyük",
-    "files": [
-      "apps/mobile/src/features/legacy/routes/create/upload.tsx",
-      "apps/mobile/src/features/legacy/routes/trends/slug.tsx",
-      "apps/mobile/src/features/studio/useStudioImagePicker.ts"
-    ]
-  },
-  {
     "text": "Döndürme kaydedilemedi. Kaynak görsel değişmedi; tekrar deneyebilirsin.",
     "files": [
       "apps/mobile/src/features/legacy/routes/create/crop.tsx"
@@ -2585,9 +2532,23 @@
     ]
   },
   {
+    "text": "Dosya büyük",
+    "files": [
+      "apps/mobile/src/features/legacy/routes/create/upload.tsx",
+      "apps/mobile/src/features/legacy/routes/trends/slug.tsx",
+      "apps/mobile/src/features/studio/useStudioImagePicker.ts"
+    ]
+  },
+  {
     "text": "Drip Art",
     "files": [
       "apps/mobile/src/features/onboarding/data.ts"
+    ]
+  },
+  {
+    "text": "Düğün / Özel Gün",
+    "files": [
+      "apps/mobile/src/features/studio/catalog.ts"
     ]
   },
   {
@@ -2606,12 +2567,6 @@
     "text": "Durum alınamadı",
     "files": [
       "apps/mobile/app/create/progress.tsx"
-    ]
-  },
-  {
-    "text": "Düğün / Özel Gün",
-    "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
     ]
   },
   {
@@ -2776,12 +2731,13 @@
   {
     "text": "Ek not (isteğe bağlı)",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
     "text": "Ek not en fazla 500 karakter olabilir.",
     "files": [
+      "apps/mobile/src/features/studio/productServer.ts",
       "apps/mobile/src/features/studio/server.ts"
     ]
   },
@@ -2806,7 +2762,7 @@
   {
     "text": "El fotoğrafını seç",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -2833,12 +2789,6 @@
     "text": "En az 3 karakterlik bir başlık yaz.",
     "files": [
       "apps/mobile/app/support/ticket.tsx"
-    ]
-  },
-  {
-    "text": "EN ÇOK SEÇİLEN",
-    "files": [
-      "apps/mobile/app/(tabs)/credits.tsx"
     ]
   },
   {
@@ -2876,12 +2826,6 @@
     "text": "Eskiz",
     "files": [
       "apps/mobile/src/constants/catalog.ts"
-    ]
-  },
-  {
-    "text": "Etiket ve kenarlar okunaklı",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
@@ -3031,21 +2975,33 @@
     ]
   },
   {
-    "text": "Fiyatlar App Store / RevenueCat üzerinden canlı gelir. Kredi miktarı backend politikasıdır.",
+    "text": "Fiyatlar mağazadan alınır ve satın almadan önce gösterilir.",
     "files": [
       "apps/mobile/app/(tabs)/credits.tsx"
     ]
   },
   {
+    "text": "Fiyatları yeniden yükle",
+    "files": [
+      "apps/mobile/src/features/billing/SubscriptionCard.tsx"
+    ]
+  },
+  {
     "text": "Flare hızlı üretim",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
     "text": "Flaşlar altında şık ve sinematik bir giriş.",
     "files": [
       "apps/mobile/src/features/trends/presets.ts"
+    ]
+  },
+  {
+    "text": "Format",
+    "files": [
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
@@ -3076,6 +3032,12 @@
     "text": "Fotoğraf dosyası doğrulanamadı. JPEG, PNG, WebP veya HEIC bir fotoğraf seç.",
     "files": [
       "apps/mobile/src/features/create/server.ts"
+    ]
+  },
+  {
+    "text": "Fotoğraf ekle",
+    "files": [
+      "apps/mobile/app/(tabs)/home.tsx"
     ]
   },
   {
@@ -3168,7 +3130,8 @@
     "files": [
       "apps/mobile/app/create/progress.tsx",
       "apps/mobile/src/features/legacy/routes/root/beauty.tsx",
-      "apps/mobile/src/features/legacy/routes/trends/slug.tsx"
+      "apps/mobile/src/features/legacy/routes/trends/slug.tsx",
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
@@ -3302,12 +3265,6 @@
     ]
   },
   {
-    "text": "Fotoğraflarını öne çıkaran siyah arka plan ve yumuşak cam yansımaları.",
-    "files": [
-      "apps/mobile/app/settings/[section].tsx"
-    ]
-  },
-  {
     "text": "Fotoğraflarla onboarding başlangıcı",
     "files": [
       "apps/mobile/src/features/onboarding/launch-experience.tsx"
@@ -3322,7 +3279,7 @@
   {
     "text": "Galeri açılıyor…",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx",
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx",
       "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
@@ -3357,6 +3314,12 @@
     ]
   },
   {
+    "text": "Geç",
+    "files": [
+      "apps/mobile/src/features/onboarding/components.tsx"
+    ]
+  },
+  {
     "text": "Gece araçtan inerken omuz üzerinden bakış, gümüş stil ve parlak fotoğraf flaşları.",
     "files": [
       "apps/mobile/src/features/trends/presets.ts"
@@ -3366,18 +3329,6 @@
     "text": "Gece ışıkları ve güçlü sahne atmosferi.",
     "files": [
       "apps/mobile/src/constants/experience-scenes.ts"
-    ]
-  },
-  {
-    "text": "Gece sokaklarında güçlü bir moda karesi.",
-    "files": [
-      "apps/mobile/src/features/trends/presets.ts"
-    ]
-  },
-  {
-    "text": "Gece Stadyumu",
-    "files": [
-      "apps/mobile/src/constants/catalog.ts"
     ]
   },
   {
@@ -3393,15 +3344,21 @@
     ]
   },
   {
-    "text": "Gece ve davet kareleri için belirgin makyaj.",
+    "text": "Gece sokaklarında güçlü bir moda karesi.",
     "files": [
-      "apps/mobile/src/features/beauty/catalog.ts"
+      "apps/mobile/src/features/trends/presets.ts"
     ]
   },
   {
-    "text": "Geç",
+    "text": "Gece Stadyumu",
     "files": [
-      "apps/mobile/src/features/onboarding/components.tsx"
+      "apps/mobile/src/constants/catalog.ts"
+    ]
+  },
+  {
+    "text": "Gece ve davet kareleri için belirgin makyaj.",
+    "files": [
+      "apps/mobile/src/features/beauty/catalog.ts"
     ]
   },
   {
@@ -3457,7 +3414,7 @@
   {
     "text": "Gerçeğine sadık üretim",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -3493,19 +3450,20 @@
   {
     "text": "Gerçekçi mermer yüzey ve yumuşak gölge.",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
     ]
   },
   {
     "text": "Geri",
     "files": [
+      "apps/mobile/app/(onboarding)/consent.tsx",
       "apps/mobile/app/generations/[id]/export.tsx",
-      "apps/mobile/app/studio/index.tsx",
       "apps/mobile/src/components/index.tsx",
       "apps/mobile/src/features/auth/auth-ui.tsx",
       "apps/mobile/src/features/legacy/routes/filters/slug.tsx",
       "apps/mobile/src/features/onboarding/components.tsx",
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+      "apps/mobile/src/features/settings/components.tsx"
     ]
   },
   {
@@ -3584,13 +3542,21 @@
       "apps/mobile/app/(auth)/social-complete.tsx",
       "apps/mobile/app/legal/[document].tsx",
       "apps/mobile/app/legal/index.tsx",
-      "apps/mobile/app/settings/[section].tsx"
+      "apps/mobile/app/settings/[section].tsx",
+      "apps/mobile/app/settings/index.tsx"
     ]
   },
   {
     "text": "Gizlilik Politikası",
     "files": [
       "apps/mobile/app/(onboarding)/consent.tsx"
+    ]
+  },
+  {
+    "text": "Gizlilik politikası (web)",
+    "files": [
+      "apps/mobile/app/legal/index.tsx",
+      "apps/mobile/app/settings/index.tsx"
     ]
   },
   {
@@ -3627,6 +3593,43 @@
   {
     "text": "Gmail, Outlook/Hotmail, Yandex, iCloud, Yahoo, Proton ve desteklenen diğer kalıcı sağlayıcılar. Yeni kayıtlarda kurumsal adresler desteklenmiyor.",
     "files": [
+      "apps/mobile/app/(auth)/register.tsx"
+    ]
+  },
+  {
+    "text": "Gölge",
+    "files": [
+      "apps/mobile/app/generations/[id]/edit.tsx"
+    ]
+  },
+  {
+    "text": "Gölgeleri ve sıcaklığı dengeleyin",
+    "files": [
+      "apps/mobile/src/constants/catalog.ts"
+    ]
+  },
+  {
+    "text": "Gölgeyi yumuşat",
+    "files": [
+      "apps/mobile/app/generations/[id]/edit.tsx"
+    ]
+  },
+  {
+    "text": "Gönderiliyor…",
+    "files": [
+      "apps/mobile/app/(auth)/verify-email.tsx"
+    ]
+  },
+  {
+    "text": "Gönderim durumunu kontrol et",
+    "files": [
+      "apps/mobile/app/support/ticket.tsx"
+    ]
+  },
+  {
+    "text": "Google",
+    "files": [
+      "apps/mobile/app/(auth)/login.tsx",
       "apps/mobile/app/(auth)/register.tsx"
     ]
   },
@@ -3691,12 +3694,6 @@
     ]
   },
   {
-    "text": "Google ile devam et",
-    "files": [
-      "apps/mobile/app/(auth)/register.tsx"
-    ]
-  },
-  {
     "text": "Google ile doğrula ve sil",
     "files": [
       "apps/mobile/app/settings/delete-account.tsx"
@@ -3723,13 +3720,13 @@
   {
     "text": "Google ile giriş şu anda kullanılamıyor. E-posta ve şifrenle giriş yapabilir veya daha sonra tekrar deneyebilirsin.",
     "files": [
-      "apps/mobile/src/features/auth/google-errors.ts"
+      "apps/mobile/src/features/auth/google-errors.ts",
+      "apps/mobile/src/features/auth/google-sign-in.tsx"
     ]
   },
   {
     "text": "Google ile giriş yap",
     "files": [
-      "apps/mobile/app/(auth)/login.tsx",
       "apps/mobile/src/features/auth/google-sign-in.tsx"
     ]
   },
@@ -3758,6 +3755,12 @@
     ]
   },
   {
+    "text": "Google veya Apple ile devam etmek için önce yukarıdaki belgeleri onayla.",
+    "files": [
+      "apps/mobile/app/(auth)/register.tsx"
+    ]
+  },
+  {
     "text": "Google veya BirKare sunucusuna ulaşılamadı. İnternet bağlantısını kontrol edip tekrar deneyin.",
     "files": [
       "apps/mobile/src/features/auth/google-errors.ts"
@@ -3767,36 +3770,6 @@
     "text": "Google web istemcisi yapılandırılmamış. Uygulamanın güncel geliştirme sürümünü açın.",
     "files": [
       "apps/mobile/src/features/auth/google-errors.ts"
-    ]
-  },
-  {
-    "text": "Gölge",
-    "files": [
-      "apps/mobile/app/generations/[id]/edit.tsx"
-    ]
-  },
-  {
-    "text": "Gölgeleri ve sıcaklığı dengeleyin",
-    "files": [
-      "apps/mobile/src/constants/catalog.ts"
-    ]
-  },
-  {
-    "text": "Gölgeyi yumuşat",
-    "files": [
-      "apps/mobile/app/generations/[id]/edit.tsx"
-    ]
-  },
-  {
-    "text": "Gönderiliyor…",
-    "files": [
-      "apps/mobile/app/(auth)/verify-email.tsx"
-    ]
-  },
-  {
-    "text": "Gönderim durumunu kontrol et",
-    "files": [
-      "apps/mobile/app/support/ticket.tsx"
     ]
   },
   {
@@ -3845,8 +3818,7 @@
   {
     "text": "Görsel kullanım hakkını onayla.",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx",
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -3932,12 +3904,6 @@
     "text": "Görselin işleniyor ve güvenlik kontrolünden geçiriliyor.",
     "files": [
       "apps/mobile/src/features/create/generation-progress.ts"
-    ]
-  },
-  {
-    "text": "Görselin yapay zekâ ile işlenmesine izin veriyorum.",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
@@ -4047,7 +4013,8 @@
   {
     "text": "Gün ışıklı gerçekçi çalışma masası.",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
     ]
   },
   {
@@ -4191,12 +4158,6 @@
     ]
   },
   {
-    "text": "Hareketler alınamadı · Yeniden dene",
-    "files": [
-      "apps/mobile/app/(tabs)/credits.tsx"
-    ]
-  },
-  {
     "text": "Hareketler alınamadı. Yeniden dene.",
     "files": [
       "apps/mobile/app/transactions.tsx"
@@ -4205,14 +4166,7 @@
   {
     "text": "Hareketler yükleniyor…",
     "files": [
-      "apps/mobile/app/(tabs)/credits.tsx",
       "apps/mobile/app/settings/[section].tsx"
-    ]
-  },
-  {
-    "text": "hareketleri",
-    "files": [
-      "apps/mobile/app/(tabs)/credits.tsx"
     ]
   },
   {
@@ -4234,9 +4188,14 @@
     ]
   },
   {
+    "text": "Hazır",
+    "files": [
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+    ]
+  },
+  {
     "text": "Hazırlanıyor",
     "files": [
-      "apps/mobile/app/(tabs)/home.tsx",
       "apps/mobile/src/features/onboarding/components.tsx"
     ]
   },
@@ -4250,7 +4209,7 @@
   {
     "text": "HD",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx",
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx",
       "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
@@ -4287,18 +4246,11 @@
   {
     "text": "Henüz kredi hareketi yok",
     "files": [
-      "apps/mobile/app/(tabs)/credits.tsx",
       "apps/mobile/app/settings/[section].tsx"
     ]
   },
   {
-    "text": "Henüz projen yok",
-    "files": [
-      "apps/mobile/app/(tabs)/projects.tsx"
-    ]
-  },
-  {
-    "text": "Her alternatif aynı seçili sahne ve ayarlarla ayrı bir sonuçtur.",
+    "text": "Her alternatif kredi kullanır. Kesin tutarı görüp onaylamadan üretim başlamaz; kredi harcanmaz.",
     "files": [
       "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
@@ -4319,11 +4271,18 @@
   {
     "text": "Her görsel bir kez yüklenir; aynı isteğe tekrar dokunma.",
     "files": [
+      "apps/mobile/src/features/legacy/routes/studio/StudioSubmissionProgress.tsx",
       "apps/mobile/src/features/studio/StudioSubmissionProgress.tsx"
     ]
   },
   {
-    "text": "Her karede biraz sen.",
+    "text": "Her ürünün kendi projesi vardır. Sahnelerini ve yeni versiyonlarını aynı projede yönetirsin.",
+    "files": [
+      "apps/mobile/app/(tabs)/projects.tsx"
+    ]
+  },
+  {
+    "text": "HESABIM",
     "files": [
       "apps/mobile/app/(tabs)/profile.tsx"
     ]
@@ -4346,12 +4305,6 @@
     "text": "Hesabı silmek mağaza aboneliğini otomatik iptal etmez.",
     "files": [
       "apps/mobile/app/settings/delete-account.tsx"
-    ]
-  },
-  {
-    "text": "HESABIM",
-    "files": [
-      "apps/mobile/app/(tabs)/profile.tsx"
     ]
   },
   {
@@ -4415,18 +4368,6 @@
     ]
   },
   {
-    "text": "Hesabın ve tercihlerin",
-    "files": [
-      "apps/mobile/app/(tabs)/profile.tsx"
-    ]
-  },
-  {
-    "text": "Hesabına ait gerçek kredi hareketleri",
-    "files": [
-      "apps/mobile/app/(tabs)/profile.tsx"
-    ]
-  },
-  {
     "text": "Hesabına ait kredi hareketleri",
     "files": [
       "apps/mobile/app/settings/[section].tsx"
@@ -4463,12 +4404,6 @@
     ]
   },
   {
-    "text": "Hesabındaki ad ve soyadını güncelle",
-    "files": [
-      "apps/mobile/app/(tabs)/profile.tsx"
-    ]
-  },
-  {
     "text": "Hesabındaki adını güncelle",
     "files": [
       "apps/mobile/app/settings/[section].tsx"
@@ -4481,7 +4416,7 @@
     ]
   },
   {
-    "text": "Hesabını oluştur.",
+    "text": "Hesabını oluştur",
     "files": [
       "apps/mobile/app/(auth)/register.tsx"
     ]
@@ -4508,8 +4443,8 @@
     "text": "Hesap",
     "files": [
       "apps/mobile/app/(tabs)/_layout.tsx",
-      "apps/mobile/app/(tabs)/credits.tsx",
-      "apps/mobile/src/features/settings/settings-tab-footer.tsx"
+      "apps/mobile/app/(tabs)/profile.tsx",
+      "apps/mobile/app/settings/index.tsx"
     ]
   },
   {
@@ -4551,7 +4486,6 @@
   {
     "text": "HESAP GÜVENLİĞİ",
     "files": [
-      "apps/mobile/app/(auth)/forgot-password.tsx",
       "apps/mobile/app/(auth)/reset-password.tsx"
     ]
   },
@@ -4568,15 +4502,15 @@
     ]
   },
   {
-    "text": "HESAP SİLME BEKLEMEDE",
-    "files": [
-      "apps/mobile/app/(auth)/login.tsx"
-    ]
-  },
-  {
     "text": "Hesap şifren",
     "files": [
       "apps/mobile/app/settings/delete-account.tsx"
+    ]
+  },
+  {
+    "text": "HESAP SİLME BEKLEMEDE",
+    "files": [
+      "apps/mobile/app/(auth)/login.tsx"
     ]
   },
   {
@@ -4604,12 +4538,6 @@
     ]
   },
   {
-    "text": "Hızlı",
-    "files": [
-      "apps/mobile/src/features/legacy/routes/create/settings.tsx"
-    ]
-  },
-  {
     "text": "HIZLI DÜZENLEME",
     "files": [
       "apps/mobile/src/features/onboarding/launch-experience.tsx"
@@ -4623,53 +4551,15 @@
     ]
   },
   {
+    "text": "Hızlı",
+    "files": [
+      "apps/mobile/src/features/legacy/routes/create/settings.tsx"
+    ]
+  },
+  {
     "text": "Hoş geldin kredisi",
     "files": [
       "apps/mobile/src/features/billing/transaction-presentation.ts"
-    ]
-  },
-  {
-    "text": "Instagram",
-    "files": [
-      "apps/mobile/src/features/sharing/GeneratedSharePanel.tsx"
-    ]
-  },
-  {
-    "text": "Islak zemin ve kontrollü neon bokeh.",
-    "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
-    ]
-  },
-  {
-    "text": "Işığı düzelt",
-    "files": [
-      "apps/mobile/app/generations/[id]/edit.tsx",
-      "apps/mobile/src/constants/catalog.ts"
-    ]
-  },
-  {
-    "text": "Işığı görseline bırak.",
-    "files": [
-      "apps/mobile/app/settings/[section].tsx"
-    ]
-  },
-  {
-    "text": "Işık",
-    "files": [
-      "apps/mobile/app/generations/[id]/edit.tsx",
-      "apps/mobile/src/features/onboarding/launch-experience.tsx"
-    ]
-  },
-  {
-    "text": "Işık ve beyaz dengesine doğal bir dokunuş.",
-    "files": [
-      "apps/mobile/src/features/beauty/catalog.ts"
-    ]
-  },
-  {
-    "text": "Işıklar altında güçlü bir kare",
-    "files": [
-      "apps/mobile/src/constants/catalog.ts"
     ]
   },
   {
@@ -4799,7 +4689,7 @@
     ]
   },
   {
-    "text": "İletişim tercihlerin senin elinde",
+    "text": "İletişim tercihlerin senin elinde.",
     "files": [
       "apps/mobile/app/settings/[section].tsx"
     ]
@@ -4811,27 +4701,15 @@
     ]
   },
   {
-    "text": "İlk ürün projenle düzenli bir katalog oluşturmaya başla.",
+    "text": "İlk ürününe yer açtık.",
     "files": [
       "apps/mobile/app/(tabs)/projects.tsx"
     ]
   },
   {
-    "text": "İlk ürünü ekle",
+    "text": "İlk ürününü ekle",
     "files": [
       "apps/mobile/app/(tabs)/projects.tsx"
-    ]
-  },
-  {
-    "text": "İlk ürününü adlandır, fotoğrafını ekle ve kullanım amacına göre çekimini planla.",
-    "files": [
-      "apps/mobile/app/(tabs)/projects.tsx"
-    ]
-  },
-  {
-    "text": "İlk ürününü kataloğa ekle",
-    "files": [
-      "apps/mobile/app/(tabs)/home.tsx"
     ]
   },
   {
@@ -4859,6 +4737,24 @@
     ]
   },
   {
+    "text": "Instagram",
+    "files": [
+      "apps/mobile/src/features/sharing/GeneratedSharePanel.tsx"
+    ]
+  },
+  {
+    "text": "iOS bildirim ayarlarına git",
+    "files": [
+      "apps/mobile/app/settings/[section].tsx"
+    ]
+  },
+  {
+    "text": "iOS’ta Hareketi Azalt veya Saydamlığı Azalt açıksa, uygulama bu tercihlere uyar.",
+    "files": [
+      "apps/mobile/app/settings/[section].tsx"
+    ]
+  },
+  {
     "text": "İptal edildi",
     "files": [
       "apps/mobile/src/features/billing/SubscriptionCard.tsx"
@@ -4877,53 +4773,50 @@
     ]
   },
   {
-    "text": "İstanbul Sokak",
+    "text": "Işığı düzelt",
+    "files": [
+      "apps/mobile/app/generations/[id]/edit.tsx",
+      "apps/mobile/src/constants/catalog.ts"
+    ]
+  },
+  {
+    "text": "Işığı görseline bırak.",
+    "files": [
+      "apps/mobile/app/settings/[section].tsx"
+    ]
+  },
+  {
+    "text": "Işık",
+    "files": [
+      "apps/mobile/app/generations/[id]/edit.tsx",
+      "apps/mobile/src/features/onboarding/launch-experience.tsx"
+    ]
+  },
+  {
+    "text": "Işık ve beyaz dengesine doğal bir dokunuş.",
+    "files": [
+      "apps/mobile/src/features/beauty/catalog.ts"
+    ]
+  },
+  {
+    "text": "Işıklar altında güçlü bir kare",
+    "files": [
+      "apps/mobile/src/constants/catalog.ts"
+    ]
+  },
+  {
+    "text": "Islak zemin ve kontrollü neon bokeh.",
     "files": [
       "apps/mobile/src/features/studio/catalog.ts"
     ]
   },
   {
-    "text": "İstediğin değişikliği yaz…",
-    "files": [
-      "apps/mobile/app/generations/[id]/edit.tsx"
-    ]
-  },
-  {
-    "text": "İsteğe bağlı sahne notu",
-    "files": [
-      "apps/mobile/src/features/legacy/routes/trends/slug.tsx"
-    ]
-  },
-  {
-    "text": "İstek alındı",
-    "files": [
-      "apps/mobile/app/(auth)/forgot-password.tsx",
-      "apps/mobile/app/(auth)/verify-email.tsx"
-    ]
-  },
-  {
-    "text": "İstek gönderilemedi.",
-    "files": [
-      "apps/mobile/app/(auth)/forgot-password.tsx"
-    ]
-  },
-  {
-    "text": "İstek iptal edildi.",
-    "files": [
-      "apps/mobile/src/api/client.ts"
-    ]
-  },
-  {
-    "text": "İstek: {{p0}}",
-    "files": [
-      "apps/mobile/app/support/ticket.tsx"
-    ]
-  },
-  {
     "text": "İşlem geçmişi",
     "files": [
+      "apps/mobile/app/(tabs)/credits.tsx",
       "apps/mobile/app/(tabs)/profile.tsx",
-      "apps/mobile/app/settings/[section].tsx"
+      "apps/mobile/app/settings/[section].tsx",
+      "apps/mobile/app/settings/index.tsx"
     ]
   },
   {
@@ -4996,19 +4889,51 @@
   {
     "text": "İştah açıcı ama gerçeğe sadık yiyecek ve içecek fotoğrafı.",
     "files": [
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
+    ]
+  },
+  {
+    "text": "İstanbul Sokak",
+    "files": [
       "apps/mobile/src/features/studio/catalog.ts"
     ]
   },
   {
-    "text": "İyi kaynak fotoğrafı",
+    "text": "İstediğin değişikliği yaz…",
     "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+      "apps/mobile/app/generations/[id]/edit.tsx"
     ]
   },
   {
-    "text": "İzinli ve saygılı paylaşım",
+    "text": "İsteğe bağlı sahne notu",
     "files": [
-      "apps/mobile/app/legal/index.tsx"
+      "apps/mobile/src/features/legacy/routes/trends/slug.tsx"
+    ]
+  },
+  {
+    "text": "İstek alındı",
+    "files": [
+      "apps/mobile/app/(auth)/forgot-password.tsx",
+      "apps/mobile/app/(auth)/verify-email.tsx"
+    ]
+  },
+  {
+    "text": "İstek gönderilemedi.",
+    "files": [
+      "apps/mobile/app/(auth)/forgot-password.tsx"
+    ]
+  },
+  {
+    "text": "İstek iptal edildi.",
+    "files": [
+      "apps/mobile/src/api/client.ts"
+    ]
+  },
+  {
+    "text": "İstek: {{p0}}",
+    "files": [
+      "apps/mobile/app/support/ticket.tsx"
     ]
   },
   {
@@ -5021,6 +4946,18 @@
     "text": "JPEG, PNG veya WebP · en çok 15 MB",
     "files": [
       "apps/mobile/src/components/index.tsx"
+    ]
+  },
+  {
+    "text": "JPEG, PNG veya WebP · En fazla 15 MB",
+    "files": [
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+    ]
+  },
+  {
+    "text": "Kaç alternatif üretelim?",
+    "files": [
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
@@ -5062,6 +4999,14 @@
     ]
   },
   {
+    "text": "Kalite",
+    "files": [
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx",
+      "apps/mobile/src/features/legacy/routes/trends/slug.tsx",
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+    ]
+  },
+  {
     "text": "Kalıcı işlem ve veri yönetimi",
     "files": [
       "apps/mobile/app/settings/delete-account.tsx"
@@ -5092,14 +5037,6 @@
     ]
   },
   {
-    "text": "Kalite",
-    "files": [
-      "apps/mobile/app/studio/[mode].tsx",
-      "apps/mobile/src/features/legacy/routes/trends/slug.tsx",
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
-    ]
-  },
-  {
     "text": "Kamera açılamadı",
     "files": [
       "apps/mobile/src/features/legacy/routes/create/upload.tsx",
@@ -5115,7 +5052,8 @@
   {
     "text": "Kamera, port ve kasa geometrisini koruyan teknoloji çekimi.",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
     ]
   },
   {
@@ -5151,13 +5089,8 @@
   {
     "text": "Kampanya kullanımı için güçlü hero sahnesi.",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
-    ]
-  },
-  {
-    "text": "Kanal formatı",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
     ]
   },
   {
@@ -5206,7 +5139,8 @@
   {
     "text": "Karanlık fonda kontrollü kahraman ışığı.",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
     ]
   },
   {
@@ -5218,7 +5152,7 @@
   {
     "text": "Kare oranı",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -5250,8 +5184,7 @@
     "files": [
       "apps/mobile/app/(tabs)/_layout.tsx",
       "apps/mobile/app/(tabs)/projects.tsx",
-      "apps/mobile/src/features/billing/ProPaywallView.tsx",
-      "apps/mobile/src/features/settings/settings-tab-footer.tsx"
+      "apps/mobile/src/features/billing/ProPaywallView.tsx"
     ]
   },
   {
@@ -5285,7 +5218,7 @@
     ]
   },
   {
-    "text": "Kataloğu aç",
+    "text": "Kataloğunu aç",
     "files": [
       "apps/mobile/app/(tabs)/home.tsx"
     ]
@@ -5293,13 +5226,7 @@
   {
     "text": "Kategori ve görünüm seçimini tamamla.",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
-    ]
-  },
-  {
-    "text": "Kategori ve sahneyi seç.",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -5383,6 +5310,12 @@
     ]
   },
   {
+    "text": "Kayıtlı tercihler",
+    "files": [
+      "apps/mobile/app/settings/[section].tsx"
+    ]
+  },
+  {
     "text": "Kaynağını seç",
     "files": [
       "apps/mobile/src/features/legacy/routes/create/upload.tsx"
@@ -5427,12 +5360,6 @@
     ]
   },
   {
-    "text": "Kaynak fotoğrafla yeni bir çekim planla",
-    "files": [
-      "apps/mobile/app/(tabs)/projects.tsx"
-    ]
-  },
-  {
     "text": "Kaynak fotoğrafları",
     "files": [
       "apps/mobile/app/settings/[section].tsx"
@@ -5453,13 +5380,13 @@
   {
     "text": "Kaynak görselini seç.",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
     "text": "Kaynak görseller",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -5500,21 +5427,9 @@
     ]
   },
   {
-    "text": "Kaynak ürün fotoğrafını seç.",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
-    ]
-  },
-  {
     "text": "Kaynak yüz ve baş-boyun hizasını koruyan klasik okuma odası portresi; krem-lacivert tonlar, doğal pencere ışığı ve 50–85 mm portre hissi.",
     "files": [
       "apps/mobile/src/features/trends/presets.ts"
-    ]
-  },
-  {
-    "text": "Kaynak, kullanım amacı ve çıktılar tek yerde",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
@@ -5560,6 +5475,61 @@
     ]
   },
   {
+    "text": "Kimlikler ayrı ayrı korunur; yüzler karıştırılmaz. İkinci kişi yalnızca bu iki 80’ler görünümünde desteklenir.",
+    "files": [
+      "apps/mobile/src/features/legacy/routes/trends/slug.tsx"
+    ]
+  },
+  {
+    "text": "Kişi fotoğrafını seç",
+    "files": [
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
+    ]
+  },
+  {
+    "text": "Kişi ve kıyafet görselini seç.",
+    "files": [
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
+    ]
+  },
+  {
+    "text": "Kişi ve kıyafet görsellerinin işlenmesi için gerekli izinlere sahibim.",
+    "files": [
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
+    ]
+  },
+  {
+    "text": "Kişi ve kıyafet iki ayrı kaynak olarak işlenir",
+    "files": [
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
+    ]
+  },
+  {
+    "text": "Kişinin yüz kimliğini ve doğal cilt dokusunu koruyarak yumuşak ışıklı, dengeli bir yakın plan bakım portresi oluştur.",
+    "files": [
+      "apps/mobile/src/constants/experience-scenes.ts"
+    ]
+  },
+  {
+    "text": "Kişinin yüzünü, pozunu ve kıyafetini koruyarak arka planı sıcak gün batımı ışığında zarif bir şehir terasına dönüştür.",
+    "files": [
+      "apps/mobile/src/constants/experience-scenes.ts"
+    ]
+  },
+  {
+    "text": "Kişisel veriler ve uygulama kullanımı",
+    "files": [
+      "apps/mobile/app/legal/[document].tsx"
+    ]
+  },
+  {
+    "text": "Kişisel verilerin nasıl işlendiği ve hakların",
+    "files": [
+      "apps/mobile/app/legal/index.tsx",
+      "apps/mobile/app/settings/[section].tsx"
+    ]
+  },
+  {
     "text": "Kırmızı Halı",
     "files": [
       "apps/mobile/src/features/trends/presets.ts"
@@ -5587,7 +5557,7 @@
     "text": "Kıyafet deneme",
     "files": [
       "apps/mobile/app/(tabs)/projects.tsx",
-      "apps/mobile/app/studio/[mode].tsx",
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx",
       "apps/mobile/src/features/studio/server.ts"
     ]
   },
@@ -5600,13 +5570,13 @@
   {
     "text": "Kıyafet fotoğrafını seç",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
     "text": "Kıyafet görseli",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -5624,7 +5594,7 @@
   {
     "text": "Kıyafet sahnesi",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -5643,61 +5613,6 @@
     "text": "Kıyafeti koru",
     "files": [
       "apps/mobile/src/features/legacy/routes/create/settings.tsx"
-    ]
-  },
-  {
-    "text": "Kimlikler ayrı ayrı korunur; yüzler karıştırılmaz. İkinci kişi yalnızca bu iki 80’ler görünümünde desteklenir.",
-    "files": [
-      "apps/mobile/src/features/legacy/routes/trends/slug.tsx"
-    ]
-  },
-  {
-    "text": "Kişi fotoğrafını seç",
-    "files": [
-      "apps/mobile/app/studio/[mode].tsx"
-    ]
-  },
-  {
-    "text": "Kişi ve kıyafet görselini seç.",
-    "files": [
-      "apps/mobile/app/studio/[mode].tsx"
-    ]
-  },
-  {
-    "text": "Kişi ve kıyafet görsellerinin işlenmesi için gerekli izinlere sahibim.",
-    "files": [
-      "apps/mobile/app/studio/[mode].tsx"
-    ]
-  },
-  {
-    "text": "Kişi ve kıyafet iki ayrı kaynak olarak işlenir",
-    "files": [
-      "apps/mobile/app/studio/[mode].tsx"
-    ]
-  },
-  {
-    "text": "Kişinin yüz kimliğini ve doğal cilt dokusunu koruyarak yumuşak ışıklı, dengeli bir yakın plan bakım portresi oluştur.",
-    "files": [
-      "apps/mobile/src/constants/experience-scenes.ts"
-    ]
-  },
-  {
-    "text": "Kişinin yüzünü, pozunu ve kıyafetini koruyarak arka planı sıcak gün batımı ışığında zarif bir şehir terasına dönüştür.",
-    "files": [
-      "apps/mobile/src/constants/experience-scenes.ts"
-    ]
-  },
-  {
-    "text": "Kişisel veriler ve uygulama kullanımı",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
-    "text": "Kişisel verilerin nasıl işlendiği ve hakların",
-    "files": [
-      "apps/mobile/app/legal/index.tsx",
-      "apps/mobile/app/settings/[section].tsx"
     ]
   },
   {
@@ -5758,7 +5673,8 @@
   {
     "text": "Kontrollü yansımalı modern vitrin.",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
     ]
   },
   {
@@ -5768,37 +5684,38 @@
     ]
   },
   {
-    "text": "Koyu tema · Cam efektleri · Animasyon",
+    "text": "Koyu",
     "files": [
+      "apps/mobile/app/(tabs)/profile.tsx",
       "apps/mobile/app/settings/index.tsx"
     ]
   },
   {
-    "text": "Koyu tema, cam efektleri ve animasyon",
+    "text": "Koyu görünüm",
     "files": [
-      "apps/mobile/app/(tabs)/profile.tsx"
+      "apps/mobile/app/settings/[section].tsx"
     ]
   },
   {
     "text": "Kozmetik için doğal ve hijyenik spa düzeni.",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
     ]
   },
   {
     "text": "kredi",
     "files": [
       "apps/mobile/app/(tabs)/credits.tsx",
-      "apps/mobile/app/studio/[mode].tsx",
       "apps/mobile/app/transactions.tsx",
       "apps/mobile/src/features/legacy/routes/create/review.tsx",
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx",
       "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
     "text": "Kredi",
     "files": [
-      "apps/mobile/app/(tabs)/credits.tsx",
       "apps/mobile/app/(tabs)/profile.tsx"
     ]
   },
@@ -5806,6 +5723,12 @@
     "text": "KREDİ",
     "files": [
       "apps/mobile/src/features/legacy/routes/filters/slug.tsx"
+    ]
+  },
+  {
+    "text": "Kredi al",
+    "files": [
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
@@ -5861,24 +5784,22 @@
   {
     "text": "Kredi özeti alınamadı",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx",
       "apps/mobile/src/features/legacy/routes/create/review.tsx",
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
     "text": "Kredi özeti alınamadı.",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx",
       "apps/mobile/src/features/legacy/routes/create/review.tsx",
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx",
       "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
     "text": "Kredi özeti bekleniyor…",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx",
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -5912,9 +5833,15 @@
     ]
   },
   {
+    "text": "Kredi paketleri",
+    "files": [
+      "apps/mobile/app/(tabs)/credits.tsx"
+    ]
+  },
+  {
     "text": "Kredi rezervasyonu API tarafından son kez doğrulanır.",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -5931,7 +5858,19 @@
     ]
   },
   {
+    "text": "Kredi teklifi alınamadı",
+    "files": [
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+    ]
+  },
+  {
     "text": "Kredi teklifi hesaplanıyor…",
+    "files": [
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+    ]
+  },
+  {
+    "text": "Kredi teklifini yenile",
     "files": [
       "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
@@ -5946,12 +5885,6 @@
     "text": "Kredi tutarını bir sonraki ekranda göreceksin. Oluşturmayı onaylamadan kredi düşülmez.",
     "files": [
       "apps/mobile/src/features/legacy/routes/create/settings.tsx"
-    ]
-  },
-  {
-    "text": "Kredi ürünlerinin tamamı mağazadan gelmedi. RevenueCat / App Store Connect içinde com.birkareai.credits.20, .60 ve .150 ürünlerini kontrol edin.",
-    "files": [
-      "apps/mobile/app/(tabs)/credits.tsx"
     ]
   },
   {
@@ -5977,8 +5910,7 @@
     "files": [
       "apps/mobile/app/(tabs)/_layout.tsx",
       "apps/mobile/app/(tabs)/credits.tsx",
-      "apps/mobile/app/settings/delete-account.tsx",
-      "apps/mobile/src/features/settings/settings-tab-footer.tsx"
+      "apps/mobile/app/settings/delete-account.tsx"
     ]
   },
   {
@@ -5994,9 +5926,15 @@
     ]
   },
   {
-    "text": "Kullanılabilir ve ayrılmış krediler",
+    "text": "Küçük dokunuşlar",
     "files": [
-      "apps/mobile/app/(tabs)/profile.tsx"
+      "apps/mobile/src/features/onboarding/launch-experience.tsx"
+    ]
+  },
+  {
+    "text": "Kullanılabilir bakiye",
+    "files": [
+      "apps/mobile/app/(tabs)/credits.tsx"
     ]
   },
   {
@@ -6024,7 +5962,8 @@
       "apps/mobile/app/(auth)/social-complete.tsx",
       "apps/mobile/app/legal/[document].tsx",
       "apps/mobile/app/legal/index.tsx",
-      "apps/mobile/app/settings/[section].tsx"
+      "apps/mobile/app/settings/[section].tsx",
+      "apps/mobile/app/settings/index.tsx"
     ]
   },
   {
@@ -6074,8 +6013,7 @@
   {
     "text": "Kurgusal karakter açıklaması",
     "files": [
-      "apps/mobile/app/legal/[document].tsx",
-      "apps/mobile/app/legal/index.tsx"
+      "apps/mobile/app/legal/[document].tsx"
     ]
   },
   {
@@ -6158,15 +6096,8 @@
     ]
   },
   {
-    "text": "Küçük dokunuşlar",
-    "files": [
-      "apps/mobile/src/features/onboarding/launch-experience.tsx"
-    ]
-  },
-  {
     "text": "language.subtitle",
     "files": [
-      "apps/mobile/app/settings/index.tsx",
       "apps/mobile/app/settings/language.tsx"
     ]
   },
@@ -6180,6 +6111,19 @@
     "text": "language.title",
     "files": [
       "apps/mobile/app/settings/language.tsx"
+    ]
+  },
+  {
+    "text": "Lisans sözleşmesi (EULA)",
+    "files": [
+      "apps/mobile/app/legal/index.tsx",
+      "apps/mobile/app/settings/index.tsx"
+    ]
+  },
+  {
+    "text": "Lisans sözleşmesi açılamadı. Lütfen daha sonra tekrar dene.",
+    "files": [
+      "apps/mobile/src/constants/legal-links.ts"
     ]
   },
   {
@@ -6198,6 +6142,13 @@
     "text": "Lütfen 15 MB altındaki bir JPEG, PNG, WebP veya HEIC seç.",
     "files": [
       "apps/mobile/src/features/studio/useStudioImagePicker.ts"
+    ]
+  },
+  {
+    "text": "Lütfen daha sonra tekrar dene.",
+    "files": [
+      "apps/mobile/app/legal/index.tsx",
+      "apps/mobile/app/settings/index.tsx"
     ]
   },
   {
@@ -6250,13 +6201,13 @@
     ]
   },
   {
-    "text": "Mağaza işlemi tamamlandı. Sunucu doğrulaması henüz sonuçlanmadıysa tekrar satın almayın; bakiye kısa süre içinde RevenueCat üzerinden eşitlenecek.",
+    "text": "Mağaza işlemi tamamlandı. Bakiyen birkaç dakika içinde güncellenecek; lütfen tekrar satın alma.",
     "files": [
       "apps/mobile/app/(tabs)/credits.tsx"
     ]
   },
   {
-    "text": "Mağaza ürünleri hazır değil. RevenueCat ürün, entitlement ve offering bağlantılarını kontrol edin.",
+    "text": "Mağaza ürünleri şu anda yüklenemedi. Lütfen daha sonra tekrar dene.",
     "files": [
       "apps/mobile/src/features/billing/revenuecat-client.ts"
     ]
@@ -6312,13 +6263,14 @@
   {
     "text": "Manikür görünümü",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
     "text": "Masa Üstü",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
     ]
   },
   {
@@ -6331,12 +6283,6 @@
     "text": "Metin alanı bırakabilen, dikkat çekici kampanya görseli.",
     "files": [
       "apps/mobile/src/features/studio/commerceGoals.ts"
-    ]
-  },
-  {
-    "text": "MEVCUT BAKİYE",
-    "files": [
-      "apps/mobile/app/(tabs)/credits.tsx"
     ]
   },
   {
@@ -6366,13 +6312,14 @@
   {
     "text": "Moda ürünleri için sıcak lüks mağaza.",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
     ]
   },
   {
     "text": "Model, prompt ve kredi tutarı yalnızca sunucudaki doğrulanmış seçime göre belirlenir. Serbest notun ürün kimliği, anatomi veya güvenlik kurallarını değiştiremez.",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -6432,13 +6379,7 @@
   {
     "text": "Nerede kullanacaksın?",
     "files": [
-      "apps/mobile/app/(tabs)/home.tsx"
-    ]
-  },
-  {
-    "text": "Net bir ürün fotoğrafı",
-    "files": [
-      "apps/mobile/app/(tabs)/home.tsx"
+      "apps/mobile/app/studio/index.tsx"
     ]
   },
   {
@@ -6450,7 +6391,8 @@
   {
     "text": "Nötr gri fonda dengeli ışık.",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
     ]
   },
   {
@@ -6466,6 +6408,32 @@
     ]
   },
   {
+    "text": "Ödeme iptali",
+    "files": [
+      "apps/mobile/app/settings/[section].tsx",
+      "apps/mobile/src/features/billing/transaction-presentation.ts"
+    ]
+  },
+  {
+    "text": "Ödeme onay bekliyor. Onaylanana kadar satın alma tamamlanmaz; tekrar satın almayın.",
+    "files": [
+      "apps/mobile/src/features/billing/revenuecat-client.ts"
+    ]
+  },
+  {
+    "text": "Ödül Gecesi",
+    "files": [
+      "apps/mobile/src/constants/catalog.ts"
+    ]
+  },
+  {
+    "text": "Ölçek, malzeme ve perspektifi koruyan iç mekân sunumu.",
+    "files": [
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
+    ]
+  },
+  {
     "text": "Oluştur",
     "files": [
       "apps/mobile/src/features/create/components.tsx"
@@ -6474,7 +6442,7 @@
   {
     "text": "Oluştur · {{p0}} kredi",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -6505,6 +6473,13 @@
     "text": "Oluşturuluyor",
     "files": [
       "apps/mobile/app/create/progress.tsx"
+    ]
+  },
+  {
+    "text": "Ömür Boyu",
+    "files": [
+      "apps/mobile/src/features/billing/ProPaywallPreview.tsx",
+      "apps/mobile/src/features/billing/paywall-model.ts"
     ]
   },
   {
@@ -6541,16 +6516,184 @@
     ]
   },
   {
-    "text": "opsiyonel",
+    "text": "Önce",
     "files": [
+      "apps/mobile/src/features/onboarding/launch-experience.tsx"
+    ]
+  },
+  {
+    "text": "Önce / sonra",
+    "files": [
+      "apps/mobile/app/generations/[id]/compare.tsx"
+    ]
+  },
+  {
+    "text": "Önce ana görseli seçmelisin.",
+    "files": [
+      "apps/mobile/src/features/studio/productServer.ts",
+      "apps/mobile/src/features/studio/server.ts"
+    ]
+  },
+  {
+    "text": "Önce bir kaynak fotoğraf seçmelisin.",
+    "files": [
+      "apps/mobile/src/features/create/server.ts"
+    ]
+  },
+  {
+    "text": "Önce el fotoğrafını seçmelisin.",
+    "files": [
+      "apps/mobile/src/features/studio/server.ts"
+    ]
+  },
+  {
+    "text": "Önce görünümünü genişlet",
+    "files": [
+      "apps/mobile/src/features/onboarding/launch-experience.tsx"
+    ]
+  },
+  {
+    "text": "Önce kaynak fotoğrafını seçmeye yönlendirir.",
+    "files": [
+      "apps/mobile/src/features/legacy/routes/filters/slug.tsx"
+    ]
+  },
+  {
+    "text": "Önce kıyafet sahnesini seçmelisin.",
+    "files": [
+      "apps/mobile/src/features/studio/server.ts"
+    ]
+  },
+  {
+    "text": "Önce kullanım amacını seç. Sonra ürününü ve çekim sahnesini hazırla.",
+    "files": [
+      "apps/mobile/app/studio/index.tsx"
+    ]
+  },
+  {
+    "text": "Önce manikür görünümünü seçmelisin.",
+    "files": [
+      "apps/mobile/src/features/studio/server.ts"
+    ]
+  },
+  {
+    "text": "Önce ürün kategorisini seçmelisin.",
+    "files": [
+      "apps/mobile/src/features/studio/productServer.ts",
+      "apps/mobile/src/features/studio/server.ts"
+    ]
+  },
+  {
+    "text": "Önce ürün sahnesini seçmelisin.",
+    "files": [
+      "apps/mobile/src/features/studio/productServer.ts",
+      "apps/mobile/src/features/studio/server.ts"
+    ]
+  },
+  {
+    "text": "Önce ve sonra görünümünü değiştir",
+    "files": [
+      "apps/mobile/src/features/legacy/routes/filters/slug.tsx"
+    ]
+  },
+  {
+    "text": "Önce ve sonra görünümünü karşılaştırmak için yatay kaydır.",
+    "files": [
+      "apps/mobile/src/features/onboarding/launch-experience.tsx"
+    ]
+  },
+  {
+    "text": "Önce ve sonra karşılaştır",
+    "files": [
+      "apps/mobile/app/generations/[id]/edit.tsx",
       "apps/mobile/app/generations/[id]/results.tsx",
+      "apps/mobile/app/projects/[id].tsx"
+    ]
+  },
+  {
+    "text": "Önce ve sonra karşılaştırması",
+    "files": [
+      "apps/mobile/src/features/onboarding/launch-experience.tsx"
+    ]
+  },
+  {
+    "text": "Önceki adıma dön",
+    "files": [
+      "apps/mobile/src/features/onboarding/launch-experience.tsx"
+    ]
+  },
+  {
+    "text": "Önceki sonuçlara her zaman geri dönebilirsin.",
+    "files": [
+      "apps/mobile/app/generations/[id]/edit.tsx"
+    ]
+  },
+  {
+    "text": "Öne çıkanlar",
+    "files": [
+      "apps/mobile/src/features/legacy/routes/tabs/explore.tsx"
+    ]
+  },
+  {
+    "text": "Önerilen",
+    "files": [
+      "apps/mobile/app/generations/[id]/results.tsx"
+    ]
+  },
+  {
+    "text": "Önerilen düzenlemeler",
+    "files": [
+      "apps/mobile/app/generations/[id]/edit.tsx"
+    ]
+  },
+  {
+    "text": "Önizleme",
+    "files": [
+      "apps/mobile/src/features/create/createFlow.ts",
+      "apps/mobile/src/features/legacy/routes/create/settings.tsx",
+      "apps/mobile/src/features/legacy/routes/root/beauty.tsx",
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx",
+      "apps/mobile/src/features/legacy/routes/trends/slug.tsx",
+      "apps/mobile/src/features/onboarding/create-handoff.ts",
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+    ]
+  },
+  {
+    "text": "Önizleme {{p0}} kredi · HD için alternatif başına +{{p1}} kredi.",
+    "files": [
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+    ]
+  },
+  {
+    "text": "Önizleme ücretsizdir",
+    "files": [
+      "apps/mobile/src/features/legacy/routes/filters/slug.tsx"
+    ]
+  },
+  {
+    "text": "Önizleme üretiminde en fazla 2 alternatif seçebilirsin.",
+    "files": [
+      "apps/mobile/src/features/studio/productServer.ts",
+      "apps/mobile/src/features/studio/server.ts"
+    ]
+  },
+  {
+    "text": "Önizleme yaklaşık renk ve ışık etkisini gösterir. Sahne ve AI dönüşümü, oluşturduğunda uygulanır.",
+    "files": [
       "apps/mobile/src/features/legacy/routes/create/settings.tsx"
     ]
   },
   {
-    "text": "Oran, kalite ve gerçek alternatif sayısını seç.",
+    "text": "Önizlemede en fazla 2 alternatif.",
     "files": [
       "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+    ]
+  },
+  {
+    "text": "opsiyonel",
+    "files": [
+      "apps/mobile/app/generations/[id]/results.tsx",
+      "apps/mobile/src/features/legacy/routes/create/settings.tsx"
     ]
   },
   {
@@ -6651,6 +6794,60 @@
     ]
   },
   {
+    "text": "Örn. arka planı yağmurlu İstanbul gecesi yap…",
+    "files": [
+      "apps/mobile/src/features/legacy/routes/trends/slug.tsx"
+    ]
+  },
+  {
+    "text": "Örn. doğal, dik bir duruş kullan",
+    "files": [
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
+    ]
+  },
+  {
+    "text": "Örn. Etiket okunaklı kalsın",
+    "files": [
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+    ]
+  },
+  {
+    "text": "Örn. Işık daha yumuşak, kamerayı biraz uzak tut.",
+    "files": [
+      "apps/mobile/src/features/legacy/routes/create/settings.tsx"
+    ]
+  },
+  {
+    "text": "Örn. mevcut tırnak uzunluğunu koru",
+    "files": [
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
+    ]
+  },
+  {
+    "text": "Örn. ürün kameranın soluna hafif dönük olsun",
+    "files": [
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
+    ]
+  },
+  {
+    "text": "Örn. Yeni sezon deri çanta",
+    "files": [
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+    ]
+  },
+  {
+    "text": "Örnek kareyle başla",
+    "files": [
+      "apps/mobile/src/features/onboarding/launch-experience.tsx"
+    ]
+  },
+  {
+    "text": "Örnek yüz kopyalanmaz. Önizleme yalnız renk fikri verir; kıyafet, poz ve ortam dönüşümü AI üretiminde uygulanır.",
+    "files": [
+      "apps/mobile/src/features/legacy/routes/trends/slug.tsx"
+    ]
+  },
+  {
     "text": "ornek@eposta.com",
     "files": [
       "apps/mobile/app/(auth)/forgot-password.tsx",
@@ -6719,262 +6916,6 @@
     ]
   },
   {
-    "text": "Ödeme iptali",
-    "files": [
-      "apps/mobile/app/settings/[section].tsx",
-      "apps/mobile/src/features/billing/transaction-presentation.ts"
-    ]
-  },
-  {
-    "text": "Ödeme onay bekliyor. Onaylanana kadar satın alma tamamlanmaz; tekrar satın almayın.",
-    "files": [
-      "apps/mobile/src/features/billing/revenuecat-client.ts"
-    ]
-  },
-  {
-    "text": "Ödül Gecesi",
-    "files": [
-      "apps/mobile/src/constants/catalog.ts"
-    ]
-  },
-  {
-    "text": "Ölçek, malzeme ve perspektifi koruyan iç mekân sunumu.",
-    "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
-    ]
-  },
-  {
-    "text": "Ömür Boyu",
-    "files": [
-      "apps/mobile/src/features/billing/ProPaywallPreview.tsx",
-      "apps/mobile/src/features/billing/paywall-model.ts"
-    ]
-  },
-  {
-    "text": "Önce",
-    "files": [
-      "apps/mobile/src/features/onboarding/launch-experience.tsx"
-    ]
-  },
-  {
-    "text": "Önce / sonra",
-    "files": [
-      "apps/mobile/app/generations/[id]/compare.tsx"
-    ]
-  },
-  {
-    "text": "Önce ana görseli seçmelisin.",
-    "files": [
-      "apps/mobile/src/features/studio/server.ts"
-    ]
-  },
-  {
-    "text": "Önce bir kaynak fotoğraf seçmelisin.",
-    "files": [
-      "apps/mobile/src/features/create/server.ts"
-    ]
-  },
-  {
-    "text": "Önce el fotoğrafını seçmelisin.",
-    "files": [
-      "apps/mobile/src/features/studio/server.ts"
-    ]
-  },
-  {
-    "text": "Önce görünümünü genişlet",
-    "files": [
-      "apps/mobile/src/features/onboarding/launch-experience.tsx"
-    ]
-  },
-  {
-    "text": "Önce kaynak fotoğrafını seçmeye yönlendirir.",
-    "files": [
-      "apps/mobile/src/features/legacy/routes/filters/slug.tsx"
-    ]
-  },
-  {
-    "text": "Önce kıyafet sahnesini seçmelisin.",
-    "files": [
-      "apps/mobile/src/features/studio/server.ts"
-    ]
-  },
-  {
-    "text": "Önce kullanım amacını seç",
-    "files": [
-      "apps/mobile/app/studio/index.tsx"
-    ]
-  },
-  {
-    "text": "Önce manikür görünümünü seçmelisin.",
-    "files": [
-      "apps/mobile/src/features/studio/server.ts"
-    ]
-  },
-  {
-    "text": "Önce RevenueCat’te ürünleri bir offering’e bağlayın.",
-    "files": [
-      "apps/mobile/src/features/billing/revenuecat-client.ts"
-    ]
-  },
-  {
-    "text": "Önce ürün kategorisini seçmelisin.",
-    "files": [
-      "apps/mobile/src/features/studio/server.ts"
-    ]
-  },
-  {
-    "text": "Önce ürün sahnesini seçmelisin.",
-    "files": [
-      "apps/mobile/src/features/studio/server.ts"
-    ]
-  },
-  {
-    "text": "Önce ve sonra görünümünü değiştir",
-    "files": [
-      "apps/mobile/src/features/legacy/routes/filters/slug.tsx"
-    ]
-  },
-  {
-    "text": "Önce ve sonra görünümünü karşılaştırmak için yatay kaydır.",
-    "files": [
-      "apps/mobile/src/features/onboarding/launch-experience.tsx"
-    ]
-  },
-  {
-    "text": "Önce ve sonra karşılaştır",
-    "files": [
-      "apps/mobile/app/generations/[id]/edit.tsx",
-      "apps/mobile/app/generations/[id]/results.tsx",
-      "apps/mobile/app/projects/[id].tsx"
-    ]
-  },
-  {
-    "text": "Önce ve sonra karşılaştırması",
-    "files": [
-      "apps/mobile/src/features/onboarding/launch-experience.tsx"
-    ]
-  },
-  {
-    "text": "Önceki adıma dön",
-    "files": [
-      "apps/mobile/src/features/onboarding/launch-experience.tsx"
-    ]
-  },
-  {
-    "text": "Önceki sonuçlara her zaman geri dönebilirsin.",
-    "files": [
-      "apps/mobile/app/generations/[id]/edit.tsx"
-    ]
-  },
-  {
-    "text": "Öne çıkanlar",
-    "files": [
-      "apps/mobile/src/features/legacy/routes/tabs/explore.tsx"
-    ]
-  },
-  {
-    "text": "Önerilen",
-    "files": [
-      "apps/mobile/app/generations/[id]/results.tsx"
-    ]
-  },
-  {
-    "text": "Önerilen düzenlemeler",
-    "files": [
-      "apps/mobile/app/generations/[id]/edit.tsx"
-    ]
-  },
-  {
-    "text": "Önizleme",
-    "files": [
-      "apps/mobile/app/studio/[mode].tsx",
-      "apps/mobile/src/features/create/createFlow.ts",
-      "apps/mobile/src/features/legacy/routes/create/settings.tsx",
-      "apps/mobile/src/features/legacy/routes/root/beauty.tsx",
-      "apps/mobile/src/features/legacy/routes/trends/slug.tsx",
-      "apps/mobile/src/features/onboarding/create-handoff.ts",
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
-    ]
-  },
-  {
-    "text": "Önizleme ücretsizdir",
-    "files": [
-      "apps/mobile/src/features/legacy/routes/filters/slug.tsx"
-    ]
-  },
-  {
-    "text": "Önizleme üretiminde en fazla 2 alternatif seçebilirsin.",
-    "files": [
-      "apps/mobile/src/features/studio/server.ts"
-    ]
-  },
-  {
-    "text": "Önizleme yaklaşık renk ve ışık etkisini gösterir. Sahne ve AI dönüşümü, oluşturduğunda uygulanır.",
-    "files": [
-      "apps/mobile/src/features/legacy/routes/create/settings.tsx"
-    ]
-  },
-  {
-    "text": "Önizlemede en fazla 2",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
-    ]
-  },
-  {
-    "text": "Örn. arka planı yağmurlu İstanbul gecesi yap…",
-    "files": [
-      "apps/mobile/src/features/legacy/routes/trends/slug.tsx"
-    ]
-  },
-  {
-    "text": "Örn. doğal, dik bir duruş kullan",
-    "files": [
-      "apps/mobile/app/studio/[mode].tsx"
-    ]
-  },
-  {
-    "text": "Örn. Işık daha yumuşak, kamerayı biraz uzak tut.",
-    "files": [
-      "apps/mobile/src/features/legacy/routes/create/settings.tsx"
-    ]
-  },
-  {
-    "text": "Örn. mevcut tırnak uzunluğunu koru",
-    "files": [
-      "apps/mobile/app/studio/[mode].tsx"
-    ]
-  },
-  {
-    "text": "Örn. ürün kameranın soluna hafif dönük olsun",
-    "files": [
-      "apps/mobile/app/studio/[mode].tsx"
-    ]
-  },
-  {
-    "text": "Örn. Ürün kameranın soluna hafif dönük olsun",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
-    ]
-  },
-  {
-    "text": "Örn. Yeni sezon deri çanta",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
-    ]
-  },
-  {
-    "text": "Örnek kareyle başla",
-    "files": [
-      "apps/mobile/src/features/onboarding/launch-experience.tsx"
-    ]
-  },
-  {
-    "text": "Örnek yüz kopyalanmaz. Önizleme yalnız renk fikri verir; kıyafet, poz ve ortam dönüşümü AI üretiminde uygulanır.",
-    "files": [
-      "apps/mobile/src/features/legacy/routes/trends/slug.tsx"
-    ]
-  },
-  {
     "text": "Özel talimat",
     "files": [
       "apps/mobile/src/features/legacy/routes/create/settings.tsx"
@@ -7011,12 +6952,6 @@
     ]
   },
   {
-    "text": "paketleri",
-    "files": [
-      "apps/mobile/app/(tabs)/credits.tsx"
-    ]
-  },
-  {
     "text": "Paketleri satın almak için hesabınıza giriş yapın.",
     "files": [
       "apps/mobile/src/features/billing/CustomProPaywall.tsx"
@@ -7025,7 +6960,7 @@
   {
     "text": "Parmakların tamamı net ve birbirinden ayrılmış görünmeli.",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -7248,12 +7183,6 @@
     ]
   },
   {
-    "text": "Profil",
-    "files": [
-      "apps/mobile/app/(tabs)/profile.tsx"
-    ]
-  },
-  {
     "text": "Profil, oturumlar ve kişisel tercihler kaldırılır.",
     "files": [
       "apps/mobile/app/settings/delete-account.tsx"
@@ -7262,7 +7191,6 @@
   {
     "text": "Profili düzenle",
     "files": [
-      "apps/mobile/app/(tabs)/profile.tsx",
       "apps/mobile/app/settings/[section].tsx",
       "apps/mobile/app/settings/index.tsx"
     ]
@@ -7478,33 +7406,9 @@
     ]
   },
   {
-    "text": "RevenueCat public SDK anahtarı yapılandırılmamış.",
-    "files": [
-      "apps/mobile/src/features/billing/revenuecat-client.ts"
-    ]
-  },
-  {
     "text": "REVENUECAT TEST STORE · GERÇEK ÜCRET ALINMAZ",
     "files": [
       "apps/mobile/src/features/billing/revenuecat.tsx"
-    ]
-  },
-  {
-    "text": "RevenueCat yapılandırması eksik. Uygulamayı güncel app.config.ts ile yeniden derleyin.",
-    "files": [
-      "apps/mobile/src/features/billing/revenuecat.tsx"
-    ]
-  },
-  {
-    "text": "RevenueCat’te `{{p0}}` offering’i bulunamadı. Ürünleri bu offering’e bağlayın.",
-    "files": [
-      "apps/mobile/src/features/billing/revenuecat-client.ts"
-    ]
-  },
-  {
-    "text": "RevenueCat’te bu uygulama için geçerli bir offering bulunamadı. Ürünleri bağlayıp current offering seçin.",
-    "files": [
-      "apps/mobile/src/features/billing/revenuecat-client.ts"
     ]
   },
   {
@@ -7566,7 +7470,8 @@
   {
     "text": "Sahne",
     "files": [
-      "apps/mobile/app/(tabs)/projects.tsx"
+      "apps/mobile/app/(tabs)/projects.tsx",
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
@@ -7584,8 +7489,15 @@
   {
     "text": "Sahne seç",
     "files": [
+      "apps/mobile/app/(tabs)/home.tsx",
       "apps/mobile/src/features/legacy/routes/create/scene.tsx",
       "apps/mobile/src/features/legacy/routes/create/upload.tsx"
+    ]
+  },
+  {
+    "text": "Sahne ve formatı seç",
+    "files": [
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
@@ -7608,12 +7520,6 @@
     ]
   },
   {
-    "text": "Sahneye göre",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
-    ]
-  },
-  {
     "text": "Sahneyle devam et",
     "files": [
       "apps/mobile/src/features/onboarding/launch-experience.tsx"
@@ -7623,6 +7529,12 @@
     "text": "Saklama seçimini her üretimin kaynak ekranında ayrı yönetebilirsin.",
     "files": [
       "apps/mobile/app/settings/[section].tsx"
+    ]
+  },
+  {
+    "text": "Sana ait çalışma alanı.",
+    "files": [
+      "apps/mobile/app/(tabs)/profile.tsx"
     ]
   },
   {
@@ -7644,7 +7556,13 @@
     ]
   },
   {
-    "text": "Satın al",
+    "text": "Şartlar",
+    "files": [
+      "apps/mobile/src/features/billing/ProPaywallView.tsx"
+    ]
+  },
+  {
+    "text": "Satın alımlar Apple’ın standart lisans sözleşmesine tabidir. Koşullar ve gizlilik politikası Hesap › Ayarlar › Yasal bölümündedir.",
     "files": [
       "apps/mobile/app/(tabs)/credits.tsx"
     ]
@@ -7658,7 +7576,13 @@
   {
     "text": "Satın alımları geri yükle",
     "files": [
-      "apps/mobile/src/features/billing/SubscriptionCard.tsx"
+      "apps/mobile/app/(tabs)/credits.tsx"
+    ]
+  },
+  {
+    "text": "Satın alımların kontrol edildi ve hesabın güncellendi.",
+    "files": [
+      "apps/mobile/app/(tabs)/credits.tsx"
     ]
   },
   {
@@ -7680,9 +7604,22 @@
     ]
   },
   {
-    "text": "Satın alma servisine ulaşılamadı. Tekrar deneyin; yeni SDK eklendiyse uygulamayı yeniden derleyin.",
+    "text": "Satın alma servisine ulaşılamadı. Lütfen tekrar dene.",
     "files": [
       "apps/mobile/src/features/billing/revenuecat-client.ts"
+    ]
+  },
+  {
+    "text": "Satın alma şu an kullanılamıyor. Fiyat ve paket bilgisi gelmeden ücret alınmaz.",
+    "files": [
+      "apps/mobile/app/(tabs)/credits.tsx"
+    ]
+  },
+  {
+    "text": "Satın alma şu anda kullanılamıyor.",
+    "files": [
+      "apps/mobile/src/features/billing/revenuecat-client.ts",
+      "apps/mobile/src/features/billing/revenuecat.tsx"
     ]
   },
   {
@@ -7701,6 +7638,12 @@
     "text": "Seçilen cihazın yeniden giriş yapması gerekecek.",
     "files": [
       "apps/mobile/app/settings/[section].tsx"
+    ]
+  },
+  {
+    "text": "Seçilen kaynak ürün fotoğrafı",
+    "files": [
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
@@ -7804,7 +7747,7 @@
   {
     "text": "Seçime göre",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -7814,21 +7757,15 @@
     ]
   },
   {
-    "text": "Seçimin ilk sahneyi ve oranı hazırlar. Sonraki adımda her ayarı değiştirebilirsin.",
-    "files": [
-      "apps/mobile/app/studio/index.tsx"
-    ]
-  },
-  {
-    "text": "Seçimin sahne ve format için başlangıç ayarını yapar.",
-    "files": [
-      "apps/mobile/app/(tabs)/home.tsx"
-    ]
-  },
-  {
     "text": "Seçimin yerel önizlemene anında uygulanır. Asıl AI üretimi yalnızca onayından sonra başlar.",
     "files": [
       "apps/mobile/src/features/onboarding/launch-experience.tsx"
+    ]
+  },
+  {
+    "text": "Seçimini sahne adımında değiştirebilirsin.",
+    "files": [
+      "apps/mobile/app/studio/index.tsx"
     ]
   },
   {
@@ -7846,6 +7783,7 @@
   {
     "text": "Seçimler değişti. Üretimi yeni işlem anahtarıyla tekrar başlat.",
     "files": [
+      "apps/mobile/src/features/studio/productServer.ts",
       "apps/mobile/src/features/studio/server.ts"
     ]
   },
@@ -7858,6 +7796,7 @@
   {
     "text": "Seçimler ve kredi kontrol ediliyor",
     "files": [
+      "apps/mobile/src/features/studio/productServer.ts",
       "apps/mobile/src/features/studio/server.ts"
     ]
   },
@@ -7928,6 +7867,36 @@
     ]
   },
   {
+    "text": "Şeffaflık",
+    "files": [
+      "apps/mobile/app/legal/[document].tsx"
+    ]
+  },
+  {
+    "text": "Şehir",
+    "files": [
+      "apps/mobile/src/constants/catalog.ts"
+    ]
+  },
+  {
+    "text": "Şehir Editoryali",
+    "files": [
+      "apps/mobile/src/features/trends/presets.ts"
+    ]
+  },
+  {
+    "text": "Şehir Işıkları",
+    "files": [
+      "apps/mobile/src/constants/catalog.ts"
+    ]
+  },
+  {
+    "text": "Şehir kıyısında ışıltılı bir davet",
+    "files": [
+      "apps/mobile/src/constants/catalog.ts"
+    ]
+  },
+  {
     "text": "Selfie veya portre fotoğrafını seç; görüntü oranını koruyarak ilk kareni hazırla.",
     "files": [
       "apps/mobile/src/features/onboarding/launch-experience.tsx"
@@ -7946,71 +7915,126 @@
     ]
   },
   {
-    "text": "Sıcak arka ışıklı açık hava çekimi.",
+    "text": "Şiddet veya nefret",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
+      "apps/mobile/app/generations/[id]/results.tsx"
     ]
   },
   {
-    "text": "Sıcak raf ışıklı premium moda kampanyası.",
+    "text": "Şifre",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
+      "apps/mobile/app/(auth)/login.tsx",
+      "apps/mobile/app/(auth)/register.tsx",
+      "apps/mobile/src/components/index.tsx"
     ]
   },
   {
-    "text": "Sıcak Stüdyo",
-    "files": [
-      "apps/mobile/src/constants/catalog.ts",
-      "apps/mobile/src/features/legacy/routes/create/review.tsx"
-    ]
-  },
-  {
-    "text": "Sıcak taş tonlarında rafine sunum.",
-    "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
-    ]
-  },
-  {
-    "text": "Sıcak ve zamansız doku",
-    "files": [
-      "apps/mobile/src/constants/catalog.ts"
-    ]
-  },
-  {
-    "text": "Sıfırla",
-    "files": [
-      "apps/mobile/src/features/legacy/routes/create/crop.tsx",
-      "apps/mobile/src/features/legacy/routes/root/beauty.tsx"
-    ]
-  },
-  {
-    "text": "Sıfırlama bağlantısı geçersiz veya süresi dolmuş.",
+    "text": "Şifre güncellenemedi.",
     "files": [
       "apps/mobile/app/(auth)/reset-password.tsx"
     ]
   },
   {
-    "text": "Sıfırlama kodu",
+    "text": "Şifre tekrar",
     "files": [
+      "apps/mobile/app/(auth)/register.tsx",
       "apps/mobile/app/(auth)/reset-password.tsx"
     ]
   },
   {
-    "text": "Sık sorulanlar",
+    "text": "Şifreler eşleşmiyor.",
     "files": [
-      "apps/mobile/app/support/index.tsx"
+      "apps/mobile/src/features/auth/validation.ts"
     ]
   },
   {
-    "text": "Sık sorulanlara göz at ya da destek ekibine bir talep gönder.",
+    "text": "Şifremi unuttum",
     "files": [
-      "apps/mobile/app/support/index.tsx"
+      "apps/mobile/app/(auth)/login.tsx"
     ]
   },
   {
-    "text": "Sıra bekleme uzadı",
+    "text": "Şifremi yenile",
     "files": [
-      "apps/mobile/app/create/progress.tsx"
+      "apps/mobile/app/settings/[section].tsx"
+    ]
+  },
+  {
+    "text": "Şifreni gir",
+    "files": [
+      "apps/mobile/app/(auth)/login.tsx",
+      "apps/mobile/app/settings/delete-account.tsx"
+    ]
+  },
+  {
+    "text": "Şifreni mi unuttun?",
+    "files": [
+      "apps/mobile/app/(auth)/forgot-password.tsx"
+    ]
+  },
+  {
+    "text": "Şifreni tekrar gir",
+    "files": [
+      "apps/mobile/app/(auth)/register.tsx",
+      "apps/mobile/app/(auth)/reset-password.tsx"
+    ]
+  },
+  {
+    "text": "Şifreniz en az 10 karakter olmalı.",
+    "files": [
+      "apps/mobile/src/features/auth/validation.ts"
+    ]
+  },
+  {
+    "text": "Şifreniz en az bir harf ve bir rakam içermeli.",
+    "files": [
+      "apps/mobile/src/features/auth/validation.ts"
+    ]
+  },
+  {
+    "text": "Şifreniz en fazla 128 karakter olabilir.",
+    "files": [
+      "apps/mobile/src/features/auth/validation.ts"
+    ]
+  },
+  {
+    "text": "Şifrenizi girin.",
+    "files": [
+      "apps/mobile/src/features/auth/validation.ts"
+    ]
+  },
+  {
+    "text": "Şifrenizi tekrar girin.",
+    "files": [
+      "apps/mobile/src/features/auth/validation.ts"
+    ]
+  },
+  {
+    "text": "Şifreyi gizle",
+    "files": [
+      "apps/mobile/app/(auth)/login.tsx",
+      "apps/mobile/app/(auth)/register.tsx",
+      "apps/mobile/app/(auth)/reset-password.tsx",
+      "apps/mobile/app/settings/delete-account.tsx",
+      "apps/mobile/src/components/index.tsx",
+      "apps/mobile/src/features/auth/auth-ui.tsx"
+    ]
+  },
+  {
+    "text": "Şifreyi göster",
+    "files": [
+      "apps/mobile/app/(auth)/login.tsx",
+      "apps/mobile/app/(auth)/register.tsx",
+      "apps/mobile/app/(auth)/reset-password.tsx",
+      "apps/mobile/app/settings/delete-account.tsx",
+      "apps/mobile/src/components/index.tsx",
+      "apps/mobile/src/features/auth/auth-ui.tsx"
+    ]
+  },
+  {
+    "text": "Şifreyi güncelle",
+    "files": [
+      "apps/mobile/app/(auth)/reset-password.tsx"
     ]
   },
   {
@@ -8058,7 +8082,7 @@
     ]
   },
   {
-    "text": "Sistemin Hareketi Azalt ve Saydamlığı Azalt tercihleri her zaman korunur.",
+    "text": "Sistem tercihlerin her zaman korunur",
     "files": [
       "apps/mobile/app/settings/[section].tsx"
     ]
@@ -8078,7 +8102,83 @@
   {
     "text": "Siyah ve altın detaylı lüks sahne.",
     "files": [
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
+    ]
+  },
+  {
+    "text": "Sıcak arka ışıklı açık hava çekimi.",
+    "files": [
       "apps/mobile/src/features/studio/catalog.ts"
+    ]
+  },
+  {
+    "text": "Sıcak raf ışıklı premium moda kampanyası.",
+    "files": [
+      "apps/mobile/src/features/studio/catalog.ts"
+    ]
+  },
+  {
+    "text": "Sıcak Stüdyo",
+    "files": [
+      "apps/mobile/src/constants/catalog.ts",
+      "apps/mobile/src/features/legacy/routes/create/review.tsx"
+    ]
+  },
+  {
+    "text": "Sıcak taş tonlarında rafine sunum.",
+    "files": [
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
+    ]
+  },
+  {
+    "text": "Sıcak ve zamansız doku",
+    "files": [
+      "apps/mobile/src/constants/catalog.ts"
+    ]
+  },
+  {
+    "text": "Sıfırla",
+    "files": [
+      "apps/mobile/src/features/legacy/routes/create/crop.tsx",
+      "apps/mobile/src/features/legacy/routes/root/beauty.tsx"
+    ]
+  },
+  {
+    "text": "Sıfırlama bağlantısı geçersiz veya süresi dolmuş.",
+    "files": [
+      "apps/mobile/app/(auth)/reset-password.tsx"
+    ]
+  },
+  {
+    "text": "Sıfırlama kodu",
+    "files": [
+      "apps/mobile/app/(auth)/reset-password.tsx"
+    ]
+  },
+  {
+    "text": "Şık Akşam Yemeği",
+    "files": [
+      "apps/mobile/src/features/trends/presets.ts"
+    ]
+  },
+  {
+    "text": "Sık sorulanlar",
+    "files": [
+      "apps/mobile/app/support/index.tsx"
+    ]
+  },
+  {
+    "text": "Sık sorulanlara göz at ya da destek ekibine bir talep gönder.",
+    "files": [
+      "apps/mobile/app/support/index.tsx"
+    ]
+  },
+  {
+    "text": "Sıra bekleme uzadı",
+    "files": [
+      "apps/mobile/app/create/progress.tsx"
     ]
   },
   {
@@ -8124,18 +8224,6 @@
     ]
   },
   {
-    "text": "Son maliyet üretimden önce sunucuda tekrar doğrulanır.",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
-    ]
-  },
-  {
-    "text": "Son ürün projeleri",
-    "files": [
-      "apps/mobile/app/(tabs)/home.tsx"
-    ]
-  },
-  {
     "text": "Sonra",
     "files": [
       "apps/mobile/src/features/onboarding/launch-experience.tsx"
@@ -8151,18 +8239,6 @@
     "text": "Sonraki",
     "files": [
       "apps/mobile/src/features/onboarding/product-launch-experience.tsx"
-    ]
-  },
-  {
-    "text": "Sonuca dön",
-    "files": [
-      "apps/mobile/app/generations/[id]/compare.tsx"
-    ]
-  },
-  {
-    "text": "Sonucun kaydedildi. Şimdi görseline geçiyoruz.",
-    "files": [
-      "apps/mobile/app/create/progress.tsx"
     ]
   },
   {
@@ -8190,13 +8266,19 @@
     ]
   },
   {
+    "text": "Sonuca dön",
+    "files": [
+      "apps/mobile/app/generations/[id]/compare.tsx"
+    ]
+  },
+  {
     "text": "Sonuçlar",
     "files": [
       "apps/mobile/app/generations/[id]/results.tsx"
     ]
   },
   {
-    "text": "Sonuçlar sunucudan alınamadı",
+    "text": "Sonuçlar yüklenemedi",
     "files": [
       "apps/mobile/app/generations/[id]/results.tsx"
     ]
@@ -8205,6 +8287,12 @@
     "text": "Sonuçlar yüklenemedi.",
     "files": [
       "apps/mobile/app/generations/[id]/results.tsx"
+    ]
+  },
+  {
+    "text": "Sonucun kaydedildi. Şimdi görseline geçiyoruz.",
+    "files": [
+      "apps/mobile/app/create/progress.tsx"
     ]
   },
   {
@@ -8276,6 +8364,12 @@
     ]
   },
   {
+    "text": "SÖZLEŞMELER VE BAĞLANTILAR",
+    "files": [
+      "apps/mobile/app/legal/index.tsx"
+    ]
+  },
+  {
     "text": "Stadyum Selfie",
     "files": [
       "apps/mobile/src/features/onboarding/data.ts"
@@ -8290,14 +8384,14 @@
   {
     "text": "Standart",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx",
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx",
       "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
     "text": "Standart +{{p0}}",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -8310,16 +8404,16 @@
     "text": "Studio",
     "files": [
       "apps/mobile/src/components/index.tsx",
-      "apps/mobile/src/features/auth/auth-ui.tsx"
+      "apps/mobile/src/features/onboarding/SplashIntro.tsx"
     ]
   },
   {
     "text": "Stüdyo",
     "files": [
       "apps/mobile/app/(tabs)/_layout.tsx",
+      "apps/mobile/app/studio/index.tsx",
       "apps/mobile/src/features/billing/billing-policy.ts",
-      "apps/mobile/src/features/onboarding/data.ts",
-      "apps/mobile/src/features/settings/settings-tab-footer.tsx"
+      "apps/mobile/src/features/onboarding/data.ts"
     ]
   },
   {
@@ -8343,12 +8437,14 @@
   {
     "text": "Stüdyo projesi hazırlanıyor",
     "files": [
+      "apps/mobile/src/features/studio/productServer.ts",
       "apps/mobile/src/features/studio/server.ts"
     ]
   },
   {
     "text": "Stüdyo projesi oluşturulamadı. Lütfen tekrar dene.",
     "files": [
+      "apps/mobile/src/features/studio/productServer.ts",
       "apps/mobile/src/features/studio/server.ts"
     ]
   },
@@ -8361,20 +8457,13 @@
   {
     "text": "Sunburst hassas üretim",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
-    ]
-  },
-  {
-    "text": "Sunucu onaylı kredi teklifi",
-    "files": [
-      "apps/mobile/src/features/onboarding/product-launch-experience.tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
     "text": "SUNUCU ONAYLI MALİYET",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx",
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -8444,180 +8533,17 @@
     ]
   },
   {
-    "text": "Şartlar",
-    "files": [
-      "apps/mobile/src/features/billing/ProPaywallView.tsx"
-    ]
-  },
-  {
-    "text": "Şeffaflık",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
-    "text": "Şehir",
-    "files": [
-      "apps/mobile/src/constants/catalog.ts"
-    ]
-  },
-  {
-    "text": "Şehir Editoryali",
-    "files": [
-      "apps/mobile/src/features/trends/presets.ts"
-    ]
-  },
-  {
-    "text": "Şehir Işıkları",
-    "files": [
-      "apps/mobile/src/constants/catalog.ts"
-    ]
-  },
-  {
-    "text": "Şehir kıyısında ışıltılı bir davet",
-    "files": [
-      "apps/mobile/src/constants/catalog.ts"
-    ]
-  },
-  {
-    "text": "Şık Akşam Yemeği",
-    "files": [
-      "apps/mobile/src/features/trends/presets.ts"
-    ]
-  },
-  {
-    "text": "Şiddet veya nefret",
-    "files": [
-      "apps/mobile/app/generations/[id]/results.tsx"
-    ]
-  },
-  {
-    "text": "Şifre",
-    "files": [
-      "apps/mobile/app/(auth)/login.tsx",
-      "apps/mobile/app/(auth)/register.tsx",
-      "apps/mobile/src/components/index.tsx"
-    ]
-  },
-  {
-    "text": "Şifre güncellenemedi.",
-    "files": [
-      "apps/mobile/app/(auth)/reset-password.tsx"
-    ]
-  },
-  {
-    "text": "Şifre tekrar",
-    "files": [
-      "apps/mobile/app/(auth)/register.tsx",
-      "apps/mobile/app/(auth)/reset-password.tsx"
-    ]
-  },
-  {
-    "text": "Şifreler eşleşmiyor.",
-    "files": [
-      "apps/mobile/src/features/auth/validation.ts"
-    ]
-  },
-  {
-    "text": "Şifremi unuttum",
-    "files": [
-      "apps/mobile/app/(auth)/login.tsx"
-    ]
-  },
-  {
-    "text": "Şifremi yenile",
-    "files": [
-      "apps/mobile/app/settings/[section].tsx"
-    ]
-  },
-  {
-    "text": "Şifreni gir",
-    "files": [
-      "apps/mobile/app/(auth)/login.tsx",
-      "apps/mobile/app/settings/delete-account.tsx"
-    ]
-  },
-  {
-    "text": "Şifreni tekrar gir",
-    "files": [
-      "apps/mobile/app/(auth)/register.tsx",
-      "apps/mobile/app/(auth)/reset-password.tsx"
-    ]
-  },
-  {
-    "text": "Şifreni yenile.",
-    "files": [
-      "apps/mobile/app/(auth)/forgot-password.tsx"
-    ]
-  },
-  {
-    "text": "Şifreniz en az 10 karakter olmalı.",
-    "files": [
-      "apps/mobile/src/features/auth/validation.ts"
-    ]
-  },
-  {
-    "text": "Şifreniz en az bir harf ve bir rakam içermeli.",
-    "files": [
-      "apps/mobile/src/features/auth/validation.ts"
-    ]
-  },
-  {
-    "text": "Şifreniz en fazla 128 karakter olabilir.",
-    "files": [
-      "apps/mobile/src/features/auth/validation.ts"
-    ]
-  },
-  {
-    "text": "Şifrenizi girin.",
-    "files": [
-      "apps/mobile/src/features/auth/validation.ts"
-    ]
-  },
-  {
-    "text": "Şifrenizi tekrar girin.",
-    "files": [
-      "apps/mobile/src/features/auth/validation.ts"
-    ]
-  },
-  {
-    "text": "Şifreyi gizle",
-    "files": [
-      "apps/mobile/app/(auth)/login.tsx",
-      "apps/mobile/app/(auth)/register.tsx",
-      "apps/mobile/app/(auth)/reset-password.tsx",
-      "apps/mobile/app/settings/delete-account.tsx",
-      "apps/mobile/src/components/index.tsx",
-      "apps/mobile/src/features/auth/auth-ui.tsx"
-    ]
-  },
-  {
-    "text": "Şifreyi göster",
-    "files": [
-      "apps/mobile/app/(auth)/login.tsx",
-      "apps/mobile/app/(auth)/register.tsx",
-      "apps/mobile/app/(auth)/reset-password.tsx",
-      "apps/mobile/app/settings/delete-account.tsx",
-      "apps/mobile/src/components/index.tsx",
-      "apps/mobile/src/features/auth/auth-ui.tsx"
-    ]
-  },
-  {
-    "text": "Şifreyi güncelle",
-    "files": [
-      "apps/mobile/app/(auth)/reset-password.tsx"
-    ]
-  },
-  {
     "text": "Taban, bağcık ve çift simetrisini koruyan katalog karesi.",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
     ]
   },
   {
     "text": "Takı",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
     ]
   },
   {
@@ -8627,13 +8553,13 @@
     ]
   },
   {
-    "text": "Talebin destek e-posta sunucusuna aktarıldı. Bu, gelen kutusuna teslim veya okunma onayı değildir. Yanıt için hesabındaki doğrulanmış e-posta adresini kullanacağız.",
+    "text": "Talebin destek ekibine iletildi. Yanıt için hesabındaki doğrulanmış e-posta adresini kullanacağız.",
     "files": [
       "apps/mobile/app/support/ticket.tsx"
     ]
   },
   {
-    "text": "Talebin hesabına bağlı olarak kaydedilir ve {{p0}} adresine backend üzerinden iletilir. Şifre veya ödeme bilgisi ekleme.",
+    "text": "Talebin hesabına bağlı olarak kaydedilir ve {{p0}} adresine iletilir. Şifre veya ödeme bilgisi ekleme.",
     "files": [
       "apps/mobile/app/support/ticket.tsx"
     ]
@@ -8696,15 +8622,15 @@
     ]
   },
   {
-    "text": "Tamamlanmış çıktı bulunamadı",
+    "text": "Tamamlanmış bir görsel bulunamadı",
     "files": [
-      "apps/mobile/app/generations/[id]/results.tsx"
+      "apps/mobile/app/generations/[id]/export.tsx"
     ]
   },
   {
-    "text": "Tamamlanmış sunucu çıktısı bulunamadı",
+    "text": "Tamamlanmış çıktı bulunamadı",
     "files": [
-      "apps/mobile/app/generations/[id]/export.tsx"
+      "apps/mobile/app/generations/[id]/results.tsx"
     ]
   },
   {
@@ -8732,27 +8658,16 @@
     ]
   },
   {
-    "text": "Tasarım önizlemesi",
+    "text": "Taş bir kaide üzerinde keten çanta örnek ürün fotoğrafı",
     "files": [
-      "apps/mobile/src/features/billing/ProPaywallPreview.tsx"
-    ]
-  },
-  {
-    "text": "TASARIM ÖNİZLEMESİ · ÖRNEK FİYATLAR · ÖDEME YAPMAZ",
-    "files": [
-      "apps/mobile/src/features/billing/ProPaywallView.tsx"
-    ]
-  },
-  {
-    "text": "Taslaklar, kaynaklar ve kayıtlı üretimler kaldırılır.",
-    "files": [
-      "apps/mobile/app/settings/delete-account.tsx"
+      "apps/mobile/app/(tabs)/home.tsx"
     ]
   },
   {
     "text": "Taş sayısı, kesim ve metal rengini koruyan makro çekim.",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
     ]
   },
   {
@@ -8768,7 +8683,25 @@
     ]
   },
   {
-    "text": "Tek bir ürün fotoğrafından katalog, ürün sayfası ve kampanya alternatifleri üret.",
+    "text": "TASARIM ÖNİZLEMESİ · ÖRNEK FİYATLAR · ÖDEME YAPMAZ",
+    "files": [
+      "apps/mobile/src/features/billing/ProPaywallView.tsx"
+    ]
+  },
+  {
+    "text": "Tasarım önizlemesi",
+    "files": [
+      "apps/mobile/src/features/billing/ProPaywallPreview.tsx"
+    ]
+  },
+  {
+    "text": "Taslaklar, kaynaklar ve kayıtlı üretimler kaldırılır.",
+    "files": [
+      "apps/mobile/app/settings/delete-account.tsx"
+    ]
+  },
+  {
+    "text": "Tek bir fotoğraftan, ürününe yakışan yeni sahneler.",
     "files": [
       "apps/mobile/app/(tabs)/home.tsx"
     ]
@@ -8777,6 +8710,12 @@
     "text": "Tek kareyi düzenli bir ürün projesine dönüştür.",
     "files": [
       "apps/mobile/src/features/onboarding/product-launch-experience.tsx"
+    ]
+  },
+  {
+    "text": "Tek kaynak fotoğraf",
+    "files": [
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
@@ -8799,15 +8738,10 @@
     ]
   },
   {
-    "text": "Tek sonuç",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
-    ]
-  },
-  {
     "text": "Teknoloji ürünleri için neon gece ışığı.",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
     ]
   },
   {
@@ -8824,7 +8758,7 @@
     ]
   },
   {
-    "text": "Tekrar hoş geldin.",
+    "text": "Tekrar hoş geldin!",
     "files": [
       "apps/mobile/app/(auth)/login.tsx"
     ]
@@ -8832,7 +8766,8 @@
   {
     "text": "Temiz e-ticaret kataloğu.",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
     ]
   },
   {
@@ -8891,15 +8826,15 @@
     ]
   },
   {
-    "text": "Tercihlerin hesabında saklanır; cihaz izinleri ayrıca yönetilir.",
+    "text": "Tercihler hesabında saklanır. Cihaz izinleri ayrıca iOS Ayarlar’dan yönetilir.",
     "files": [
       "apps/mobile/app/settings/[section].tsx"
     ]
   },
   {
-    "text": "Test Store anahtarı canlı ortamda kullanılamaz.",
+    "text": "Tercihler, dil ve bildirimler",
     "files": [
-      "apps/mobile/src/features/billing/revenuecat.tsx"
+      "apps/mobile/app/(tabs)/profile.tsx"
     ]
   },
   {
@@ -8917,7 +8852,7 @@
   {
     "text": "Tırnak & manikür",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -8954,26 +8889,13 @@
   {
     "text": "Topluluk kuralları",
     "files": [
-      "apps/mobile/app/legal/[document].tsx",
-      "apps/mobile/app/legal/index.tsx"
-    ]
-  },
-  {
-    "text": "Turkuaz koyda Akdeniz terası",
-    "files": [
-      "apps/mobile/src/constants/catalog.ts"
+      "apps/mobile/app/legal/[document].tsx"
     ]
   },
   {
     "text": "Tüm cihazlardan çıkış yap",
     "files": [
       "apps/mobile/app/settings/[section].tsx"
-    ]
-  },
-  {
-    "text": "Tüm eski projeler",
-    "files": [
-      "apps/mobile/app/(tabs)/projects.tsx"
     ]
   },
   {
@@ -8986,12 +8908,6 @@
     "text": "Tüm filtreleri gör",
     "files": [
       "apps/mobile/src/features/legacy/routes/filters/index.tsx"
-    ]
-  },
-  {
-    "text": "Tüm hesap hareketlerini gör",
-    "files": [
-      "apps/mobile/app/(tabs)/credits.tsx"
     ]
   },
   {
@@ -9015,7 +8931,6 @@
   {
     "text": "Tümü",
     "files": [
-      "apps/mobile/app/(tabs)/home.tsx",
       "apps/mobile/app/transactions.tsx",
       "apps/mobile/src/constants/catalog.ts",
       "apps/mobile/src/features/legacy/routes/filters/index.tsx",
@@ -9027,7 +8942,6 @@
   {
     "text": "Tümünü gör",
     "files": [
-      "apps/mobile/app/(tabs)/credits.tsx",
       "apps/mobile/app/generations/[id]/edit.tsx",
       "apps/mobile/app/projects/[id].tsx"
     ]
@@ -9051,46 +8965,9 @@
     ]
   },
   {
-    "text": "Uygula ve dön",
+    "text": "Turkuaz koyda Akdeniz terası",
     "files": [
-      "apps/mobile/src/features/onboarding/launch-experience.tsx"
-    ]
-  },
-  {
-    "text": "Uygulamaya dön",
-    "files": [
-      "apps/mobile/src/features/billing/ProPaywallView.tsx"
-    ]
-  },
-  {
-    "text": "Uygulamayı sana göre düzenle",
-    "files": [
-      "apps/mobile/app/(tabs)/profile.tsx",
-      "apps/mobile/app/settings/index.tsx"
-    ]
-  },
-  {
-    "text": "Uygunsuz veya cinsel içerik",
-    "files": [
-      "apps/mobile/app/generations/[id]/results.tsx"
-    ]
-  },
-  {
-    "text": "Uygunsuz veya yanlış yönlendirici bir içerik görürsen destek ekibine raporla.",
-    "files": [
-      "apps/mobile/app/legal/[document].tsx"
-    ]
-  },
-  {
-    "text": "Uzman ipucu: Amacına en yakın sahneyi seç; filtre adımında görünümünü ayrıca özelleştirebilirsin.",
-    "files": [
-      "apps/mobile/src/features/onboarding/launch-experience.tsx"
-    ]
-  },
-  {
-    "text": "Uzman notu: Işık ve yüz dengesi uygunsa önizleme çok daha doğal görünür.",
-    "files": [
-      "apps/mobile/src/features/onboarding/launch-experience.tsx"
+      "apps/mobile/src/constants/catalog.ts"
     ]
   },
   {
@@ -9130,17 +9007,23 @@
     ]
   },
   {
+    "text": "Üretim bakiyeni buradan yönet.",
+    "files": [
+      "apps/mobile/app/(tabs)/credits.tsx"
+    ]
+  },
+  {
     "text": "Üretim başlatılamadı",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx",
       "apps/mobile/src/features/legacy/routes/create/review.tsx",
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx",
       "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
     "text": "Üretim başlatılamadı.",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx",
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx",
       "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
@@ -9148,6 +9031,7 @@
     "text": "Üretim başlatılıyor",
     "files": [
       "apps/mobile/src/features/create/server.ts",
+      "apps/mobile/src/features/studio/productServer.ts",
       "apps/mobile/src/features/studio/server.ts"
     ]
   },
@@ -9239,7 +9123,7 @@
   {
     "text": "Üretim için ek not",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -9275,7 +9159,8 @@
   {
     "text": "Üretim özeti",
     "files": [
-      "apps/mobile/src/features/legacy/routes/create/review.tsx"
+      "apps/mobile/src/features/legacy/routes/create/review.tsx",
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
@@ -9289,6 +9174,7 @@
     "text": "Üretim sıraya alındı",
     "files": [
       "apps/mobile/src/features/create/server.ts",
+      "apps/mobile/src/features/studio/productServer.ts",
       "apps/mobile/src/features/studio/server.ts"
     ]
   },
@@ -9326,6 +9212,7 @@
     "text": "Üretim yanıtı doğrulanamadı. Aynı işlemi yeniden deneyebilirsin.",
     "files": [
       "apps/mobile/src/features/create/server.ts",
+      "apps/mobile/src/features/studio/productServer.ts",
       "apps/mobile/src/features/studio/server.ts"
     ]
   },
@@ -9339,12 +9226,6 @@
     "text": "Üretimden sonra tahmini",
     "files": [
       "apps/mobile/src/features/legacy/routes/create/review.tsx"
-    ]
-  },
-  {
-    "text": "Üretimi başlat · {{p0}} kredi",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
@@ -9390,9 +9271,21 @@
     ]
   },
   {
+    "text": "Üretimini planla.",
+    "files": [
+      "apps/mobile/src/features/billing/SubscriptionCard.tsx"
+    ]
+  },
+  {
+    "text": "Üretmeden önce net kredi maliyeti",
+    "files": [
+      "apps/mobile/src/features/onboarding/product-launch-experience.tsx"
+    ]
+  },
+  {
     "text": "Ürün & katalog çekimi",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -9404,19 +9297,14 @@
   {
     "text": "Ürün adı en fazla 120 karakter olabilir.",
     "files": [
+      "apps/mobile/src/features/studio/productServer.ts",
       "apps/mobile/src/features/studio/server.ts"
-    ]
-  },
-  {
-    "text": "Ürün adı, kaynak fotoğrafı, sahne ve çıktı formatıyla düzenli bir proje oluştur.",
-    "files": [
-      "apps/mobile/app/(tabs)/home.tsx"
     ]
   },
   {
     "text": "Ürün adını yaz.",
     "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+      "apps/mobile/src/features/studio/productServer.ts"
     ]
   },
   {
@@ -9440,7 +9328,6 @@
   {
     "text": "Ürün çekimi",
     "files": [
-      "apps/mobile/app/(tabs)/home.tsx",
       "apps/mobile/app/(tabs)/projects.tsx",
       "apps/mobile/src/features/studio/server.ts"
     ]
@@ -9458,34 +9345,22 @@
     ]
   },
   {
-    "text": "Ürün çekimlerin, çıktılar ve yeni versiyonlar.",
-    "files": [
-      "apps/mobile/app/(tabs)/projects.tsx"
-    ]
-  },
-  {
     "text": "Ürün çıktısını düzenle",
     "files": [
       "apps/mobile/app/generations/[id]/edit.tsx"
     ]
   },
   {
-    "text": "Ürün fotoğrafından satış kanallarına.",
+    "text": "ÜRÜN FOTOĞRAFIYLA BAŞLA",
     "files": [
-      "apps/mobile/src/features/auth/auth-ui.tsx"
+      "apps/mobile/src/features/onboarding/product-launch-experience.tsx"
     ]
   },
   {
     "text": "Ürün fotoğrafını seç",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx",
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx",
       "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
-    ]
-  },
-  {
-    "text": "ÜRÜN FOTOĞRAFIYLA BAŞLA",
-    "files": [
-      "apps/mobile/src/features/onboarding/product-launch-experience.tsx"
     ]
   },
   {
@@ -9498,14 +9373,7 @@
   {
     "text": "Ürün görsel çalışma alanın",
     "files": [
-      "apps/mobile/app/(tabs)/home.tsx",
-      "apps/mobile/src/features/onboarding/product-launch-experience.tsx"
-    ]
-  },
-  {
-    "text": "Ürün görseli üretim bakiyeniz",
-    "files": [
-      "apps/mobile/app/(tabs)/credits.tsx"
+      "apps/mobile/src/features/onboarding/SplashIntro.tsx"
     ]
   },
   {
@@ -9521,22 +9389,10 @@
     ]
   },
   {
-    "text": "Ürün kataloğun hazır",
-    "files": [
-      "apps/mobile/app/(tabs)/projects.tsx"
-    ]
-  },
-  {
     "text": "Ürün kategorisi",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx",
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx",
       "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
-    ]
-  },
-  {
-    "text": "Ürün kategorisi, sahne, kalite, alternatif sayısı ve kredi tutarı oluşturma öncesinde açıkça gösterilir.",
-    "files": [
-      "apps/mobile/app/studio/index.tsx"
     ]
   },
   {
@@ -9546,21 +9402,15 @@
     ]
   },
   {
-    "text": "Ürün kimliğini koruyan akış",
-    "files": [
-      "apps/mobile/app/(tabs)/home.tsx"
-    ]
-  },
-  {
-    "text": "ÜRÜN KÜTÜPHANESİ",
-    "files": [
-      "apps/mobile/app/(tabs)/projects.tsx"
-    ]
-  },
-  {
     "text": "Ürün net, tek ve mümkünse sade zeminde görünmeli.",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
+    ]
+  },
+  {
+    "text": "Ürün planı",
+    "files": [
+      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
@@ -9570,15 +9420,15 @@
     ]
   },
   {
-    "text": "Ürün projelerin ve kataloğun seni bekliyor.",
-    "files": [
-      "apps/mobile/app/(auth)/login.tsx"
-    ]
-  },
-  {
     "text": "Ürün projelerinde",
     "files": [
       "apps/mobile/src/features/billing/ProPaywallView.tsx"
+    ]
+  },
+  {
+    "text": "Ürün projelerine ve kataloğuna devam etmek için giriş yap.",
+    "files": [
+      "apps/mobile/app/(auth)/login.tsx"
     ]
   },
   {
@@ -9606,33 +9456,9 @@
     ]
   },
   {
-    "text": "ÜRÜN STÜDYONA DÖN",
-    "files": [
-      "apps/mobile/app/(auth)/login.tsx"
-    ]
-  },
-  {
-    "text": "ÜRÜN STÜDYOSU",
-    "files": [
-      "apps/mobile/app/(tabs)/home.tsx"
-    ]
-  },
-  {
-    "text": "Ürün tek başına, net ve mümkünse sade bir zeminde görünmeli.",
+    "text": "Ürün tek başına ve bütünüyle görünmeli. Net, iyi aydınlatılmış, sade fonlu bir fotoğraf kullan.",
     "files": [
       "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
-    ]
-  },
-  {
-    "text": "Ürün üretim kredilerinizi planlayın.",
-    "files": [
-      "apps/mobile/src/features/billing/SubscriptionCard.tsx"
-    ]
-  },
-  {
-    "text": "Ürün ve katalog stüdyosu",
-    "files": [
-      "apps/mobile/src/features/auth/auth-ui.tsx"
     ]
   },
   {
@@ -9645,6 +9471,12 @@
     "text": "Ürünler",
     "files": [
       "apps/mobile/src/constants/catalog.ts"
+    ]
+  },
+  {
+    "text": "Ürünlerin, çekimlerin ve tüm alternatiflerin.",
+    "files": [
+      "apps/mobile/app/(tabs)/projects.tsx"
     ]
   },
   {
@@ -9667,6 +9499,12 @@
     ]
   },
   {
+    "text": "Ürünü ekle",
+    "files": [
+      "apps/mobile/app/studio/index.tsx"
+    ]
+  },
+  {
     "text": "Ürünü koru",
     "files": [
       "apps/mobile/app/generations/[id]/edit.tsx"
@@ -9676,12 +9514,6 @@
     "text": "Ürünü koruyan kontrollü bir değişiklik iste",
     "files": [
       "apps/mobile/app/generations/[id]/edit.tsx"
-    ]
-  },
-  {
-    "text": "Ürünü tanımla",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
@@ -9711,7 +9543,13 @@
   {
     "text": "Ürünün kimliği ve tasarımı korunur",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
+    ]
+  },
+  {
+    "text": "Ürünün odakta. Sahne senin elinde.",
+    "files": [
+      "apps/mobile/app/(tabs)/home.tsx"
     ]
   },
   {
@@ -9727,9 +9565,9 @@
     ]
   },
   {
-    "text": "Ürünün tamamı kadraj içinde",
+    "text": "Ürününü adlandır, bir fotoğraf ekle. Ürettiğin alternatifler burada bir arada dursun.",
     "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
+      "apps/mobile/app/(tabs)/projects.tsx"
     ]
   },
   {
@@ -9741,13 +9579,62 @@
   {
     "text": "Üstten bakışlı düzenli katalog kompozisyonu.",
     "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
     ]
   },
   {
     "text": "Üyelik kredisi",
     "files": [
       "apps/mobile/app/settings/[section].tsx"
+    ]
+  },
+  {
+    "text": "Uygula ve dön",
+    "files": [
+      "apps/mobile/src/features/onboarding/launch-experience.tsx"
+    ]
+  },
+  {
+    "text": "Uygulama içi satın almalar Apple’ın standart EULA’sına tabidir. Gizlilik politikası ve veri hakların uygulama içinde ve web sitesinde aynıdır.",
+    "files": [
+      "apps/mobile/app/settings/index.tsx"
+    ]
+  },
+  {
+    "text": "Uygulama içi satın almalar ve abonelikler Apple’ın standart son kullanıcı lisans sözleşmesine tabidir.",
+    "files": [
+      "apps/mobile/app/legal/index.tsx"
+    ]
+  },
+  {
+    "text": "Uygulamaya dön",
+    "files": [
+      "apps/mobile/src/features/billing/ProPaywallView.tsx"
+    ]
+  },
+  {
+    "text": "Uygunsuz veya cinsel içerik",
+    "files": [
+      "apps/mobile/app/generations/[id]/results.tsx"
+    ]
+  },
+  {
+    "text": "Uygunsuz veya yanlış yönlendirici bir içerik görürsen destek ekibine raporla.",
+    "files": [
+      "apps/mobile/app/legal/[document].tsx"
+    ]
+  },
+  {
+    "text": "Uzman ipucu: Amacına en yakın sahneyi seç; filtre adımında görünümünü ayrıca özelleştirebilirsin.",
+    "files": [
+      "apps/mobile/src/features/onboarding/launch-experience.tsx"
+    ]
+  },
+  {
+    "text": "Uzman notu: Işık ve yüz dengesi uygunsa önizleme çok daha doğal görünür.",
+    "files": [
+      "apps/mobile/src/features/onboarding/launch-experience.tsx"
     ]
   },
   {
@@ -9807,15 +9694,9 @@
     ]
   },
   {
-    "text": "veya e-posta ile",
+    "text": "veya şununla devam et",
     "files": [
       "apps/mobile/src/features/auth/auth-ui.tsx"
-    ]
-  },
-  {
-    "text": "veya e-posta ile kayıt ol",
-    "files": [
-      "apps/mobile/app/(auth)/register.tsx"
     ]
   },
   {
@@ -9882,7 +9763,7 @@
     ]
   },
   {
-    "text": "Yaklaşık {{p0}} standart ürün alternatifi için yeterli.",
+    "text": "Yaklaşık {{p0}} standart alternatif için yeterli. Kesin tutar üretim öncesinde gösterilir.",
     "files": [
       "apps/mobile/app/(tabs)/credits.tsx"
     ]
@@ -9900,12 +9781,6 @@
     ]
   },
   {
-    "text": "Yalnızca istediklerin.",
-    "files": [
-      "apps/mobile/app/settings/[section].tsx"
-    ]
-  },
-  {
     "text": "Yalnızca paylaşma hakkına sahip olduğun fotoğrafları yükle. Kaynak görselin iznin olmadan paylaşılmaz.",
     "files": [
       "apps/mobile/src/features/legacy/routes/create/index.tsx"
@@ -9914,7 +9789,7 @@
   {
     "text": "Yalnızca tırnak görünümü değiştirilir",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -9940,6 +9815,7 @@
     "text": "Yardım ve destek",
     "files": [
       "apps/mobile/app/(tabs)/profile.tsx",
+      "apps/mobile/app/settings/index.tsx",
       "apps/mobile/app/support/index.tsx"
     ]
   },
@@ -9962,18 +9838,24 @@
     ]
   },
   {
+    "text": "Yaşadığın sorunu, varsa proje adını ve ne beklediğini yaz.",
+    "files": [
+      "apps/mobile/app/support/ticket.tsx"
+    ]
+  },
+  {
+    "text": "YASAL",
+    "files": [
+      "apps/mobile/app/settings/index.tsx"
+    ]
+  },
+  {
     "text": "Yasal belgeler",
     "files": [
       "apps/mobile/app/(auth)/register.tsx",
       "apps/mobile/app/(tabs)/profile.tsx",
       "apps/mobile/app/legal/index.tsx",
       "apps/mobile/app/settings/index.tsx"
-    ]
-  },
-  {
-    "text": "Yaşadığın sorunu, varsa proje adını ve ne beklediğini yaz.",
-    "files": [
-      "apps/mobile/app/support/ticket.tsx"
     ]
   },
   {
@@ -10014,12 +9896,6 @@
     ]
   },
   {
-    "text": "YENİ PROJE",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
-    ]
-  },
-  {
     "text": "Yeni sahne oluştur",
     "files": [
       "apps/mobile/src/features/legacy/routes/create/index.tsx"
@@ -10050,35 +9926,17 @@
     ]
   },
   {
-    "text": "Yeni ürün çekimi",
-    "files": [
-      "apps/mobile/app/(tabs)/home.tsx"
-    ]
-  },
-  {
     "text": "Yeni ürün projesi",
     "files": [
+      "apps/mobile/app/(tabs)/home.tsx",
       "apps/mobile/app/(tabs)/projects.tsx",
-      "apps/mobile/app/generations/[id]/results.tsx",
-      "apps/mobile/app/studio/index.tsx"
-    ]
-  },
-  {
-    "text": "YENİ ÜRÜN STÜDYOSU",
-    "files": [
-      "apps/mobile/app/(auth)/register.tsx"
+      "apps/mobile/app/generations/[id]/results.tsx"
     ]
   },
   {
     "text": "Yeni versiyon oluştur",
     "files": [
       "apps/mobile/app/generations/[id]/results.tsx"
-    ]
-  },
-  {
-    "text": "Yeniden dene",
-    "files": [
-      "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
   {
@@ -10108,8 +9966,8 @@
   {
     "text": "Yetersiz kredi",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx",
       "apps/mobile/src/features/legacy/routes/create/review.tsx",
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx",
       "apps/mobile/src/features/studio/ProductStudioWorkspace.tsx"
     ]
   },
@@ -10120,16 +9978,17 @@
     ]
   },
   {
+    "text": "Yiyecek & İçecek",
+    "files": [
+      "apps/mobile/src/features/studio/catalog.ts",
+      "apps/mobile/src/features/studio/productCatalog.ts"
+    ]
+  },
+  {
     "text": "Yıllık",
     "files": [
       "apps/mobile/src/features/billing/ProPaywallPreview.tsx",
       "apps/mobile/src/features/billing/paywall-model.ts"
-    ]
-  },
-  {
-    "text": "Yiyecek & İçecek",
-    "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
     ]
   },
   {
@@ -10171,42 +10030,6 @@
     ]
   },
   {
-    "text": "Yumuşak allık pembesi doğal görünüm.",
-    "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
-    ]
-  },
-  {
-    "text": "Yumuşak arka plan derinliği",
-    "files": [
-      "apps/mobile/src/constants/catalog.ts"
-    ]
-  },
-  {
-    "text": "Yumuşak Bokeh",
-    "files": [
-      "apps/mobile/src/constants/catalog.ts"
-    ]
-  },
-  {
-    "text": "Yumuşak dekorlu resmi etkinlik çekimi.",
-    "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
-    ]
-  },
-  {
-    "text": "Yumuşak pastel lavanta rengi.",
-    "files": [
-      "apps/mobile/src/features/studio/catalog.ts"
-    ]
-  },
-  {
-    "text": "Yumuşak, profesyonel stüdyo ışığı",
-    "files": [
-      "apps/mobile/src/constants/catalog.ts"
-    ]
-  },
-  {
     "text": "Yüklediğim fotoğrafın bana ait olduğunu veya gerekli kullanım iznine sahip olduğumu beyan ederim.",
     "files": [
       "apps/mobile/app/(onboarding)/consent.tsx"
@@ -10215,13 +10038,13 @@
   {
     "text": "Yüklediğim görselin AI ile işlenmesine izin veriyorum.",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
     "text": "Yüklediğin ürüne uygun kategoriyi seçerek malzeme ve geometri korumasını güçlendir.",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {
@@ -10267,6 +10090,42 @@
     "files": [
       "apps/mobile/src/features/filters/intensity.ts",
       "apps/mobile/src/features/onboarding/launch-experience.tsx"
+    ]
+  },
+  {
+    "text": "Yumuşak allık pembesi doğal görünüm.",
+    "files": [
+      "apps/mobile/src/features/studio/catalog.ts"
+    ]
+  },
+  {
+    "text": "Yumuşak arka plan derinliği",
+    "files": [
+      "apps/mobile/src/constants/catalog.ts"
+    ]
+  },
+  {
+    "text": "Yumuşak Bokeh",
+    "files": [
+      "apps/mobile/src/constants/catalog.ts"
+    ]
+  },
+  {
+    "text": "Yumuşak dekorlu resmi etkinlik çekimi.",
+    "files": [
+      "apps/mobile/src/features/studio/catalog.ts"
+    ]
+  },
+  {
+    "text": "Yumuşak pastel lavanta rengi.",
+    "files": [
+      "apps/mobile/src/features/studio/catalog.ts"
+    ]
+  },
+  {
+    "text": "Yumuşak, profesyonel stüdyo ışığı",
+    "files": [
+      "apps/mobile/src/constants/catalog.ts"
     ]
   },
   {
@@ -10358,7 +10217,7 @@
   {
     "text": "Yüzün ve vücut duruşunun net göründüğü bir fotoğraf seç.",
     "files": [
-      "apps/mobile/app/studio/[mode].tsx"
+      "apps/mobile/src/features/legacy/routes/studio/mode.tsx"
     ]
   },
   {

@@ -13,13 +13,27 @@ import {
   useWindowDimensions,
   type ImageSourcePropType,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 
-import { Icon, UploadTile } from '@/components';
+import { LowCreditsSheet } from '@/features/billing/LowCreditsSheet';
 import { CREDIT_WALLET_QUERY_KEY } from '@/features/billing/use-wallet';
 import { createSubmissionKey } from '@/features/create/server';
 import { useCopy } from '@/features/settings/language-store';
 import { useLanguageRevision } from '@/i18n/use-language';
+import { brand } from '@/theme/brand';
+import {
+  BackNav,
+  Group,
+  Hint,
+  Page,
+  PageTitle,
+  PrimaryAction,
+  SecondaryAction,
+  SectionLabel,
+  Separator,
+  ui,
+  useLayout,
+} from '@/ui/kit';
 import { commerceGoals, commerceGoalById } from './commerceGoals';
 import {
   quoteProductStudioFlow,
@@ -28,7 +42,9 @@ import {
   type StudioQuote,
   type StudioSubmissionStage,
 } from './productServer';
+import { StudioPreview } from './StudioPreview';
 import { StudioSubmissionProgress } from './StudioSubmissionProgress';
+import { liftProductSubject } from './subjectLift';
 import {
   useProductStudioFlow,
   type StudioAspectRatio,
@@ -40,7 +56,11 @@ import {
 import { useProductStudioCatalog } from './useProductStudioCatalog';
 import { useStudioImagePicker } from './useStudioImagePicker';
 
-type ProductStudioWorkspaceProps = { entry?: string };
+type ProductStudioWorkspaceProps = {
+  entry?: string;
+  /** Signed-out trial: everything works on the device, generating asks for an account. */
+  guest?: boolean;
+};
 
 type CatalogItem = {
   id: string;
@@ -52,52 +72,33 @@ type CatalogItem = {
 
 const formatOptions: readonly {
   ratio: StudioAspectRatio;
-  titleTr: string;
-  titleEn: string;
   detailTr: string;
   detailEn: string;
 }[] = [
-  {
-    ratio: '1:1',
-    titleTr: 'Kare',
-    titleEn: 'Square',
-    detailTr: 'Katalog ve mağaza',
-    detailEn: 'Catalog and store',
-  },
+  { ratio: '1:1', detailTr: 'Kare · Katalog ve mağaza', detailEn: 'Square · Catalog and store' },
   {
     ratio: '4:5',
-    titleTr: 'Dikey',
-    titleEn: 'Portrait',
-    detailTr: 'Ürün sayfası ve akış',
-    detailEn: 'Product page and feed',
+    detailTr: 'Dikey · Ürün sayfası ve akış',
+    detailEn: 'Portrait · Product page and feed',
   },
-  {
-    ratio: '9:16',
-    titleTr: 'Hikâye',
-    titleEn: 'Story',
-    detailTr: 'Tam ekran sosyal',
-    detailEn: 'Full-screen social',
-  },
-  {
-    ratio: '16:9',
-    titleTr: 'Yatay',
-    titleEn: 'Landscape',
-    detailTr: 'Web vitrini',
-    detailEn: 'Web hero',
-  },
+  { ratio: '9:16', detailTr: 'Hikâye · Tam ekran sosyal', detailEn: 'Story · Full-screen social' },
+  { ratio: '16:9', detailTr: 'Yatay · Web vitrini', detailEn: 'Landscape · Web hero' },
 ] as const;
 
 function validEntry(value: string | undefined): StudioCommerceGoal | null {
   return commerceGoals.some((goal) => goal.id === value) ? (value as StudioCommerceGoal) : null;
 }
 
-export function ProductStudioWorkspace({ entry }: ProductStudioWorkspaceProps) {
+/**
+ * The whole shoot on one screen: the live preview stays in view while the
+ * product, scene and format are chosen. On a wide window the preview and the
+ * summary keep the leading column and the controls scroll beside them.
+ */
+export function ProductStudioWorkspace({ entry, guest = false }: ProductStudioWorkspaceProps) {
   useLanguageRevision();
   const copy = useCopy();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { width } = useWindowDimensions();
-  const tablet = width >= 820;
   const { hdExtraCredits, previewCredits, productCategories, productScenes } =
     useProductStudioCatalog();
   const { flow, set } = useProductStudioFlow();
@@ -111,8 +112,13 @@ export function ProductStudioWorkspace({ entry }: ProductStudioWorkspaceProps) {
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
   const [stage, setStage] = useState<StudioSubmissionStage>('CHECKING');
+  const [liftingUri, setLiftingUri] = useState<string | null>(null);
+  const [creditsOpen, setCreditsOpen] = useState(false);
+  const { wide } = useLayout();
+  const { height: windowHeight } = useWindowDimensions();
   const startLock = useRef(false);
   const attempt = useRef<{ fingerprint: string; key: string } | null>(null);
+  const currentSource = useRef<string | null>(flow.primaryUri);
 
   useEffect(() => {
     if (!flow.sceneId) {
@@ -124,9 +130,22 @@ export function ProductStudioWorkspace({ entry }: ProductStudioWorkspaceProps) {
     }
   }, [flow.sceneId, initialGoal.aspectRatio, initialGoal.id, initialGoal.sceneId, set]);
 
-  const picker = useStudioImagePicker((image) =>
-    set({ primaryUri: image.uri, primaryName: image.name, rightsConfirmed: false }),
-  );
+  const picker = useStudioImagePicker((image) => {
+    currentSource.current = image.uri;
+    set({
+      primaryUri: image.uri,
+      primaryName: image.name,
+      cutoutUri: null,
+      rightsConfirmed: false,
+    });
+    setLiftingUri(image.uri);
+    void liftProductSubject(image.uri).then((cutoutUri) => {
+      // A newer photo may have been chosen while this one was being processed.
+      if (currentSource.current !== image.uri) return;
+      setLiftingUri(null);
+      if (cutoutUri) set({ cutoutUri });
+    });
+  });
   const selectionReady = Boolean(flow.categoryId && flow.sceneId);
   const quoteFlow = useMemo<ProductStudioFlow>(
     () => ({
@@ -136,6 +155,7 @@ export function ProductStudioWorkspace({ entry }: ProductStudioWorkspaceProps) {
       numberOfImages: flow.numberOfImages,
       primaryUri: null,
       primaryName: null,
+      cutoutUri: null,
       categoryId: flow.categoryId,
       sceneId: flow.sceneId,
       quality: flow.quality,
@@ -156,7 +176,7 @@ export function ProductStudioWorkspace({ entry }: ProductStudioWorkspaceProps) {
   );
   const quoteRequestKey = useMemo(
     () =>
-      selectionReady
+      selectionReady && !guest
         ? JSON.stringify([
             quoteFlow.categoryId,
             quoteFlow.sceneId,
@@ -165,7 +185,7 @@ export function ProductStudioWorkspace({ entry }: ProductStudioWorkspaceProps) {
             quoteRevision,
           ])
         : null,
-    [quoteFlow, quoteRevision, selectionReady],
+    [guest, quoteFlow, quoteRevision, selectionReady],
   );
   const quote = quoteState.requestKey === quoteRequestKey ? quoteState.quote : null;
   const quoteError = quoteState.requestKey === quoteRequestKey ? quoteState.error : null;
@@ -200,6 +220,7 @@ export function ProductStudioWorkspace({ entry }: ProductStudioWorkspaceProps) {
   const sourceReady = Boolean(flow.primaryUri);
   const titleReady = flow.productTitle.trim().length > 0 && flow.productTitle.trim().length <= 120;
   const canStart = Boolean(
+    !guest &&
     sourceReady &&
     titleReady &&
     selectionReady &&
@@ -207,7 +228,14 @@ export function ProductStudioWorkspace({ entry }: ProductStudioWorkspaceProps) {
     quote?.canGenerate &&
     !starting,
   );
+  const insufficient = Boolean(quote && !quote.canGenerate);
   const flowFingerprint = JSON.stringify(flow);
+  const missing = [
+    sourceReady ? null : copy('ürün fotoğrafı', 'a product photo'),
+    titleReady ? null : copy('ürün adı', 'a product name'),
+    flow.categoryId ? null : copy('kategori', 'a category'),
+    flow.rightsConfirmed ? null : copy('kullanım hakkı onayı', 'the usage-rights confirmation'),
+  ].filter((item): item is string => Boolean(item));
 
   function chooseGoal(goalId: StudioCommerceGoal) {
     const goal = commerceGoalById(goalId);
@@ -258,836 +286,563 @@ export function ProductStudioWorkspace({ entry }: ProductStudioWorkspaceProps) {
     }
   }
 
-  return (
-    <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.page}>
-          <View style={styles.header}>
-            <Pressable
-              accessibilityLabel={copy('Geri', 'Back')}
-              accessibilityRole="button"
-              hitSlop={8}
-              onPress={() =>
-                router.canGoBack() ? router.back() : router.replace('/studio' as never)
-              }
-              style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
-            >
-              <Icon name="chevron-back" size={24} color="#EEF5F0" />
-            </Pressable>
-            <View style={styles.headerCopy}>
-              <Text style={styles.headerTitle}>
-                {copy('Ürün çekimi planı', 'Product shoot plan')}
-              </Text>
-              <Text style={styles.headerSubtitle}>
-                {copy(
-                  'Kaynak, kullanım amacı ve çıktılar tek yerde',
-                  'Source, intended use, and outputs in one place',
-                )}
-              </Text>
-            </View>
-            <View style={styles.stepBadge}>
-              <Text style={styles.stepBadgeText}>{copy('YENİ PROJE', 'NEW PROJECT')}</Text>
-            </View>
+  const goal = commerceGoalById(flow.commerceGoal);
+  const scene = (productScenes as CatalogItem[]).find((item) => item.id === flow.sceneId);
+  const format = formatOptions.find((option) => option.ratio === flow.aspectRatio);
+  const qualityLabel =
+    flow.quality === 'PREVIEW'
+      ? copy('Önizleme', 'Preview')
+      : flow.quality === 'STANDARD'
+        ? copy('Standart', 'Standard')
+        : 'HD';
+  const alternativesLabel = (count: number) =>
+    copy(`${count} alternatif`, count === 1 ? '1 alternative' : `${count} alternatives`);
+  const generateLabel = (count: number) =>
+    copy(
+      `${count} alternatif üret`,
+      count === 1 ? 'Generate 1 alternative' : `Generate ${count} alternatives`,
+    );
+
+  const previewBlock = (
+    <>
+      <StudioPreview
+        cutoutUri={flow.cutoutUri}
+        maxHeight={wide ? Math.max(240, windowHeight * 0.4) : 320}
+        photoUri={flow.primaryUri}
+        preparing={liftingUri !== null && liftingUri === flow.primaryUri}
+        ratio={flow.aspectRatio}
+        sceneId={flow.sceneId}
+        sceneSource={scene?.imageSource}
+      />
+      <View style={styles.sourceActions}>
+        <SecondaryAction
+          icon="camera-outline"
+          label={copy('Fotoğraf çek', 'Take photo')}
+          loading={picker.busySource === 'camera'}
+          onPress={() => void picker.capture()}
+          style={styles.sourceAction}
+        />
+        <SecondaryAction
+          icon="images-outline"
+          label={flow.primaryUri ? copy('Değiştir', 'Replace') : copy('Galeriden seç', 'Library')}
+          loading={picker.busySource === 'library'}
+          onPress={() => void picker.open()}
+          style={styles.sourceAction}
+        />
+      </View>
+      {flow.primaryUri ? (
+        <Hint>
+          {copy(
+            'En iyi sonuç için ürün tek başına, bütünüyle ve iyi ışıkta görünmeli.',
+            'For the best result the product should appear alone, in full and well lit.',
+          )}
+        </Hint>
+      ) : (
+        <Pressable
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={picker.pickSample}
+          style={({ pressed }) => [styles.sampleLink, pressed && styles.pressed]}
+        >
+          <Text style={styles.sampleLinkText}>
+            {copy('Fotoğrafın yok mu? Örnek ürünle dene', 'No photo yet? Try a sample product')}
+          </Text>
+        </Pressable>
+      )}
+    </>
+  );
+
+  const summaryBlock = (
+    <>
+      <Group>
+        <View style={styles.between}>
+          <Text style={styles.summaryTitle}>{copy('Üretim özeti', 'Generation summary')}</Text>
+          {quote ? (
+            <Text style={styles.summaryCost}>
+              {quote.creditCost} {copy('kredi', 'credits')}
+            </Text>
+          ) : null}
+        </View>
+        <Hint>
+          {alternativesLabel(flow.numberOfImages)} · {scene?.name ?? '—'} · {flow.aspectRatio} ·{' '}
+          {qualityLabel}
+        </Hint>
+        <Separator />
+        {guest ? (
+          <Hint>
+            {copy(
+              'Önizleme cihazında çalışır. Görselleri üretmek için ücretsiz bir hesap aç; ilk kredilerin hesabınla birlikte gelir.',
+              'The preview runs on your device. Create a free account to render the images; your first credits come with it.',
+            )}
+          </Hint>
+        ) : quote ? (
+          quote.canGenerate ? (
+            <Hint>
+              {copy(
+                `Bakiyen: ${quote.availableCredits} kredi. Üretim başladığında ${quote.creditCost} kredi ayrılır.`,
+                `Your balance: ${quote.availableCredits} credits. ${quote.creditCost} credits are reserved when generation starts.`,
+              )}
+            </Hint>
+          ) : (
+            <SummaryState
+              body={copy(
+                `Bu plan ${quote.creditCost} kredi gerektiriyor; hesabında ${quote.availableCredits} kredi var.`,
+                `This plan needs ${quote.creditCost} credits; your balance is ${quote.availableCredits}.`,
+              )}
+              title={copy('Yetersiz kredi', 'Not enough credits')}
+            />
+          )
+        ) : quoteError ? (
+          <SummaryState
+            body={copy(
+              'Her alternatif kredi kullanır. Kesin tutarı görüp onaylamadan üretim başlamaz; kredi harcanmaz.',
+              'Each alternative uses credits. Nothing starts and no credits are spent until you see and confirm the exact cost.',
+            )}
+            title={copy('Kredi teklifi alınamadı', 'Could not load the credit quote')}
+          />
+        ) : selectionReady ? (
+          <View style={styles.inlineRow}>
+            <ActivityIndicator color={brand.gold} size="small" />
+            <Hint>{copy('Kredi teklifi hesaplanıyor…', 'Calculating credit quote…')}</Hint>
           </View>
+        ) : (
+          <Hint>
+            {copy(
+              'Kategori seçildiğinde kesin kredi tutarı burada görünür.',
+              'The exact credit cost appears here once a category is chosen.',
+            )}
+          </Hint>
+        )}
+        {startError ? (
+          <SummaryState
+            body={startError}
+            title={copy('Üretim başlatılamadı', 'Generation could not start')}
+          />
+        ) : null}
+      </Group>
 
-          <View style={[styles.workspace, tablet && styles.workspaceTablet]}>
-            <View style={[styles.sourcePane, tablet && styles.sourcePaneTablet]}>
-              <SectionHeading
-                index="01"
-                title={copy('Ürünü tanımla', 'Define the product')}
-                detail={copy(
-                  'Bu ad katalogda proje başlığı olarak görünür.',
-                  'This becomes the project title in your catalog.',
-                )}
-              />
-              <Text style={styles.fieldLabel}>{copy('Ürün adı', 'Product name')}</Text>
-              <TextInput
-                accessibilityLabel={copy('Ürün adı', 'Product name')}
-                maxLength={120}
-                onChangeText={(productTitle) => set({ productTitle })}
-                placeholder={copy('Örn. Yeni sezon deri çanta', 'e.g. New-season leather bag')}
-                placeholderTextColor="#66736B"
-                style={styles.titleInput}
-                value={flow.productTitle}
-              />
-              <Text style={styles.inputCounter}>{flow.productTitle.length} / 120</Text>
+      {starting ? <StudioSubmissionProgress stage={stage} /> : null}
+    </>
+  );
 
-              <Text style={styles.fieldLabel}>
-                {copy('Kaynak ürün fotoğrafı', 'Source product photo')}
-              </Text>
-              <Text style={styles.fieldHint}>
-                {copy(
-                  'Ürün tek başına, net ve mümkünse sade bir zeminde görünmeli.',
-                  'Use a sharp image with one product, preferably on a simple background.',
-                )}
-              </Text>
-              <UploadTile
-                label={
-                  picker.busy
-                    ? copy('Galeri açılıyor…', 'Opening library…')
-                    : copy('Ürün fotoğrafını seç', 'Choose product photo')
-                }
-                onPress={() => void picker.open()}
-                sourceUri={flow.primaryUri}
-              />
+  const controls = (
+    <>
+      <View style={styles.field}>
+        <SectionLabel>{copy('Ürün adı', 'Product name')}</SectionLabel>
+        <TextInput
+          accessibilityLabel={copy('Ürün adı', 'Product name')}
+          maxLength={120}
+          onChangeText={(productTitle) => set({ productTitle })}
+          placeholder={copy('Örn. Yeni sezon deri çanta', 'e.g. New-season leather bag')}
+          placeholderTextColor={brand.textMuted}
+          returnKeyType="done"
+          selectionColor={brand.gold}
+          style={styles.input}
+          value={flow.productTitle}
+        />
+      </View>
 
-              <Text style={styles.fieldLabel}>{copy('Ürün kategorisi', 'Product category')}</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.categoryRail}
-              >
-                {productCategories.map((item) => (
-                  <Pressable
-                    accessibilityRole="radio"
-                    accessibilityState={{ selected: flow.categoryId === item.id }}
-                    key={item.id}
-                    onPress={() => set({ categoryId: item.id })}
-                    style={({ pressed }) => [
-                      styles.categoryCard,
-                      flow.categoryId === item.id && styles.categoryCardSelected,
-                      pressed && styles.pressed,
-                    ]}
-                  >
-                    {item.imageSource ? (
-                      <Image
-                        source={item.imageSource}
-                        resizeMode="cover"
-                        style={styles.categoryImage}
-                      />
-                    ) : null}
-                    <View style={styles.categoryFooter}>
-                      <Text numberOfLines={1} style={styles.categoryTitle}>
-                        {item.name}
-                      </Text>
-                      {flow.categoryId === item.id ? (
-                        <Icon name="checkmark-circle" size={17} color="#B8F1CD" />
-                      ) : null}
-                    </View>
-                  </Pressable>
-                ))}
-              </ScrollView>
+      <View style={styles.field}>
+        <SectionLabel>{copy('Kategori', 'Category')}</SectionLabel>
+        <View accessibilityRole="radiogroup" style={styles.chips}>
+          {productCategories.map((item) => (
+            <Chip
+              key={item.id}
+              label={item.name}
+              onPress={() => set({ categoryId: item.id })}
+              selected={flow.categoryId === item.id}
+            />
+          ))}
+        </View>
+      </View>
 
-              <View style={styles.photoChecklist}>
-                <Text style={styles.checklistTitle}>
-                  {copy('İyi kaynak fotoğrafı', 'A good source photo')}
-                </Text>
-                {[
-                  copy('Ürünün tamamı kadraj içinde', 'The full product is in frame'),
-                  copy('Etiket ve kenarlar okunaklı', 'Labels and edges are clear'),
-                  copy('Başka ürün veya kişi yok', 'No other product or person'),
-                ].map((item) => (
-                  <View key={item} style={styles.checklistRow}>
-                    <Icon name="checkmark" size={15} color="#B8F1CD" />
-                    <Text style={styles.checklistText}>{item}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
+      <View style={styles.field}>
+        <SectionLabel>{copy('Nerede kullanacaksın?', 'Where will you use it?')}</SectionLabel>
+        <View accessibilityRole="radiogroup" style={styles.chips}>
+          {commerceGoals.map((item) => (
+            <Chip
+              key={item.id}
+              label={copy(item.titleTr, item.titleEn)}
+              onPress={() => chooseGoal(item.id)}
+              selected={flow.commerceGoal === item.id}
+            />
+          ))}
+        </View>
+        <Hint>{copy(goal.descriptionTr, goal.descriptionEn)}</Hint>
+      </View>
 
-            <View style={[styles.settingsPane, tablet && styles.settingsPaneTablet]}>
-              <SectionHeading
-                index="02"
-                title={copy('Çekimi planla', 'Plan the shoot')}
-                detail={copy(
-                  'Amaç seçimi yalnızca başlangıç ayarlarını hazırlar.',
-                  'The goal only prepares sensible starting settings.',
-                )}
-              />
-
-              <Text style={styles.fieldLabel}>{copy('Kullanım amacı', 'Intended use')}</Text>
-              <View style={styles.goalChoices}>
-                {commerceGoals.map((goal) => {
-                  const selected = flow.commerceGoal === goal.id;
-                  return (
-                    <Pressable
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected }}
-                      key={goal.id}
-                      onPress={() => chooseGoal(goal.id)}
-                      style={({ pressed }) => [
-                        styles.goalChoice,
-                        selected && styles.goalChoiceSelected,
-                        pressed && styles.pressed,
-                      ]}
-                    >
-                      <Icon name={goal.icon} size={18} color={selected ? '#B8F1CD' : '#8C9891'} />
-                      <View style={styles.goalChoiceCopy}>
-                        <Text style={[styles.goalChoiceTitle, selected && styles.selectedText]}>
-                          {copy(goal.titleTr, goal.titleEn)}
-                        </Text>
-                        <Text numberOfLines={2} style={styles.goalChoiceDetail}>
-                          {copy(goal.descriptionTr, goal.descriptionEn)}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  );
-                })}
-              </View>
-
-              <Text style={styles.fieldLabel}>{copy('Çekim sahnesi', 'Shoot scene')}</Text>
-              <CatalogRail
-                items={productScenes}
-                selectedId={flow.sceneId}
-                onSelect={(sceneId) => set({ sceneId })}
-                creditLabel={copy('kredi', 'credits')}
-              />
-
-              <SectionHeading
-                index="03"
-                title={copy('Çıktıları ayarla', 'Set the outputs')}
-                detail={copy(
-                  'Oran, kalite ve gerçek alternatif sayısını seç.',
-                  'Choose ratio, quality, and the real alternative count.',
-                )}
-              />
-
-              <Text style={styles.fieldLabel}>{copy('Kanal formatı', 'Channel format')}</Text>
-              <View style={styles.optionGrid}>
-                {formatOptions.map((option) => (
-                  <OptionCard
-                    detail={copy(option.detailTr, option.detailEn)}
-                    key={option.ratio}
-                    label={copy(option.titleTr, option.titleEn)}
-                    meta={option.ratio}
-                    onPress={() => set({ aspectRatio: option.ratio })}
-                    selected={flow.aspectRatio === option.ratio}
-                  />
-                ))}
-              </View>
-
-              <Text style={styles.fieldLabel}>{copy('Kalite', 'Quality')}</Text>
-              <View style={styles.threeColumns}>
-                <OptionCard
-                  detail={copy(`${previewCredits} kredi`, `${previewCredits} credits`)}
-                  label={copy('Önizleme', 'Preview')}
-                  onPress={() => chooseQuality('PREVIEW')}
-                  selected={flow.quality === 'PREVIEW'}
-                />
-                <OptionCard
-                  detail={copy('Sahneye göre', 'Based on scene')}
-                  label={copy('Standart', 'Standard')}
-                  onPress={() => chooseQuality('STANDARD')}
-                  selected={flow.quality === 'STANDARD'}
-                />
-                <OptionCard
-                  detail={copy(`+${hdExtraCredits} kredi`, `+${hdExtraCredits} credits`)}
-                  label="HD"
-                  onPress={() => chooseQuality('HD')}
-                  selected={flow.quality === 'HD'}
-                />
-              </View>
-
-              <Text style={styles.fieldLabel}>
-                {copy('Alternatif sayısı', 'Number of alternatives')}
-              </Text>
-              <Text style={styles.fieldHint}>
-                {copy(
-                  'Her alternatif aynı seçili sahne ve ayarlarla ayrı bir sonuçtur.',
-                  'Each alternative is a separate result using the same selected scene and settings.',
-                )}
-              </Text>
-              <View style={styles.threeColumns}>
-                {([1, 2, 4] as const).map((count) => {
-                  const unavailable = flow.quality === 'PREVIEW' && count === 4;
-                  return (
-                    <OptionCard
-                      detail={
-                        unavailable
-                          ? copy('Önizlemede en fazla 2', 'Preview supports up to 2')
-                          : count === 1
-                            ? copy('Tek sonuç', 'One result')
-                            : copy(`${count} ayrı sonuç`, `${count} separate results`)
-                      }
-                      disabled={unavailable}
-                      key={count}
-                      label={String(count)}
-                      onPress={() => set({ numberOfImages: count as StudioImageCount })}
-                      selected={flow.numberOfImages === count}
-                    />
-                  );
-                })}
-              </View>
-
-              <Text style={styles.fieldLabel}>
-                {copy('Çekim notu (isteğe bağlı)', 'Shoot note (optional)')}
-              </Text>
-              <TextInput
-                accessibilityLabel={copy('Çekim notu', 'Shoot note')}
-                maxLength={500}
-                multiline
-                onChangeText={(userNotes) => set({ userNotes })}
-                placeholder={copy(
-                  'Örn. Ürün kameranın soluna hafif dönük olsun',
-                  'e.g. Turn the product slightly toward camera-left',
-                )}
-                placeholderTextColor="#66736B"
-                style={styles.notesInput}
-                textAlignVertical="top"
-                value={flow.userNotes}
-              />
-              <Text style={styles.inputCounter}>{flow.userNotes.length} / 500</Text>
-
+      <View style={styles.field}>
+        <SectionLabel trailing={scene?.name}>{copy('Sahne', 'Scene')}</SectionLabel>
+        <ScrollView
+          accessibilityRole="radiogroup"
+          contentContainerStyle={wide ? styles.sceneRailWide : styles.sceneRail}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={wide ? undefined : styles.bleed}
+        >
+          {(productScenes as CatalogItem[]).map((item) => {
+            const selected = flow.sceneId === item.id;
+            return (
               <Pressable
-                accessibilityRole="checkbox"
-                accessibilityState={{ checked: flow.rightsConfirmed, disabled: !sourceReady }}
-                disabled={!sourceReady}
-                onPress={() => set({ rightsConfirmed: !flow.rightsConfirmed })}
-                style={({ pressed }) => [
-                  styles.rights,
-                  flow.rightsConfirmed && styles.rightsSelected,
-                  !sourceReady && styles.disabled,
-                  pressed && sourceReady && styles.pressed,
-                ]}
+                accessibilityLabel={item.name}
+                accessibilityRole="radio"
+                accessibilityState={{ selected }}
+                key={item.id}
+                onPress={() => set({ sceneId: item.id })}
+                style={({ pressed }) => [styles.sceneTile, pressed && styles.pressed]}
               >
-                <View style={[styles.checkbox, flow.rightsConfirmed && styles.checkboxSelected]}>
-                  {flow.rightsConfirmed ? (
-                    <Icon name="checkmark" size={16} color="#0A2118" />
+                <View style={[styles.sceneImage, selected && styles.selectedBorder]}>
+                  {item.imageSource ? (
+                    <Image resizeMode="cover" source={item.imageSource} style={styles.fillImage} />
                   ) : null}
                 </View>
-                <View style={styles.rightsCopy}>
-                  <Text style={styles.rightsTitle}>
-                    {copy(
-                      'Bu ürün görselini kullanma hakkım var',
-                      'I have the right to use this product image',
-                    )}
-                  </Text>
-                  <Text style={styles.rightsDetail}>
-                    {copy(
-                      'Görselin yapay zekâ ile işlenmesine izin veriyorum.',
-                      'I allow this image to be processed with AI.',
-                    )}
-                  </Text>
-                </View>
-              </Pressable>
-
-              {quote ? (
-                <View style={styles.quoteCard}>
-                  <View style={styles.quoteCopy}>
-                    <Text style={styles.quoteLabel}>
-                      {copy('SUNUCU ONAYLI MALİYET', 'SERVER-CONFIRMED COST')}
-                    </Text>
-                    <Text style={styles.quoteCost}>
-                      {quote.creditCost} {copy('kredi', 'credits')}
-                    </Text>
-                    <Text style={styles.quoteDetail}>
-                      {flow.numberOfImages} {copy('alternatif', 'alternatives')} ·{' '}
-                      {flow.aspectRatio} ·{' '}
-                      {flow.quality === 'PREVIEW'
-                        ? copy('Önizleme', 'Preview')
-                        : flow.quality === 'STANDARD'
-                          ? copy('Standart', 'Standard')
-                          : 'HD'}
-                    </Text>
-                  </View>
-                  <View style={styles.balanceBadge}>
-                    <Icon name="flash" size={17} color="#B8F1CD" />
-                    <Text style={styles.balanceText}>{quote.availableCredits}</Text>
-                  </View>
-                </View>
-              ) : selectionReady && !quoteError ? (
-                <View style={styles.quoteLoading}>
-                  <ActivityIndicator color="#B8F1CD" size="small" />
-                  <Text style={styles.quoteLoadingText}>
-                    {copy('Kredi teklifi hesaplanıyor…', 'Calculating credit quote…')}
-                  </Text>
-                </View>
-              ) : null}
-
-              {quoteError ? (
-                <Pressable
-                  onPress={() => setQuoteRevision((value) => value + 1)}
-                  style={({ pressed }) => [styles.warningCard, pressed && styles.pressed]}
-                >
-                  <Icon name="warning-outline" size={20} color="#FFB65C" />
-                  <View style={styles.warningCopy}>
-                    <Text style={styles.warningTitle}>
-                      {copy('Kredi özeti alınamadı', 'Could not load quote')}
-                    </Text>
-                    <Text style={styles.warningDetail}>
-                      {quoteError} · {copy('Yeniden dene', 'Tap to retry')}
-                    </Text>
-                  </View>
-                </Pressable>
-              ) : null}
-              {quote && !quote.canGenerate ? (
-                <View style={styles.warningCard}>
-                  <Icon name="flash-outline" size={20} color="#FFB65C" />
-                  <View style={styles.warningCopy}>
-                    <Text style={styles.warningTitle}>
-                      {copy('Yetersiz kredi', 'Not enough credits')}
-                    </Text>
-                    <Text style={styles.warningDetail}>
-                      {copy(
-                        `Bu plan ${quote.creditCost} kredi gerektiriyor; hesabında ${quote.availableCredits} kredi var.`,
-                        `This plan needs ${quote.creditCost} credits; your balance is ${quote.availableCredits}.`,
-                      )}
-                    </Text>
-                  </View>
-                </View>
-              ) : null}
-              {startError ? (
-                <View style={styles.warningCard}>
-                  <Icon name="alert-circle-outline" size={20} color="#FFB65C" />
-                  <View style={styles.warningCopy}>
-                    <Text style={styles.warningTitle}>
-                      {copy('Üretim başlatılamadı', 'Generation could not start')}
-                    </Text>
-                    <Text style={styles.warningDetail}>{startError}</Text>
-                  </View>
-                </View>
-              ) : null}
-              {starting ? <StudioSubmissionProgress stage={stage} /> : null}
-
-              <View style={styles.submitBlock}>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityState={{ disabled: !canStart, busy: starting }}
-                  disabled={!canStart}
-                  onPress={() => void create()}
-                  style={({ pressed }) => [
-                    styles.submitButton,
-                    !canStart && styles.submitButtonDisabled,
-                    pressed && canStart && styles.pressed,
-                  ]}
-                >
-                  {starting ? (
-                    <ActivityIndicator color="#0A2118" />
-                  ) : (
-                    <Icon name="sparkles-outline" size={20} color="#0A2118" />
-                  )}
-                  <Text style={styles.submitText}>
-                    {starting
-                      ? `${studioSubmissionLabels[stage]}…`
-                      : quote
-                        ? copy(
-                            `Üretimi başlat · ${quote.creditCost} kredi`,
-                            `Generate · ${quote.creditCost} credits`,
-                          )
-                        : copy('Kredi özeti bekleniyor…', 'Waiting for credit quote…')}
-                  </Text>
-                </Pressable>
-                <Text style={styles.submitHint}>
-                  {!titleReady
-                    ? copy('Ürün adını yaz.', 'Enter a product name.')
-                    : !sourceReady
-                      ? copy('Kaynak ürün fotoğrafını seç.', 'Choose the source product photo.')
-                      : !selectionReady
-                        ? copy('Kategori ve sahneyi seç.', 'Choose a category and scene.')
-                        : !flow.rightsConfirmed
-                          ? copy(
-                              'Görsel kullanım hakkını onayla.',
-                              'Confirm your right to use the image.',
-                            )
-                          : copy(
-                              'Son maliyet üretimden önce sunucuda tekrar doğrulanır.',
-                              'The final cost is revalidated by the server before generation.',
-                            )}
+                <Text numberOfLines={1} style={[styles.sceneName, selected && styles.sceneNameOn]}>
+                  {item.name}
                 </Text>
-              </View>
-            </View>
-          </View>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      <View style={styles.field}>
+        <SectionLabel>{copy('Format', 'Format')}</SectionLabel>
+        <View accessibilityRole="radiogroup" style={styles.segments}>
+          {formatOptions.map((option) => (
+            <Chip
+              fill
+              key={option.ratio}
+              label={option.ratio}
+              onPress={() => set({ aspectRatio: option.ratio })}
+              selected={flow.aspectRatio === option.ratio}
+            />
+          ))}
         </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
-
-function SectionHeading({
-  index,
-  title,
-  detail,
-}: {
-  index: string;
-  title: string;
-  detail: string;
-}) {
-  return (
-    <View style={styles.sectionHeading}>
-      <View style={styles.sectionIndex}>
-        <Text style={styles.sectionIndexText}>{index}</Text>
+        {format ? <Hint>{copy(format.detailTr, format.detailEn)}</Hint> : null}
       </View>
-      <View style={styles.sectionHeadingCopy}>
-        <Text style={styles.sectionTitle}>{title}</Text>
-        <Text style={styles.sectionDetail}>{detail}</Text>
-      </View>
-    </View>
-  );
-}
 
-function CatalogRail({
-  items,
-  selectedId,
-  onSelect,
-  creditLabel,
-}: {
-  items: readonly CatalogItem[];
-  selectedId: string | null;
-  onSelect: (id: string) => void;
-  creditLabel: string;
-}) {
-  return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.sceneRail}
-    >
-      {items.map((item) => {
-        const selected = selectedId === item.id;
-        return (
-          <Pressable
-            accessibilityRole="radio"
-            accessibilityState={{ selected }}
-            key={item.id}
-            onPress={() => onSelect(item.id)}
-            style={({ pressed }) => [
-              styles.sceneCard,
-              selected && styles.sceneCardSelected,
-              pressed && styles.pressed,
-            ]}
+      <View style={styles.field}>
+        <SectionLabel>{copy('Kalite', 'Quality')}</SectionLabel>
+        <View accessibilityRole="radiogroup" style={styles.segments}>
+          <Chip
+            fill
+            label={copy('Önizleme', 'Preview')}
+            onPress={() => chooseQuality('PREVIEW')}
+            selected={flow.quality === 'PREVIEW'}
+          />
+          <Chip
+            fill
+            label={copy('Standart', 'Standard')}
+            onPress={() => chooseQuality('STANDARD')}
+            selected={flow.quality === 'STANDARD'}
+          />
+          <Chip
+            fill
+            label="HD"
+            onPress={() => chooseQuality('HD')}
+            selected={flow.quality === 'HD'}
+          />
+        </View>
+        <Hint>
+          {copy(
+            `Önizleme ${previewCredits} kredi · HD için alternatif başına +${hdExtraCredits} kredi.`,
+            `Preview costs ${previewCredits} credits · HD adds ${hdExtraCredits} credits per alternative.`,
+          )}
+        </Hint>
+      </View>
+
+      <View style={styles.field}>
+        <SectionLabel>{copy('Kaç alternatif üretelim?', 'How many alternatives?')}</SectionLabel>
+        <View accessibilityRole="radiogroup" style={styles.segments}>
+          {[1, 2, 4].map((count) => {
+            const unavailable = flow.quality === 'PREVIEW' && count === 4;
+            return (
+              <Chip
+                disabled={unavailable}
+                fill
+                key={count}
+                label={String(count)}
+                accessibilityLabel={alternativesLabel(count)}
+                onPress={() => set({ numberOfImages: count as StudioImageCount })}
+                selected={flow.numberOfImages === count}
+              />
+            );
+          })}
+        </View>
+        {flow.quality === 'PREVIEW' ? (
+          <Hint>
+            {copy('Önizlemede en fazla 2 alternatif.', 'Preview supports up to 2 alternatives.')}
+          </Hint>
+        ) : null}
+      </View>
+
+      <View style={styles.field}>
+        <SectionLabel>{copy('Çekim notu (isteğe bağlı)', 'Shoot note (optional)')}</SectionLabel>
+        <TextInput
+          accessibilityLabel={copy('Çekim notu', 'Shoot note')}
+          maxLength={500}
+          multiline
+          onChangeText={(userNotes) => set({ userNotes })}
+          placeholder={copy('Örn. Etiket okunaklı kalsın', 'e.g. Keep the label readable')}
+          placeholderTextColor={brand.textMuted}
+          selectionColor={brand.gold}
+          style={[styles.input, styles.inputMultiline]}
+          value={flow.userNotes}
+        />
+      </View>
+
+      <Pressable
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: flow.rightsConfirmed, disabled: !sourceReady }}
+        disabled={!sourceReady}
+        onPress={() => set({ rightsConfirmed: !flow.rightsConfirmed })}
+        style={({ pressed }) => [
+          styles.rights,
+          !sourceReady && styles.disabled,
+          pressed && styles.pressed,
+        ]}
+      >
+        <Ionicons
+          color={flow.rightsConfirmed ? brand.gold : brand.textMuted}
+          name={flow.rightsConfirmed ? 'checkbox' : 'square-outline'}
+          size={24}
+        />
+        <Text style={styles.rightsText}>
+          {copy(
+            'Bu fotoğrafı kullanma hakkına sahibim ve ürün bana ya da işletmeme ait.',
+            'I have the right to use this photo and the product belongs to me or my business.',
+          )}
+        </Text>
+      </Pressable>
+    </>
+  );
+
+  const header = (
+    <>
+      <BackNav
+        fallback={guest ? '/(auth)/login' : '/(tabs)/home'}
+        label={guest ? copy('Giriş', 'Sign in') : copy('Stüdyo', 'Studio')}
+      />
+      <PageTitle title={copy('Ürün çekimi', 'Product shoot')} />
+    </>
+  );
+
+  const footer = guest ? (
+    <PrimaryAction
+      label={copy('Üretmek için ücretsiz hesap aç', 'Create a free account to generate')}
+      onPress={() => router.push('/(auth)/register' as never)}
+      trailingIcon="arrow-forward"
+    />
+  ) : (
+    <>
+      {missing.length && !starting ? (
+        <Hint style={styles.missing}>
+          {copy(`Eksik: ${missing.join(', ')}`, `Still needed: ${missing.join(', ')}`)}
+        </Hint>
+      ) : null}
+      {quoteError ? (
+        <SecondaryAction
+          icon="refresh"
+          label={copy('Kredi teklifini yenile', 'Refresh credit quote')}
+          onPress={() => setQuoteRevision((value) => value + 1)}
+        />
+      ) : null}
+      {quote && insufficient ? (
+        <PrimaryAction
+          icon="flash"
+          label={copy(
+            `Kredi al · ${quote.creditCost - quote.availableCredits} kredi eksik`,
+            `Get credits · ${quote.creditCost - quote.availableCredits} short`,
+          )}
+          onPress={() => setCreditsOpen(true)}
+        />
+      ) : (
+        <PrimaryAction
+          disabled={!canStart}
+          label={
+            starting
+              ? `${studioSubmissionLabels[stage]}…`
+              : quote
+                ? `${generateLabel(flow.numberOfImages)} · ${quote.creditCost} ${copy('kredi', 'credits')}`
+                : generateLabel(flow.numberOfImages)
+          }
+          onPress={() => void create()}
+        />
+      )}
+      {quote ? (
+        <LowCreditsSheet
+          available={quote.availableCredits}
+          onClose={() => setCreditsOpen(false)}
+          onPurchased={() => {
+            setCreditsOpen(false);
+            setQuoteRevision((value) => value + 1);
+          }}
+          required={quote.creditCost}
+          visible={creditsOpen && insufficient}
+        />
+      ) : null}
+    </>
+  );
+
+  if (wide)
+    return (
+      <Page edges={['top', 'left', 'right', 'bottom']} scroll={false} width="workspace">
+        {header}
+        <View style={styles.columns}>
+          <ScrollView
+            contentContainerStyle={styles.columnContent}
+            showsVerticalScrollIndicator={false}
+            style={styles.leading}
           >
-            {item.imageSource ? (
-              <Image source={item.imageSource} resizeMode="cover" style={styles.sceneImage} />
-            ) : null}
-            <View style={styles.sceneCredit}>
-              <Text style={styles.sceneCreditText}>
-                {item.creditCost} {creditLabel}
-              </Text>
-            </View>
-            {selected ? (
-              <View style={styles.sceneTick}>
-                <Icon name="checkmark" size={14} color="#0A2118" />
-              </View>
-            ) : null}
-            <View style={styles.sceneBody}>
-              <Text numberOfLines={1} style={styles.sceneTitle}>
-                {item.name}
-              </Text>
-              <Text numberOfLines={2} style={styles.sceneDescription}>
-                {item.description}
-              </Text>
-            </View>
-          </Pressable>
-        );
-      })}
-    </ScrollView>
+            {previewBlock}
+            {summaryBlock}
+            <View style={styles.wideActions}>{footer}</View>
+          </ScrollView>
+          <ScrollView
+            automaticallyAdjustKeyboardInsets
+            contentContainerStyle={styles.columnContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            style={styles.trailing}
+          >
+            {controls}
+          </ScrollView>
+        </View>
+      </Page>
+    );
+
+  return (
+    <Page footer={footer} scroll={false} width="workspace">
+      <ScrollView
+        automaticallyAdjustKeyboardInsets
+        contentContainerStyle={[styles.columnContent, styles.narrowContent]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        style={styles.narrowScroll}
+      >
+        {header}
+        {previewBlock}
+        {controls}
+        {summaryBlock}
+      </ScrollView>
+    </Page>
   );
 }
 
-function OptionCard({
+function Chip({
   label,
-  detail,
-  meta,
   selected,
-  disabled = false,
   onPress,
+  disabled = false,
+  fill = false,
+  accessibilityLabel,
 }: {
   label: string;
-  detail: string;
-  meta?: string;
+  accessibilityLabel?: string;
   selected: boolean;
-  disabled?: boolean;
   onPress: () => void;
+  disabled?: boolean;
+  fill?: boolean;
 }) {
   return (
     <Pressable
+      accessibilityLabel={accessibilityLabel ?? label}
       accessibilityRole="radio"
-      accessibilityState={{ selected, disabled }}
+      accessibilityState={{ disabled, selected }}
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [
-        styles.optionCard,
-        selected && styles.optionCardSelected,
+        styles.chip,
+        fill && styles.chipFill,
+        selected && styles.selectedBorder,
         disabled && styles.disabled,
-        pressed && !disabled && styles.pressed,
+        pressed && styles.pressed,
       ]}
     >
-      <View style={styles.optionTitleRow}>
-        <Text style={[styles.optionTitle, selected && styles.selectedText]}>{label}</Text>
-        {meta ? <Text style={styles.optionMeta}>{meta}</Text> : null}
-      </View>
-      <Text style={styles.optionDetail}>{detail}</Text>
+      {selected ? <Ionicons color={brand.gold} name="checkmark" size={14} /> : null}
+      <Text numberOfLines={1} style={[styles.chipText, selected && styles.chipTextSelected]}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
 
+function SummaryState({ title, body }: { title: string; body: string }) {
+  return (
+    <View accessibilityRole="alert" style={styles.summaryState}>
+      <View style={styles.inlineRow}>
+        <Ionicons color={brand.warning} name="alert-circle-outline" size={18} />
+        <Text style={styles.summaryStateTitle}>{title}</Text>
+      </View>
+      <Hint>{body}</Hint>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: '#0B0F0D', flex: 1 },
-  scrollContent: { paddingBottom: 58, paddingHorizontal: 18, paddingTop: 8 },
-  page: { alignSelf: 'center', maxWidth: 1120, width: '100%' },
-  header: { alignItems: 'center', flexDirection: 'row', gap: 12, minHeight: 58 },
-  backButton: {
-    alignItems: 'center',
-    borderColor: '#29332E',
+  columns: { flex: 1, flexDirection: 'row', gap: 32 },
+  leading: { flex: 5 },
+  trailing: { flex: 6 },
+  wideActions: { gap: 10 },
+  narrowScroll: { flex: 1, marginHorizontal: -ui.gutter },
+  columnContent: { gap: ui.gap, paddingBottom: 24 },
+  narrowContent: { paddingHorizontal: ui.gutter },
+  field: { gap: 12 },
+  fillImage: { height: '100%', width: '100%' },
+  sourceActions: { flexDirection: 'row', gap: 10 },
+  sourceAction: { flex: 1 },
+  sampleLink: { alignSelf: 'center', minHeight: 28, justifyContent: 'center' },
+  sampleLinkText: { color: brand.gold, fontSize: 15 },
+  input: {
+    backgroundColor: brand.surface,
     borderRadius: 14,
-    borderWidth: 1,
-    height: 44,
-    justifyContent: 'center',
-    width: 44,
-  },
-  headerCopy: { flex: 1, minWidth: 0 },
-  headerTitle: { color: '#F2F7F4', fontSize: 21, fontWeight: '800' },
-  headerSubtitle: { color: '#849088', fontSize: 12, marginTop: 2 },
-  stepBadge: {
-    backgroundColor: '#1D3026',
-    borderRadius: 99,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-  },
-  stepBadgeText: { color: '#B8F1CD', fontSize: 10, fontWeight: '800', letterSpacing: 0.6 },
-  workspace: { gap: 14, marginTop: 18 },
-  workspaceTablet: { alignItems: 'flex-start', flexDirection: 'row' },
-  sourcePane: {
-    backgroundColor: '#111815',
-    borderColor: '#28342D',
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 17,
-  },
-  sourcePaneTablet: { flex: 0.82, minWidth: 0 },
-  settingsPane: {
-    backgroundColor: '#111815',
-    borderColor: '#28342D',
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 17,
-  },
-  settingsPaneTablet: { flex: 1.18, minWidth: 0 },
-  sectionHeading: { alignItems: 'flex-start', flexDirection: 'row', gap: 11, marginBottom: 18 },
-  sectionHeadingCopy: { flex: 1 },
-  sectionIndex: {
-    alignItems: 'center',
-    backgroundColor: '#1C2D25',
-    borderRadius: 11,
-    height: 34,
-    justifyContent: 'center',
-    width: 34,
-  },
-  sectionIndexText: { color: '#B8F1CD', fontSize: 11, fontWeight: '900' },
-  sectionTitle: { color: '#EDF4EF', fontSize: 18, fontWeight: '800' },
-  sectionDetail: { color: '#839087', fontSize: 12, lineHeight: 17, marginTop: 3 },
-  fieldLabel: { color: '#DDE7E1', fontSize: 13, fontWeight: '800', marginBottom: 7, marginTop: 17 },
-  fieldHint: { color: '#7F8C84', fontSize: 12, lineHeight: 17, marginBottom: 9, marginTop: -2 },
-  titleInput: {
-    backgroundColor: '#0D1310',
-    borderColor: '#2B3931',
-    borderRadius: 14,
-    borderWidth: 1,
-    color: '#F1F6F3',
-    fontSize: 15,
-    minHeight: 50,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  notesInput: {
-    backgroundColor: '#0D1310',
-    borderColor: '#2B3931',
-    borderRadius: 14,
-    borderWidth: 1,
-    color: '#F1F6F3',
-    fontSize: 14,
-    lineHeight: 20,
-    minHeight: 94,
-    padding: 13,
-  },
-  inputCounter: { color: '#657169', fontSize: 10, marginTop: 5, textAlign: 'right' },
-  categoryRail: { gap: 9, paddingRight: 12 },
-  categoryCard: {
-    backgroundColor: '#0E1411',
-    borderColor: '#28342D',
-    borderRadius: 15,
-    borderWidth: 1,
-    overflow: 'hidden',
-    width: 126,
-  },
-  categoryCardSelected: { borderColor: '#8DDDAC', borderWidth: 2 },
-  categoryImage: { height: 92, width: '100%' },
-  categoryFooter: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 5,
-    minHeight: 42,
-    paddingHorizontal: 9,
-  },
-  categoryTitle: { color: '#DDE6E0', flex: 1, fontSize: 12, fontWeight: '700' },
-  photoChecklist: {
-    backgroundColor: '#0E1511',
-    borderColor: '#243129',
-    borderRadius: 16,
-    borderWidth: 1,
-    gap: 7,
-    marginTop: 17,
-    padding: 13,
-  },
-  checklistTitle: { color: '#DDE7E1', fontSize: 12, fontWeight: '800', marginBottom: 2 },
-  checklistRow: { alignItems: 'center', flexDirection: 'row', gap: 8 },
-  checklistText: { color: '#87938B', flex: 1, fontSize: 11, lineHeight: 16 },
-  goalChoices: { gap: 8 },
-  goalChoice: {
-    alignItems: 'center',
-    backgroundColor: '#0D1310',
-    borderColor: '#27342C',
-    borderRadius: 15,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 10,
-    padding: 12,
-  },
-  goalChoiceSelected: { backgroundColor: '#16251D', borderColor: '#72C593' },
-  goalChoiceCopy: { flex: 1 },
-  goalChoiceTitle: { color: '#CCD5CF', fontSize: 13, fontWeight: '800' },
-  goalChoiceDetail: { color: '#77847C', fontSize: 11, lineHeight: 15, marginTop: 2 },
-  sceneRail: { gap: 10, paddingRight: 14 },
-  sceneCard: {
-    backgroundColor: '#0D1310',
-    borderColor: '#28342D',
-    borderRadius: 16,
-    borderWidth: 1,
-    overflow: 'hidden',
-    width: 150,
-  },
-  sceneCardSelected: { borderColor: '#8DDDAC', borderWidth: 2 },
-  sceneImage: { height: 110, width: '100%' },
-  sceneCredit: {
-    backgroundColor: 'rgba(8,17,12,0.84)',
-    borderRadius: 9,
-    left: 7,
-    paddingHorizontal: 7,
-    paddingVertical: 5,
-    position: 'absolute',
-    top: 7,
-  },
-  sceneCreditText: { color: '#E7F0EA', fontSize: 9, fontWeight: '800' },
-  sceneTick: {
-    alignItems: 'center',
-    backgroundColor: '#B8F1CD',
-    borderRadius: 12,
-    height: 24,
-    justifyContent: 'center',
-    position: 'absolute',
-    right: 7,
-    top: 7,
-    width: 24,
-  },
-  sceneBody: { minHeight: 69, padding: 10 },
-  sceneTitle: { color: '#E6EDE8', fontSize: 12, fontWeight: '800' },
-  sceneDescription: { color: '#79867E', fontSize: 10, lineHeight: 14, marginTop: 3 },
-  optionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  threeColumns: { flexDirection: 'row', gap: 8 },
-  optionCard: {
-    backgroundColor: '#0D1310',
-    borderColor: '#28342D',
-    borderRadius: 14,
-    borderWidth: 1,
-    flex: 1,
-    minWidth: 0,
-    padding: 11,
-  },
-  optionCardSelected: { backgroundColor: '#16251D', borderColor: '#72C593' },
-  optionTitleRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 5,
-    justifyContent: 'space-between',
-  },
-  optionTitle: { color: '#CBD5CF', fontSize: 12, fontWeight: '800' },
-  optionMeta: { color: '#B8F1CD', fontSize: 10, fontWeight: '800' },
-  optionDetail: { color: '#718078', fontSize: 10, lineHeight: 14, marginTop: 4 },
-  selectedText: { color: '#E9F8EF' },
-  rights: {
-    alignItems: 'flex-start',
-    backgroundColor: '#0D1310',
-    borderColor: '#29362E',
-    borderRadius: 16,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 17,
-    padding: 13,
-  },
-  rightsSelected: { backgroundColor: '#15251C', borderColor: '#6FC08F' },
-  checkbox: {
-    alignItems: 'center',
-    borderColor: '#66736B',
-    borderRadius: 6,
-    borderWidth: 1,
-    height: 22,
-    justifyContent: 'center',
-    marginTop: 1,
-    width: 22,
-  },
-  checkboxSelected: { backgroundColor: '#B8F1CD', borderColor: '#B8F1CD' },
-  rightsCopy: { flex: 1 },
-  rightsTitle: { color: '#E1E9E4', fontSize: 12, fontWeight: '800' },
-  rightsDetail: { color: '#7C8981', fontSize: 11, lineHeight: 16, marginTop: 3 },
-  quoteCard: {
-    alignItems: 'center',
-    backgroundColor: '#15251C',
-    borderColor: '#47755A',
-    borderRadius: 18,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 14,
-    padding: 15,
-  },
-  quoteCopy: { flex: 1 },
-  quoteLabel: { color: '#91BBA0', fontSize: 9, fontWeight: '900', letterSpacing: 0.7 },
-  quoteCost: { color: '#F1F7F3', fontSize: 22, fontWeight: '900', marginTop: 3 },
-  quoteDetail: { color: '#8EA097', fontSize: 11, marginTop: 3 },
-  balanceBadge: {
-    alignItems: 'center',
-    backgroundColor: '#20382A',
-    borderRadius: 99,
-    flexDirection: 'row',
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  balanceText: { color: '#D9F6E4', fontSize: 13, fontWeight: '800' },
-  quoteLoading: {
-    alignItems: 'center',
-    borderColor: '#28342D',
-    borderRadius: 16,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 9,
-    marginTop: 14,
-    padding: 13,
-  },
-  quoteLoadingText: { color: '#849188', fontSize: 12 },
-  warningCard: {
-    alignItems: 'flex-start',
-    backgroundColor: '#21180D',
-    borderColor: '#5B3C19',
-    borderRadius: 16,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 12,
-    padding: 13,
-  },
-  warningCopy: { flex: 1 },
-  warningTitle: { color: '#FFD09A', fontSize: 12, fontWeight: '800' },
-  warningDetail: { color: '#BB9D7A', fontSize: 11, lineHeight: 16, marginTop: 2 },
-  submitBlock: { marginTop: 17 },
-  submitButton: {
-    alignItems: 'center',
-    backgroundColor: '#B8F1CD',
-    borderRadius: 16,
-    flexDirection: 'row',
-    gap: 9,
-    justifyContent: 'center',
-    minHeight: 56,
+    color: brand.text,
+    fontSize: 17,
+    minHeight: 52,
     paddingHorizontal: 16,
   },
-  submitButtonDisabled: { backgroundColor: '#344139', opacity: 0.66 },
-  submitText: { color: '#0A2118', fontSize: 15, fontWeight: '900' },
-  submitHint: { color: '#748178', fontSize: 10, lineHeight: 15, marginTop: 7, textAlign: 'center' },
-  disabled: { opacity: 0.42 },
-  pressed: { opacity: 0.76, transform: [{ scale: 0.99 }] },
+  inputMultiline: { minHeight: 88, paddingTop: 14, textAlignVertical: 'top' },
+  between: { alignItems: 'center', flexDirection: 'row', gap: 8, justifyContent: 'space-between' },
+  inlineRow: { alignItems: 'center', flexDirection: 'row', gap: 6 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  segments: { flexDirection: 'row', gap: 8 },
+  chip: {
+    alignItems: 'center',
+    backgroundColor: brand.surface,
+    borderColor: brand.surface,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    flexDirection: 'row',
+    gap: 6,
+    justifyContent: 'center',
+    minHeight: 44,
+    paddingHorizontal: 14,
+  },
+  chipFill: { flex: 1, paddingHorizontal: 6 },
+  chipText: { color: brand.text, flexShrink: 1, fontSize: 15 },
+  chipTextSelected: { color: brand.gold, fontWeight: '600' },
+  selectedBorder: { borderColor: brand.gold },
+  bleed: { marginHorizontal: -ui.gutter },
+  sceneRail: { gap: 10, paddingHorizontal: ui.gutter },
+  sceneRailWide: { gap: 10 },
+  sceneTile: { gap: 6, width: 104 },
+  sceneImage: {
+    aspectRatio: 1,
+    backgroundColor: brand.surfaceRaised,
+    borderColor: 'transparent',
+    borderRadius: 14,
+    borderWidth: 2,
+    overflow: 'hidden',
+  },
+  sceneName: { color: brand.textSecondary, fontSize: 13, textAlign: 'center' },
+  sceneNameOn: { color: brand.gold, fontWeight: '600' },
+  rights: { alignItems: 'flex-start', flexDirection: 'row', gap: 10, minHeight: 44 },
+  rightsText: { color: brand.textSecondary, flex: 1, fontSize: 15, lineHeight: 20 },
+  summaryTitle: { color: brand.text, fontSize: 17, fontWeight: '600' },
+  summaryCost: { color: brand.gold, fontSize: 15, fontWeight: '600' },
+  summaryState: { gap: 6 },
+  summaryStateTitle: { color: brand.text, flex: 1, fontSize: 15, fontWeight: '500' },
+  missing: { textAlign: 'center' },
+  disabled: { opacity: 0.45 },
+  pressed: { opacity: 0.65 },
 });

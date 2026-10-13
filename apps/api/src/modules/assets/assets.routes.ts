@@ -1,8 +1,10 @@
 import { raw, Router } from 'express';
 import { createHash } from 'node:crypto';
 import { AssetParamsSchema, UploadInitiateSchema } from '@birkare/contracts';
+import type { AssetRecord } from '@birkare/database';
 import { createId, forbidden, notFound } from '@birkare/shared';
 import { requireAuth } from '../../middleware/auth.middleware.js';
+import { uploadRateLimit } from '../../middleware/rate-limit.middleware.js';
 import { validate } from '../../middleware/validate.middleware.js';
 import type { ApiDependencies } from '../../services/dependencies.js';
 import { asyncHandler, sendSuccess } from '../../services/http.js';
@@ -112,6 +114,7 @@ export function createAssetsRouter(deps: ApiDependencies): Router {
 
   router.post(
     '/uploads/initiate',
+    uploadRateLimit,
     validate(UploadInitiateSchema),
     asyncHandler(async (req, res) => {
       if (req.body.purpose === 'USER_SOURCE') {
@@ -156,13 +159,20 @@ export function createAssetsRouter(deps: ApiDependencies): Router {
   router.put(
     '/uploads/:assetId/content',
     validate(AssetParamsSchema, 'params'),
-    raw({ type: ['image/jpeg', 'image/png', 'image/webp'], limit: '15mb' }),
-    asyncHandler(async (req, res) => {
+    // Resolve ownership and state before buffering: an unknown, foreign or
+    // already-finalized asset id must not make the API hold a 15 MB body.
+    asyncHandler(async (req, res, next) => {
       const asset = await ownedAsset(deps, req.auth!.userId, req.params.assetId as string);
-      if (!(req.body instanceof Buffer) || req.body.length === 0)
-        throw forbidden('UPLOAD_BODY_REQUIRED', 'Yüklenecek görsel bulunamadı.');
       if (asset.status !== 'PENDING_UPLOAD' && asset.status !== 'UPLOADED')
         throw forbidden('UPLOAD_NOT_ACCEPTED', 'Bu yükleme artık kabul edilmiyor.');
+      res.locals.uploadAsset = asset;
+      next();
+    }),
+    raw({ type: ['image/jpeg', 'image/png', 'image/webp'], limit: '15mb' }),
+    asyncHandler(async (req, res) => {
+      const asset = res.locals.uploadAsset as AssetRecord;
+      if (!(req.body instanceof Buffer) || req.body.length === 0)
+        throw forbidden('UPLOAD_BODY_REQUIRED', 'Yüklenecek görsel bulunamadı.');
       if (req.body.length !== asset.sizeBytes || req.body.length > MAX_UPLOAD_BYTES)
         throw forbidden('UPLOAD_SIZE_INVALID', 'Yüklenen dosya beklenen boyutu aşıyor.');
       if (req.header('content-type')?.split(';')[0] !== asset.mimeType)

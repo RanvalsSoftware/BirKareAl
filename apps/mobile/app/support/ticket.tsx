@@ -63,7 +63,7 @@ function SupportTicketForm() {
         <View style={styles.success}>
           <View style={styles.successIcon}><Icon name="mail-open-outline" size={32} color={colors.background} /></View>
           <Text style={styles.successTitle}>{translateCopy("Destek talebin kaydedildi.")}</Text>
-          <Text style={styles.successText}>{translateCopy("Talebin destek e-posta sunucusuna aktarıldı. Bu, gelen kutusuna teslim veya okunma onayı değildir. Yanıt için hesabındaki doğrulanmış e-posta adresini kullanacağız.")}</Text>
+          <Text style={styles.successText}>{translateCopy("Talebin destek ekibine iletildi. Yanıt için hesabındaki doğrulanmış e-posta adresini kullanacağız.")}</Text>
           <Text selectable style={styles.email}>{translateCopy("Talep:")}{' '}{receipt.id}</Text>
           <Text selectable style={styles.email}>
             {supportEmail}
@@ -113,8 +113,8 @@ function SupportTicketForm() {
             : undefined
         }
       />
-      <Notice tone="neutral">{translateCopy("Talebin hesabına bağlı olarak kaydedilir ve {{p0}} adresine backend üzerinden iletilir. Şifre veya ödeme bilgisi ekleme.", { p0: supportEmail })}</Notice>
-      {generationId ? <Notice tone="neutral">{translateCopy("Bu üretimin hata kodu ve teknik istek numarası sunucudan eklenir. Fotoğrafın ve üretim promptun destek e-postasına eklenmez.")}</Notice> : null}
+      <Notice tone="neutral">{translateCopy("Talebin hesabına bağlı olarak kaydedilir ve {{p0}} adresine iletilir. Şifre veya ödeme bilgisi ekleme.", { p0: supportEmail })}</Notice>
+      {generationId ? <Notice tone="neutral">{translateCopy("Bu üretimin hata kodu talebe otomatik eklenir. Fotoğrafın ve çekim notun destek e-postasına eklenmez.")}</Notice> : null}
       {error ? (
         <Notice tone="warning" title={translateCopy("Gönderim durumunu kontrol et")}>{translateCopy("{{p0}} Açıklaman bu ekranda korunur.", { p0: error })}</Notice>
       ) : null}

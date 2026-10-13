@@ -81,6 +81,12 @@ const englishErrors: Readonly<Record<string, string>> = {
   TREND_QUALITY_CHECK_UNAVAILABLE:
     'The image quality check is temporarily unavailable. Check Credits for the refund status.',
   MODERATION_BLOCKED: 'This request does not comply with the content safety rules.',
+  UPLOAD_RATE_LIMITED: 'Too many uploads in a short time. Please wait a minute and try again.',
+  IDEMPOTENCY_KEY_REUSED: 'This request is already being processed. Please wait a moment.',
+  PROJECT_TITLE_REQUIRED: 'Add a product name before writing the listing text.',
+  LISTING_RATE_LIMITED: 'You have written several listings in a row. Please try again in a few minutes.',
+  LISTING_DISABLED: 'Listing text is temporarily unavailable.',
+  LISTING_UNAVAILABLE: 'The listing text could not be written. Please try again.',
   INPUT_MODERATION_BLOCKED: 'The photo or request did not pass the safety check.',
   NETWORK_REQUEST_FAILED: 'Unable to reach the server. Check your connection and try again.',
   NETWORK_REQUEST_TIMEOUT: 'The server did not respond in time. Please try again.',
