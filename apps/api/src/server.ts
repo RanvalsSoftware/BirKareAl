@@ -55,10 +55,20 @@ async function main(): Promise<void> {
       deps.logger.warn({ err: error }, 'Sosyal kayıt temizliği tamamlanamadı.');
     }
   };
+  // Used provider ID tokens are remembered only until the token itself expires.
+  const purgeConsumedIdentityTokens = async () => {
+    try {
+      await deps.repository.purgeConsumedIdentityTokens({ before: new Date(), limit: 1000 });
+    } catch (error) {
+      deps.logger.warn({ err: error }, 'Kullanılmış sosyal kimlik belirteci temizliği tamamlanamadı.');
+    }
+  };
   await purgePendingSocialLogins();
+  await purgeConsumedIdentityTokens();
   const socialLoginCleanupTimer = setInterval(
     () => {
       void purgePendingSocialLogins();
+      void purgeConsumedIdentityTokens();
     },
     15 * 60 * 1000,
   );

@@ -42,6 +42,7 @@ import type { SocialAuthProvider } from '@birkare/database';
 import { randomInt } from 'node:crypto';
 import { EmailSecurityService } from './email-security.service.js';
 import { assertKnownRegistrationProvider } from './email-provider-policy.js';
+import { identityTokenReplayRef, type IdentityTokenReplayRef } from './identity-token-replay.js';
 import type { CommunicationLanguage } from '../../services/request-language.js';
 
 export type AuthRequestContext = {
@@ -76,7 +77,18 @@ export type AuthSessionResponse = {
 
 export type RegistrationResponse = {
   verificationRequired: true;
+  /**
+   * Opaque proof that this client submitted the current pending registration.
+   * Sent back with the code on verify-email; only its SHA-256 is stored.
+   */
+  registrationToken: string;
   developmentVerificationToken?: string;
+};
+
+export type EmailVerificationResponse = {
+  verified: true;
+  /** Present (true) only when the stored password was cleared; no session is ever issued here. */
+  passwordResetRequired?: true;
 };
 
 export type SocialProfileCompletionRequiredResponse = {
@@ -101,7 +113,13 @@ type VerifiedSocialIdentity = {
   email: string;
   givenName?: string;
   familyName?: string;
+  replay?: IdentityTokenReplayRef;
 };
+
+const INVALID_SOCIAL_TOKEN = {
+  GOOGLE: ['AUTH_INVALID_GOOGLE_TOKEN', 'Google kimliği doğrulanamadı.'],
+  APPLE: ['AUTH_INVALID_APPLE_TOKEN', 'Apple kimliği doğrulanamadı.'],
+} as const;
 
 const toPublicUser = (user: UserRecord): PublicUser => ({
   id: user.id,
@@ -199,7 +217,8 @@ export class AuthService {
     });
     const dateOfBirth = ensureAdult(input.dateOfBirth);
     const consents = createRequiredConsentRecords(input.consent, 'PASSWORD_REGISTRATION');
-    const user = await this.repository.createUser({
+    const registrationToken = createOpaqueToken();
+    const registration = {
       email: normalizeEmail(input.email),
       passwordHash: await this.passwordService.hash(input.password),
       firstName: input.firstName ?? null,
@@ -207,7 +226,9 @@ export class AuthService {
       locale: input.locale,
       dateOfBirth,
       consents,
-    });
+      registrationTokenHash: hashToken(registrationToken),
+    };
+    const user = await this.createOrReplacePendingRegistration(registration);
     const verificationCode = createEmailVerificationCode();
     await this.repository.replaceEmailToken({
       userId: user.id,
@@ -234,8 +255,45 @@ export class AuthService {
     }
     return {
       verificationRequired: true,
+      registrationToken,
       ...(this.allowDevelopmentTokens() ? { developmentVerificationToken: verificationCode } : {}),
     };
+  }
+
+  /**
+   * An address that was registered but never verified is not owned by anyone
+   * yet: a new registration REPLACES the pending one (password, profile,
+   * consents, registration token) instead of failing. This is what stops a
+   * third party from parking their own password on someone else's address.
+   * Verified, suspended and deletion-pending accounts keep answering 409.
+   */
+  private async createOrReplacePendingRegistration(
+    registration: Parameters<BirKareRepository['createUser']>[0],
+  ): Promise<UserRecord> {
+    const isPending = (user: UserRecord | null): user is UserRecord =>
+      Boolean(
+        user && user.status === 'PENDING_VERIFICATION' && !user.emailVerifiedAt && !user.deletedAt,
+      );
+    const emailTaken = () =>
+      conflict('AUTH_EMAIL_ALREADY_EXISTS', 'Bu e-posta adresiyle zaten bir hesap var.');
+    const replace = async (pending: UserRecord): Promise<UserRecord> => {
+      const replaced = await this.repository.replacePendingRegistration(pending.id, registration);
+      // Null: the address was verified in the meantime, so it is now owned.
+      if (!replaced) throw emailTaken();
+      return replaced;
+    };
+    const existing = await this.repository.getUserByEmail(registration.email);
+    if (isPending(existing)) return replace(existing);
+    try {
+      return await this.repository.createUser(registration);
+    } catch (error) {
+      if (!(error instanceof ApiError) || error.code !== 'AUTH_EMAIL_ALREADY_EXISTS') throw error;
+      // Two first-time registrations raced; the loser replaces the winner's
+      // pending row exactly as a later re-registration would.
+      const raced = await this.repository.getUserByEmail(registration.email);
+      if (isPending(raced)) return replace(raced);
+      throw error;
+    }
   }
 
   async login(input: LoginInput, context: AuthRequestContext): Promise<AuthSessionResponse> {
@@ -471,7 +529,12 @@ export class AuthService {
       throw forbidden('AUTH_ACCOUNT_UNAVAILABLE', 'Bu hesap kullanılamıyor.');
   }
 
-  async verifyEmail(email: string, code: string, context: AuthRequestContext = {}): Promise<void> {
+  async verifyEmail(
+    email: string,
+    code: string,
+    context: AuthRequestContext = {},
+    registrationToken?: string,
+  ): Promise<EmailVerificationResponse> {
     const normalizedEmail = normalizeEmail(email);
     await this.emailSecurityService?.assertVerificationAllowed(normalizedEmail, context);
     if (!/^\d{6}$/.test(code))
@@ -492,6 +555,7 @@ export class AuthService {
       tokenHash,
       EMAIL_VERIFICATION_MAX_FAILED_ATTEMPTS,
       this.emailSecurityService?.abuseKeyHash(normalizedEmail) ?? hashStable(normalizedEmail),
+      registrationToken ? hashToken(registrationToken) : null,
     );
     if (result.status === 'ACCOUNT_SUSPENDED')
       throw forbidden('AUTH_ACCOUNT_SUSPENDED', 'Hesabınız geçici olarak askıya alınmış.');
@@ -502,6 +566,10 @@ export class AuthService {
         'AUTH_INVALID_VERIFICATION_TOKEN',
         'Doğrulama kodu geçersiz veya süresi dolmuş.',
       );
+    return {
+      verified: true,
+      ...(result.passwordResetRequired ? { passwordResetRequired: true as const } : {}),
+    };
   }
 
   async googleLogin(
@@ -509,7 +577,13 @@ export class AuthService {
     context: AuthRequestContext,
   ): Promise<GoogleLoginResponse> {
     const identity = await this.googleIdentityVerifier.verify(input.idToken);
-    return this.loginWithVerifiedSocialIdentity('GOOGLE', identity, input, context);
+    return this.loginWithVerifiedSocialIdentity(
+      'GOOGLE',
+      identity,
+      input,
+      context,
+      identity.replay ?? identityTokenReplayRef(input.idToken),
+    );
   }
 
   async appleLogin(
@@ -521,7 +595,9 @@ export class AuthService {
         'AUTH_APPLE_NOT_CONFIGURED',
         'Apple ile giriş henüz bu ortam için yapılandırılmadı.',
       );
-    const identity = await this.appleIdentityVerifier.verify(input.idToken);
+    const identity = await this.appleIdentityVerifier.verify(input.idToken, {
+      nonce: input.nonce,
+    });
     return this.loginWithVerifiedSocialIdentity(
       'APPLE',
       {
@@ -531,7 +607,38 @@ export class AuthService {
       },
       input,
       context,
+      identity.replay ?? identityTokenReplayRef(input.idToken),
     );
+  }
+
+  /**
+   * Provider ID tokens are single-use. The token is claimed immediately
+   * before the terminal step (issuing a session or a pending-registration
+   * handoff) and the unique registry row elects exactly one winner among
+   * concurrent requests. Non-terminal answers ("deletion recovery required",
+   * "link required") do not claim it, so the client can legitimately send the
+   * same token again with `recoverDeletion: true`. A claim whose terminal step
+   * then fails is released: no session exists, so nothing was replayed.
+   */
+  private async withSingleUseIdentityToken<T>(
+    provider: SocialAuthProvider,
+    replay: IdentityTokenReplayRef,
+    terminal: () => Promise<T>,
+  ): Promise<T> {
+    const claimed = await this.repository.consumeIdentityToken({
+      provider,
+      tokenKey: replay.key,
+      expiresAt: replay.expiresAt,
+    });
+    if (!claimed) throw unauthorized(...INVALID_SOCIAL_TOKEN[provider]);
+    try {
+      return await terminal();
+    } catch (error) {
+      await this.repository
+        .releaseIdentityToken({ provider, tokenKey: replay.key })
+        .catch(() => undefined);
+      throw error;
+    }
   }
 
   private async loginWithVerifiedSocialIdentity(
@@ -539,7 +646,11 @@ export class AuthService {
     identity: VerifiedSocialIdentity,
     input: SocialLoginInput,
     context: AuthRequestContext,
+    replay: IdentityTokenReplayRef,
   ): Promise<SocialLoginResponse> {
+    // A token that already produced a session/handoff reveals nothing further.
+    if (await this.repository.isIdentityTokenConsumed({ provider, tokenKey: replay.key }))
+      throw unauthorized(...INVALID_SOCIAL_TOKEN[provider]);
     // Resolve the verified immutable subject BEFORE the new-signup domain gate.
     // Otherwise existing corporate users and deletion recovery would be locked out.
     const linkedUser = await this.repository.getUserByAuthAccount(provider, identity.subject);
@@ -550,7 +661,9 @@ export class AuthService {
         const recovery = await this.deletionRecoveryResponse(linkedUser);
         if (recovery) return recovery;
       }
-      return this.createSocialSession(linkedUser, input, context);
+      return this.withSingleUseIdentityToken(provider, replay, () =>
+        this.createSocialSession(linkedUser, input, context),
+      );
     }
     const existingEmailUser = await this.repository.getUserByEmail(identity.email);
     if (existingEmailUser) {
@@ -566,15 +679,17 @@ export class AuthService {
       deviceId: input.deviceId,
     });
     const pendingToken = createOpaqueToken();
-    await this.repository.createPendingSocialLogin({
-      tokenHash: hashToken(pendingToken),
-      provider,
-      providerAccountId: identity.subject,
-      providerEmail: identity.email,
-      givenName: identity.givenName ?? null,
-      familyName: identity.familyName ?? null,
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-    });
+    await this.withSingleUseIdentityToken(provider, replay, () =>
+      this.repository.createPendingSocialLogin({
+        tokenHash: hashToken(pendingToken),
+        provider,
+        providerAccountId: identity.subject,
+        providerEmail: identity.email,
+        givenName: identity.givenName ?? null,
+        familyName: identity.familyName ?? null,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+      }),
+    );
     return {
       needsProfileCompletion: true,
       pendingToken,

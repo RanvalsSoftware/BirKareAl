@@ -470,7 +470,9 @@ export type ReverseCreditGrantInput = {
 
 export type ReverseCreditGrantResult = {
   /**
-   * REVERSED: this call deducted. ALREADY_REVERSED: an earlier call did.
+   * REVERSED: this call deducted. ALREADY_REVERSED: a refund was already
+   * recorded for this grant (including one that was later undone by
+   * `restoreReversedCreditGrant`; a grant is clawed back at most once ever).
    * NOT_FOUND: no such grant (never granted, or the account was erased).
    */
   status: 'REVERSED' | 'ALREADY_REVERSED' | 'NOT_FOUND';

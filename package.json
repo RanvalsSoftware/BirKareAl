@@ -5,7 +5,13 @@
   "description": "BirKare Studio — ürün ve katalog görsel çalışma alanı monorepo",
   "packageManager": "pnpm@10.18.0",
   "engines": { "node": ">=22.13.0", "pnpm": ">=10.0.0" },
-  "pnpm": { "overrides": { "body-parser>qs": "6.16.0" } },
+  "pnpm": {
+    "overrides": {
+      "body-parser>qs": "6.16.0",
+      "express>proxy-addr": "2.0.8",
+      "@prisma/config>deepmerge-ts": "8.0.2"
+    }
+  },
   "scripts": {
     "dev": "pnpm --parallel --filter @birkare/mobile --filter @birkare/api --filter @birkare/worker dev",
     "dev:mobile": "pnpm --filter @birkare/mobile start",

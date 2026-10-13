@@ -126,11 +126,15 @@ export function createAuthRouter(deps: ApiDependencies): Router {
     emailVerificationRateLimit,
     validate(VerifyEmailSchema),
     asyncHandler(async (req, res) => {
-      await deps.authService.verifyEmail(req.body.email, req.body.code, {
-        ...getRequestContext(req),
-        deviceId: req.body.deviceId,
-      });
-      sendSuccess(res, req.requestId, { verified: true });
+      const result = await deps.authService.verifyEmail(
+        req.body.email,
+        req.body.code,
+        { ...getRequestContext(req), deviceId: req.body.deviceId },
+        req.body.registrationToken,
+      );
+      // Never a session: `{ verified: true }`, plus `passwordResetRequired: true`
+      // when the caller did not prove they submitted the pending registration.
+      sendSuccess(res, req.requestId, result);
     }),
   );
 

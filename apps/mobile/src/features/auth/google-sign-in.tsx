@@ -200,9 +200,10 @@ export function GoogleSignInButton({
           await google.GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
         }
 
-        // Only clear the native SDK's local cache for explicit reauthentication;
-        // this never revokes Google access or signs out of the BirKare account.
-        if (forceReauthentication) await google.GoogleSignin.signOut();
+        // The server accepts each Google ID token once. Clearing the native SDK's
+        // local cache makes it issue a fresh token instead of handing back the one
+        // already used; it never revokes Google access or the BirKare session.
+        await google.GoogleSignin.signOut().catch(() => undefined);
 
         const startedAt = Date.now();
         const response = await google.GoogleSignin.signIn();

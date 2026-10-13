@@ -30,3 +30,11 @@ export function welcomeCreditAbuseHash(secret: string, email: string): string {
     .update(`welcome:${emailAbuseFingerprint(email)}`)
     .digest('hex');
 }
+
+/** Ledger types that represent a store purchase and can be clawed back by a store refund. */
+export const STORE_GRANT_TYPES = ['PURCHASE', 'SUBSCRIPTION_GRANT'] as const;
+
+/** One active refund row per grant; the key is retired if that refund is later reversed. */
+export function creditRefundIdempotencyKey(grantTransactionId: string): string {
+  return `credit-refund:${grantTransactionId}`;
+}

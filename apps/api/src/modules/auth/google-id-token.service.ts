@@ -2,6 +2,7 @@ import { EmailSchema } from '@birkare/contracts';
 import type { BirKareConfig } from '@birkare/config';
 import { createRemoteJWKSet, errors, jwtVerify, type JWTPayload, type JWTVerifyGetKey } from 'jose';
 import { unauthorized, unavailable } from '@birkare/shared';
+import { identityTokenReplayRef, type IdentityTokenReplayRef } from './identity-token-replay.js';
 
 const GOOGLE_ISSUERS = ['https://accounts.google.com', 'accounts.google.com'];
 const GOOGLE_JWKS = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'), {
@@ -41,6 +42,8 @@ export type VerifiedGoogleIdentity = {
   familyName?: string;
   /** Verified provider issue time; callers may require a fresh identity for sensitive actions. */
   issuedAt?: number;
+  /** Single-use identity of this ID token (see identity-token-replay.ts). */
+  replay?: IdentityTokenReplayRef;
 };
 
 export interface GoogleIdentityVerifier {
@@ -156,6 +159,7 @@ export class GoogleIdTokenService implements GoogleIdentityVerifier {
       subject,
       email: emailResult.data,
       issuedAt: payload.iat,
+      replay: identityTokenReplayRef(idToken, payload),
       ...(profileClaim(payload, 'given_name')
         ? { givenName: profileClaim(payload, 'given_name') }
         : {}),

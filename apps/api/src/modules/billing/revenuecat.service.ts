@@ -5,6 +5,20 @@ import { BIRKARE_CREDIT_PRODUCTS, conflict, forbidden, unavailable } from '@birk
 
 const REVENUECAT_EVENT_ID = /^[A-Za-z0-9._:$-]{1,200}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+/** Ledger reference types under which RevenueCat purchases are credited. */
+const STORE_GRANT_REFERENCE_TYPES = ['REVENUECAT', 'REVENUECAT_CONSUMABLE'];
+
+/**
+ * What a store refund did to the ledger. `matched` counts the grants found for
+ * the refunded store transaction; 0 means it was never credited here.
+ */
+export type RevenueCatRefundOutcome = {
+  action: 'REFUND' | 'REFUND_REVERSED';
+  matched: number;
+  applied: number;
+  credits: number;
+  shortfall: number;
+};
 
 export type RevenueCatPlan = 'monthly' | 'annual' | 'lifetime' | 'unknown';
 
@@ -20,6 +34,8 @@ export type RevenueCatSubscriptionStatus = {
   store: string | null;
   creditsGranted: number;
   creditPackCreditsGranted: number;
+  /** Credits clawed back during this read because RevenueCat marks a purchase refunded. */
+  creditsRevoked: number;
 };
 
 type RevenueCatEntitlement = {
@@ -37,6 +53,8 @@ type RevenueCatSubscription = {
   unsubscribe_detected_at?: string | null;
   billing_issues_detected_at?: string | null;
   store_transaction_id?: string | number | null;
+  /** Set by RevenueCat when it detected a store refund of this subscription. */
+  refunded_at?: string | null;
 };
 
 type RevenueCatNonSubscription = {
@@ -45,6 +63,8 @@ type RevenueCatNonSubscription = {
   original_purchase_date?: string | null;
   store?: string | null;
   is_sandbox?: boolean;
+  /** The store's own identifier; `id` above is RevenueCat's. Not always present. */
+  store_transaction_id?: string | number | null;
 };
 
 type RevenueCatSubscriber = {
@@ -67,8 +87,10 @@ export type RevenueCatWebhookEvent = {
     aliases?: string[];
     product_id?: string;
     entitlement_ids?: string[];
-    transaction_id?: string;
-    original_transaction_id?: string;
+    transaction_id?: string | null;
+    original_transaction_id?: string | null;
+    /** Only on CANCELLATION. `CUSTOMER_SUPPORT` is RevenueCat's refund reason. */
+    cancel_reason?: string | null;
     environment?: string;
   };
 };
@@ -97,6 +119,8 @@ type Dependencies = {
   repository: BirKareRepository;
   fetchImpl?: typeof fetch;
   now?: () => Date;
+  /** Receives refunds that could not be matched to a grant (needs a human look). */
+  logger?: { warn(details: Record<string, unknown>, message: string): void };
 };
 
 type CachedStatus = { expiresAt: number; value: RevenueCatSubscriptionStatus };
@@ -124,6 +148,18 @@ function utcMonthKey(value: Date): string {
 function storeReference(value: string | number | null | undefined): string | null {
   const text = typeof value === 'number' ? String(value) : value?.trim();
   return text && text.length <= 200 ? text : null;
+}
+
+/**
+ * RevenueCat sets `refunded_at` on a subscription it saw refunded. Guard
+ * against a marker left over from an earlier period: it only applies to the
+ * transaction currently listed when it is not older than that purchase.
+ */
+function refundApplies(subscription: RevenueCatSubscription | undefined): boolean {
+  const refundedAt = validDate(subscription?.refunded_at);
+  if (!refundedAt) return false;
+  const purchasedAt = validDate(subscription?.purchase_date);
+  return !purchasedAt || refundedAt.getTime() >= purchasedAt.getTime();
 }
 
 function safeTokenEquals(received: string, expected: string): boolean {
@@ -244,6 +280,8 @@ export function createRevenueCatService(dependencies: Dependencies) {
     plan: Exclude<RevenueCatPlan, 'unknown'>,
     periodKey: string,
     storeTransactionId?: string | null,
+    /** The store's identifier when `storeTransactionId` is RevenueCat's own id. */
+    refundLookupId?: string | null,
   ): Promise<{ credits: number; transaction: CreditTransactionRecord | null }> {
     const amount =
       plan === 'monthly'
@@ -265,6 +303,9 @@ export function createRevenueCatService(dependencies: Dependencies) {
       ...(storeTransactionId
         ? { referenceId: `${storeTransactionId}:${periodKey}`, exclusiveReference: true }
         : { referenceId: productId }),
+      ...(refundLookupId && refundLookupId !== storeTransactionId
+        ? { storeTransactionId: refundLookupId }
+        : {}),
       idempotencyKey: `revenuecat:${userId}:${plan}:${productId}:${periodKey}`,
       description:
         plan === 'monthly'
@@ -294,6 +335,11 @@ export function createRevenueCatService(dependencies: Dependencies) {
           // One paid store transaction is credited once, whichever account
           // RevenueCat currently lists it under (restore/transfer/alias).
           exclusiveReference: true,
+          // A refund only names the store's transaction id; keep it findable.
+          ...(storeReference(purchase.store_transaction_id) &&
+          storeReference(purchase.store_transaction_id) !== transactionId
+            ? { storeTransactionId: storeReference(purchase.store_transaction_id)! }
+            : {}),
           idempotencyKey: `revenuecat:${userId}:credit-pack:${pack.productId}:${transactionId}`,
           description: `BirKare ${pack.credits} kredi paketi`,
         });
@@ -301,6 +347,107 @@ export function createRevenueCatService(dependencies: Dependencies) {
       }
     }
     return creditsGranted;
+  }
+
+  /**
+   * Grants credited for one store transaction. Subscription periods are
+   * referenced by the store id directly; credit packs and lifetime are
+   * referenced by RevenueCat's own purchase id, so those are resolved through
+   * the store id saved with the grant or through RevenueCat's purchase list.
+   */
+  async function grantsForStoreTransaction(
+    storeTransactionId: string,
+    listings: Array<RevenueCatSubscriber | undefined>,
+  ): Promise<CreditTransactionRecord[]> {
+    const referenceIds: string[] = [];
+    for (const listing of listings) {
+      for (const purchases of Object.values(listing?.non_subscriptions ?? {})) {
+        for (const purchase of purchases) {
+          const id = purchase.id?.trim();
+          if (id && storeReference(purchase.store_transaction_id) === storeTransactionId)
+            referenceIds.push(id, `${id}:${id}`);
+        }
+      }
+    }
+    return repository.findStoreCreditGrants({
+      referenceTypes: STORE_GRANT_REFERENCE_TYPES,
+      storeTransactionId,
+      referenceIds,
+    });
+  }
+
+  /** Claws back every grant of a refunded store transaction, each at most once. */
+  async function revokeRefundedTransaction(
+    storeTransactionId: string,
+    source: string,
+    listings: Array<RevenueCatSubscriber | undefined>,
+  ): Promise<RevenueCatRefundOutcome> {
+    const outcome: RevenueCatRefundOutcome = {
+      action: 'REFUND',
+      matched: 0,
+      applied: 0,
+      credits: 0,
+      shortfall: 0,
+    };
+    for (const grant of await grantsForStoreTransaction(storeTransactionId, listings)) {
+      const result = await repository.reverseCreditGrant({
+        grantTransactionId: grant.id,
+        type: 'REFUND',
+        source,
+        description: 'Mağaza iadesi: satın alma kredisi geri alındı',
+      });
+      if (result.status === 'NOT_FOUND') continue;
+      outcome.matched += 1;
+      if (result.userId) cache.delete(result.userId);
+      if (result.status !== 'REVERSED') continue;
+      outcome.applied += 1;
+      outcome.credits += result.deducted;
+      outcome.shortfall += result.shortfall;
+    }
+    return outcome;
+  }
+
+  /** A store refund was undone: give back what that refund removed, once. */
+  async function restoreRefundedTransaction(
+    storeTransactionId: string,
+    source: string,
+    listings: Array<RevenueCatSubscriber | undefined>,
+  ): Promise<RevenueCatRefundOutcome> {
+    const outcome: RevenueCatRefundOutcome = {
+      action: 'REFUND_REVERSED',
+      matched: 0,
+      applied: 0,
+      credits: 0,
+      shortfall: 0,
+    };
+    for (const grant of await grantsForStoreTransaction(storeTransactionId, listings)) {
+      const result = await repository.restoreReversedCreditGrant({
+        grantTransactionId: grant.id,
+        source,
+        description: 'Mağaza iadesi geri alındı: kredi yeniden tanımlandı',
+      });
+      if (result.status === 'NOT_FOUND') continue;
+      outcome.matched += 1;
+      if (result.userId) cache.delete(result.userId);
+      if (result.status !== 'RESTORED') continue;
+      outcome.applied += 1;
+      outcome.credits += result.restored;
+    }
+    return outcome;
+  }
+
+  /** /sync and /status reconciliation: RevenueCat marks refunded subscriptions. */
+  async function revokeRefundedSubscriptions(
+    data: RevenueCatSubscriber | undefined,
+  ): Promise<number> {
+    let revoked = 0;
+    for (const subscription of Object.values(data?.subscriptions ?? {})) {
+      const storeTransactionId = storeReference(subscription.store_transaction_id);
+      if (!storeTransactionId || !refundApplies(subscription)) continue;
+      revoked += (await revokeRefundedTransaction(storeTransactionId, 'revenuecat-sync', [data]))
+        .credits;
+    }
+    return revoked;
   }
 
   async function readStatus(userId: string, force = false): Promise<RevenueCatSubscriptionStatus> {
@@ -321,10 +468,12 @@ export function createRevenueCatService(dependencies: Dependencies) {
         store: null,
         creditsGranted: 0,
         creditPackCreditsGranted: 0,
+        creditsRevoked: 0,
       };
     }
 
     const data = await subscriber(userId);
+    const creditsRevoked = await revokeRefundedSubscriptions(data);
     const creditPackCreditsGranted = await grantCreditPackPurchases(userId, data);
     const entitlement = data?.entitlements?.[config.REVENUECAT_ENTITLEMENT_ID];
     const productId = entitlement?.product_identifier ?? null;
@@ -336,7 +485,9 @@ export function createRevenueCatService(dependencies: Dependencies) {
     const source = subscription ?? nonSubscription;
     let creditsGranted = 0;
 
-    if (active && productId && plan !== 'unknown') {
+    // A refunded transaction earns nothing further, even where the store left
+    // the entitlement active (a refund does not always revoke access).
+    if (active && productId && plan !== 'unknown' && !refundApplies(subscription)) {
       if (plan === 'lifetime') {
         const lifetimeKey =
           nonSubscription?.id ||
@@ -344,7 +495,14 @@ export function createRevenueCatService(dependencies: Dependencies) {
           nonSubscription?.purchase_date ||
           'first-purchase';
         creditsGranted = (
-          await grant(userId, productId, plan, lifetimeKey, storeReference(nonSubscription?.id))
+          await grant(
+            userId,
+            productId,
+            plan,
+            lifetimeKey,
+            storeReference(nonSubscription?.id),
+            storeReference(nonSubscription?.store_transaction_id),
+          )
         ).credits;
       } else if (plan === 'monthly') {
         const period = validDate(subscription?.purchase_date) ?? now();
@@ -382,6 +540,7 @@ export function createRevenueCatService(dependencies: Dependencies) {
       store: source?.store ?? null,
       creditsGranted,
       creditPackCreditsGranted,
+      creditsRevoked,
     };
     cache.set(userId, { expiresAt: timestamp + config.REVENUECAT_CACHE_TTL_MS, value });
     return value;
@@ -399,7 +558,12 @@ export function createRevenueCatService(dependencies: Dependencies) {
     authorization: string | undefined,
     payload: RevenueCatWebhookEvent,
     verification?: { signature?: string; rawBody?: Buffer },
-  ): Promise<{ duplicate: boolean; processed: boolean; status?: RevenueCatSubscriptionStatus }> {
+  ): Promise<{
+    duplicate: boolean;
+    processed: boolean;
+    status?: RevenueCatSubscriptionStatus;
+    refund?: RevenueCatRefundOutcome;
+  }> {
     const expected = config.REVENUECAT_WEBHOOK_AUTH_TOKEN?.trim();
     if (!expected || !authorization || !safeTokenEquals(authorization, expected)) {
       throw forbidden('REVENUECAT_WEBHOOK_UNAUTHORIZED', 'Webhook doğrulaması başarısız.');
@@ -424,7 +588,18 @@ export function createRevenueCatService(dependencies: Dependencies) {
     const userId = [event?.app_user_id, event?.original_app_user_id, ...(event?.aliases ?? [])]
       .map((value) => value?.trim())
       .find((value): value is string => Boolean(value && UUID.test(value)));
-    if (!eventId || !REVENUECAT_EVENT_ID.test(eventId) || !userId) {
+    // RevenueCat reports a store refund as CANCELLATION with cancel_reason
+    // CUSTOMER_SUPPORT (subscriptions and non-renewing purchases alike), and an
+    // undone refund as REFUND_REVERSED. Both name the store transaction, which
+    // is what identifies the grant; they are therefore acknowledged even when
+    // the event carries no BirKare account (nothing to do, never retried).
+    const refundAction: RevenueCatRefundOutcome['action'] | null =
+      event?.type === 'CANCELLATION' && event.cancel_reason === 'CUSTOMER_SUPPORT'
+        ? 'REFUND'
+        : event?.type === 'REFUND_REVERSED'
+          ? 'REFUND_REVERSED'
+          : null;
+    if (!eventId || !REVENUECAT_EVENT_ID.test(eventId) || (!userId && !refundAction)) {
       throw forbidden(
         'REVENUECAT_WEBHOOK_INVALID',
         'Webhook event kimliği veya BirKare kullanıcı kimliği geçersiz.',
@@ -444,9 +619,26 @@ export function createRevenueCatService(dependencies: Dependencies) {
       return { duplicate: true, processed: true };
     }
 
-    const user = await repository.getUserById(userId);
+    const user = userId ? await repository.getUserById(userId) : null;
+    let refund: RevenueCatRefundOutcome | undefined;
+    if (refundAction) {
+      const storeTransactionId = storeReference(event?.transaction_id);
+      // RevenueCat's purchase list maps the store id to the id a credit pack
+      // was granted under. A failure here fails the delivery so it is retried.
+      const listing = userId && configured() ? await subscriber(userId) : undefined;
+      refund = !storeTransactionId
+        ? { action: refundAction, matched: 0, applied: 0, credits: 0, shortfall: 0 }
+        : refundAction === 'REFUND'
+          ? await revokeRefundedTransaction(storeTransactionId, 'revenuecat-webhook', [listing])
+          : await restoreRefundedTransaction(storeTransactionId, 'revenuecat-webhook', [listing]);
+      if (refund.matched === 0)
+        dependencies.logger?.warn(
+          { eventId, type: event?.type, productId: event?.product_id ?? null },
+          'RevenueCat iade bildirimi hiçbir kredi tanımıyla eşleşmedi; işlem yapılmadı.',
+        );
+    }
     let status: RevenueCatSubscriptionStatus | undefined;
-    if (user && !user.deletedAt) {
+    if (userId && user && !user.deletedAt) {
       cache.delete(userId);
       status = await readStatus(userId, true);
     }
@@ -456,10 +648,19 @@ export function createRevenueCatService(dependencies: Dependencies) {
       key: eventId,
       requestHash,
       responseCode: 200,
-      responseBody: { processed: Boolean(user), type: event?.type ?? 'UNKNOWN' },
+      responseBody: {
+        processed: Boolean(user),
+        type: event?.type ?? 'UNKNOWN',
+        ...(refund ? { refund } : {}),
+      },
       expiresAt: new Date(now().getTime() + 400 * 24 * 60 * 60 * 1000),
     });
-    return { duplicate: false, processed: Boolean(user), ...(status ? { status } : {}) };
+    return {
+      duplicate: false,
+      processed: Boolean(user),
+      ...(status ? { status } : {}),
+      ...(refund ? { refund } : {}),
+    };
   }
 
   return {

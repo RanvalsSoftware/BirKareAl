@@ -111,7 +111,11 @@ test('issues an opaque handoff, then creates a verified Google user by immutable
     (error: unknown) =>
       error instanceof ApiError && error.code === 'AUTH_SOCIAL_PENDING_TOKEN_INVALID',
   );
-  const second = await service.googleLogin(socialInput(), { ip: '127.0.0.1' });
+  // Every Google sign-in yields a new ID token; a used one is single-use.
+  const second = await service.googleLogin(
+    { ...socialInput(), idToken: 'test-google-id-token-2' },
+    { ip: '127.0.0.1' },
+  );
   if (!('user' in second)) assert.fail('Expected a session for a linked Google account.');
 
   assert.equal(first.user.email, 'elif@example.test');
@@ -171,12 +175,18 @@ test('password re-registration and repeated login cannot repeat the welcome gran
     ),
   );
 
+  assert.ok(registration.developmentVerificationToken);
+  await service.verifyEmail(
+    registrationInput.email,
+    registration.developmentVerificationToken,
+    {},
+    registration.registrationToken,
+  );
+  // Once the address is verified it is owned: registering again is refused.
   await assert.rejects(
     () => service.register(registrationInput, {}),
     (error: unknown) => error instanceof ApiError && error.code === 'AUTH_EMAIL_ALREADY_EXISTS',
   );
-  assert.ok(registration.developmentVerificationToken);
-  await service.verifyEmail(registrationInput.email, registration.developmentVerificationToken);
   await service.login(
     { email: registrationInput.email, password: registrationInput.password },
     { deviceId: 'first-install' },
@@ -213,7 +223,12 @@ test('password login offers deletion recovery before creating a new session', as
   } as const;
   const registration = await service.register(input, {});
   assert.ok(registration.developmentVerificationToken);
-  await service.verifyEmail(input.email, registration.developmentVerificationToken!);
+  await service.verifyEmail(
+    input.email,
+    registration.developmentVerificationToken!,
+    {},
+    registration.registrationToken,
+  );
   const user = await repository.getUserByEmail(input.email);
   assert.ok(user);
   await repository.requestAccountDeletion(user.id);

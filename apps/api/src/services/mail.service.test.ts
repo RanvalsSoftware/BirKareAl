@@ -323,7 +323,11 @@ function deliveredToken(mail: FakeMail, index = mail.sent.length - 1) {
 test('production registration sends a single-use six-digit verification code but exposes no development code', async () => {
   const mail = new FakeMail();
   const { service, repository } = authFixture(mail);
-  assert.deepEqual(await service.register(registration, {}), { verificationRequired: true });
+  const registered = await service.register(registration, {});
+  // Production returns the opaque registration token but never the mailed code.
+  assert.deepEqual(Object.keys(registered).sort(), ['registrationToken', 'verificationRequired']);
+  assert.equal(registered.verificationRequired, true);
+  assert.ok(registered.registrationToken.length >= 43);
   assert.equal(mail.sent.length, 1);
   const raw = deliveredToken(mail);
   assert.match(raw, /^\d{6}$/);

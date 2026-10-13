@@ -79,6 +79,10 @@ export const VerifyEmailSchema = z
   .object({
     email: EmailSchema,
     code: z.string().regex(/^\d{6}$/, 'Doğrulama kodu 6 rakamdan oluşmalıdır.'),
+    // Opaque token returned by POST /register to the client that submitted the
+    // pending registration. Without a matching token the e-mail is still
+    // verified, but the stored password is cleared (`passwordResetRequired`).
+    registrationToken: z.string().min(1).max(512).optional(),
   })
   .merge(DeviceSchema);
 export const ResendVerificationSchema = z.object({ email: EmailSchema }).merge(DeviceSchema);
@@ -110,6 +114,10 @@ export const SocialLoginSchema = z
     firstName: z.string().trim().min(1).max(80).optional(),
     lastName: z.string().trim().min(1).max(80).optional(),
     recoverDeletion: z.boolean().optional(),
+    // Apple only: the RAW nonce whose SHA-256 was passed to the Apple
+    // authorization request. Required when the ID token carries a `nonce`
+    // claim; ignored for Google.
+    nonce: z.string().min(1).max(512).optional(),
   })
   .merge(DeviceSchema);
 

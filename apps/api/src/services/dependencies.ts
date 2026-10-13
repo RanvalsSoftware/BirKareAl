@@ -54,7 +54,7 @@ export async function createApiDependencies(config = getConfig()): Promise<ApiDe
   const appleIdentityVerifier = new AppleIdTokenService(config);
   const mailService = createMailService(config, logger);
   const emailSecurityService = await EmailSecurityService.create(config);
-  const revenueCatService = createRevenueCatService({ config, repository });
+  const revenueCatService = createRevenueCatService({ config, repository, logger });
   const authService = new AuthService(
     repository,
     passwordService,

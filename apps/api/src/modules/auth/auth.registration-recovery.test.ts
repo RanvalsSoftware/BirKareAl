@@ -315,17 +315,19 @@ for (const kind of kinds) {
     assert.equal(deletion.body.data.recoveryDays, 30);
     assert.equal((await f.repository.getUserById(user.id))?.status, 'DELETION_PENDING');
     assert.ok([401, 403].includes((await request('/v1/me', 'GET', undefined, oldToken)).status));
-    const pending = await request('/v1/auth/google', 'POST', { idToken: 'fixture-google-token' });
+    // A new Google sign-in mints a new ID token (the first one is spent). The
+    // recovery handshake then legitimately sends this one token several times.
+    const pending = await request('/v1/auth/google', 'POST', { idToken: 'fixture-google-token-2' });
     assert.equal(pending.status, 200, JSON.stringify(pending.body));
     assert.equal(pending.body.data.deletionRecoveryRequired, true);
     assert.equal(pending.body.data.recoveryDays, 30);
     assert.equal(pending.body.data.accessToken, undefined);
     assert.equal(pending.body.data.refreshToken, undefined);
-    const again = await request('/v1/auth/google', 'POST', { idToken: 'fixture-google-token' });
+    const again = await request('/v1/auth/google', 'POST', { idToken: 'fixture-google-token-2' });
     assert.equal(again.body.data.recoveryUntil, pending.body.data.recoveryUntil);
     assert.equal((await f.repository.getUserById(user.id))?.status, 'DELETION_PENDING');
     const restored = await request('/v1/auth/google', 'POST', {
-      idToken: 'fixture-google-token',
+      idToken: 'fixture-google-token-2',
       recoverDeletion: true,
     });
     assert.equal(restored.status, 200, JSON.stringify(restored.body));

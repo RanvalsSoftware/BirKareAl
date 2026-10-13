@@ -57,3 +57,26 @@ test('fails closed when Apple bundle identity is missing', async () => {
     (error: unknown) => error instanceof ApiError && error.code === 'AUTH_APPLE_NOT_CONFIGURED',
   );
 });
+
+test('nonce binding applies to sign-in and leaves re-authentication callers unchanged', async () => {
+  const { createHash } = await import('node:crypto');
+  const raw = 'client-generated-raw-nonce';
+  const bound = await token({ nonce: createHash('sha256').update(raw).digest('hex') });
+  const invalid = (error: unknown) =>
+    error instanceof ApiError && error.code === 'AUTH_INVALID_APPLE_TOKEN';
+
+  assert.equal((await service.verify(bound, { nonce: raw })).subject, 'immutable-apple-subject');
+  await assert.rejects(() => service.verify(bound, { nonce: 'wrong' }), invalid);
+  await assert.rejects(() => service.verify(bound, {}), invalid);
+  const malformed = await token({ nonce: 42 });
+  await assert.rejects(() => service.verify(malformed, { nonce: raw }), invalid);
+  // Token without a nonce claim: unchanged, whatever the body carries.
+  assert.equal((await service.verify(await token(), { nonce: raw })).subject, 'immutable-apple-subject');
+  assert.equal((await service.verify(await token(), {})).subject, 'immutable-apple-subject');
+  // Callers that do not opt in (account-deletion re-auth) are not affected.
+  assert.equal((await service.verify(bound)).subject, 'immutable-apple-subject');
+  // The verifier exposes the token's single-use identity and expiry.
+  const identity = await service.verify(await token());
+  assert.match(identity.replay!.key, /^sha256:[0-9a-f]{64}$/);
+  assert.equal(identity.replay!.expiresAt.getTime(), (now + 600) * 1000);
+});

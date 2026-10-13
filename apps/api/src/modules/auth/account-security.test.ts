@@ -380,7 +380,7 @@ test('two verified Gmail aliases can create accounts but receive welcome credit 
       5,
       sharedAbuseHash,
     ),
-    { status: 'VERIFIED', welcomeCreditsGranted: true },
+    { status: 'VERIFIED', welcomeCreditsGranted: true, passwordResetRequired: true },
   );
   assert.deepEqual(
     await repository.completeEmailVerification(
@@ -389,7 +389,7 @@ test('two verified Gmail aliases can create accounts but receive welcome credit 
       5,
       sharedAbuseHash,
     ),
-    { status: 'VERIFIED', welcomeCreditsGranted: false },
+    { status: 'VERIFIED', welcomeCreditsGranted: false, passwordResetRequired: true },
   );
   assert.equal((await repository.getWallet(first.id)).available, 21);
   assert.equal((await repository.getWallet(second.id)).available, 0);

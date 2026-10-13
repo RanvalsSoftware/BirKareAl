@@ -16,6 +16,8 @@ import {
 } from './deletion.js';
 import type { AccountDeletionRecord } from './types.js';
 import {
+  creditRefundIdempotencyKey,
+  STORE_GRANT_TYPES,
   WELCOME_CREDIT_AMOUNT,
   WELCOME_CREDIT_REFERENCE_TYPE,
   welcomeCreditAbuseHash,
@@ -55,8 +57,12 @@ import type {
   PendingSocialLoginRecord,
   PasswordResetCompletionResult,
   ProjectRecord,
+  RestoreCreditGrantResult,
+  ReverseCreditGrantInput,
+  ReverseCreditGrantResult,
   SessionRecord,
   SocialAuthProvider,
+  StoreCreditGrantQuery,
   SupportTicketRecord,
   UserPreferences,
   UserConsentRecord,
@@ -112,6 +118,10 @@ export class MemoryRepository implements BirKareRepository {
   private readonly transactionIdsByIdempotencyKey = new Map<string, string>();
   private readonly idempotency = new Map<string, IdempotencyRecord>();
   private readonly supportTickets = new Map<string, SupportTicketRecord>();
+  /** Internal-only columns that the Prisma adapter keeps out of the public records. */
+  private readonly registrationTokenHashes = new Map<string, string>();
+  private readonly transactionMetadata = new Map<string, Record<string, unknown>>();
+  private readonly consumedIdentityTokens = new Map<string, Date>();
 
   async readiness(): Promise<{ ready: boolean; detail?: string }> {
     return { ready: true, detail: 'development in-memory repository' };
@@ -158,6 +168,8 @@ export class MemoryRepository implements BirKareRepository {
     };
     this.users.set(user.id, user);
     this.userIdsByEmail.set(email, user.id);
+    if (input.registrationTokenHash)
+      this.registrationTokenHashes.set(user.id, input.registrationTokenHash);
     this.recordUserConsents(user.id, input.consents);
 
     const wallet: CreditWalletRecord = {
@@ -173,6 +185,53 @@ export class MemoryRepository implements BirKareRepository {
       updatedAt: now,
     };
     this.wallets.set(user.id, wallet);
+    return clone(user);
+  }
+
+  async replacePendingRegistration(
+    userId: string,
+    input: CreateUserInput,
+  ): Promise<UserRecord | null> {
+    const user = this.users.get(userId);
+    if (
+      !user ||
+      user.email !== input.email.toLowerCase() ||
+      user.status !== 'PENDING_VERIFICATION' ||
+      user.emailVerifiedAt ||
+      user.deletedAt
+    )
+      return null;
+    // No awaits below: one event-loop critical section, like the Prisma transaction.
+    const now = new Date();
+    Object.assign(user, {
+      passwordHash: input.passwordHash,
+      firstName: input.firstName ?? null,
+      lastName: input.lastName ?? null,
+      locale: input.locale,
+      dateOfBirth: input.dateOfBirth ?? null,
+      updatedAt: now,
+    });
+    if (input.registrationTokenHash)
+      this.registrationTokenHashes.set(userId, input.registrationTokenHash);
+    else this.registrationTokenHashes.delete(userId);
+    for (const [id, consent] of this.userConsents)
+      if (consent.userId === userId) {
+        this.userConsents.delete(id);
+        this.userConsentIdsByUserTypeVersion.delete(
+          userConsentKey(userId, consent.type, consent.version),
+        );
+      }
+    this.recordUserConsents(userId, input.consents);
+    for (const [id, token] of this.emailTokens)
+      if (token.userId === userId && token.type === 'VERIFY_EMAIL') {
+        this.emailTokens.delete(id);
+        this.tokenIdsByHash.delete(token.tokenHash);
+      }
+    for (const session of this.sessions.values())
+      if (session.userId === userId && !session.revokedAt) {
+        session.revokedAt = now;
+        session.revokedReason = 'REGISTRATION_REPLACED';
+      }
     return clone(user);
   }
 
@@ -343,6 +402,39 @@ export class MemoryRepository implements BirKareRepository {
       this.pendingSocialLoginIdsByTokenHash.delete(record.tokenHash);
     }
     return records.length;
+  }
+
+  async consumeIdentityToken(input: {
+    provider: SocialAuthProvider;
+    tokenKey: string;
+    expiresAt: Date;
+  }): Promise<boolean> {
+    const key = providerAccountKey(input.provider, input.tokenKey);
+    if (this.consumedIdentityTokens.has(key)) return false;
+    this.consumedIdentityTokens.set(key, input.expiresAt);
+    return true;
+  }
+
+  async releaseIdentityToken(input: {
+    provider: SocialAuthProvider;
+    tokenKey: string;
+  }): Promise<void> {
+    this.consumedIdentityTokens.delete(providerAccountKey(input.provider, input.tokenKey));
+  }
+
+  async isIdentityTokenConsumed(input: {
+    provider: SocialAuthProvider;
+    tokenKey: string;
+  }): Promise<boolean> {
+    return this.consumedIdentityTokens.has(providerAccountKey(input.provider, input.tokenKey));
+  }
+
+  async purgeConsumedIdentityTokens(input: { before: Date; limit: number }): Promise<number> {
+    const expired = [...this.consumedIdentityTokens]
+      .filter(([, expiresAt]) => expiresAt <= input.before)
+      .slice(0, Math.max(0, input.limit));
+    for (const [key] of expired) this.consumedIdentityTokens.delete(key);
+    return expired.length;
   }
 
   async listUserConsents(userId: string): Promise<UserConsentRecord[]> {
@@ -583,6 +675,7 @@ export class MemoryRepository implements BirKareRepository {
     for (const [id, item] of this.supportTickets)
       if (item.userId === userId) this.supportTickets.delete(id);
     if (user) this.userIdsByEmail.delete(user.email.toLowerCase());
+    this.registrationTokenHashes.delete(userId);
     this.users.delete(userId);
     this.wallets.delete(userId);
     record.storageKeys = [];
@@ -781,15 +874,16 @@ export class MemoryRepository implements BirKareRepository {
     tokenHash: string,
     maxFailedAttempts: number,
     welcomeCreditAbuseHash: string,
+    registrationTokenHash: string | null = null,
   ): Promise<EmailVerificationCompletionResult> {
     const now = new Date();
     const user = this.users.get(userId);
     if (!user || user.deletedAt || ['DELETION_PENDING', 'DELETED'].includes(user.status))
-      return { status: 'ACCOUNT_UNAVAILABLE', welcomeCreditsGranted: false };
+      return { status: 'ACCOUNT_UNAVAILABLE', welcomeCreditsGranted: false, passwordResetRequired: false };
     if (user.status === 'SUSPENDED')
-      return { status: 'ACCOUNT_SUSPENDED', welcomeCreditsGranted: false };
+      return { status: 'ACCOUNT_SUSPENDED', welcomeCreditsGranted: false, passwordResetRequired: false };
     if (user.emailVerifiedAt || user.status !== 'PENDING_VERIFICATION')
-      return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false };
+      return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false, passwordResetRequired: false };
     const token = [...this.emailTokens.values()]
       .filter(
         (candidate) =>
@@ -800,16 +894,31 @@ export class MemoryRepository implements BirKareRepository {
       )
       .sort((left, right) => right.createdAt.getTime() - left.createdAt.getTime())[0];
     if (!token || token.failedAttempts >= maxFailedAttempts)
-      return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false };
+      return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false, passwordResetRequired: false };
     if (token.tokenHash !== tokenHash) {
       token.failedAttempts += 1;
       if (token.failedAttempts >= maxFailedAttempts) token.usedAt = now;
-      return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false };
+      return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false, passwordResetRequired: false };
     }
     token.usedAt = now;
     user.emailVerifiedAt = now;
     user.status = 'ACTIVE';
     user.updatedAt = now;
+    const storedRegistrationToken = this.registrationTokenHashes.get(userId);
+    const provenRegistrant = Boolean(
+      storedRegistrationToken &&
+      registrationTokenHash &&
+      storedRegistrationToken === registrationTokenHash,
+    );
+    this.registrationTokenHashes.delete(userId);
+    if (!provenRegistrant) {
+      user.passwordHash = null;
+      for (const session of this.sessions.values())
+        if (session.userId === userId && !session.revokedAt) {
+          session.revokedAt = now;
+          session.revokedReason = 'REGISTRATION_UNPROVEN';
+        }
+    }
 
     const wasDeleted = this.wasDeleted([
       deletionIdentityHash(this.identitySecret, 'email', user.email),
@@ -843,7 +952,11 @@ export class MemoryRepository implements BirKareRepository {
         description: 'BirKare AI hoş geldin kredisi',
       });
     }
-    return { status: 'VERIFIED', welcomeCreditsGranted: shouldGrant };
+    return {
+      status: 'VERIFIED',
+      welcomeCreditsGranted: shouldGrant,
+      passwordResetRequired: !provenRegistrant,
+    };
   }
 
   async invalidateEmailTokens(userId: string, type: EmailTokenType): Promise<void> {
@@ -1317,7 +1430,146 @@ export class MemoryRepository implements BirKareRepository {
       idempotencyKey: input.idempotencyKey,
       description: input.description ?? null,
     });
+    if (input.storeTransactionId)
+      this.transactionMetadata.set(transaction.id, {
+        storeTransactionId: input.storeTransactionId,
+      });
     return { wallet: clone(wallet), transaction: clone(transaction), created: true };
+  }
+
+  async findStoreCreditGrants(input: StoreCreditGrantQuery): Promise<CreditTransactionRecord[]> {
+    const storeTransactionId = input.storeTransactionId?.trim();
+    const referenceIds = new Set((input.referenceIds ?? []).filter(Boolean));
+    if (input.referenceTypes.length === 0 || (!storeTransactionId && referenceIds.size === 0))
+      return [];
+    return [...this.transactions.values()]
+      .filter(
+        (transaction) =>
+          transaction.referenceType !== null &&
+          input.referenceTypes.includes(transaction.referenceType) &&
+          (STORE_GRANT_TYPES as readonly string[]).includes(transaction.type) &&
+          transaction.amount > 0 &&
+          ((transaction.referenceId !== null && referenceIds.has(transaction.referenceId)) ||
+            (Boolean(storeTransactionId) &&
+              (transaction.referenceId === storeTransactionId ||
+                Boolean(transaction.referenceId?.startsWith(`${storeTransactionId}:`)) ||
+                this.transactionMetadata.get(transaction.id)?.storeTransactionId ===
+                  storeTransactionId))),
+      )
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+      .map(clone);
+  }
+
+  private findStoreGrant(grantTransactionId: string): CreditTransactionRecord | undefined {
+    const grant = this.transactions.get(grantTransactionId);
+    return grant &&
+      grant.amount > 0 &&
+      (STORE_GRANT_TYPES as readonly string[]).includes(grant.type)
+      ? grant
+      : undefined;
+  }
+
+  async reverseCreditGrant(input: ReverseCreditGrantInput): Promise<ReverseCreditGrantResult> {
+    // No awaits in this method: one event-loop critical section, matching the
+    // account + reference locks held by the Prisma transaction.
+    const grant = this.findStoreGrant(input.grantTransactionId);
+    const wallet = grant ? this.wallets.get(grant.userId) : undefined;
+    if (!grant || !wallet)
+      return {
+        status: 'NOT_FOUND',
+        userId: null,
+        granted: 0,
+        deducted: 0,
+        shortfall: 0,
+        transaction: null,
+      };
+    const idempotencyKey = creditRefundIdempotencyKey(grant.id);
+    const existingId = this.transactionIdsByIdempotencyKey.get(idempotencyKey);
+    const existing = existingId ? this.transactions.get(existingId) : undefined;
+    if (existing) {
+      const deducted = Math.abs(existing.amount);
+      return {
+        status: 'ALREADY_REVERSED',
+        userId: grant.userId,
+        granted: grant.amount,
+        deducted,
+        shortfall: Math.max(0, grant.amount - deducted),
+        transaction: clone(existing),
+      };
+    }
+    const granted = grant.amount;
+    const deducted = Math.min(granted, Math.max(0, wallet.available));
+    const shortfall = granted - deducted;
+    if (deducted > 0) {
+      wallet.available -= deducted;
+      wallet.version += 1;
+      wallet.updatedAt = new Date();
+    }
+    const transaction = this.recordTransaction({
+      userId: grant.userId,
+      type: input.type,
+      amount: -deducted,
+      availableAfter: wallet.available,
+      reservedAfter: wallet.reserved,
+      referenceType: grant.referenceType,
+      referenceId: grant.referenceId,
+      idempotencyKey,
+      description: `${input.description ?? 'Mağaza iadesi: satın alma kredisi geri alındı'}${
+        shortfall > 0 ? ` (${shortfall} kredi kullanıldığı için geri alınamadı)` : ''
+      }`,
+    });
+    this.transactionMetadata.set(transaction.id, {
+      grantTransactionId: grant.id,
+      granted,
+      deducted,
+      shortfall,
+      source: input.source,
+    });
+    return {
+      status: 'REVERSED',
+      userId: grant.userId,
+      granted,
+      deducted,
+      shortfall,
+      transaction: clone(transaction),
+    };
+  }
+
+  async restoreReversedCreditGrant(input: {
+    grantTransactionId: string;
+    source: string;
+    description?: string;
+  }): Promise<RestoreCreditGrantResult> {
+    const grant = this.findStoreGrant(input.grantTransactionId);
+    const wallet = grant ? this.wallets.get(grant.userId) : undefined;
+    if (!grant || !wallet)
+      return { status: 'NOT_FOUND', userId: null, restored: 0, transaction: null };
+    const activeKey = creditRefundIdempotencyKey(grant.id);
+    const refundId = this.transactionIdsByIdempotencyKey.get(activeKey);
+    const refund = refundId ? this.transactions.get(refundId) : undefined;
+    if (!refund || refund.status !== 'COMPLETED')
+      return { status: 'NOT_REVERSED', userId: grant.userId, restored: 0, transaction: null };
+    // Mirrors PrismaRepository: the row keeps its key, so a stale "refunded"
+    // marker seen later can never deduct again.
+    refund.status = 'REVERSED';
+    const restored = Math.abs(refund.amount);
+    if (restored > 0) {
+      wallet.available += restored;
+      wallet.version += 1;
+      wallet.updatedAt = new Date();
+    }
+    const transaction = this.recordTransaction({
+      userId: grant.userId,
+      type: grant.type,
+      amount: restored,
+      availableAfter: wallet.available,
+      reservedAfter: wallet.reserved,
+      referenceType: 'CREDIT_REFUND_REVERSAL',
+      referenceId: refund.id,
+      idempotencyKey: `credit-refund-reversal:${refund.id}`,
+      description: input.description ?? 'Mağaza iadesi geri alındı: kredi yeniden tanımlandı',
+    });
+    return { status: 'RESTORED', userId: grant.userId, restored, transaction: clone(transaction) };
   }
 
   async listCreditTransactions(userId: string): Promise<CreditTransactionRecord[]> {

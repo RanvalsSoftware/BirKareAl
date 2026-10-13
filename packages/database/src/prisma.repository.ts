@@ -6,7 +6,7 @@ import {
   unauthorized,
 } from '@birkare/shared';
 import type { CatalogFeaturedPerson, CatalogItem, ProjectListing } from '@birkare/shared';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
 import {
   ACCOUNT_DELETION_RECOVERY_MS,
   accountDeletionRecoveryDeadline,
@@ -16,6 +16,8 @@ import {
 } from './deletion.js';
 import type { AccountDeletionRecord } from './types.js';
 import {
+  creditRefundIdempotencyKey,
+  STORE_GRANT_TYPES,
   WELCOME_CREDIT_AMOUNT,
   WELCOME_CREDIT_REFERENCE_TYPE,
   welcomeCreditAbuseHash,
@@ -54,8 +56,12 @@ import type {
   PendingSocialLoginRecord,
   PasswordResetCompletionResult,
   ProjectRecord,
+  RestoreCreditGrantResult,
+  ReverseCreditGrantInput,
+  ReverseCreditGrantResult,
   SessionRecord,
   SocialAuthProvider,
+  StoreCreditGrantQuery,
   SupportTicketRecord,
   UserConsentRecord,
   UserRecord,
@@ -70,6 +76,13 @@ class GenerationFinalizationConflict extends Error {}
 const asDate = (value: unknown): Date | null =>
   value instanceof Date ? value : value ? new Date(value as string) : null;
 const asNumber = (value: unknown): number => Number(value ?? 0);
+
+function sameHash(left: string | null | undefined, right: string | null | undefined): boolean {
+  if (!left || !right) return false;
+  const a = Buffer.from(left);
+  const b = Buffer.from(right);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
 
 function toUser(row: any): UserRecord {
   const profile = row.profile ?? {};
@@ -410,6 +423,7 @@ export class PrismaRepository implements BirKareRepository {
             lastName: userInput.lastName,
             locale: userInput.locale,
             dateOfBirth: userInput.dateOfBirth,
+            registrationTokenHash: userInput.registrationTokenHash ?? null,
             status: 'PENDING_VERIFICATION',
             profile: { create: {} },
             wallet: {
@@ -432,6 +446,48 @@ export class PrismaRepository implements BirKareRepository {
         throw conflict('AUTH_EMAIL_ALREADY_EXISTS', 'Bu e-posta adresiyle zaten bir hesap var.');
       throw error;
     }
+  }
+
+  async replacePendingRegistration(
+    userId: string,
+    input: CreateUserInput,
+  ): Promise<UserRecord | null> {
+    return this.prisma.$transaction(async (tx: PrismaClientLike) => {
+      const now = new Date();
+      const { consents, ...userInput } = input;
+      // The conditional write both locks the row and proves it is still an
+      // unverified registration; a concurrent verification makes it a no-op.
+      const claimed = await tx.user.updateMany({
+        where: {
+          id: userId,
+          email: userInput.email.toLowerCase(),
+          status: 'PENDING_VERIFICATION',
+          emailVerifiedAt: null,
+          deletedAt: null,
+        },
+        data: {
+          passwordHash: userInput.passwordHash,
+          firstName: userInput.firstName,
+          lastName: userInput.lastName,
+          locale: userInput.locale,
+          dateOfBirth: userInput.dateOfBirth,
+          registrationTokenHash: userInput.registrationTokenHash ?? null,
+          updatedAt: now,
+        },
+      });
+      if (claimed.count !== 1) return null;
+      await tx.userConsent.deleteMany({ where: { userId } });
+      await tx.userConsent.createMany({
+        data: consents.map((consent) => ({ ...consent, userId })),
+      });
+      await tx.emailToken.deleteMany({ where: { userId, type: 'VERIFY_EMAIL' } });
+      await tx.session.updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: now, revokedReason: 'REGISTRATION_REPLACED' },
+      });
+      const row = await tx.user.findUnique({ where: { id: userId }, include: { profile: true } });
+      return row ? toUser(row) : null;
+    });
   }
 
   async getUserById(id: string): Promise<UserRecord | null> {
@@ -623,6 +679,51 @@ export class PrismaRepository implements BirKareRepository {
     });
     if (records.length === 0) return 0;
     const result = await this.prisma.pendingSocialLogin.deleteMany({
+      where: { id: { in: records.map((record: { id: string }) => record.id) } },
+    });
+    return result.count;
+  }
+
+  async consumeIdentityToken(input: {
+    provider: SocialAuthProvider;
+    tokenKey: string;
+    expiresAt: Date;
+  }): Promise<boolean> {
+    // The unique (provider, tokenKey) index elects exactly one winner.
+    const created = await this.prisma.consumedIdentityToken.createMany({
+      data: [input],
+      skipDuplicates: true,
+    });
+    return created.count === 1;
+  }
+
+  async releaseIdentityToken(input: {
+    provider: SocialAuthProvider;
+    tokenKey: string;
+  }): Promise<void> {
+    await this.prisma.consumedIdentityToken.deleteMany({ where: input });
+  }
+
+  async isIdentityTokenConsumed(input: {
+    provider: SocialAuthProvider;
+    tokenKey: string;
+  }): Promise<boolean> {
+    const row = await this.prisma.consumedIdentityToken.findUnique({
+      where: { provider_tokenKey: input },
+      select: { id: true },
+    });
+    return Boolean(row);
+  }
+
+  async purgeConsumedIdentityTokens(input: { before: Date; limit: number }): Promise<number> {
+    const records = await this.prisma.consumedIdentityToken.findMany({
+      where: { expiresAt: { lte: input.before } },
+      orderBy: { expiresAt: 'asc' },
+      take: Math.max(0, input.limit),
+      select: { id: true },
+    });
+    if (records.length === 0) return 0;
+    const result = await this.prisma.consumedIdentityToken.deleteMany({
       where: { id: { in: records.map((record: { id: string }) => record.id) } },
     });
     return result.count;
@@ -1091,6 +1192,7 @@ export class PrismaRepository implements BirKareRepository {
     tokenHash: string,
     maxFailedAttempts: number,
     welcomeCreditAbuseHash: string,
+    registrationTokenHash: string | null = null,
   ): Promise<EmailVerificationCompletionResult> {
     return this.prisma.$transaction(async (tx: PrismaClientLike) => {
       // The account row serializes guesses across concurrent requests so the
@@ -1101,11 +1203,11 @@ export class PrismaRepository implements BirKareRepository {
         select: { id: true, email: true, status: true, emailVerifiedAt: true, deletedAt: true },
       });
       if (!user || user.deletedAt || ['DELETION_PENDING', 'DELETED'].includes(user.status))
-        return { status: 'ACCOUNT_UNAVAILABLE', welcomeCreditsGranted: false };
+        return { status: 'ACCOUNT_UNAVAILABLE', welcomeCreditsGranted: false, passwordResetRequired: false };
       if (user.status === 'SUSPENDED')
-        return { status: 'ACCOUNT_SUSPENDED', welcomeCreditsGranted: false };
+        return { status: 'ACCOUNT_SUSPENDED', welcomeCreditsGranted: false, passwordResetRequired: false };
       if (user.emailVerifiedAt || user.status !== 'PENDING_VERIFICATION')
-        return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false };
+        return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false, passwordResetRequired: false };
 
       const locked = await tx.user.updateMany({
         where: {
@@ -1116,7 +1218,7 @@ export class PrismaRepository implements BirKareRepository {
         },
         data: { updatedAt: now },
       });
-      if (locked.count !== 1) return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false };
+      if (locked.count !== 1) return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false, passwordResetRequired: false };
       const token = await tx.emailToken.findFirst({
         where: {
           userId,
@@ -1127,7 +1229,7 @@ export class PrismaRepository implements BirKareRepository {
         orderBy: { createdAt: 'desc' },
       });
       if (!token || token.failedAttempts >= maxFailedAttempts)
-        return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false };
+        return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false, passwordResetRequired: false };
       if (token.tokenHash !== tokenHash) {
         const failedAttempts = token.failedAttempts + 1;
         await tx.emailToken.update({
@@ -1137,7 +1239,7 @@ export class PrismaRepository implements BirKareRepository {
             ...(failedAttempts >= maxFailedAttempts ? { usedAt: now } : {}),
           },
         });
-        return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false };
+        return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false, passwordResetRequired: false };
       }
       const claimed = await tx.emailToken.updateMany({
         where: {
@@ -1149,12 +1251,31 @@ export class PrismaRepository implements BirKareRepository {
         },
         data: { usedAt: now },
       });
-      if (claimed.count !== 1) return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false };
+      if (claimed.count !== 1) return { status: 'INVALID_TOKEN', welcomeCreditsGranted: false, passwordResetRequired: false };
 
+      // Read under the row lock taken above, so a concurrent re-registration
+      // cannot swap the token between this comparison and the write below.
+      const pending = await tx.user.findUnique({
+        where: { id: userId },
+        select: { registrationTokenHash: true },
+      });
+      const provenRegistrant = sameHash(pending?.registrationTokenHash, registrationTokenHash);
       await tx.user.update({
         where: { id: userId },
-        data: { emailVerifiedAt: now, status: 'ACTIVE' },
+        data: {
+          emailVerifiedAt: now,
+          status: 'ACTIVE',
+          registrationTokenHash: null,
+          // Whoever verified the mailbox did not prove they chose the stored
+          // password (pre-registration by a third party): make it unusable.
+          ...(provenRegistrant ? {} : { passwordHash: null }),
+        },
       });
+      if (!provenRegistrant)
+        await tx.session.updateMany({
+          where: { userId, revokedAt: null },
+          data: { revokedAt: now, revokedReason: 'REGISTRATION_UNPROVEN' },
+        });
 
       const deletionHash = deletionIdentityHash(this.identitySecret, 'email', user.email);
       const [priorDeletion, priorDeletionClaim] = await Promise.all([
@@ -1203,7 +1324,11 @@ export class PrismaRepository implements BirKareRepository {
           },
         });
       }
-      return { status: 'VERIFIED', welcomeCreditsGranted: shouldGrant };
+      return {
+        status: 'VERIFIED',
+        welcomeCreditsGranted: shouldGrant,
+        passwordResetRequired: !provenRegistrant,
+      };
     });
   }
 
@@ -1595,10 +1720,205 @@ export class PrismaRepository implements BirKareRepository {
           referenceId: input.referenceId,
           idempotencyKey: input.idempotencyKey,
           description: input.description,
+          ...(input.storeTransactionId
+            ? { metadata: { storeTransactionId: input.storeTransactionId } }
+            : {}),
           completedAt: new Date(),
         },
       });
       return { wallet: toWallet(wallet), transaction: toTransaction(transaction), created: true };
+    });
+  }
+
+  async findStoreCreditGrants(input: StoreCreditGrantQuery): Promise<CreditTransactionRecord[]> {
+    const storeTransactionId = input.storeTransactionId?.trim();
+    const referenceIds = [...new Set(input.referenceIds ?? [])].filter(Boolean);
+    if (input.referenceTypes.length === 0 || (!storeTransactionId && referenceIds.length === 0))
+      return [];
+    const rows = await this.prisma.creditTransaction.findMany({
+      where: {
+        referenceType: { in: input.referenceTypes },
+        type: { in: [...STORE_GRANT_TYPES] },
+        amount: { gt: 0 },
+        OR: [
+          ...(referenceIds.length > 0 ? [{ referenceId: { in: referenceIds } }] : []),
+          ...(storeTransactionId
+            ? [
+                { referenceId: storeTransactionId },
+                // Subscription periods are referenced as `<store id>:<period>`.
+                { referenceId: { startsWith: `${storeTransactionId}:` } },
+                { metadata: { path: ['storeTransactionId'], equals: storeTransactionId } },
+              ]
+            : []),
+        ],
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+    return rows.map(toTransaction);
+  }
+
+  /**
+   * Same lock order as `grantCredits` (account row, then the store reference),
+   * so a refund can neither deadlock with nor interleave a grant of the same
+   * purchase. The account is locked with FOR UPDATE rather than
+   * `lockWritableAccount`: a refund must still apply to a suspended account.
+   */
+  private async lockCreditGrant(tx: PrismaClientLike, grantTransactionId: string) {
+    const snapshot = await tx.creditTransaction.findUnique({ where: { id: grantTransactionId } });
+    if (!snapshot) return null;
+    await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${snapshot.userId} FOR UPDATE`;
+    if (snapshot.referenceType && snapshot.referenceId)
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`credit-reference:${snapshot.referenceType}:${snapshot.referenceId}`}, 0))`;
+    const grant = await tx.creditTransaction.findUnique({ where: { id: grantTransactionId } });
+    if (
+      !grant ||
+      grant.amount <= 0 ||
+      !(STORE_GRANT_TYPES as readonly string[]).includes(grant.type)
+    )
+      return null;
+    return grant;
+  }
+
+  async reverseCreditGrant(input: ReverseCreditGrantInput): Promise<ReverseCreditGrantResult> {
+    const notFound: ReverseCreditGrantResult = {
+      status: 'NOT_FOUND',
+      userId: null,
+      granted: 0,
+      deducted: 0,
+      shortfall: 0,
+      transaction: null,
+    };
+    const idempotencyKey = creditRefundIdempotencyKey(input.grantTransactionId);
+    const already = async (client: PrismaClientLike): Promise<ReverseCreditGrantResult | null> => {
+      const existing = await client.creditTransaction.findUnique({ where: { idempotencyKey } });
+      if (!existing) return null;
+      const deducted = Math.abs(existing.amount);
+      const granted = Number(existing.metadata?.granted ?? deducted);
+      return {
+        status: 'ALREADY_REVERSED',
+        userId: existing.userId,
+        granted,
+        deducted,
+        shortfall: Math.max(0, granted - deducted),
+        transaction: toTransaction(existing),
+      };
+    };
+    try {
+      return await this.prisma.$transaction(async (tx: PrismaClientLike) => {
+        const grant = await this.lockCreditGrant(tx, input.grantTransactionId);
+        if (!grant) return notFound;
+        const previous = await already(tx);
+        if (previous) return previous;
+
+        // Lock the wallet row so the balance read here is the balance debited.
+        const [walletRow] = (await tx.$queryRaw`SELECT "available" FROM "CreditWallet" WHERE "userId" = ${grant.userId} FOR UPDATE`) as Array<{
+          available: number;
+        }>;
+        if (!walletRow) return notFound;
+        const granted = grant.amount as number;
+        const deducted = Math.min(granted, Math.max(0, Number(walletRow.available)));
+        const shortfall = granted - deducted;
+        const wallet =
+          deducted > 0
+            ? await tx.creditWallet.update({
+                where: { userId: grant.userId },
+                data: { available: { decrement: deducted }, version: { increment: 1 } },
+              })
+            : await tx.creditWallet.findUniqueOrThrow({ where: { userId: grant.userId } });
+        const now = new Date();
+        const transaction = await tx.creditTransaction.create({
+          data: {
+            userId: grant.userId,
+            type: input.type,
+            status: 'COMPLETED',
+            amount: -deducted,
+            availableAfter: wallet.available,
+            reservedAfter: wallet.reserved,
+            referenceType: grant.referenceType,
+            referenceId: grant.referenceId,
+            idempotencyKey,
+            description: `${input.description ?? 'Mağaza iadesi: satın alma kredisi geri alındı'}${
+              shortfall > 0 ? ` (${shortfall} kredi kullanıldığı için geri alınamadı)` : ''
+            }`,
+            metadata: {
+              grantTransactionId: grant.id,
+              granted,
+              deducted,
+              shortfall,
+              source: input.source,
+            },
+            completedAt: now,
+          },
+        });
+        return {
+          status: 'REVERSED' as const,
+          userId: grant.userId,
+          granted,
+          deducted,
+          shortfall,
+          transaction: toTransaction(transaction),
+        };
+      });
+    } catch (error: any) {
+      // Backstop: the unique idempotency key elected another transaction.
+      if (error?.code !== 'P2002') throw error;
+      return (await already(this.prisma)) ?? notFound;
+    }
+  }
+
+  async restoreReversedCreditGrant(input: {
+    grantTransactionId: string;
+    source: string;
+    description?: string;
+  }): Promise<RestoreCreditGrantResult> {
+    return this.prisma.$transaction(async (tx: PrismaClientLike) => {
+      const grant = await this.lockCreditGrant(tx, input.grantTransactionId);
+      if (!grant) return { status: 'NOT_FOUND', userId: null, restored: 0, transaction: null };
+      const activeKey = creditRefundIdempotencyKey(grant.id);
+      const refund = await tx.creditTransaction.findUnique({
+        where: { idempotencyKey: activeKey },
+      });
+      if (!refund || refund.status !== 'COMPLETED')
+        return { status: 'NOT_REVERSED', userId: grant.userId, restored: 0, transaction: null };
+      // Flipping the refund row to REVERSED is the single claim that makes the
+      // restoration happen once. The row keeps its idempotency key on purpose:
+      // a stale "refunded" marker seen later can then never deduct again.
+      const claimed = await tx.creditTransaction.updateMany({
+        where: { id: refund.id, status: 'COMPLETED', idempotencyKey: activeKey },
+        data: { status: 'REVERSED' },
+      });
+      if (claimed.count !== 1)
+        return { status: 'NOT_REVERSED', userId: grant.userId, restored: 0, transaction: null };
+      const restored = Math.abs(refund.amount);
+      const wallet =
+        restored > 0
+          ? await tx.creditWallet.update({
+              where: { userId: grant.userId },
+              data: { available: { increment: restored }, version: { increment: 1 } },
+            })
+          : await tx.creditWallet.findUniqueOrThrow({ where: { userId: grant.userId } });
+      const transaction = await tx.creditTransaction.create({
+        data: {
+          userId: grant.userId,
+          type: grant.type,
+          status: 'COMPLETED',
+          amount: restored,
+          availableAfter: wallet.available,
+          reservedAfter: wallet.reserved,
+          referenceType: 'CREDIT_REFUND_REVERSAL',
+          referenceId: refund.id,
+          idempotencyKey: `credit-refund-reversal:${refund.id}`,
+          description: input.description ?? 'Mağaza iadesi geri alındı: kredi yeniden tanımlandı',
+          metadata: { grantTransactionId: grant.id, refundTransactionId: refund.id, source: input.source },
+          completedAt: new Date(),
+        },
+      });
+      return {
+        status: 'RESTORED',
+        userId: grant.userId,
+        restored,
+        transaction: toTransaction(transaction),
+      };
     });
   }
 

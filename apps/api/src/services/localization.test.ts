@@ -133,7 +133,11 @@ const registration = {
 
 test('registration and recovery honor locale without weakening verification or disclosing accounts', async () => {
   const { repository, mail, service } = fixture();
-  assert.deepEqual(await service.register(registration, {}), { verificationRequired: true });
+  const registered = await service.register(registration, {});
+  // Production returns the opaque registration token but never the mailed code.
+  assert.deepEqual(Object.keys(registered).sort(), ['registrationToken', 'verificationRequired']);
+  assert.equal(registered.verificationRequired, true);
+  assert.ok(registered.registrationToken.length >= 43);
   assert.match(mail.sent[0]!.subject, /Verify your email/);
   const code = mail.sent[0]!.text.match(/verification code: (\d{6})/)?.[1];
   assert.ok(code);
