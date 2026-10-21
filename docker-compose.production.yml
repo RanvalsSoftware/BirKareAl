@@ -11,7 +11,9 @@ x-backend-environment: &backend-environment
   API_PORT: '4000'
   LOG_LEVEL: ${LOG_LEVEL:-info}
   CORS_ORIGINS: ${CORS_ORIGINS:?Set allowed HTTPS origins}
-  TRUST_PROXY: ${TRUST_PROXY:-false}
+  # One reverse proxy sits in front of the API; without this every client shares
+  # one IP for rate limiting. Set to the real hop count if that changes.
+  TRUST_PROXY: ${TRUST_PROXY:-1}
   DATABASE_PROVIDER: prisma
   DATABASE_URL: 'postgresql://${DB_USER:?Set Cloud SQL DB user}:${DB_PASSWORD:?Set Cloud SQL DB password}@cloudsql-proxy:5432/${DB_NAME:?Set Cloud SQL DB name}?schema=public&sslmode=disable'
   QUEUE_DRIVER: bullmq
@@ -30,7 +32,8 @@ x-backend-environment: &backend-environment
   OPENAI_IMAGE_MODEL: ${OPENAI_IMAGE_MODEL:-gpt-image-2.5-flare}
   OPENAI_IMAGE_PREMIUM_MODEL: ${OPENAI_IMAGE_PREMIUM_MODEL:-gpt-image-2.5-sunburst}
   OPENAI_MODERATION_MODEL: ${OPENAI_MODERATION_MODEL:-omni-moderation-latest}
-  DISABLE_ALL_GENERATION: ${DISABLE_ALL_GENERATION:-true}
+  # Emergency stop for image generation and listing text: set to true to pause both.
+  DISABLE_ALL_GENERATION: ${DISABLE_ALL_GENERATION:-false}
   REVENUECAT_ENABLED: ${REVENUECAT_ENABLED:-false}
   REVENUECAT_SECRET_API_KEY: ${REVENUECAT_SECRET_API_KEY:-}
   REVENUECAT_WEBHOOK_AUTH_TOKEN: ${REVENUECAT_WEBHOOK_AUTH_TOKEN:-}

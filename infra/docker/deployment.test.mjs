@@ -93,7 +93,8 @@ test('API and worker run immutable backend images with runtime-only required con
     // GCS authenticates through the VM service account; no key file is mounted.
     assert.equal(service.environment.GOOGLE_APPLICATION_CREDENTIALS, undefined);
     assert.ok(!(service.secrets ?? []).some((secret) => secret.source.startsWith('gcs-')));
-    assert.equal(service.environment.DISABLE_ALL_GENERATION, 'true');
+    assert.equal(service.environment.DISABLE_ALL_GENERATION, 'false');
+    assert.equal(service.environment.TRUST_PROXY, '1');
     assert.equal(service.environment.NODE_ENV, 'staging');
   }
   assert.equal(services.api.environment.MAIL_DRIVER, 'disabled');

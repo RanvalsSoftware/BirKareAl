@@ -111,7 +111,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     es: './locales/es.json',
     ar: './locales/ar.json',
   },
-  version: '1.0.1',
+  version: '1.1.0',
   // App icons must be opaque: the gold mark is composited on the brand black.
   icon: './assets/brand/birkare-gold-icon-1024.png',
   orientation: 'default',
@@ -121,7 +121,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     icon: './assets/brand/birkare-gold-icon-1024.png',
     supportsTablet: true,
     bundleIdentifier: 'com.birkareai.mobile',
-    buildNumber: '14',
+    buildNumber: '15',
     usesAppleSignIn: true,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
